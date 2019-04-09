@@ -1,0 +1,101 @@
+import {define, Component, html, css} from 'flit'
+import {svgSymbols} from '../../icons/svg-symbol'
+import {subMatches, animateByFunction} from 'ff'
+import {theme} from './theme'
+
+
+@define('f-icon')
+export class Icon extends Component {
+
+	static properties = ['type']
+
+	static style = css`
+		f-icon{
+			display: inline-block;
+			stroke: currentColor;
+			fill: none;
+			margin: auto;
+			vertical-align: top;
+		}
+	`
+
+	type: string = ''
+
+	constructor(el: HTMLElement) {
+		super(el)
+		this.type = el.getAttribute('type') || ''
+	}
+	
+	render() {
+		let svgCode = (svgSymbols as any)[this.type]
+		if (!svgCode) {
+			return ''
+		}
+
+		let [viewBox, inner] = subMatches(svgCode, /<svg viewBox="(.+?)">([\s\S]+?)<\/svg>/) as string[]
+		let [,, w, h] = viewBox.split(' ')
+		let rate = theme.lineHeight / 30
+		let width = Math.round(Number(w) * rate)
+		let height = Math.round(Number(h) * rate)
+
+		return html`
+			<template
+				:style=${{width, height}}
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					xmlns:xlink="http://www.w3.org/1999/xlink"
+					viewBox=${viewBox}
+					:html=${inner}
+				></svg>
+			</template>
+		`
+	}
+}
+
+
+@define('f-icon-loading')
+export class IconLoading extends Icon {
+
+	static properties = ['type', 'loading']
+
+	static style = css`
+		f-icon-loading{
+			display: inline-block;
+			stroke: currentColor;
+			fill: none;
+			margin: auto;
+			vertical-align: top;
+			position: relative;
+		}
+	`
+
+	type: string = 'loading'
+	loading: boolean = false
+	playing: boolean = false
+
+	onCreated () {
+		this.watchImmediately('loading', (value) => {
+			if (value && !this.playing) {
+				this.play()
+				this.playing = true
+			}
+		})
+	}
+
+	play () {
+		let fn = (value: number) => {
+			this.el.style.transform = 'rotate(' + value + 'deg)'
+		}
+
+		// Playing web animation will cause it becomes fuzzy.
+		animateByFunction(fn, 0, 360, 1000, 'linear').promise.then(() => {
+			if (this.loading) {
+				this.play()
+			}
+			else {
+				this.playing = false
+			}
+		})
+	}
+}

@@ -1,0 +1,30 @@
+{
+	"name": "fui",
+	"version": "1.0.0",
+	"description": "A small Web UI library",
+	"main": "src/index.ts",
+	"scripts": {
+		"compile": "tsc -b",
+		"watch": "tsc -b -w",
+		"test": "gulp test && start test/index.html"
+	},
+	"author": "pucelle",
+	"license": "MIT",
+	"dependencies": {
+		"ff": "^1.0.0",
+		"flit": "^1.0.0"
+	},
+	"devDependencies": {
+		"browserify": "^16.2.3",
+		"chai": "^4.2.0",
+		"chai-spies": "^1.0.0",
+		"exorcist": "^1.0.1",
+		"gulp": "^4.0.0",
+		"gulp-util": "^3.0.8",
+		"mocha": "^6.0.2",
+		"tsify": "^4.0.1",
+		"typescript": "^3.3.3333",
+		"vinyl-source-stream": "^2.0.0",
+		"watchify": "^3.11.1"
+	}
+}
