@@ -39,14 +39,14 @@ export class Icon extends Component {
 		let height = Math.round(Number(h) * rate)
 
 		return html`
-			<template
-				:style=${{width, height}}
-			>
-				<svg
-					viewBox=${viewBox}
-					:html=${inner}
-				></svg>
-			</template>
+		<template
+			:style=${{width, height}}
+		>
+			<svg
+				viewBox=${viewBox}
+				:html=${inner}
+			></svg>
+		</template>
 		`
 	}
 }

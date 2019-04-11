@@ -36,7 +36,7 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 			width: 100%;
 			height: 100%;
 			background: currentColor;
-			opacity: 0.4;
+			opacity: 0.3;
 		}
 	
 		.progress{
@@ -53,6 +53,10 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 			width: ${size}px;
 			height: ${size}px;
 			margin: ${-size / 2 + 2}px -${size / 2}px;
+		}
+
+		.dragging .ball{
+			border-color: ${mainColor.darken(10)};
 		}
 	
 		:host[vertical]{
@@ -83,21 +87,21 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 
 	render() {
 		return html`
-			<template
-				:class.$dragging=${this.draging}
-				@@mousedown=${this.onMouseDown}
-				@@wheel.prevent=${this.onWheel}
-			>
-				<div class="groove" :ref="groove">
-					<div class="groove-bg"></div>
-					<div class="progress"
-						:style.width.percent=${this.vertical ? '' : this.getPercent()}
-						:style.height.percent=${this.vertical ? this.getPercent() : ''}
-					>
-						<div class="ball"></div>
-					</div>
+		<template
+			:class.dragging=${this.draging}
+			@@mousedown=${this.onMouseDown}
+			@@wheel.prevent=${this.onWheel}
+		>
+			<div class="groove" :ref="groove">
+				<div class="groove-bg"></div>
+				<div class="progress"
+					:style.width.percent=${this.vertical ? '' : this.getPercent()}
+					:style.height.percent=${this.vertical ? this.getPercent() : ''}
+				>
+					<div class="ball" :title=${this.value}></div>
 				</div>
-			</template>
+			</div>
+		</template>
 		`
 	}
 

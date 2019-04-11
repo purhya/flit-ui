@@ -50,9 +50,9 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 
 	render() {
 		return html`
-			<template :class.on=${this.value} @@click.stop=${this.onClick}>
-				<div class="ball"></div>
-			</template>
+		<template :class.on=${this.value} @@click.stop=${this.onClick}>
+			<div class="ball"></div>
+		</template>
 		`
 	}
 

@@ -82,18 +82,18 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 		}
 
 		return html`
-			<template :class.checked=${this.checked} :class.indeterminate=${this.indeterminate}
-				@@click.stop=${this.onClick}
-				@@mousedown.stop=${this.onMouseDown}
-			>
-				<svg viewBox="0 0 13 13">
-					${svgInner}
-				</svg>
+		<template :class.checked=${this.checked} :class.indeterminate=${this.indeterminate}
+			@@click.stop=${this.onClick}
+			@@mousedown.stop=${this.onMouseDown}
+		>
+			<svg viewBox="0 0 13 13">
+				${svgInner}
+			</svg>
 
-				<div class="label">
-					<slot></slot>
-				</div>
-			</template>
+			<div class="label">
+				<slot></slot>
+			</div>
+		</template>
 		`
 	}
 

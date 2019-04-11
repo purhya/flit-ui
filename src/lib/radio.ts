@@ -64,15 +64,15 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 		let size = 20 / 30 * lineHeight
 
 		return html`
-			<template :class.checked=${this.checked} @@click.stop=${this.onClick}>
-				<svg viewBox="0 0 20 20" style="width: ${size}px; height: ${size}px;">
-					<circle style="fill:none;stroke:currentColor;" cx="10" cy="10" r="7.5"></circle>
-					<circle style="fill:currentColor;stroke:none;" cx="10" cy="10" r="4" class="dot"></circle>
-				</svg>
-				<div class="label">
-					<slot></slot>
-				</div>
-			</template>
+		<template :class.checked=${this.checked} @@click.stop=${this.onClick}>
+			<svg viewBox="0 0 20 20" style="width: ${size}px; height: ${size}px;">
+				<circle style="fill:none;stroke:currentColor;" cx="10" cy="10" r="7.5"></circle>
+				<circle style="fill:currentColor;stroke:none;" cx="10" cy="10" r="4" class="dot"></circle>
+			</svg>
+			<div class="label">
+				<slot></slot>
+			</div>
+		</template>
 		`
 	}
 
