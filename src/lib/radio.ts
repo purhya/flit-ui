@@ -1,112 +1,120 @@
-// import {define, Component, html, css} from 'flit'
-// import {theme} from './theme'
+import {define, Component, html, css, getEasing} from 'flit'
+import {theme} from './theme'
 
 
-// @define('f-radio')
-// export class Radio extends Component {
+@define('f-radio')
+export class Radio extends Component<{change: (checked: true) => void}> {
 
-// 	static properties = ['checked']
+	static style() {
+		let {mainColor, lineHeight} = theme
 
-// 	static style() {
-// 		let {mainColor} = theme
+		return css`
+		:host{
+			display: inline-flex;
+			vertical-align: top;
+			align-items: center;
+			cursor: pointer;
 
-// 		return css`
-// 			f-radio{
-// 				display: inline-flex;
-// 				vertical-align: top;
-// 				align-items: center;
-// 				cursor: pointer;
-// 			}
+			&:hover{
+				color: ${mainColor};
+			}
 
-// 			f-icon{
-// 				margin-right: 6px;
-// 			}
-		
-// 			label{
-// 				flex: 1;
-// 				white-space: nowrap;
-// 				overflow: hidden;
-// 				text-overflow: ellipsis;
-// 			}
-		
-// 			f-radio:hover, .radio-checked{
-// 				color: ${mainColor};
-// 			}
-// 		`
-// 	}
+			&:active:not(.checked) .dot{
+				transform: scale(0.5);
+			}
+		}
 
-// 	checked: boolean = false
-// 	radioGroup: RadioGroup | null = null
+		svg{
+			margin-right: ${lineHeight / 5 - 1}px;
+		}
 
-// 	// Used to compare with `RadioGroup.value`
-// 	value: any = null
+		.dot{
+			transition: transform 0.2s ${getEasing('ease-out-cubic')};
+			transform-origin: center;
+			transform: scale(0);
+		}
 
-// 	render() {
-// 		return html`
-// 			<radio class="radio" :class.radio-checked="checked" @click.stop="onClick">
-// 				<icon :prop.type=${this.checked ? 'radio-checked' : 'radio-unchecked'}></icon>
-// 				<label>
-// 					<slot></slot>
-// 				</label>
-// 		`
-// 	}
+		.checked{
+			color: ${mainColor};
 
-// 	onCreated () {
-// 		this.watchImmediately('checked', (value) => {
-// 			this.el.classList.toggle('radio-checked__f-radio')
-// 		})
+			.dot{
+				transform: none;
+			}
+		}
+	
+		.label{
+			flex: 1;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		`
+	}
 
-// 		let groupEl = this.el.closest('f-radio-group') as HTMLElement
-// 		if (groupEl) {
-// 			this.radioGroup = Component.get(groupEl) as RadioGroup
-// 			this.checked = this.radioGroup.value == this.value
-// 			this.radioGroup.register(this)
-// 		}
-// 	}
+	static properties = ['checked', 'value']
 
-// 	onClick () {
-// 		// if (e.defaultPrevented) {
-// 		// 	return
-// 		// }
+	checked: boolean = false
+	radioGroup: RadioGroup | null = null
 
-// 		// var newChecked = this.checked = !this.checked
+	// Used to compare with `RadioGroup.value`
+	value: any = null
 
-// 		// if (newChecked) {
-// 		// 	this.emit('change', true)
-// 		// }
-// 	}
-// }
+	render() {
+		let {lineHeight} = theme
+		let size = 20 / 30 * lineHeight
 
+		return html`
+			<template :class.checked=${this.checked} @@click.stop=${this.onClick}>
+				<svg viewBox="0 0 20 20" style="width: ${size}px; height: ${size}px;">
+					<circle style="fill:none;stroke:currentColor;" cx="10" cy="10" r="7.5"></circle>
+					<circle style="fill:currentColor;stroke:none;" cx="10" cy="10" r="4" class="dot"></circle>
+				</svg>
+				<div class="label">
+					<slot></slot>
+				</div>
+			</template>
+		`
+	}
 
-// @define('f-radio-group')
-// export class RadioGroup extends Component {
-// 	value: any = null
+	onCreated() {
+		let groupEl = this.el.closest('f-radio-group') as HTMLElement
+		if (groupEl) {
+			this.radioGroup = Component.get(groupEl) as RadioGroup
+			this.checked = this.radioGroup.value == this.value
+			this.radioGroup.register(this)
+		}
+	}
 
-// 	template: `
-// 		<radio-group class="radio-group">
-// 			<slot></slot>
-// 		</radio-group>
-// 	`
-
-// 	onCreated () {
-// 		this.radios = []
-// 	}
-
-
-// 	register (radio: Radio) {
-// 		this.radios.push(radio)
-// 		radio.on('change', this.onRadioChange.bind(this, radio))
-// 	}
+	onClick() {
+		if (!this.checked) {
+			this.checked = true
+			this.emit('change', true)
+		}
+	}
+}
 
 
-// 	onRadioChange (changedRadio) {
-// 		for (let radio of this.radios) {
-// 			if (radio !== changedRadio) {
-// 				radio.checked = false
-// 			}
-// 		}
+@define('f-radio-group')
+export class RadioGroup extends Component<{change: (value: (string | number)[]) => void}> {
 
-// 		this.value = changedRadio.value
-// 		this.emit('change', this.value)
-// 	}
-// }
+	static properties = ['value']
+
+	value: any = null
+	radios: Radio[] = []
+
+	register(radio: Radio) {
+		this.radios.push(radio)
+		radio.on('change', this.onRadioChange.bind(this, radio))
+	}
+
+	onRadioChange(changedRadio: Radio) {
+		for (let radio of this.radios) {
+			if (radio !== changedRadio) {
+				radio.checked = false
+			}
+		}
+
+		this.value = changedRadio.value
+		this.emit('change', this.value)
+	}
+}

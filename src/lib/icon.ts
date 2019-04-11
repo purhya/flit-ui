@@ -7,17 +7,17 @@ import {theme} from './theme'
 @define('f-icon')
 export class Icon extends Component {
 
-	static properties = ['type']
-
 	static style = css`
-		f-icon{
-			display: inline-block;
-			stroke: currentColor;
-			fill: none;
-			margin: auto;
-			vertical-align: top;
-		}
+	:host{
+		display: inline-block;
+		stroke: currentColor;
+		fill: none;
+		margin: auto;
+		vertical-align: top;
+	}
 	`
+
+	static properties = ['type']
 
 	type: string = ''
 
@@ -43,8 +43,6 @@ export class Icon extends Component {
 				:style=${{width, height}}
 			>
 				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					xmlns:xlink="http://www.w3.org/1999/xlink"
 					viewBox=${viewBox}
 					:html=${inner}
 				></svg>
@@ -60,21 +58,21 @@ export class IconLoading extends Icon {
 	static properties = ['type', 'loading']
 
 	static style = css`
-		f-icon-loading{
-			display: inline-block;
-			stroke: currentColor;
-			fill: none;
-			margin: auto;
-			vertical-align: top;
-			position: relative;
-		}
+	:host{
+		display: inline-block;
+		stroke: currentColor;
+		fill: none;
+		margin: auto;
+		vertical-align: top;
+		position: relative;
+	}
 	`
 
 	type: string = 'loading'
 	loading: boolean = false
 	playing: boolean = false
 
-	onCreated () {
+	onCreated() {
 		this.watchImmediately('loading', (value) => {
 			if (value && !this.playing) {
 				this.play()
@@ -83,7 +81,7 @@ export class IconLoading extends Icon {
 		})
 	}
 
-	play () {
+	play() {
 		let fn = (value: number) => {
 			this.el.style.transform = 'rotate(' + value + 'deg)'
 		}
