@@ -22,6 +22,10 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 			height: ${lineHeight}px;
 			color: ${mainColor};
 			cursor: pointer;
+
+			&:focus .ball{
+				box-shadow: 0 0 5px ${mainColor};
+			}
 		}
 
 		.groove{
@@ -55,10 +59,6 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 			margin: ${-size / 2 + 2}px -${size / 2}px;
 		}
 
-		.dragging .ball{
-			border-color: ${mainColor.darken(10)};
-		}
-	
 		:host[vertical]{
 			width: ${lineHeight}px;
 			height: ${lineHeight * 5}px;
@@ -88,9 +88,12 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 	render() {
 		return html`
 		<template
-			:class.dragging=${this.draging}
+			tabindex="0"
+			:class=${this.draging}
 			@@mousedown=${this.onMouseDown}
 			@@wheel.prevent=${this.onWheel}
+			@@focus=${this.onFocus}
+			@@blur=${this.onBlur}
 		>
 			<div class="groove" :ref="groove">
 				<div class="groove-bg"></div>
@@ -98,7 +101,7 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 					:style.width.percent=${this.vertical ? '' : this.getPercent()}
 					:style.height.percent=${this.vertical ? this.getPercent() : ''}
 				>
-					<div class="ball" :title=${this.value}></div>
+					<div class="ball" :title=${{title: this.value, alignPosition: this.vertical ? 'r' : 't', leaveToHide: !this.draging}}></div>
 				</div>
 			</div>
 		</template>
@@ -128,13 +131,15 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 		this.draging = true
 
 		let onMouseMove = (e: MouseEvent) => {
+			// Disable selecting text unexpectedly
+			e.preventDefault()
 			this.changeValueByEvent(e, rect)
 		}
 
-		on(document, 'mousemove', onMouseMove as any)
+		on(document, 'mousemove', onMouseMove as (e: Event) => void)
 
 		once(document, 'mouseup', () => {
-			off(document, 'mousemove', onMouseMove as any)
+			off(document, 'mousemove', onMouseMove as (e: Event) => void)
 			this.draging = false
 		})
 	}
@@ -165,7 +170,6 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 
 	onWheel(e: WheelEvent) {
 		if (this.step) {
-			let oldValue = this.value
 			let newValue
 
 			// deltaY < 0 when wheel up
@@ -176,9 +180,44 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 				newValue = Math.max(this.value - this.step, this.min)
 			}
 
-			if (newValue !== oldValue) {
+			if (newValue !== this.value) {
 				this.emit('change', this.value = newValue)
 			}
 		}
+	}
+
+	onFocus() {
+		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
+	}
+
+	onKeyDown(e: KeyboardEvent) {
+		e.preventDefault()
+		
+		let newValue
+
+		if (this.vertical) {
+			if (e.key === 'ArrowUp') {
+				newValue = Math.max(this.value + this.step, this.min)
+			}
+			else if (e.key === 'ArrowDown') {
+				newValue = Math.max(this.value - this.step, this.min)
+			}
+		}
+		else {
+			if (e.key === 'ArrowLeft') {
+				newValue = Math.max(this.value - this.step, this.min)
+			}
+			else if (e.key === 'ArrowRight') {
+				newValue = Math.max(this.value + this.step, this.min)
+			}
+		}
+		
+		if (newValue !== undefined && newValue !== this.value) {
+			this.emit('change', this.value = newValue)
+		}
+	}
+
+	onBlur() {
+		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 }

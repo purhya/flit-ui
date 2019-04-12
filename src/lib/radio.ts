@@ -1,4 +1,4 @@
-import {define, Component, html, css, getEasing} from 'flit'
+import {define, Component, html, css, getEasing, off, once} from 'flit'
 import {theme} from './theme'
 
 
@@ -19,12 +19,22 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 				color: ${mainColor};
 			}
 
-			&:active:not(.checked) .dot{
+			&:focus{
+				color: ${mainColor};
+
+				svg{
+					box-shadow: 0 0 3px ${mainColor.alpha(0.1)};
+				}
+			}
+
+			&:active .dot{
 				transform: scale(0.5);
 			}
 		}
 
 		svg{
+			border-radius: 50%;
+			border: 1px solid currentColor;
 			margin-right: ${lineHeight / 5 - 1}px;
 		}
 
@@ -39,6 +49,10 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 
 			.dot{
 				transform: none;
+			}
+
+			&:active .dot{
+				transform: scale(0.87);
 			}
 		}
 	
@@ -61,13 +75,18 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 
 	render() {
 		let {lineHeight} = theme
-		let size = 20 / 30 * lineHeight
+		let size = 16 / 30 * lineHeight
 
 		return html`
-		<template :class.checked=${this.checked} @@click.stop=${this.onClick}>
-			<svg viewBox="0 0 20 20" style="width: ${size}px; height: ${size}px;">
-				<circle style="fill:none;stroke:currentColor;" cx="10" cy="10" r="7.5"></circle>
-				<circle style="fill:currentColor;stroke:none;" cx="10" cy="10" r="4" class="dot"></circle>
+		<template
+			tabindex="0"
+			:class.checked=${this.checked}
+			@@click.stop=${this.onClick}
+			@@focus=${this.onFocus}
+			@@blur=${this.onBlur}
+		>
+			<svg viewBox="0 0 14 14" style="width: ${size}px; height: ${size}px;">
+				<circle style="fill:currentColor;stroke:none;" cx="7" cy="7" r="4" class="dot"></circle>
 			</svg>
 			<div class="label">
 				<slot></slot>
@@ -89,6 +108,18 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 		if (!this.checked) {
 			this.checked = true
 			this.emit('change', true)
+		}
+	}
+
+	onFocus() {
+		if (!this.checked) {
+			once(document, 'keydown.enter', this.onClick, this)
+		}
+	}
+
+	onBlur() {
+		if (!this.checked) {
+			off(document, 'keydown', this.onClick, this)
 		}
 	}
 }

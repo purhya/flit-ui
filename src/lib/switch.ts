@@ -1,4 +1,4 @@
-import {define, Component, html, css, getEasing} from 'flit'
+import {define, Component, html, css, getEasing, on, off} from 'flit'
 import {theme} from './theme'
 
 
@@ -20,9 +20,9 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 			transition: all 0.2s ${getEasing('ease-out-cubic')};
 			cursor: pointer;
 			background: #ccc;
-
-			&:active{
-				background: ${mainColor.mix('#ccc', 66)};
+			
+			&:focus{
+				box-shadow: 0 0 3px ${mainColor};
 			}
 		}
 	
@@ -36,10 +36,6 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 	
 		.on{		
 			background: ${mainColor};
-
-			&:active{
-				background: ${mainColor.mix('#ccc', 33)};
-			}
 		}
 	
 		.on .ball{
@@ -50,7 +46,13 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 
 	render() {
 		return html`
-		<template :class.on=${this.value} @@click.stop=${this.onClick}>
+		<template
+			tabindex="0"
+			:class.on=${this.value}
+			@@click.stop=${this.onClick}
+			@@focus=${this.onFocus}
+			@@blur=${this.onBlur}
+		>
 			<div class="ball"></div>
 		</template>
 		`
@@ -61,5 +63,31 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 	onClick () {
 		this.value = !this.value
 		this.emit('change', this.value)
+	}
+
+	onFocus() {
+		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
+	}
+
+	onKeyDown(e: KeyboardEvent) {
+		e.preventDefault()
+		
+		if (e.key === 'Enter') {
+			this.onClick()
+		}
+		else if (e.key === 'ArrowLeft') {
+			if (this.value) {
+				this.onClick()
+			}
+		}
+		else if (e.key === 'ArrowRight') {
+			if (!this.value) {
+				this.onClick()
+			}
+		}
+	}
+
+	onBlur() {
+		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 }

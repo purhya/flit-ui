@@ -1,4 +1,4 @@
-import {updateStyles, addGlobalStyle, css, update} from 'flit'
+import {updateStyles, addGlobalStyle, css, updateComponents} from 'flit'
 import {Color} from './color'
 
 
@@ -19,15 +19,15 @@ type NotColorOptions = {[key in Exclude<keyof ThemeOptions, keyof ColorOptions>]
 export class Theme implements ColorOptions, NotColorOptions {
 	
 	private themeMap: Map<string, ThemeOptions> = new Map()
-	private options: Required<ThemeOptions>
+	private options: ThemeOptions
 
 	defaultThemeOptions: Required<ThemeOptions> = {
 		mainColor: '#0077cf',
 		textColor: '#333',
 		successColor: '#00af41',
 		errorColor: '#ff0000',
-		borderRadius: 4,
-		fontSize: 14,	// Should also set font-size and line-height on html or body to avoid flushing.
+		borderRadius: 3,
+		fontSize: 14,	// Should set `font-size` and `line-height` on html or body to avoid flushing.
 		lineHeight: 30,
 	}
 
@@ -44,38 +44,47 @@ export class Theme implements ColorOptions, NotColorOptions {
 			throw new Error(`"${name}" is not a defined theme`)
 		}
 
-		this.options = Object.assign({}, this.defaultThemeOptions, this.themeMap.get(name))
+		this.options = this.themeMap.get(name)!
 		
 		updateStyles()
-		update()
+		updateComponents()
+	}
+
+	private getOption<P extends keyof ThemeOptions>(property: P): Required<ThemeOptions>[P] {
+		if (this.options[property] !== undefined) {
+			return this.options[property]!
+		}
+		else {
+			return this.defaultThemeOptions[property]
+		}
 	}
 
 	get mainColor(): Color {
-		return new Color(this.options.mainColor)
+		return new Color(this.getOption('mainColor'))
 	}
 
 	get textColor(): Color {
-		return new Color(this.options.textColor)
+		return new Color(this.getOption('textColor'))
 	}
 
 	get successColor(): Color {
-		return new Color(this.options.successColor)
+		return new Color(this.getOption('successColor'))
 	}
 
 	get errorColor(): Color {
-		return new Color(this.options.errorColor)
+		return new Color(this.getOption('errorColor'))
 	}
 
 	get borderRadius() {
-		return this.options.borderRadius
+		return this.getOption('borderRadius')
 	}
 
 	get fontSize() {
-		return this.options.fontSize
+		return this.getOption('fontSize')
 	}
 
 	get lineHeight() {
-		return this.options.lineHeight
+		return this.getOption('lineHeight')
 	}
 }
 
@@ -92,7 +101,7 @@ addGlobalStyle(() => {
 		line-height: ${theme.lineHeight}px;
 	}
 
-	button{
+	button, [type=button], [type=reset], [type=submit]{
 		display: inline-flex;
 		justify-content: center;
 		height: ${lineHeight}px;
@@ -106,7 +115,7 @@ addGlobalStyle(() => {
 		cursor: pointer;
 		vertical-align: top;
 		
-		&:hover{
+		&:hover, &:focus{
 			border-color: ${mainColor};
 			color: ${mainColor};
 		}
@@ -134,7 +143,7 @@ addGlobalStyle(() => {
 			border-color: ${mainColor};
 			color: #fff;
 
-			&:hover{
+			&:hover, &:focus{
 				background: ${mainColor.darken(5)};
 				border-color: ${mainColor.darken(5)};
 			}

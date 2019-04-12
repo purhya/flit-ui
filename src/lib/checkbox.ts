@@ -1,4 +1,4 @@
-import {define, Component, html, css, svg, once} from 'flit'
+import {define, Component, html, css, svg, on, off} from 'flit'
 import {theme} from './theme'
 import {removeWhere, orderBy} from 'ff'
 
@@ -20,8 +20,12 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 				color: ${mainColor};
 			}
 
-			&:active svg{
-				background: ${mainColor.alpha(0.33)};
+			&:focus{
+				color: ${mainColor};
+
+				svg{
+					box-shadow: 0 0 3px ${mainColor};
+				}
 			}
 		}
 
@@ -33,23 +37,11 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 			margin-right: ${lineHeight / 5 - 1}px;
 		}
 
-		.indeterminate{
+		.indeterminate, .checked{
 			color: ${mainColor};
 			
 			svg{
 				background: ${mainColor};
-			}
-		}
-
-		.checked{
-			color: ${mainColor};
-
-			svg{
-				background: ${mainColor};
-			}
-
-			&:active svg{
-				background: ${mainColor.alpha(0.66)};
 			}
 		}
 
@@ -66,7 +58,6 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 
 	checked: boolean = false
 	indeterminate: boolean = false
-	active: boolean = false
 	checkboxGroup: CheckboxGroup | null = null
 
 	// Used to compare with `checkboxGroup.value`
@@ -74,17 +65,21 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 
 	render() {
 		let svgInner: any = ''
-		if (this.checked && !this.active || !this.checked && this.active) {
+		if (this.checked) {
 			svgInner = svg`<polyline style="fill:none;stroke:#FFFFFF;stroke-linecap:round;stroke-linejoin:round;" points="1.5,7 5.7,10.5 10.5,1.5"/>`
 		}
-		else if (this.indeterminate && !this.active) {
+		else if (this.indeterminate) {
 			svgInner = svg`<line style="fill:none;stroke:#FFFFFF;" x1="2" y1="6.5" x2="11" y2="6.5"/>`
 		}
 
 		return html`
-		<template :class.checked=${this.checked} :class.indeterminate=${this.indeterminate}
+		<template
+			tabindex="0"
+			:class.checked=${this.checked}
+			:class.indeterminate=${this.indeterminate}
 			@@click.stop=${this.onClick}
-			@@mousedown.stop=${this.onMouseDown}
+			@@focus=${this.onFocus}
+			@@blur=${this.onBlur}
 		>
 			<svg viewBox="0 0 13 13">
 				${svgInner}
@@ -107,18 +102,17 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 	}
 
 	onClick() {
-		let checked = this.checked = !this.checked
-		if (checked) {
-			this.indeterminate = false
-			this.emit('change', true)
-		}
+		this.checked = !this.checked
+		this.indeterminate = false
+		this.emit('change', this.checked)
 	}
 
-	onMouseDown() {
-		this.active = true
-		once(document, 'mouseup', () => {
-			this.active = false
-		})
+	onFocus() {
+		on(document, 'keydown.enter', this.onClick, this)
+	}
+
+	onBlur() {
+		off(document, 'keydown', this.onClick, this)
 	}
 }
 

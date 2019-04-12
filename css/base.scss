@@ -18,7 +18,12 @@ html{
 }
 
 body{
-	height: 100%;
+	// By default, `absolute` element's offsetParent is `body`,
+	// but it still align `top` pixels relative to document.
+	// Which means, set `margin-top` on `html` or `body` will no cause
+	// `absolute` element moved. So we added a `position: relative` here.
+	position: relative;
+
 	-webkit-tap-highlight-color: rgba(#000, 0);
 }
 
