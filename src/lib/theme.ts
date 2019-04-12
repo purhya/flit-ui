@@ -26,7 +26,7 @@ export class Theme implements ColorOptions, NotColorOptions {
 		textColor: '#333',
 		successColor: '#00af41',
 		errorColor: '#ff0000',
-		borderRadius: 3,
+		borderRadius: 4,
 		fontSize: 14,	// Should set `font-size` and `line-height` on html or body to avoid flushing.
 		lineHeight: 30,
 	}

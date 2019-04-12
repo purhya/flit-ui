@@ -192,7 +192,7 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 
 	onKeyDown(e: KeyboardEvent) {
 		e.preventDefault()
-		
+
 		let newValue
 
 		if (this.vertical) {

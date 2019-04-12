@@ -170,7 +170,10 @@ export class TitleLayer extends Component {
 let titleLayer: TitleLayer | null = null
 async function getTitleLayer(): Promise<TitleLayer> {
 	if (!titleLayer) {
-		titleLayer = await Component.getAsync(render('<f-title-layer />', document.body) as HTMLElement) as TitleLayer
+		let fragment = render('<f-title-layer />')
+		let layerEl = fragment.firstElementChild as HTMLElement
+		document.body.append(fragment)
+		titleLayer = await Component.getAsync(layerEl) as TitleLayer
 		await renderComplete()
 	}
 

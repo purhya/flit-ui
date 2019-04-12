@@ -1,5 +1,6 @@
 import {define, Component, html, css, getEasing, on, off} from 'flit'
 import {theme} from './theme'
+import {Color} from './color'
 
 
 @define('f-switch')
@@ -20,6 +21,10 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 			transition: all 0.2s ${getEasing('ease-out-cubic')};
 			cursor: pointer;
 			background: #ccc;
+
+			&:hover{
+				background: ${new Color('#ccc').darken(3)};
+			}
 			
 			&:focus{
 				box-shadow: 0 0 3px ${mainColor};
@@ -36,6 +41,10 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 	
 		.on{		
 			background: ${mainColor};
+
+			&:hover{
+				background: ${mainColor.darken(5)};
+			}
 		}
 	
 		.on .ball{
@@ -71,7 +80,7 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 
 	onKeyDown(e: KeyboardEvent) {
 		e.preventDefault()
-		
+
 		if (e.key === 'Enter') {
 			this.onClick()
 		}
