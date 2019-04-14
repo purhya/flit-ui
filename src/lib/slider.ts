@@ -80,8 +80,7 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 				margin: -${size / 2}px ${-size / 2 + 2}px;
 			}
 		}
-		`
-	}
+	`}
 
 	static properties = ['vertical', 'min', 'max', 'step', 'value']
 
@@ -101,12 +100,11 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 					:style.width.percent=${this.vertical ? '' : this.getPercent()}
 					:style.height.percent=${this.vertical ? this.getPercent() : ''}
 				>
-					<div class="ball" :title=${{title: this.value, alignPosition: this.vertical ? 'r' : 't', leaveToHide: !this.draging}}></div>
+					<div class="ball" :tooltip=${{title: this.value, alignPosition: this.vertical ? 'r' : 't', leaveToHide: !this.draging}}></div>
 				</div>
 			</div>
 		</template>
-		`
-	}
+	`}
 
 	vertical: boolean = false
 	min: number = 0

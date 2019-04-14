@@ -55,7 +55,7 @@ export class Icon extends Component {
 @define('f-icon-loading')
 export class IconLoading extends Icon {
 
-	static properties = ['type', 'loading']
+	static properties = ['type']
 
 	static style = css`
 	:host{
@@ -65,8 +65,7 @@ export class IconLoading extends Icon {
 		margin: auto;
 		vertical-align: top;
 		position: relative;
-	}
-	`
+	}`
 
 	type: string = 'loading'
 	loading: boolean = false

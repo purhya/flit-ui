@@ -23,7 +23,7 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 				color: ${mainColor};
 
 				svg{
-					box-shadow: 0 0 3px ${mainColor.alpha(0.1)};
+					box-shadow: 0 0 3px ${mainColor};
 				}
 			}
 
@@ -62,8 +62,7 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
-		`
-	}
+	`}
 
 	static properties = ['checked', 'value']
 
@@ -81,7 +80,7 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 		<template
 			tabindex="0"
 			:class.checked=${this.checked}
-			@@click.stop=${this.onClick}
+			@@click=${this.onClick}
 			@@focus=${this.onFocus}
 			@@blur=${this.onBlur}
 		>
@@ -92,8 +91,7 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 				<slot></slot>
 			</div>
 		</template>
-		`
-	}
+	`}
 
 	onCreated() {
 		let groupEl = this.el.closest('f-radio-group') as HTMLElement

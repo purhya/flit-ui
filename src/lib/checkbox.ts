@@ -51,8 +51,7 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
-		`
-	}
+	`}
 
 	static properties = ['checked', 'indeterminate', 'value']
 
@@ -77,7 +76,7 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 			tabindex="0"
 			:class.checked=${this.checked}
 			:class.indeterminate=${this.indeterminate}
-			@@click.stop=${this.onClick}
+			@@click=${this.onClick}
 			@@focus=${this.onFocus}
 			@@blur=${this.onBlur}
 		>
@@ -89,8 +88,7 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 				<slot></slot>
 			</div>
 		</template>
-		`
-	}
+	`}
 
 	onCreated() {
 		let groupEl = this.el.closest('f-checkbox-group') as HTMLElement
@@ -120,10 +118,10 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 @define('f-checkbox-group')
 export class CheckboxGroup extends Component<{change: (value: string | number) => void}> {
 
-	static properties = ['value', 'order']
+	static properties = ['value', 'ordered']
 
 	value: any[] = []
-	order: boolean = false
+	ordered: boolean = false
 	checkboxs: Checkbox[] = []
 
 	register (checkbox: Checkbox) {
@@ -139,7 +137,7 @@ export class CheckboxGroup extends Component<{change: (value: string | number) =
 			removeWhere(this.value, value => value == checkbox.value)
 		}
 
-		if (this.order) {
+		if (this.ordered) {
 			let values = this.checkboxs.map(checkbox => checkbox.value)
 			orderBy(this.value, item => values.findIndex(value => value == item))
 		}

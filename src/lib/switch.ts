@@ -50,24 +50,22 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 		.on .ball{
 			margin-left: calc(100% - ${lineHeight * 0.8 - 4}px);
 		}
-		`
-	}
+	`}
+
+	value: boolean = false
 
 	render() {
 		return html`
 		<template
 			tabindex="0"
 			:class.on=${this.value}
-			@@click.stop=${this.onClick}
+			@@click=${this.onClick}
 			@@focus=${this.onFocus}
 			@@blur=${this.onBlur}
 		>
 			<div class="ball"></div>
 		</template>
-		`
-	}
-
-	value: boolean = false
+	`}
 
 	onClick () {
 		this.value = !this.value

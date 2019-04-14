@@ -46,6 +46,5 @@ export class ButtonGroup extends Component {
 				}
 			}
 		}
-		`
-	}
+	`}
 }
