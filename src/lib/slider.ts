@@ -100,7 +100,7 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 					:style.width.percent=${this.vertical ? '' : this.getPercent()}
 					:style.height.percent=${this.vertical ? this.getPercent() : ''}
 				>
-					<div class="ball" :tooltip=${{title: this.value, alignPosition: this.vertical ? 'r' : 't', leaveToHide: !this.draging}}></div>
+					<div class="ball" :tooltip=${{title: this.value, alignPosition: this.vertical ? 'r' : 't', keepVisible: this.draging}}></div>
 				</div>
 			</div>
 		</template>

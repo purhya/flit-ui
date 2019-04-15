@@ -103,8 +103,7 @@ export class Popup extends Component {
 	hideDelay: number = 100
 	appendLayerTo:  HTMLElement | string | null = 'body'
 	
-	private showTimeout: Timeout | null = null
-	private hideTimeout: Timeout | null = null
+	timeout: Timeout | null = null
 	private unwatch: (() => void) = () => undefined
 
 	render() {
@@ -119,7 +118,6 @@ export class Popup extends Component {
 			:herizontal=${this.isHerizontal()}
 			:trangle=${this.hasTrangle}
 			:appendTo=${this.appendLayerTo}
-			@rendered=${this.alignLayer}
 		>
 			<slot name="content" />
 		</f-layer>
@@ -130,11 +128,6 @@ export class Popup extends Component {
 		return direction === 'l' || direction === 'r'
 	}
 
-	alignLayer() {
-		let trangle = (Component.get(this.refs.layer) as Layer).refs.trangle
-		align(this.refs.layer, this.el, this.alignPosition, {margin: this.alignMargin, canShrinkInY: true, trangle})
-	}
-
 	onCreated() {
 		this.bindTriggerEvents()
 
@@ -143,8 +136,19 @@ export class Popup extends Component {
 		}
 	}
 
+	onRendered() {
+		if (this.refs.layer && this.opened) {
+			this.alignLayer()
+		}
+	}
+
+	alignLayer() {
+		let trangle = (Component.get(this.refs.layer) as Layer).refs.trangle
+		align(this.refs.layer, this.el, this.alignPosition, {margin: this.alignMargin, canShrinkInY: true, trangle})
+	}
+
 	onDisconnected() {
-		// Must remove layer since it may be showing in `body`.
+		// Must remove layer since it may be showing in `body`
 		if (this.refs.layer) {
 			this.refs.layer.remove()
 		}
@@ -160,13 +164,12 @@ export class Popup extends Component {
 	}
 
 	showLayerLater() {
-		if (this.hideTimeout) {
-			this.hideTimeout.cancel()
-			this.hideTimeout = null
+		if (this.timeout) {
+			this.timeout.cancel()
 		}
 		
 		if (!this.opened) {
-			this.showTimeout = timeout(this.showLayer.bind(this), this.showDelay)
+			this.timeout = timeout(this.showLayer.bind(this), this.showDelay)
 			
 			if (this.trigger === 'hover') {
 				once(this.el, 'mouseleave', this.hideLayerLater, this)
@@ -181,7 +184,6 @@ export class Popup extends Component {
 	}
 
 	async showLayer() {
-		this.showTimeout = null
 		this.opened = true
 
 		// Wait for `refs.layer` to be referenced.
@@ -209,19 +211,17 @@ export class Popup extends Component {
 	}
 
 	hideLayerLater() {
-		if (this.showTimeout) {
-			this.showTimeout.cancel()
-			this.showTimeout = null
+		if (this.timeout) {
+			this.timeout.cancel()
 		}
 		
 		if (this.opened) {
 			this.unwatch()
-			this.hideTimeout = timeout(this.hideLayer.bind(this), this.hideDelay)
+			this.timeout = timeout(this.hideLayer.bind(this), this.hideDelay)
 		}
 	}
 
 	hideLayer() {
-		this.hideTimeout = null
 		this.opened = false
 	}
 

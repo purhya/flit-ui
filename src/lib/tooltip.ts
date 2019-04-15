@@ -1,5 +1,4 @@
-import {css, define, Component, html, off, once, defineBinding, on, render, renderComplete, updateComponents, renderAndFollowInContext} from "flit"
-import {timeout, Timeout, align, getAlignDirection} from "ff"
+import {css, define, html, off, defineBinding, on, renderAndFollowInContext, renderComplete, cache} from "flit"
 import {theme} from './theme'
 import {Layer, Popup} from "./popup"
 
@@ -48,7 +47,6 @@ export class TooltipLayer extends Layer {
 @define('f-tooltip')
 export class Tooltip extends Popup {
 
-	alignMargin: number | number[] = 3
 	title: string = ''
 
 	renderLayer() {
@@ -58,8 +56,6 @@ export class Tooltip extends Popup {
 			:herizontal=${this.isHerizontal()}
 			:trangle=${this.hasTrangle}
 			:appendTo=${this.appendLayerTo}
-			:title=${this.title}
-			@rendered=${this.alignLayer}
 		>
 			${this.title}
 		</f-layer>
@@ -71,10 +67,11 @@ export class GlobalTooltip extends Tooltip {
 
 	keepVisible: boolean = false
 
-	//When `keepVisible = true`, keep visible until `keepVisible = false`
+	// When `keepVisible = true`, keep visible until `keepVisible = false`.
 	private mouseLeaved: boolean = false
 
-	// Can't update `el` since it uses dynamic `el`.
+	// Can't update `el` since it uses dynamic `el`
+	// Otherwise, `onRendered` and `alignLayer` will not be called.
 	update() {}
 
 	setEl(el: HTMLElement) {
@@ -84,12 +81,22 @@ export class GlobalTooltip extends Tooltip {
 		}
 	}
 
-	setOptions(options: TooltipOptions) {
+	async setOptions(options: TooltipOptions) {
 		Object.assign(this, defaultTooltipOptions, options)
 
+		// When no need to keep `layer` visible.
 		if (!this.keepVisible && this.mouseLeaved) {
 			this.mouseLeaved = false
 			this.hideLayerLater()
+		}
+
+		// When `title` changed, do aligning.
+		else if (this.opened) {
+			if (this.timeout) {
+				this.timeout.cancel()
+			}
+			await renderComplete()
+			this.alignLayer()
 		}
 	}
 
@@ -101,12 +108,14 @@ export class GlobalTooltip extends Tooltip {
 	async showLayer() {
 		// Can't render a `<layer>` in current `el` since it's dynamic.
 		if (!this.refs.layer) {
-			renderAndFollowInContext(this, () => {
-				return this.renderLayer()
+			let fragment = renderAndFollowInContext(this, () => {
+				return html`${cache(this.opened ? (this.renderLayer()) : '', this.transition)}`
 			})
+			document.body.append(fragment)
 		}
 
 		await super.showLayer()
+		this.alignLayer()
 	}
 
 	hideLayerLater() {
@@ -148,7 +157,7 @@ export let defaultTooltipOptions: Required<TooltipOptions> = {
 	alignMargin: 3,
 	showDelay: 0,
 	hideDelay: 200,
-	keepVisible: true
+	keepVisible: false
 }
 
 
@@ -156,7 +165,6 @@ defineBinding('tooltip', class TooltipBinding {
 
 	private el: HTMLElement
 	private options: TooltipOptions | null = null
-	private timeout: Timeout | null = null
 
 	constructor(el: HTMLElement, value: unknown) {
 		this.el = el
@@ -173,19 +181,25 @@ defineBinding('tooltip', class TooltipBinding {
 			this.options = {title: value}
 		}
 
-		// Update options when the title are showing at current el
-		if (globalTooltip && globalTooltip.el === this.el) {
+		// Update options when the title are showing at current el.
+		if (globalTooltip && globalTooltip.el === this.el && this.hasTitle()) {
 			globalTooltip.setOptions(this.options)
 		}
 	}
 
+	private hasTitle() {
+		let title = this.options!.title
+		return title !== null && title !== undefined && String(title)
+	}
+
 	private async showTooltipLayer() {
-		let tooltip = await getGlobalTooltip(this.el)
-		if (tooltip.opened) {
-			tooltip.showLayer()
-		}
-		else {
-			tooltip.showLayerLater()
+		if (this.hasTitle()) {
+			let tooltip = await getGlobalTooltip(this.el)
+			tooltip.setOptions(this.options!)
+
+			if (!tooltip.opened) {
+				tooltip.showLayerLater()
+			}
 		}
 	}
 })
