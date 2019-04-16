@@ -23,7 +23,7 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 			background: #ccc;
 
 			&:hover{
-				background: ${new Color('#ccc').darken(3)};
+				background: ${new Color('#ccc').darken(5)};
 			}
 			
 			&:focus{
@@ -52,13 +52,15 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 		}
 	`}
 
-	value: boolean = false
+	static properties = ['checked']
+
+	checked: boolean = false
 
 	render() {
 		return html`
 		<template
 			tabindex="0"
-			:class.on=${this.value}
+			:class.on=${this.checked}
 			@@click=${this.onClick}
 			@@focus=${this.onFocus}
 			@@blur=${this.onBlur}
@@ -68,8 +70,8 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 	`}
 
 	onClick () {
-		this.value = !this.value
-		this.emit('change', this.value)
+		this.checked = !this.checked
+		this.emit('change', this.checked)
 	}
 
 	onFocus() {
@@ -83,12 +85,12 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 			this.onClick()
 		}
 		else if (e.key === 'ArrowLeft') {
-			if (this.value) {
+			if (this.checked) {
 				this.onClick()
 			}
 		}
 		else if (e.key === 'ArrowRight') {
-			if (!this.value) {
+			if (!this.checked) {
 				this.onClick()
 			}
 		}

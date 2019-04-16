@@ -1,4 +1,4 @@
-import {css, define, html, off, defineBinding, on, renderAndFollowInContext, renderComplete, cache} from "flit"
+import {css, define, html, off, defineBinding, on, renderAndFollowInContext, cache} from "flit"
 import {theme} from './theme'
 import {Layer, Popup} from "./popup"
 
@@ -18,7 +18,6 @@ export class TooltipLayer extends Layer {
 			max-width: 220px;
 			padding: 4px 8px;
 			line-height: ${lineHeight * 0.8}px;
-			pointer-events: none;
 			background: #333;
 			color: #fff;
 			border-radius: ${borderRadius}px;
@@ -95,8 +94,7 @@ export class GlobalTooltip extends Tooltip {
 			if (this.timeout) {
 				this.timeout.cancel()
 			}
-			await renderComplete()
-			this.alignLayer()
+			await this.showLayer()
 		}
 	}
 
@@ -106,9 +104,9 @@ export class GlobalTooltip extends Tooltip {
 	}
 
 	async showLayer() {
-		// Can't render a `<layer>` in current `el` since it's dynamic.
+		// Can't render `<layer>` in current `el` since it's dynamic.
 		if (!this.refs.layer) {
-			let fragment = renderAndFollowInContext(this, () => {
+			let {fragment} = renderAndFollowInContext(this, () => {
 				return html`${cache(this.opened ? (this.renderLayer()) : '', this.transition)}`
 			})
 			document.body.append(fragment)

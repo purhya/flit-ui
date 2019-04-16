@@ -1,5 +1,5 @@
 import {css, define, Component, html, on, off, cache, once, renderComplete} from "flit"
-import {getAlignDirection, watchUntil, onceMouseLeaveAll, align, timeout, Timeout} from "ff"
+import {getAlignDirection, onceMouseLeaveAll, align, timeout, Timeout, watch, Rect} from "ff"
 import {theme} from "./theme"
 
 
@@ -42,42 +42,12 @@ export class Layer extends Component {
 	herizontal: boolean = false
 	trangle: boolean = true
 
-	/**
-	 * The selector to get HTML element to append to or the HTML element.
-	 * Note that don't specify this value to `document.body`, it may not prepared when class initialize. 
-	 */
-	appendTo: HTMLElement | string | null = 'body'
-
 	render() {
 		return html`
 		<template>
 			${this.trangle ? html`<div class="trangle" :ref="trangle" :class.trangle-herizontal=${this.herizontal}></div>` : ''}
 			<slot></slot>
 		</template>`
-	}
-
-	// Why render `layer` to body?
-	// It's very common that the `el` is covered or clipped,
-	// which will cause the `layer` is not fully visible.
-	// You can still render the `<layer>` in the same scroller with `<popup>`.
-
-	// Note that:
-	// The template `content` can't pass into `layer` as an argument,
-	// it will cause the template was parsed in `layer` context.
-
-	// The `<layer>` will be cached in `<popup>`, and element will be removed when not in use.
-	// And after restored from `cache`, it will be inserted back into `<popup>`.
-	// So here we need to move it to `body` after every time rendered.
-	onRendered() {
-		if (typeof this.appendTo === 'string') {
-			let target = document.querySelector(this.appendTo)
-			if (target) {
-				target.append(this.el)
-			}
-		}
-		else if (this.appendTo) {
-			this.appendTo.append(this.el)
-		}
 	}
 }
 
@@ -90,34 +60,51 @@ export class Popup extends Component {
 		return css`
 		:host{
 			display: inline-block;
+			vertical-align: top;
 		}
+		
+		.opened{}
+		.layer{}
 	`}
+
+	static properties = ['trigger']
 
 	opened: boolean = false
 	transition: string = 'fade'
 	hasTrangle: boolean = true
 	alignPosition: string = 't'
-	alignMargin: number | number[] = 5
+	alignMargin: number | number[] = 3
 	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'hover'
 	showDelay: number = 0
 	hideDelay: number = 100
-	appendLayerTo:  HTMLElement | string | null = 'body'
+
+	/**
+	 * The selector to get HTML element to append to or the HTML element.
+	 * Note that don't specify this value to `document.body`, it may not prepared when class initialize. 
+	 */
+	appendLayerTo: HTMLElement | string | null = 'body'
 	
 	timeout: Timeout | null = null
-	private unwatch: (() => void) = () => undefined
+	private unwatch: (() => void) = () => {}
+	private unwatchLeave: (() => void) = () => {}
 
 	render() {
 		let layerPart = cache(this.opened ? (this.renderLayer()) : '', this.transition)
-		return html`<slot />${layerPart}`
+		
+		return html`
+			<template :class.opened="${this.opened}">
+				<slot />${layerPart}
+			</template>
+		`
 	}
 
 	renderLayer() {
 		return html`
 		<f-layer
+			class="layer"
 			:ref="layer"
 			:herizontal=${this.isHerizontal()}
 			:trangle=${this.hasTrangle}
-			:appendTo=${this.appendLayerTo}
 		>
 			<slot name="content" />
 		</f-layer>
@@ -129,15 +116,54 @@ export class Popup extends Component {
 	}
 
 	onCreated() {
-		this.bindTriggerEvents()
+		if (this.trigger === 'hover') {
+			on(this.el, 'mouseenter', this.showLayerLater, this)
+		}
+		else {
+			on(this.el, this.trigger, this.showLayerLater, this)
+		}
 
 		if (this.opened) {
 			this.showLayer()
 		}
 	}
 
-	onRendered() {
+	async onUpdated() {
+		// Why render `<layer>` to body?
+		// It's very common that the `el` is covered or clipped,
+		// which will cause the `<layer>` is not fully visible.
+		// You can still render the `<layer>` in the same scroller with `<popup>`.
+
+		// Why inserted into body every time?
+		// Most layers share same `z-index`, append newly opened `<layer>` will makesure it covers others.
+
+		// Note that:
+		// The template `content` can't pass into `<layer>` as an argument,
+		// it will cause the template was parsed in `<layer>` context.
+
+		// The `<layer>` will be cached in `<popup>`, and element will be removed when not in use.
+		// After restored from `cache`, it will be inserted back into `<popup>`.
+		// So here we need to move it to `body` after every time rendered.
+
+		// If there are serval nodes which belong to an template you need to append into another element,
+		// Don't forget to move the anchor nodes, or the whole template nodes into the target element,
+		// or they will can't be removed because they are outside of the template node ranges.
+
+		// In the future, we may implement a flit directive `renderTo(..., ...)`, 
+		// to render elements and it's anchor node to another element.
+
 		if (this.refs.layer && this.opened) {
+			if (typeof this.appendLayerTo === 'string') {
+				let target = document.querySelector(this.appendLayerTo)
+				if (target) {
+					target.append(this.refs.layer)
+				}
+			}
+			else if (this.appendLayerTo) {
+				this.appendLayerTo.append(this.refs.layer)
+			}
+
+			await renderComplete()
 			this.alignLayer()
 		}
 	}
@@ -154,15 +180,6 @@ export class Popup extends Component {
 		}
 	}
 
-	bindTriggerEvents() {
-		if (this.trigger === 'hover') {
-			on(this.el, 'mouseenter', this.showLayerLater, this)
-		}
-		else {
-			on(this.el, this.trigger, this.showLayerLater, this)
-		}
-	}
-
 	showLayerLater() {
 		if (this.timeout) {
 			this.timeout.cancel()
@@ -170,7 +187,7 @@ export class Popup extends Component {
 		
 		if (!this.opened) {
 			this.timeout = timeout(this.showLayer.bind(this), this.showDelay)
-			
+
 			if (this.trigger === 'hover') {
 				once(this.el, 'mouseleave', this.hideLayerLater, this)
 			}
@@ -191,21 +208,24 @@ export class Popup extends Component {
 		
 		if (this.trigger === 'hover') {
 			off(this.el, 'mouseleave', this.hideLayerLater, this)
-			onceMouseLeaveAll([this.el, this.refs.layer], this.hideLayerLater.bind(this))
+			this.unwatchLeave = onceMouseLeaveAll([this.el, this.refs.layer], this.hideLayerLater.bind(this))
 		}
 		else if (this.trigger === 'click' || this.trigger === 'contextmenu') {
 			off(document, 'mousedown', this.hideLayerLater, this)
 			on(document, 'mousedown', this.onDocMouseDown, this)
+
+			if (this.trigger === 'click') {
+				on(this.el, 'click', this.hideLayerLater, this)
+			}
 		}
 
-		this.unwatch = watchUntil(this.el, 'outview', this.hideLayerLater.bind(this))
+		this.unwatch = watch(this.el, 'rect', this.onRectChanged.bind(this))
 	}
 
 	onDocMouseDown(e: Event) {
 		let target = e.target as HTMLElement
 
 		if (!this.el.contains(target) && !this.refs.layer.contains(target)) {
-			off(document, 'mousedown', this.onDocMouseDown, this)
 			this.hideLayerLater()
 		}
 	}
@@ -216,13 +236,34 @@ export class Popup extends Component {
 		}
 		
 		if (this.opened) {
+			if (this.trigger === 'hover') {
+				this.unwatchLeave()
+			}
+			else if (this.trigger === 'click' || this.trigger === 'contextmenu') {
+				off(document, 'mousedown', this.onDocMouseDown, this)
+	
+				if (this.trigger === 'click') {
+					off(this.el, 'click', this.hideLayerLater, this)
+				}
+			}
+
 			this.unwatch()
+			
 			this.timeout = timeout(this.hideLayer.bind(this), this.hideDelay)
 		}
 	}
 
 	hideLayer() {
 		this.opened = false
+	}
+
+	private onRectChanged(rect: Rect) {
+		if (rect.width > 0 && rect.height > 0) {
+			this.alignLayer()
+		}
+		else {
+			this.hideLayerLater()
+		}
 	}
 
 	// Components like `<dropdown>` will need this when clicking.

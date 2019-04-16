@@ -279,7 +279,7 @@ export const svgSymbols = {
 
 	'right': `
 		<svg viewBox="0 0 20 20">
-			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="6.5,15.5 14.5,9.5 6.5,3.5"/>
+			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="5.5,15.5 13.5,9.5 5.5,3.5"/>
 		</svg>
 	`,
 

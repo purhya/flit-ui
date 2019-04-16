@@ -1,51 +1,50 @@
-// import {css, define, Component, html, render} from "flit"
-// import {Popup} from "./popup"
-// import {theme} from "./theme"
+import {css, define, html, cache} from "flit"
+import {Popup} from "./popup"
+import {theme} from "./theme"
 
 
-// @define('f-menu')
-// export class Menu extends Popup {
+@define('f-dropdown')
+export class Dropdown extends Popup {
 
-// 	static style() {
-// 		return css`
-// 		:host{
-// 			display: inline-flex;
-// 			position: relative;
-// 			cursor: pointer;
+	static style() {
+		let {mainColor, lineHeight, fontSize} = theme
 
-// 			&:hover, &.opened{
-// 				color: $main-color;
-// 			}
+		return css`
+		:host{
+			display: inline-flex;
+			vertical-align: top;
+			position: relative;
+			cursor: pointer;
 
-// 			&:hover, &.opened{
-// 				button{
-// 					border-color: $main-color;
-// 				}
-// 			}
+			&:hover, &.opened{
+				color: ${mainColor};
+			}
+		}
 
-// 			.icon-down{
-// 				margin-right: 0;
-// 			}
+		.layer{
+			padding: 5px 0;
+			font-size: ${fontSize * 6 / 7}px;
 
-// 			button .icon-down{
-// 				margin-right: -6px;
-// 			}
-// 		}
+			f-menuitem{
+				padding: 0 ${lineHeight / 3}px;
+			}
+		}
+	`}
 
-// 	`}
+	static properties = ['icon', ...Popup.properties]
 
-// 	static properties = ['selectable', 'dir-selectable']
+	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'click'
+	alignPosition: string = 'b'
+	icon: string = 'down'
 
-// 	alignPosition: string = 'b'
-
-// 	render() {
-// 		return html`
-// 		<template class="dropdown" :class.opened=${this.opened}>
-// 			<slot></slot>
-// 			<icon :type="icon" f-if="icon"></icon>
-// 			<layer class="menu-layer dropdown-layer" :open="open" f-ref="layer">
-// 				<slot name="menu" f-ref="menu" class="dropdown-menu"></slot>
-// 			</layer>
-// 		</dropdown>
-// 	`}
-// }
+	render() {
+		let layerPart = cache(this.opened ? (this.renderLayer()) : '', this.transition)
+		
+		return html`
+		<template :class.opened="${this.opened}">
+			<slot />
+			${this.icon ? html`<f-icon :type="${this.icon}" />` : ''}
+			${layerPart}
+		</template>
+	`}
+}

@@ -20,7 +20,7 @@ addGlobalStyle(() => {
 		border: 1px solid ${textColor.lighten(20)};
 		color: ${textColor.lighten(10)};
 		border-radius: ${borderRadius}px;
-		padding: 0 ${lineHeight / 3 + Math.max(0, (borderRadius - 5) / 2)}px;
+		padding: 0 ${lineHeight / 2 + Math.max(0, (borderRadius - 5) / 2)}px;
 		background: #fff;
 		text-align: center;
 		cursor: pointer;
@@ -48,8 +48,8 @@ addGlobalStyle(() => {
 			}
 
 			&:last-child{
-				margin-right: ${-(lineHeight / 10 - 1)}px;
-				margin-left: ${lineHeight / 5 - 2}px;
+				margin-left: ${lineHeight / 10 - 1}px;
+				margin-right: ${-(lineHeight / 5 - 2)}px;
 			}
 		}
 

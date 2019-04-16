@@ -1,4 +1,4 @@
-import {define, Component, html, css, getEasing, off, once} from 'flit'
+import {define, Component, html, css, off, once, svg} from 'flit'
 import {theme} from './theme'
 
 
@@ -26,10 +26,6 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 					box-shadow: 0 0 3px ${mainColor};
 				}
 			}
-
-			&:active .dot{
-				transform: scale(0.5);
-			}
 		}
 
 		svg{
@@ -38,22 +34,8 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 			margin-right: ${lineHeight / 5 - 1}px;
 		}
 
-		.dot{
-			transition: transform 0.2s ${getEasing('ease-out-cubic')};
-			transform-origin: center;
-			transform: scale(0);
-		}
-
 		.checked{
 			color: ${mainColor};
-
-			.dot{
-				transform: none;
-			}
-
-			&:active .dot{
-				transform: scale(0.87);
-			}
 		}
 	
 		.label{
@@ -77,21 +59,22 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 		let size = 16 / 30 * lineHeight
 
 		return html`
-		<template
-			tabindex="0"
-			:class.checked=${this.checked}
-			@@click=${this.onClick}
-			@@focus=${this.onFocus}
-			@@blur=${this.onBlur}
-		>
-			<svg viewBox="0 0 14 14" style="width: ${size}px; height: ${size}px;">
-				<circle style="fill:currentColor;stroke:none;" cx="7" cy="7" r="4" class="dot"></circle>
-			</svg>
-			<div class="label">
-				<slot></slot>
-			</div>
-		</template>
-	`}
+			<template
+				tabindex="0"
+				:class.checked=${this.checked}
+				@@click=${this.onClick}
+				@@focus=${this.onFocus}
+				@@blur=${this.onBlur}
+			>
+				<svg viewBox="0 0 14 14" style="width: ${size}px; height: ${size}px;">
+					${this.checked? svg`<circle style="fill:currentColor;stroke:none;" cx="7" cy="7" r="4" />` : ''}
+				</svg>
+				<div class="label">
+					<slot></slot>
+				</div>
+			</template>
+		`
+	}
 
 	onCreated() {
 		let groupEl = this.el.closest('f-radio-group') as HTMLElement
