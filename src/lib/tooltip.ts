@@ -52,9 +52,9 @@ export class Tooltip extends Popup {
 		return html`
 		<f-tooltip-layer
 			:ref="layer"
+			:popup=${this}
 			:herizontal=${this.isHerizontal()}
 			:trangle=${this.hasTrangle}
-			:appendTo=${this.appendLayerTo}
 		>
 			${this.title}
 		</f-layer>

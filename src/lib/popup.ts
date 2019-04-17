@@ -42,6 +42,9 @@ export class Layer extends Component {
 	herizontal: boolean = false
 	trangle: boolean = true
 
+	// Although this property is not used to render, it can be used to get current opened state and can be captured by inner content.
+	popup: Popup | null = null
+
 	render() {
 		return html`
 		<template>
@@ -103,6 +106,7 @@ export class Popup extends Component {
 		<f-layer
 			class="layer"
 			:ref="layer"
+			:popup=${this}
 			:herizontal=${this.isHerizontal()}
 			:trangle=${this.hasTrangle}
 		>
@@ -129,40 +133,7 @@ export class Popup extends Component {
 	}
 
 	async onUpdated() {
-		// Why render `<layer>` to body?
-		// It's very common that the `el` is covered or clipped,
-		// which will cause the `<layer>` is not fully visible.
-		// You can still render the `<layer>` in the same scroller with `<popup>`.
-
-		// Why inserted into body every time?
-		// Most layers share same `z-index`, append newly opened `<layer>` will makesure it covers others.
-
-		// Note that:
-		// The template `content` can't pass into `<layer>` as an argument,
-		// it will cause the template was parsed in `<layer>` context.
-
-		// The `<layer>` will be cached in `<popup>`, and element will be removed when not in use.
-		// After restored from `cache`, it will be inserted back into `<popup>`.
-		// So here we need to move it to `body` after every time rendered.
-
-		// If there are serval nodes which belong to an template you need to append into another element,
-		// Don't forget to move the anchor nodes, or the whole template nodes into the target element,
-		// or they will can't be removed because they are outside of the template node ranges.
-
-		// In the future, we may implement a flit directive `renderTo(..., ...)`, 
-		// to render elements and it's anchor node to another element.
-
-		if (this.refs.layer && this.opened) {
-			if (typeof this.appendLayerTo === 'string') {
-				let target = document.querySelector(this.appendLayerTo)
-				if (target) {
-					target.append(this.refs.layer)
-				}
-			}
-			else if (this.appendLayerTo) {
-				this.appendLayerTo.append(this.refs.layer)
-			}
-
+		if (this.opened) {
 			await renderComplete()
 			this.alignLayer()
 		}
@@ -174,7 +145,10 @@ export class Popup extends Component {
 	}
 
 	onDisconnected() {
-		// Must remove layer since it may be showing in `body`
+		// After disconnected, the component imediately locked and will never update.
+		// So we must delete the layer element because it's in the body.
+		this.opened = false
+
 		if (this.refs.layer) {
 			this.refs.layer.remove()
 		}
@@ -205,6 +179,7 @@ export class Popup extends Component {
 
 		// Wait for `refs.layer` to be referenced.
 		await renderComplete()
+		this.moveLayer()
 		
 		if (this.trigger === 'hover') {
 			off(this.el, 'mouseleave', this.hideLayerLater, this)
@@ -220,6 +195,41 @@ export class Popup extends Component {
 		}
 
 		this.unwatch = watch(this.el, 'rect', this.onRectChanged.bind(this))
+	}
+
+	moveLayer() {
+		// Why render `<layer>` to body?
+		// It's very common that the `el` is covered or clipped,
+		// which will cause the `<layer>` is not fully visible.
+		// You can still render the `<layer>` in the same scroller with `<popup>`.
+
+		// Why inserted into body every time?
+		// Most layers share same `z-index`, append newly opened `<layer>` will makesure it covers others.
+
+		// Note that:
+		// The template `content` can't pass into `<layer>` as an argument,
+		// it will cause the template was parsed in `<layer>` context.
+
+		// The `<layer>` will be cached in `<popup>`, and element will be removed when not in use.
+		// After restored from `cache`, it will be inserted back into `<popup>`.
+		// So here we need to move it to `body` after every time rendered.
+
+		// If there are serval nodes which belong to an template you need to append into another element,
+		// Don't forget to move the anchor nodes, or the whole template nodes into the target element,
+		// or they will can't be removed because they are outside of the template node ranges.
+
+		// In the future, we may implement a flit directive `renderTo(..., ...)`, 
+		// to render elements and it's anchor node to another element.
+
+		if (typeof this.appendLayerTo === 'string') {
+			let target = document.querySelector(this.appendLayerTo)
+			if (target) {
+				target.append(this.refs.layer)
+			}
+		}
+		else if (this.appendLayerTo) {
+			this.appendLayerTo.append(this.refs.layer)
+		}
 	}
 
 	onDocMouseDown(e: Event) {

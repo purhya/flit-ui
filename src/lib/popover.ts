@@ -57,9 +57,9 @@ export class Popover extends Popup {
 			<f-layer
 				class="layer"
 				:ref="layer"
+				:popup=${this}
 				:herizontal=${this.isHerizontal()}
 				:trangle=${this.hasTrangle}
-				:appendTo=${this.appendLayerTo}
 			>
 				${content}
 			</f-layer>
