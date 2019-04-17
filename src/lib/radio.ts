@@ -22,13 +22,13 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 			&:focus{
 				color: ${mainColor};
 
-				svg{
+				.icon{
 					box-shadow: 0 0 3px ${mainColor};
 				}
 			}
 		}
 
-		svg{
+		.icon{
 			border-radius: 50%;
 			border: 1px solid currentColor;
 			margin-right: ${lineHeight / 5 - 1}px;
@@ -66,7 +66,7 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 				@@focus=${this.onFocus}
 				@@blur=${this.onBlur}
 			>
-				<svg viewBox="0 0 14 14" style="width: ${size}px; height: ${size}px;">
+				<svg class="icon" viewBox="0 0 14 14" style="width: ${size}px; height: ${size}px;">
 					${this.checked? svg`<circle style="fill:currentColor;stroke:none;" cx="7" cy="7" r="4" />` : ''}
 				</svg>
 				<div class="label">

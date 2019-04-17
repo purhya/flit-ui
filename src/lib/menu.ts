@@ -1,6 +1,6 @@
-import {css, define, Component, html, on, renderInContext, renderComplete} from "flit"
+import {css, define, Component, html, on, renderInContext, renderComplete, off} from "flit"
 import {theme} from "./theme"
-import {onceMouseLeaveAll, align} from "ff";
+import {onceMouseLeaveAll, align, getPreviousElement, getNextElement} from "ff"
 import {Transition} from "flit/out/lib/transition"
 import {Layer} from "./popup"
 
@@ -12,24 +12,6 @@ export class Menu extends Component {
 		return css`
 		:host{
 			display: block;
-		}
-
-		.tooltip{
-			padding: 6px 0;
-
-			.menu-item-title{
-				padding-left: 16px;
-				padding-right: 16px;
-			}
-
-			.menu-item-right-icon{
-				width: 16px;
-				margin-left: 8px;
-			}
-
-			.menu-spliter{
-				padding: 0 15px;
-			}
 		}
 	`}
 
@@ -80,6 +62,13 @@ export class Menu extends Component {
 		}
 	}
 
+	focusFirstItem() {
+		let firstItem = [...this.el.children].find(item => item.localName === 'f-menuitem') as HTMLElement | null
+		if (firstItem) {
+			firstItem.focus()
+		}
+	}
+
 	onSubMenuOpened(submenu: SubMenu) {
 		let oldOpenedSubMenus = this.openedSubMenus
 		let newOpenedSubMenus = this.openedSubMenus = [submenu]
@@ -123,15 +112,18 @@ export class MenuItem extends Component {
 			cursor: pointer;
 			padding: 0 ${lineHeight / 3}px;
 
-			&:hover{
-				color: ${mainColor};
-				background: ${mainColor.alpha(0.05)};
+			&:hover, &:focus{
+				background: ${mainColor.alpha(0.1)};
 			}
-		}
 
-		.active{
-			color: ${mainColor};
-			background: ${mainColor.alpha(0.1)};
+			&.active{
+				color: ${mainColor};
+				background: ${mainColor.alpha(0.15)};
+
+				&:focus{
+					background: ${mainColor.alpha(0.2)};
+				}
+			}
 		}
 
 		.submenu-opened{
@@ -196,10 +188,13 @@ export class MenuItem extends Component {
 
 		return html`
 			<template
+				tabindex="0"
 				:class.active=${this.active}
 				:class.submenu-opened=${topMenu!.layerEl && subMenu && subMenu.opened}
 				:style.padding-left.px=${topMenu!.layerEl ? '' : parentMenu.itemsHasIcon ? parentMenu.deep * 25 + 5 : parentMenu.deep * 25}
 				@@click=${this.onClick}
+				@@focus=${this.onFocus}
+				@@blur=${this.onBlur}
 			>
 				${icon}
 				<span class="text">
@@ -224,7 +219,7 @@ export class MenuItem extends Component {
 		}
 	}
 
-	private onClick() {
+	onClick() {
 		let topMenu = this.topMenu!
 
 		if (this.subMenu) {
@@ -241,6 +236,85 @@ export class MenuItem extends Component {
 		else {
 			topMenu.setCurrent(this)
 		}
+	}
+
+	onFocus() {
+		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
+	}
+
+	onKeyDown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			e.preventDefault()
+
+			if (this.topMenu!.layerEl && this.subMenu) {
+				if (this.subMenu.opened) {
+					this.subMenu.hideLayer()
+				}
+				else {
+					this.subMenu.showInLayer()
+				}
+			}
+			else {
+				this.onClick()
+			}
+		}
+		else if (e.key === 'ArrowLeft') {
+			e.preventDefault()
+
+			if (this.topMenu!.layerEl) {
+				if (this.parentMenu && (this.parentMenu instanceof SubMenu) && this.parentMenu.parentMenu) {
+					this.parentMenu.parentMenu.focusFirstItem()
+				}
+			}
+		}
+		else if (e.key === 'ArrowRight') {
+			e.preventDefault()
+
+			if (this.topMenu!.layerEl && this.subMenu) {
+				if (this.subMenu.opened) {
+					this.subMenu.focusFirstItem()
+				}
+				else {
+					this.subMenu.showInLayer()
+				}
+			}
+		}
+		else if (e.key === 'ArrowUp') {
+			e.preventDefault()
+			this.focusPreviousItem()
+		}
+		else if (e.key === 'ArrowDown') {
+			e.preventDefault()
+			this.focusNextItem()
+		}
+	}
+
+	focusPreviousItem() {
+		let prev: HTMLElement | null = this.el
+		do {
+			prev = getPreviousElement(prev, this.topMenu!.el) as HTMLElement | null
+		}
+		while (prev && prev.localName !== 'f-menuitem')
+
+		if (prev) {
+			prev.focus()
+		}
+	}
+
+	focusNextItem() {
+		let next: HTMLElement | null = this.el
+		do {
+			next = getNextElement(next, this.topMenu!.el) as HTMLElement | null
+		}
+		while (next && next.localName !== 'f-menuitem')
+
+		if (next) {
+			next.focus()
+		}
+	}
+
+	onBlur() {
+		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 }
 
@@ -314,7 +388,7 @@ export class SubMenu extends Component {
 		}
 	}
 
-	private initWhenInLayer() {
+	initWhenInLayer() {
 		this.el.remove()
 
 		if (this.menuItem) {
@@ -327,7 +401,7 @@ export class SubMenu extends Component {
 		}
 	}
 
-	private async showInLayer() {
+	async showInLayer() {
 		// If already opened, just hide included submenus.
 		if (this.opened) {
 			this.topMenu!.onSubMenuOpened(this)
@@ -357,6 +431,10 @@ export class SubMenu extends Component {
 				this.layerEl!.remove()
 			}
 		})
+	}
+
+	focusFirstItem() {
+		Menu.prototype.focusFirstItem.call(this)
 	}
 }
 

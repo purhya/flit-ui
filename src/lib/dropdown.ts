@@ -1,4 +1,4 @@
-import {css, define, html, cache} from "flit"
+import {css, define, html, cache, on, off} from "flit"
 import {Popup} from "./popup"
 import {theme} from "./theme"
 
@@ -47,4 +47,50 @@ export class Dropdown extends Popup {
 			${layerPart}
 		</template>
 	`}
+
+	onCreated() {
+		super.onCreated()
+		this.initFocus()
+	}
+
+	initFocus() {
+		let focusEl = this.el.querySelector('button') || this.el
+		if (focusEl === this.el) {
+			this.el.setAttribute('tabindex', '0')
+		}
+		on(focusEl, 'focus', this.onFocus, this)
+		on(focusEl, 'blur', this.onBlur, this)
+	}
+
+	onFocus() {
+		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
+	}
+
+	onKeyDown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			// May cause button tigger additional click event if not prevent.
+			e.preventDefault()
+			this.toggleOpened()
+		}
+		else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+			if (this.opened) {
+				let menuitem = this.refs.layer.querySelector('f-menuitem') as HTMLElement
+				if (menuitem) {
+					menuitem.focus()
+				}
+			}
+			else {
+				this.showLayerLater()
+			}
+		}
+		else if (e.key === 'Escape') {
+			if (this.opened) {
+				this.hideLayerLater()
+			}
+		}
+	}
+
+	onBlur() {
+		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
+	}
 }

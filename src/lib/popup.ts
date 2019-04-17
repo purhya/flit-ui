@@ -60,13 +60,18 @@ export class Layer extends Component {
 export class Popup extends Component {
 
 	static style() {
+		let {mainColor} = theme
+
 		return css`
 		:host{
 			display: inline-block;
 			vertical-align: top;
 		}
 		
-		.opened{}
+		.opened{
+			color: ${mainColor};
+		}
+
 		.layer{}
 	`}
 
@@ -85,7 +90,7 @@ export class Popup extends Component {
 	 * The selector to get HTML element to append to or the HTML element.
 	 * Note that don't specify this value to `document.body`, it may not prepared when class initialize. 
 	 */
-	appendLayerTo: HTMLElement | string | null = 'body'
+	appendLayerTo: Element | string | null = 'body'
 	
 	timeout: Timeout | null = null
 	private unwatch: (() => void) = () => {}
@@ -122,6 +127,7 @@ export class Popup extends Component {
 	onCreated() {
 		if (this.trigger === 'hover') {
 			on(this.el, 'mouseenter', this.showLayerLater, this)
+			on(this.el, 'click', this.toggleOpened, this)
 		}
 		else {
 			on(this.el, this.trigger, this.showLayerLater, this)
@@ -139,9 +145,18 @@ export class Popup extends Component {
 		}
 	}
 
+	toggleOpened() {
+		if (this.opened) {
+			this.hideLayerLater()
+		}
+		else {
+			this.showLayerLater()
+		}
+	}
+	
 	alignLayer() {
-		let trangle = (Component.get(this.refs.layer) as Layer).refs.trangle
-		align(this.refs.layer, this.el, this.alignPosition, {margin: this.alignMargin, canShrinkInY: true, trangle})
+		let trangle = (Component.get(this.refs.layer as HTMLElement) as Layer).refs.trangle as HTMLElement
+		align(this.refs.layer as HTMLElement, this.el, this.alignPosition, {margin: this.alignMargin, canShrinkInY: true, trangle})
 	}
 
 	onDisconnected() {
@@ -165,11 +180,11 @@ export class Popup extends Component {
 			if (this.trigger === 'hover') {
 				once(this.el, 'mouseleave', this.hideLayerLater, this)
 			}
-			else if (this.trigger === 'focus') {
-				once(this.el, 'blur', this.hideLayerLater, this)
-			}
 			else if (this.trigger === 'click' || this.trigger === 'contextmenu') {
 				once(document, 'mousedown', this.hideLayerLater, this)
+			}
+			else if (this.trigger === 'focus') {
+				once(this.el, 'blur', this.hideLayerLater, this)
 			}
 		}
 	}
@@ -233,7 +248,7 @@ export class Popup extends Component {
 	}
 
 	onDocMouseDown(e: Event) {
-		let target = e.target as HTMLElement
+		let target = e.target as Element
 
 		if (!this.el.contains(target) && !this.refs.layer.contains(target)) {
 			this.hideLayerLater()
@@ -267,22 +282,12 @@ export class Popup extends Component {
 		this.opened = false
 	}
 
-	private onRectChanged(rect: Rect) {
+	onRectChanged(rect: Rect) {
 		if (rect.width > 0 && rect.height > 0) {
 			this.alignLayer()
 		}
 		else {
 			this.hideLayerLater()
-		}
-	}
-
-	// Components like `<dropdown>` will need this when clicking.
-	toggleOpened() {
-		if (this.opened) {
-			this.hideLayerLater()
-		}
-		else {
-			this.showLayerLater()
 		}
 	}
 }

@@ -23,13 +23,13 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 			&:focus{
 				color: ${mainColor};
 
-				svg{
+				.icon{
 					box-shadow: 0 0 3px ${mainColor};
 				}
 			}
 		}
 
-		svg{
+		.icon{
 			width: ${lineHeight / 2}px;
 			height: ${lineHeight / 2}px;
 			border: 1px solid currentColor;
@@ -40,7 +40,7 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 		.indeterminate, .checked{
 			color: ${mainColor};
 			
-			svg{
+			.icon{
 				background: ${mainColor};
 			}
 		}
@@ -80,7 +80,7 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 				@@focus=${this.onFocus}
 				@@blur=${this.onBlur}
 			>
-				<svg viewBox="0 0 13 13">
+				<svg class="icon" viewBox="0 0 13 13">
 					${svgInner}
 				</svg>
 
@@ -107,7 +107,12 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 	}
 
 	onFocus() {
-		on(document, 'keydown.enter', this.onClick, this)
+		on(document, 'keydown.enter', this.onEnter, this)
+	}
+
+	onEnter(e: Event) {
+		e.preventDefault()
+		this.onClick()
 	}
 
 	onBlur() {
@@ -125,12 +130,12 @@ export class CheckboxGroup extends Component<{change: (value: string | number) =
 	ordered: boolean = false
 	checkboxs: Checkbox[] = []
 
-	register (checkbox: Checkbox) {
+	register(checkbox: Checkbox) {
 		this.checkboxs.push(checkbox)
 		checkbox.on('change', this.onCheckboxChange.bind(this, checkbox))
 	}
 
-	onCheckboxChange (checkbox: Checkbox) {
+	onCheckboxChange(checkbox: Checkbox) {
 		if (checkbox.checked) {
 			this.value.push(checkbox.value)
 		}

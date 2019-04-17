@@ -8,11 +8,15 @@ import {Popup} from "./popup"
 export class Popover extends Popup {
 
 	static style() {
-		let {lineHeight} = theme
+		let {lineHeight, mainColor} = theme
 
 		return css`
 		:host{
 			display: inline-block;
+		}
+
+		.opened{
+			color: ${mainColor};
 		}
 
 		.layer{

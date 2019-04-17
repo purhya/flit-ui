@@ -189,23 +189,27 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 	}
 
 	onKeyDown(e: KeyboardEvent) {
-		e.preventDefault()
+		
 
 		let newValue
 
 		if (this.vertical) {
 			if (e.key === 'ArrowUp') {
+				e.preventDefault()
 				newValue = Math.max(this.value + this.step, this.min)
 			}
 			else if (e.key === 'ArrowDown') {
+				e.preventDefault()
 				newValue = Math.max(this.value - this.step, this.min)
 			}
 		}
 		else {
 			if (e.key === 'ArrowLeft') {
+				e.preventDefault()
 				newValue = Math.max(this.value - this.step, this.min)
 			}
 			else if (e.key === 'ArrowRight') {
+				e.preventDefault()
 				newValue = Math.max(this.value + this.step, this.min)
 			}
 		}

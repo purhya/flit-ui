@@ -79,18 +79,19 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 	}
 
 	onKeyDown(e: KeyboardEvent) {
-		e.preventDefault()
-
 		if (e.key === 'Enter') {
+			e.preventDefault()
 			this.onClick()
 		}
 		else if (e.key === 'ArrowLeft') {
 			if (this.checked) {
+				e.preventDefault()
 				this.onClick()
 			}
 		}
 		else if (e.key === 'ArrowRight') {
 			if (!this.checked) {
+				e.preventDefault()
 				this.onClick()
 			}
 		}

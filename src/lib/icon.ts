@@ -20,11 +20,6 @@ export class Icon extends Component {
 	static properties = ['type']
 
 	type: string = ''
-
-	constructor(el: HTMLElement) {
-		super(el)
-		this.type = el.getAttribute('type') || ''
-	}
 	
 	render() {
 		let svgCode = (svgSymbols as any)[this.type]
