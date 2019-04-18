@@ -75,7 +75,7 @@ export class IconLoading extends Icon {
 		})
 	}
 
-	play() {
+	private play() {
 		let fn = (value: number) => {
 			this.el.style.transform = 'rotate(' + value + 'deg)'
 		}

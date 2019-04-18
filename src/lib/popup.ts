@@ -38,8 +38,8 @@ export class Popup<Events = {}> extends Component<Events> {
 	hideDelay: number = 100
 
 	timeout: Timeout | null = null
-	private unwatch: (() => void) = () => {}
-	private unwatchLeave: (() => void) = () => {}
+	private unwatchRect: (() => void) | null = null
+	private unwatchLeave: (() => void) | null = null
 
 	render() {
 		let layerPart = cache(this.opened ? this.renderLayer() : '', this.transition)
@@ -117,11 +117,26 @@ export class Popup<Events = {}> extends Component<Events> {
 		}
 	}
 
-	showLayerLater() {
+	clearTimeoutAndWatchings() {
 		if (this.timeout) {
 			this.timeout.cancel()
+			this.timeout = null
 		}
-		
+
+		if (this.unwatchRect) {
+			this.unwatchRect()
+			this.unwatchRect = null
+		}
+
+		if (this.unwatchLeave) {
+			this.unwatchLeave()
+			this.unwatchLeave = null
+		}
+	}
+
+	showLayerLater() {
+		this.clearTimeoutAndWatchings()
+
 		if (!this.opened) {
 			if (this.trigger === 'hover' || this.trigger === 'focus') {
 				this.timeout = timeout(this.showLayer.bind(this), this.showDelay)
@@ -140,6 +155,7 @@ export class Popup<Events = {}> extends Component<Events> {
 	}
 
 	async showLayer() {
+		this.clearTimeoutAndWatchings()
 		this.opened = true
 
 		// Wait for `refs.layer` to be referenced.
@@ -153,7 +169,7 @@ export class Popup<Events = {}> extends Component<Events> {
 			on(document, 'mousedown', this.onDocMouseDown, this)
 		}
 
-		this.unwatch = watch(this.el, 'rect', this.onRectChanged.bind(this))
+		this.unwatchRect = watch(this.el, 'rect', this.onRectChanged.bind(this))
 	}
 
 	onDocMouseDown(e: Event) {
@@ -165,28 +181,23 @@ export class Popup<Events = {}> extends Component<Events> {
 	}
 
 	hideLayerLater() {
-		if (this.timeout) {
-			this.timeout.cancel()
-		}
+		this.clearTimeoutAndWatchings()
 		
 		if (this.opened) {
-			if (this.trigger === 'hover') {
-				this.unwatchLeave()
-			}
-			else if (this.trigger === 'click' || this.trigger === 'contextmenu') {
+			if (this.trigger === 'click' || this.trigger === 'contextmenu') {
 				off(document, 'mousedown', this.onDocMouseDown, this)
 			}
 
-			this.unwatch()
 			this.timeout = timeout(this.hideLayer.bind(this), this.hideDelay)
 		}
 	}
 
 	hideLayer() {
+		this.clearTimeoutAndWatchings()
 		this.opened = false
 	}
 
-	onRectChanged(rect: Rect) {
+	private onRectChanged(rect: Rect) {
 		if (rect.width > 0 && rect.height > 0) {
 			this.alignLayer()
 		}

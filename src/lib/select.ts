@@ -1,8 +1,8 @@
 import {css, define, html, on, renderComplete, cache, repeat, off} from "flit"
 import {theme} from "./theme"
 import {Popup} from "./popup"
-import {Color} from "./color";
-import {remove, scrollToView} from "ff"
+import {Color} from "./color"
+import {remove, scrollToView, scrollToTop} from "ff"
 
 
 export interface SelectEvents<T = unknown> {
@@ -28,11 +28,11 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 			cursor: pointer;
 
 			&:hover, &.opened{
-				border-color: $main-color;
-			}
+				border-color: ${mainColor};
 
-			&:focus{
-				box-shadow: 0 0 3px ${mainColor};
+				.icon{
+					color: ${mainColor};
+				}
 			}
 
 			&.not-inputable input{
@@ -103,7 +103,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		}
 	`}
 
-	static properties = ['trigger', 'icon', 'value', 'multiple', 'suggest', 'ordered']
+	static properties = ['trigger', 'icon', 'value', 'multiple', 'searchable', 'ordered']
 
 	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'click'
 	alignPosition: string = 'b'
@@ -114,12 +114,12 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	data: Iterable<[T, string | number]> = []
 	value: T | T[] | null = null
 	multiple: boolean = false
-	suggest: boolean = false
+	searchable: boolean = false
 	ordered: boolean = false
 
 	private inputed: string = ''
 	private editing: boolean = false
-	private hover: T | null = null
+	private hoverAt: T | null = null
 
 	render() {
 		let layerPart = cache(this.opened ? this.renderLayer() : '', this.transition)
@@ -140,10 +140,10 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		return html`
 		<template
 			:class.opened=${this.opened}
-			:class.not-inputable=${!this.suggest}
+			:class.not-inputable=${!this.searchable}
 		>
 			${inputPart}
-			${this.icon && !this.editing ? html`<f-icon :type="${this.icon}" />` : ''}
+			${this.icon && !this.editing ? html`<f-icon class="icon" :type="${this.icon}" />` : ''}
 			${layerPart}
 		</template>
 	`}
@@ -158,7 +158,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 				<li
 					class="item"
 					:class.selected=${selected}
-					:class.hover=${this.hover !== null && this.hover === key}
+					:class.hover=${this.hoverAt !== null && this.hoverAt === key}
 					@click.prevent=${() => this.select(key)}
 					@mouseenter=${() => this.onMouseEnter(key)}
 				>
@@ -206,7 +206,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	}
 
 	getMaySuggestedData(): Iterable<[T, string | number]> {
-		if (this.suggest && this.inputed) {
+		if (this.searchable && this.inputed) {
 			let lowerSearchWord = this.inputed.toLowerCase()
 			let filteredData: [T, string | number][] = []
 
@@ -268,7 +268,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 			}
 		}
 
-		if (this.suggest) {
+		if (this.searchable) {
 			this.watch(() => this.opened, (opened) => {
 				if (!opened && this.editing) {
 					this.endEditing()
@@ -286,12 +286,12 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	}
 
 	onClick() {
-		if (this.suggest && !this.editing) {
+		if (this.searchable && !this.editing) {
 			this.startEditing()
 		}
 	}
 
-	async startEditing() {
+	private async startEditing() {
 		this.editing = true
 		this.inputed = ''
 
@@ -299,7 +299,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		this.refs.input.focus()
 	}
 
-	endEditing() {
+	private endEditing() {
 		this.editing = false
 	}
 
@@ -308,6 +308,11 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 
 		if (this.editing && this.refs.input) {
 			this.refs.input.focus()
+		}
+
+		let el = this.refs.layer.querySelector(this.scopeClassName('.selected')) as HTMLElement | null
+		if (el) {
+			scrollToTop(el)
 		}
 	}
 
@@ -320,15 +325,15 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		on(document, 'keydown', this.onKeyDown as (e: Event) => Promise<void>, this)
 	}
 
-	async onKeyDown(e: KeyboardEvent) {
-		let data = [...this.data]
+	private async onKeyDown(e: KeyboardEvent) {
+		let keys = [...this.getMaySuggestedData()].map(([key]) => key)
 		let moved = false
 
 		if (e.key === 'Enter') {
 			e.preventDefault()
 			if (this.opened) {
-				if (this.hover) {
-					this.select(this.hover)
+				if (this.hoverAt) {
+					this.select(this.hoverAt)
 				}
 				else {
 					this.hideLayer()
@@ -340,48 +345,47 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		}
 		else if (e.key === 'ArrowUp') {
 			e.preventDefault()
-			if (data.length === 0) {
+			if (keys.length === 0) {
 				return
 			}
 
 			if (!this.opened) {
 				this.showLayer()
 			}
-			else if (this.multiple && this.hover === null) {
-				this.hover = data[data.length - 1][0]
+			else if (this.multiple && this.hoverAt === null) {
+				this.hoverAt = keys[keys.length - 1]
 			}
 			else {
-				if (this.hover === null) {
-					this.hover = this.value as T
+				if (this.hoverAt === null) {
+					this.hoverAt = this.value as T
 				}
 
-				let lastIndex = data.findIndex(([key]) => key === this.hover)
+				let lastIndex = keys.findIndex(key => key === this.hoverAt)
 				let newIndex = Math.max(0, lastIndex - 1)
-				this.hover = data[newIndex][0]
+				this.hoverAt = keys[newIndex]
 				moved = true
 			}
 		}
 		else if (e.key === 'ArrowDown') {
 			e.preventDefault()
-			let data = [...this.data]
-			if (data.length === 0) {
+			if (keys.length === 0) {
 				return
 			}
 
 			if (!this.opened) {
 				this.showLayer()
 			}
-			else if (this.multiple && this.hover === null) {
-				this.hover = data[0][0]
+			else if (this.multiple && this.hoverAt === null) {
+				this.hoverAt = keys[0]
 			}
 			else {
-				if (this.hover === null) {
-					this.hover = this.value as T
+				if (this.hoverAt === null) {
+					this.hoverAt = this.value as T
 				}
 
-				let lastIndex = data.findIndex(([key]) => key === this.hover)
-				let newIndex = Math.min(data.length - 1, lastIndex + 1)
-				this.hover = data[newIndex][0]
+				let lastIndex = keys.findIndex(key => key === this.hoverAt)
+				let newIndex = Math.min(keys.length - 1, lastIndex + 1)
+				this.hoverAt = keys[newIndex]
 				moved = true
 			}
 		}
@@ -394,7 +398,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 
 		if (moved) {
 			await renderComplete()
-			let el = this.refs.layer.querySelector('.hover__f-select') as HTMLElement | null
+			let el = this.refs.layer.querySelector(this.scopeClassName('.hover')) as HTMLElement | null
 			if (el) {
 				scrollToView(el, theme.lineHeight)
 			}
@@ -402,12 +406,12 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	}
 
 	onBlur() {
-		this.hover = null
+		this.hoverAt = null
 		off(document, 'keydown', this.onKeyDown as (e: Event) => Promise<void>, this)
 	}
 
 	onMouseEnter(key: T) {
-		this.hover = key
+		this.hoverAt = key
 
 		if (document.activeElement !== this.refs.input) {
 			this.refs.input.focus()

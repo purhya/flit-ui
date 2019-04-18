@@ -60,7 +60,7 @@ export class Radio extends Component<RadioEvents> {
 
 	render() {
 		let {lineHeight} = theme
-		let size = 16 / 30 * lineHeight
+		let size = Math.round(16 / 30 * lineHeight)
 
 		return html`
 			<template
@@ -98,13 +98,17 @@ export class Radio extends Component<RadioEvents> {
 
 	onFocus() {
 		if (!this.checked) {
-			once(document, 'keydown.enter', this.onClick, this)
+			once(document, 'keydown.enter', this.onEnter, this)
 		}
+	}
+
+	onEnter() {
+		this.onClick()
 	}
 
 	onBlur() {
 		if (!this.checked) {
-			off(document, 'keydown', this.onClick, this)
+			off(document, 'keydown', this.onEnter, this)
 		}
 	}
 }

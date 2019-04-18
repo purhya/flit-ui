@@ -8,7 +8,7 @@ import {Popup} from "./popup"
 export class Layer extends Component {
 
 	static style() {
-		let {borderRadius} = theme
+		let {layerRadius} = theme
 
 		return css`
 		:host{
@@ -18,7 +18,7 @@ export class Layer extends Component {
 			z-index: 1000;	// Same with window, so if in window, we must move it behind the window
 			background: #fff;
 			filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.33));	// 3px nearly equals 6px in box-shadow.
-			border-radius: ${borderRadius * 2}px;
+			border-radius: ${layerRadius}px;
 		}
 
 		.trangle{

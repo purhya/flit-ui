@@ -11,23 +11,26 @@ export interface SwitchEvents {
 export class Switch extends Component<SwitchEvents> {
 
 	static style() {
-		let {mainColor, lineHeight} = theme
+		let {mainColor, lineHeight, textColor} = theme
+		let h = Math.round(lineHeight * 0.32) * 2
+		let w = h * 2 - 6
 
 		return css`
 		:host{
 			display: inline-block;
 			vertical-align: top;
-			width: ${lineHeight * 1.333}px;
-			height: ${lineHeight * 0.8}px;
-			border-radius: ${lineHeight * 0.4}px;
-			padding: 2px;
-			margin: ${lineHeight * 0.1}px 0;
+			width: ${w}px;
+			height: ${h}px;
+			color: ${textColor.lighten(10)};
+			border: 1px solid currentColor;
+			border-radius: ${h / 2}px;
+			padding: 1px;
+			margin: ${(lineHeight - h ) / 2}px 0;
 			transition: all 0.2s ${getEasing('ease-out-cubic')};
 			cursor: pointer;
-			background: #ccc;
 
 			&:hover{
-				background: ${new Color('#ccc').darken(5)};
+				color: ${mainColor};
 			}
 			
 			&:focus{
@@ -36,23 +39,26 @@ export class Switch extends Component<SwitchEvents> {
 		}
 	
 		.ball{
-			width: ${lineHeight * 0.8 - 4}px;
-			height: ${lineHeight * 0.8 - 4}px;
+			width: ${h - 4}px;
+			height: ${h - 4}px;
 			background: #fff;
+			border: 1px solid currentColor;
 			border-radius: 50%;
 			transition: all 0.2s ${getEasing('ease-out-cubic')};
 		}
 	
 		.on{		
 			background: ${mainColor};
+			color: ${mainColor};
+
+			.ball{
+				border-color: #fff;
+				margin-left: calc(100% - ${h - 4}px);
+			}
 
 			&:hover{
 				background: ${mainColor.darken(5)};
 			}
-		}
-	
-		.on .ball{
-			margin-left: calc(100% - ${lineHeight * 0.8 - 4}px);
 		}
 	`}
 
@@ -82,7 +88,7 @@ export class Switch extends Component<SwitchEvents> {
 		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 
-	onKeyDown(e: KeyboardEvent) {
+	private onKeyDown(e: KeyboardEvent) {
 		if (e.key === 'Enter') {
 			e.preventDefault()
 			this.onClick()

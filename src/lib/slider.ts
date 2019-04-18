@@ -11,8 +11,9 @@ export interface SliderEvents {
 export class Slider extends Component<SliderEvents> {
 
 	static style() {
-		let {mainColor, lineHeight} = theme
-		let size = Math.ceil(lineHeight / 4) * 2
+		let {mainColor, textColor, lineHeight} = theme
+		let grooveSize = 1
+		let ballSize = Math.ceil(lineHeight * 0.3) * 2 + grooveSize
 
 		return css`
 		:host{
@@ -20,21 +21,20 @@ export class Slider extends Component<SliderEvents> {
 			vertical-align: top;
 			flex-direction: column;
 			justify-content: center;
-			cursor: default;
 			position: relative;
 			width: ${lineHeight * 5}px;
 			height: ${lineHeight}px;
-			color: ${mainColor};
 			cursor: pointer;
 
 			&:focus .ball{
 				box-shadow: 0 0 5px ${mainColor};
+				border-color: ${mainColor};
 			}
 		}
 
 		.groove{
 			position: relative;
-			height: 4px;
+			height: ${grooveSize}px;
 		}
 
 		.groove-bg{
@@ -43,24 +43,34 @@ export class Slider extends Component<SliderEvents> {
 			top: 0;
 			width: 100%;
 			height: 100%;
-			background: currentColor;
+			background: ${textColor};
 			opacity: 0.3;
 		}
 	
 		.progress{
 			position: relative;
-			background: currentColor;
+			background: ${mainColor};
 			height: 100%;
 		}
 	
 		.ball{
 			border-radius: 50%;
-			border: 3px solid currentColor;
+			border: 1px solid ${textColor.lighten(10)};
 			background: #fff;
 			float: right;
-			width: ${size}px;
-			height: ${size}px;
-			margin: ${-size / 2 + 2}px -${size / 2}px;
+			width: ${ballSize}px;
+			height: ${ballSize}px;
+			margin: -${(ballSize - grooveSize) / 2}px -${Math.round(ballSize / 2)}px;
+
+			&:hover{
+				border-color: ${mainColor};
+			}
+		}
+
+		.dragging{
+			.ball{
+				border-color: currentColor;
+			}
 		}
 
 		:host[vertical]{
@@ -69,7 +79,7 @@ export class Slider extends Component<SliderEvents> {
 			flex-direction: row;
 
 			.groove{
-				width: 4px;
+				width: ${grooveSize}px;
 				height: 100%;
 			}
 
@@ -81,7 +91,7 @@ export class Slider extends Component<SliderEvents> {
 			}
 
 			.ball{
-				margin: -${size / 2}px ${-size / 2 + 2}px;
+				margin: -${Math.round(ballSize / 2)}px -${(ballSize - grooveSize) / 2}px;
 			}
 		}
 	`}
@@ -92,7 +102,7 @@ export class Slider extends Component<SliderEvents> {
 		return html`
 		<template
 			tabindex="0"
-			:class=${this.draging}
+			:class.dragging=${this.draging}
 			@mousedown=${this.onMouseDown}
 			@wheel.prevent=${this.onWheel}
 			@focus=${this.onFocus}
@@ -146,7 +156,7 @@ export class Slider extends Component<SliderEvents> {
 		})
 	}
 
-	changeValueByEvent(e: MouseEvent, rect: Rect) {
+	private changeValueByEvent(e: MouseEvent, rect: Rect) {
 		let rate
 
 		if (this.vertical) {
@@ -192,9 +202,7 @@ export class Slider extends Component<SliderEvents> {
 		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 
-	onKeyDown(e: KeyboardEvent) {
-		
-
+	private onKeyDown(e: KeyboardEvent) {
 		let newValue
 
 		if (this.vertical) {

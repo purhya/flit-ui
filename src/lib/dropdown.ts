@@ -54,7 +54,7 @@ export class Dropdown extends Popup {
 		this.initFocus()
 	}
 
-	initFocus() {
+	private initFocus() {
 		let focusEl = this.el.querySelector('button') || this.el
 		if (focusEl === this.el) {
 			this.el.setAttribute('tabindex', '0')
@@ -67,7 +67,7 @@ export class Dropdown extends Popup {
 		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 
-	onKeyDown(e: KeyboardEvent) {
+	private onKeyDown(e: KeyboardEvent) {
 		if (e.key === 'Enter') {
 			// May cause button tigger additional click event if not prevent.
 			e.preventDefault()

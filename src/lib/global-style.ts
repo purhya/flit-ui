@@ -105,11 +105,11 @@ addGlobalStyle(() => {
 	
 	[type=text], [type=number], [type=email], textarea{
 		border: none;
-		box-shadow: inset 0 -1px 0 0 #888;
+		box-shadow: inset 0 -1px 0 0 ${textColor.lighten(20)};
 		background: #e5e5e5;
 		
 		&:focus{
-			box-shadow: 0 0 3px ${mainColor};
+			box-shadow: inset 0 -1px 0 0 ${mainColor};
 		}
 	}
 	

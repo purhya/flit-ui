@@ -8,6 +8,7 @@ export interface ThemeOptions {
 	successColor?: string
 	errorColor?: string
 	borderRadius?: number
+	layerRadius?: number
 	fontSize?: number
 	lineHeight?: number
 }
@@ -26,7 +27,8 @@ export class Theme implements ColorOptions, NotColorOptions {
 		textColor: '#333',
 		successColor: '#00af41',
 		errorColor: '#ff0000',
-		borderRadius: 4,
+		borderRadius: 15,
+		layerRadius: 8,
 		fontSize: 14,	// Should set `font-size` and `line-height` on html or body to avoid flushing.
 		lineHeight: 30,
 	}
@@ -77,6 +79,10 @@ export class Theme implements ColorOptions, NotColorOptions {
 
 	get borderRadius() {
 		return this.getOption('borderRadius')
+	}
+
+	get layerRadius() {
+		return this.getOption('layerRadius')
 	}
 
 	get fontSize() {

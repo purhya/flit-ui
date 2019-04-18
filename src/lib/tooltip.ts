@@ -21,7 +21,7 @@ export class TooltipLayer extends Layer {
 			line-height: ${lineHeight * 0.8}px;
 			background: #333;
 			color: #fff;
-			border-radius: ${borderRadius}px;
+			border-radius: 4px;
 		}
 
 		.trangle{
@@ -92,9 +92,6 @@ export class GlobalTooltip extends Tooltip {
 
 		// When `title` changed, do aligning.
 		else if (this.opened) {
-			if (this.timeout) {
-				this.timeout.cancel()
-			}
 			await this.showLayer()
 		}
 	}
@@ -163,13 +160,12 @@ export let defaultTooltipOptions: Required<TooltipOptions> = {
 defineBinding('tooltip', class TooltipBinding {
 
 	private el: HTMLElement
-	private options: TooltipOptions | null = null
+	private options!: TooltipOptions
 
 	constructor(el: HTMLElement, value: unknown) {
 		this.el = el
-		this.update(value as any)
-
 		on(this.el, 'mouseenter', this.showTooltipLayer, this)
+		this.update(value as any)
 	}
 
 	async update(value: TooltipOptions | string) {
