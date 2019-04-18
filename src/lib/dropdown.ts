@@ -1,6 +1,7 @@
-import {css, define, html, cache, on, off} from "flit"
+import {css, define, html, cache, on, off, Component} from "flit"
 import {Popup} from "./popup"
 import {theme} from "./theme"
+import {Menu, MenuItem} from "./menu";
 
 
 @define('f-dropdown')
@@ -74,9 +75,13 @@ export class Dropdown extends Popup {
 		}
 		else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
 			if (this.opened) {
-				let menuitem = this.refs.layer.querySelector('f-menuitem') as HTMLElement
-				if (menuitem) {
-					menuitem.focus()
+				let menuEl = this.refs.layer.querySelector('f-menu') as HTMLElement | null
+				if (menuEl) {
+					let menuitems = [...menuEl.children].filter(el => el.localName === 'f-menuitem') as HTMLElement[]
+					let menuitem = menuitems.length > 0 ? e.key === 'ArrowUp' ? menuitems[menuitems.length- 1] : menuitems[0] : null
+					if (menuitem) {
+						(Component.get(menuEl) as Menu).setHoverItem((Component.get(menuitem) as MenuItem))
+					}
 				}
 			}
 			else {

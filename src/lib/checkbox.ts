@@ -3,8 +3,12 @@ import {theme} from './theme'
 import {removeWhere, orderBy} from 'ff'
 
 
+export interface CheckboxEvents {
+	change: (checked: boolean) => void
+}
+
 @define('f-checkbox')
-export class Checkbox extends Component<{change: (checked: boolean) => void}> {
+export class Checkbox extends Component<CheckboxEvents> {
 
 	static style() {
 		let {mainColor, lineHeight} = theme
@@ -76,9 +80,9 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 				tabindex="0"
 				:class.checked=${this.checked}
 				:class.indeterminate=${this.indeterminate}
-				@@click=${this.onClick}
-				@@focus=${this.onFocus}
-				@@blur=${this.onBlur}
+				@click=${this.onClick}
+				@focus=${this.onFocus}
+				@blur=${this.onBlur}
 			>
 				<svg class="icon" viewBox="0 0 13 13">
 					${svgInner}
@@ -116,7 +120,7 @@ export class Checkbox extends Component<{change: (checked: boolean) => void}> {
 	}
 
 	onBlur() {
-		off(document, 'keydown', this.onClick, this)
+		off(document, 'keydown', this.onEnter, this)
 	}
 }
 

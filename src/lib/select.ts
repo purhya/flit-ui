@@ -1,428 +1,416 @@
-// import {css, define, html, on, renderInContext, renderComplete} from "flit"
-// import {theme} from "./theme"
-// import {Popup} from "./popup"
+import {css, define, html, on, renderComplete, cache, repeat, off} from "flit"
+import {theme} from "./theme"
+import {Popup} from "./popup"
+import {Color} from "./color";
+import {remove, scrollToView} from "ff"
 
 
-// @define('f-select')
-// class Select extends Popup {
+export interface SelectEvents<T = unknown> {
+	change: (value: T | T[]) => void
+}
+
+@define('f-select')
+export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	
-// 	static style = () => {
-// 		let {mainColor, lineHeight, textColor} = theme
+	static style() {
+		let {mainColor, lineHeight, textColor} = theme
 
-// 		return css`
-// 		:host{
-// 			display: inline-flex;
-// 			vertical-align: top;
-// 			border: 1px solid ${textColor.lighten(20)};
-// 			height: ${lineHeight}px;
-// 			line-height: ${lineHeight - 2}px;
-// 			justify-content: space-between;
-// 			align-items: center;
+		return css`
+		:host{
+			display: inline-flex;
+			vertical-align: top;
+			border-bottom: 1px solid ${textColor.lighten(20)};
+			height: ${lineHeight}px;
+			background: #e5e5e5;
+			line-height: ${lineHeight}px;
+			justify-content: space-between;
+			align-items: center;
+			cursor: pointer;
 
-// 			&:hover, &.open{
-// 				border-color: $main-color;
-// 			}
+			&:hover, &.opened{
+				border-color: $main-color;
+			}
 
-// 			&:focus{
-// 				box-shadow: 0 0 3px ${mainColor};
-// 			}
-// 		}
+			&:focus{
+				box-shadow: 0 0 3px ${mainColor};
+			}
 
-// 		.inputable{
-// 			border: none;
-// 			line-height: ${lineHeight}px;
-// 			border-bottom: 1px solid grey;
-// 			background: #e5e5e5;
-// 		}
-	
-// 		.icon{
-// 			margin-left: auto;
-// 			margin-right: 4px;
-// 		}
-	
-// 		.input{
-// 			flex: 1;
-// 			min-width: 0;
-// 			padding: 0 0 0 8px;
-// 			height: 30px;
-// 			border: none;
-// 			background: transparent;
-// 		}
-	
-// 		.display{
-// 			flex: 1;
-// 			min-width: 0;
-// 			padding: 0 0 0 8px;
-// 			white-space: nowrap;
-// 			overflow: hidden;
-// 			text-overflow: ellipsis;
-// 			cursor: pointer;
-// 		}
-	
-// 		.layer{
-// 			border-radius: 0;
-// 			filter: none;
-// 			box-shadow: 0 2px 10px rgba(#000, 0.2);
-// 		}
-	
-// 		.list{
-// 			overflow-y: auto;
-// 			max-height: 100%;
-// 		}
+			&.not-inputable input{
+				cursor: inherit;
+			}
+		}
 
-// 		.item{
-// 			display: flex;
-// 			padding: 0 8px;
-// 			cursor: pointer;
+		.icon{
+			margin-left: auto;
+			margin-right: 4px;
+		}
+	
+		.input{
+			flex: 1;
+			min-width: 0;
+			padding: 0 0 0 8px;
+			height: 30px;
+			border: none;
+			background: transparent;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			box-shadow: none;
+
+			&:focus{
+				box-shadow: none;
+			}
+		}
+	
+		.layer{
+			border-radius: 0;
+			filter: none;
+			box-shadow: 0 2px 10px ${new Color('#000').alpha(0.2)};
+		}
+	
+		.list{
+			overflow-y: auto;
+			max-height: 100%;
+		}
+
+		.item{
+			display: flex;
+			padding: 0 8px;
+			box-shadow: inset 0 -1px 0 0 #fff;	// Add a white line as spliter for adjacent selected items.
+			cursor: pointer;
 			
-// 			&:hover{
-// 				color: $main-color;
-// 				background: $main-color-opacity-5;
-// 			}
-// 		}
+			&.hover{
+				background: #eee;
 
-// 		.text{
-// 			min-width: 0;
-// 		}
+				&.selected{
+					background: ${mainColor.alpha(0.15)};
+				}
+			}
 
-// 		.icon-selected{
-// 			margin-right: -4px;
-// 		}
-// 	`}
+			&.selected{
+				color: ${mainColor};
+				background: ${mainColor.alpha(0.1)};
+			}
+		}
 
-// 	template: `
-// 		<picker class="picker" :class.open="open">
-// 			<input type="text" class="picker-input" f-if="suggest" f-show="editing" f-model="suggestedValue" @input="onInput" @blur="onBlur" @keydown.enter="onKeyEnter" f-ref="input">
-// 			<div class="picker-display" f-show="!editing">
-// 				<slot>{{getCurrentDisplay()}}</slot>
-// 			</div>
-// 			<icon :type="icon" f-if="icon" f-hide="editing"></icon>
+		.text{
+			flex: 1;
+			min-width: 0;
+		}
 
-// 			<layer class="picker-layer" :open="open" :class="layerClass" trangle="false" f-ref="layer">
-// 				<ul class="menu picker-menu" :class="menuClass">
-// 					<li f-for="key, item in getFilteredOptions()"
-// 						:class.active="isSelected(item, key)"
-// 						@click="select(item, key)"
-// 					>
-// 						<span>{{getDisplay(item, key)}}</span>
-// 						<icon type="selected" f-if="isSelected(item, key)"></icon>
-// 					</li>
-// 				</ul>
-// 			</layer>
-// 		</picker>
-// 	`,
+		.selected-icon{
+			margin-right: -4px;
+		}
+	`}
+
+	static properties = ['trigger', 'icon', 'value', 'multiple', 'suggest', 'ordered']
+
+	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'click'
+	alignPosition: string = 'b'
+	alignMargin: number | number[] = 0
+	hasTrangle: boolean = false
+
+	icon: string = 'down'
+	data: Iterable<[T, string | number]> = []
+	value: T | T[] | null = null
+	multiple: boolean = false
+	suggest: boolean = false
+	ordered: boolean = false
+
+	private inputed: string = ''
+	private editing: boolean = false
+	private hover: T | null = null
+
+	render() {
+		let layerPart = cache(this.opened ? this.renderLayer() : '', this.transition)
+
+		let inputPart = html`
+			<input type="text"
+				class="input"
+				:ref="input"
+				.value=${this.editing ? this.inputed : this.getDisplay()}
+				?readonly=${!this.editing}
+				@click=${this.onClick}
+				@input=${this.onInput}
+				@focus=${this.onFocus}
+				@blur=${this.onBlur}
+			>
+		`
+
+		return html`
+		<template
+			:class.opened=${this.opened}
+			:class.not-inputable=${!this.suggest}
+		>
+			${inputPart}
+			${this.icon && !this.editing ? html`<f-icon :type="${this.icon}" />` : ''}
+			${layerPart}
+		</template>
+	`}
+
+	renderLayer() {
+		let data = this.getMaySuggestedData()
+
+		let listPart = repeat(data, ([key, display]) => {
+			let selected = this.isSelected(key)
+
+			return html`
+				<li
+					class="item"
+					:class.selected=${selected}
+					:class.hover=${this.hover !== null && this.hover === key}
+					@click.prevent=${() => this.select(key)}
+					@mouseenter=${() => this.onMouseEnter(key)}
+				>
+					<span class="text">${display}</span>
+					${selected ? html`<f-icon class="selected-icon" type="selected" />` : ''}
+				</li>
+			`
+		})
+
+		return html`
+		<f-layer
+			class="layer"
+			:ref="layer"
+			:popup=${this}
+			:herizontal=${false}
+			:trangle=${false}
+		>
+			<ul class="list">
+			${listPart}
+			</ul>
+		</f-layer>
+	`}
+
+	getDisplay(): string {
+		if (this.multiple) {
+			let displays: string[] = []
+
+			for (let [key, display] of this.data) {
+				if ((this.value as T[]).includes(key)) {
+					displays.push(String(display))
+				}
+			}
+
+			return displays.join('; ')
+		}
+		else {
+			for (let [key, display] of this.data) {
+				if (this.value === key) {
+					return String(display)
+				}
+			}
+
+			return ''
+		}
+	}
+
+	getMaySuggestedData(): Iterable<[T, string | number]> {
+		if (this.suggest && this.inputed) {
+			let lowerSearchWord = this.inputed.toLowerCase()
+			let filteredData: [T, string | number][] = []
+
+			for (let item of this.data) {
+				if (String(item[1]).includes(lowerSearchWord)) {
+					filteredData.push(item)
+				}
+			}
+
+			return filteredData
+		}
+		else {
+			return this.data
+		}
+	}
+
+	isSelected(key: T) {
+		if (this.multiple) {
+			return (this.value as T[]).includes(key)
+		}
+		else {
+			return this.value === key
+		}
+	}
 	
-// 	icon: 'down',
-
-// 	event: 'click',
-
-// 	margin: '0',
-
-// 	key: '',
-
-// 	display: '',
-
-// 	value: null,
-
-// 	options: null,
-
-// 	suggest: false,
-
-// 	suggestedValue: '',
-
-// 	layerClass: '',
-
-// 	menuClass: '',
-
-
-// 	//inner properties
-// 	editing: false,
-
-// 	onReady () {
-// 		if (this.suggest) {
-// 			this.el.on('click', this.onClickEl, this)
-
-// 			this.watch('open', (value) => {
-// 				if (!value) {
-// 					this.cancelEditing()
-// 				}
-// 			})
-// 		}
-// 	},
-
-
-// 	onClickEl (e) {
-// 		this.editing = true
-// 		this.suggestedValue = ''
-
-// 		FF.nextTick(() => {
-// 			this.refs.input.focus()
-// 		})
-// 	},
-
-
-// 	cancelEditing () {
-// 		this.editing = false
-// 	},
-
-
-// 	getKey (item, key) {
-// 		let {options} = this
-// 		let prop = this.key
-
-// 		if (typeof prop === 'function') {
-// 			return prop(item, key)
-// 		}
-// 		else if (prop) {
-// 			return item[prop]
-// 		}
-// 		else if (Array.isArray(options)) {
-// 			return item
-// 		}
-// 		else {
-// 			return key
-// 		}
-// 	},
-
-
-// 	getDisplay (item, key) {
-// 		let prop = this.display
-// 		let display
-
-// 		if (typeof prop === 'function') {
-// 			return prop(item, key)
-// 		}
-// 		else if (prop) {
-// 			display = item[prop]
-// 		}
-// 		else {
-// 			display = item
-// 		}
-
-// 		return display
-// 	},
-
-
-// 	getCurrentDisplay () {
-// 		let value = this.value
-// 		let item = this.getItemFromValue(value)
-// 		let display
-
-// 		if (item) {
-// 			display = this.getDisplay(item, value)
-// 		}
-// 		else {
-// 			display = ''
-// 		}
-
-// 		return display
-// 	},
-
-
-// 	getItemFromValue (value) {
-// 		let {options} = this
-// 		let item
-
-// 		if (Array.isArray(options)) {
-// 			item = options.find((item, key) => {
-// 				return this.getKey(item, key) == value
-// 			})
-// 		}
-// 		else {
-// 			for (let key in options) {
-// 				if (this.getKey(options[key], key) == value) {
-// 					item = options[key]
-// 					break
-// 				}
-// 			}
-// 		}
-
-// 		return item
-// 	},
-
-
-// 	getFilteredOptions () {
-// 		let {options} = this
-
-// 		if (this.suggest && this.suggestedValue) {
-// 			let lowerSearch = this.suggestedValue.toLowerCase()
-
-// 			return this.filter(options, (item, key) => {
-// 				return this.isMatchSuggestedValue(item, key, lowerSearch)
-// 			})
-// 		}
-// 		else {
-// 			return options
-// 		}
-// 	},
-
-
-// 	isMatchSuggestedValue (item, key, lowerSearch) {
-// 		return String(this.getDisplay(item, key)).toLowerCase().includes(lowerSearch)
-// 	},
-
-
-// 	filter (value, fn) {
-// 		if (Array.isArray(value)) {
-// 			return value.filter(fn)
-// 		}
-// 		else {
-// 			let filterred = {}
-
-// 			for (let key in value) {
-// 				if (fn(value[key], key)) {
-// 					filterred[key] = value[key]
-// 				}
-// 			}
-
-// 			return filterred
-// 		}
-// 	},
-
-
-// 	isSelected (item, key) {
-// 		return this.getKey(item, key) == this.value
-// 	},
-
-
-// 	select (item, key) {
-// 		this.hideLayer()
-
-// 		let value = this.getKey(item, key)
-// 		if (value !== this.value) {
-// 			this.value = value
-// 			this.editing = false
-// 			this.emit('change', value)
-// 		}
-
-// 		this.emit('select', value)
-// 	},
-
-
-// 	showLayer () {
-// 		let {el} = this
-// 		let {layer} = this.refs
-
-// 		if (!this.open) {
-// 			layer.el.setCSS('min-width', el.offsetWidth)
-// 		}
-
-// 		if (this.refs.input) {
-// 			this.refs.input.focus()
-// 		}
+	select(key: T) {
+		if (this.multiple) {
+			if ((this.value as T[]).includes(key)) {
+				remove(this.value as T[], key)
+			}
+			else {
+				(this.value as T[]).push(key)
+				
+				if (this.ordered) {
+					let keys = [...this.data].map(([key]) => key)
+					;(this.value as T[]).sort((key1, key2) => {
+						return keys.indexOf(key1) - keys.indexOf(key2)
+					})
+				}
+			}
+		}
+		else {
+			this.value = key
+			this.hideLayer()
+		}
 		
-// 		super.showLayer()
-// 	},
+		this.emit('change', this.value as T)
+	}
 
+	onCreated() {
+		super.onCreated()
 
-// 	onInput () {
-// 		this.showLayer()
-// 	},
+		if (this.multiple && !Array.isArray(this.value)) {
+			if (this.value === null || this.value === undefined) {
+				this.value = []
+			}
+			else {
+				this.value = [this.value as unknown as T]
+			}
+		}
 
+		if (this.suggest) {
+			this.watch(() => this.opened, (opened) => {
+				if (!opened && this.editing) {
+					this.endEditing()
+				}
+			})
+		}
+	}
 
-// 	onBlur () {
-// 		this.editing = false
-// 	},
+	async onUpdated() {
+		if (this.refs.layer) {
+			this.refs.layer.style.minWidth = String(this.el.offsetWidth) + 'px'
+		}
 
+		await super.onUpdated()
+	}
 
-// 	onKeyEnter () {},
-// })
+	onClick() {
+		if (this.suggest && !this.editing) {
+			this.startEditing()
+		}
+	}
 
+	async startEditing() {
+		this.editing = true
+		this.inputed = ''
 
+		await renderComplete()
+		this.refs.input.focus()
+	}
 
-// FF.registerComponent('multi-picker', 'picker', {
+	endEditing() {
+		this.editing = false
+	}
 
-// 	template: `
-// 		<multi-picker class="picker multi-picker" :class.open="open">
-// 			<input type="text" class="picker-input" f-if="suggest" f-model="suggestedValue" @input="onInput" @keydown.enter="onKeyEnter" f-ref="input">
-// 			<div class="picker-display" f-else>
-// 				<slot>{{getCurrentDisplay()}}</slot>
-// 			</div>
-// 			<icon :type="icon" f-if="icon"></icon>
+	async showLayer() {
+		await super.showLayer()
 
-// 			<layer class="picker-layer multi-picker-layer" :open="open" :class="layerClass" trangle="false" f-ref="layer">
-// 				<ul class="menu picker-menu multi-picker-menu" :class="menuClass" f-ref="menu">
-// 					<li f-for="key, item in getFilteredOptions()"
-// 						:class.active="isSelected(item, key)"
-// 						@click="toggleSelect(item, key)"
-// 					>
-// 						<span>{{getDisplay(item, key)}}</span>
-// 						<icon type="selected" f-if="isSelected(item, key)"></icon>
-// 					</li>
-// 				</ul>
-// 			</div>
-// 		</multi-picker>
-// 	`,
+		if (this.editing && this.refs.input) {
+			this.refs.input.focus()
+		}
+	}
 
-// 	//if is true, items in value will be sorted
-// 	order: false,
+	onInput() {
+		this.inputed = (this.refs.input as HTMLInputElement).value
+		this.showLayer()
+	}
 
+	onFocus() {
+		on(document, 'keydown', this.onKeyDown as (e: Event) => Promise<void>, this)
+	}
 
-// 	onCreated () {
-// 		if (!this.value) {
-// 			this.value = []
-// 		}
-// 	},
+	async onKeyDown(e: KeyboardEvent) {
+		let data = [...this.data]
+		let moved = false
 
+		if (e.key === 'Enter') {
+			e.preventDefault()
+			if (this.opened) {
+				if (this.hover) {
+					this.select(this.hover)
+				}
+				else {
+					this.hideLayer()
+				}
+			}
+			else {
+				this.showLayer()
+			}
+		}
+		else if (e.key === 'ArrowUp') {
+			e.preventDefault()
+			if (data.length === 0) {
+				return
+			}
 
-// 	getCurrentDisplay () {
-// 		let displays = this.value.map((value) => {
-// 			let item = this.getItemFromValue(value)
-// 			let display = this.getDisplay(item, value)
+			if (!this.opened) {
+				this.showLayer()
+			}
+			else if (this.multiple && this.hover === null) {
+				this.hover = data[data.length - 1][0]
+			}
+			else {
+				if (this.hover === null) {
+					this.hover = this.value as T
+				}
 
-// 			return display
-// 		})
+				let lastIndex = data.findIndex(([key]) => key === this.hover)
+				let newIndex = Math.max(0, lastIndex - 1)
+				this.hover = data[newIndex][0]
+				moved = true
+			}
+		}
+		else if (e.key === 'ArrowDown') {
+			e.preventDefault()
+			let data = [...this.data]
+			if (data.length === 0) {
+				return
+			}
 
-// 		return displays.join('; ')
-// 	},
+			if (!this.opened) {
+				this.showLayer()
+			}
+			else if (this.multiple && this.hover === null) {
+				this.hover = data[0][0]
+			}
+			else {
+				if (this.hover === null) {
+					this.hover = this.value as T
+				}
 
+				let lastIndex = data.findIndex(([key]) => key === this.hover)
+				let newIndex = Math.min(data.length - 1, lastIndex + 1)
+				this.hover = data[newIndex][0]
+				moved = true
+			}
+		}
+		else if (e.key === 'Escape') {
+			e.preventDefault()
+			this.inputed = ''
+			this.hideLayer()
+			this.refs.input.blur()
+		}
 
-// 	isSelected (item, key) {
-// 		let {value} = this
-// 		let valueItem = this.getKey(item, key)
-// 		let valueIndex = value.findIndex(v => v == valueItem)
+		if (moved) {
+			await renderComplete()
+			let el = this.refs.layer.querySelector('.hover__f-select') as HTMLElement | null
+			if (el) {
+				scrollToView(el, theme.lineHeight)
+			}
+		}
+	}
 
-// 		return valueIndex > -1
-// 	},
+	onBlur() {
+		this.hover = null
+		off(document, 'keydown', this.onKeyDown as (e: Event) => Promise<void>, this)
+	}
 
+	onMouseEnter(key: T) {
+		this.hover = key
 
-// 	toggleSelect (item, key) {
-// 		let {value, options} = this
-// 		let valueItem = this.getKey(item, key)
-
-// 		if (this.isSelected(item, key)) {
-// 			value.removeWhere(v => v == valueItem)
-// 		}
-// 		else {
-// 			value.push(valueItem)
-
-// 			if (this.order) {
-// 				value.orderBy(value => this.getIndexByValue(value))
-// 			}
-// 		}
-		
-// 		this.emit('change', this.value)
-// 	},
-
-
-// 	getIndexByValue (value) {
-// 		let {options} = this
-// 		let index = -1
-
-// 		if (Array.isArray(options)) {
-// 			index = options.findIndex((item, key) => {
-// 				return this.getKey(item, key) == value
-// 			})
-// 		}
-// 		else {
-// 			for (let key in options) {
-// 				index++
-// 				if (this.getKey(options[key], key) == value) {
-// 					break
-// 				}
-// 			}
-// 		}
-
-// 		return index
-// 	},
-// })
+		if (document.activeElement !== this.refs.input) {
+			this.refs.input.focus()
+		}
+	}
+}

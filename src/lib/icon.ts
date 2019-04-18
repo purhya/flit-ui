@@ -12,7 +12,7 @@ export class Icon extends Component {
 		display: inline-block;
 		stroke: currentColor;
 		fill: none;
-		margin: auto;
+		margin: auto 0;
 		vertical-align: top;
 	}
 	`
@@ -67,7 +67,7 @@ export class IconLoading extends Icon {
 	playing: boolean = false
 
 	onCreated() {
-		this.watchImmediately('loading', (value) => {
+		this.watchImmediately(() => this.loading, (value) => {
 			if (value && !this.playing) {
 				this.play()
 				this.playing = true

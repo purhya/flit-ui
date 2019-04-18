@@ -3,8 +3,12 @@ import {theme} from './theme'
 import {Color} from './color'
 
 
+export interface SwitchEvents {
+	change: (value: boolean) => void
+}
+
 @define('f-switch')
-export class Switch extends Component<{change: (value: boolean) => void}> {
+export class Switch extends Component<SwitchEvents> {
 
 	static style() {
 		let {mainColor, lineHeight} = theme
@@ -61,9 +65,9 @@ export class Switch extends Component<{change: (value: boolean) => void}> {
 		<template
 			tabindex="0"
 			:class.on=${this.checked}
-			@@click=${this.onClick}
-			@@focus=${this.onFocus}
-			@@blur=${this.onBlur}
+			@click=${this.onClick}
+			@focus=${this.onFocus}
+			@blur=${this.onBlur}
 		>
 			<div class="ball"></div>
 		</template>

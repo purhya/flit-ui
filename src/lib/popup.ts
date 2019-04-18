@@ -1,63 +1,12 @@
 import {css, define, Component, html, on, off, cache, once, renderComplete} from "flit"
 import {getAlignDirection, onceMouseLeaveAll, align, timeout, Timeout, watch, Rect} from "ff"
 import {theme} from "./theme"
-
-
-// It's the base class for all the layer which will align with another element.
-@define('f-layer')
-export class Layer extends Component {
-
-	static style() {
-		let {borderRadius} = theme
-
-		return css`
-		:host{
-			position: absolute;
-			left: 0;
-			top: 0;
-			z-index: 1000;	// Same with window, so if in window, we must move it behind the window
-			background: #fff;
-			filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.33));	// 3px nearly equals 6px in box-shadow.
-			border-radius: ${borderRadius * 2}px;
-		}
-
-		.trangle{
-			position: absolute;
-			border-left: 8px solid transparent;
-			border-right: 8px solid transparent;
-			border-bottom: 11px solid #fff;
-			top: -11px;
-
-			&-herizontal{
-				border-top: 8px solid transparent;
-				border-bottom: 8px solid transparent;
-				border-right: 11px solid #fff;
-				border-left: 0;
-				top: auto;
-				left: -11px;
-			}
-		}
-	`}
-
-	herizontal: boolean = false
-	trangle: boolean = true
-
-	// Although this property is not used to render, it can be used to get current opened state and can be captured by inner content.
-	popup: Popup | null = null
-
-	render() {
-		return html`
-		<template>
-			${this.trangle ? html`<div class="trangle" :ref="trangle" :class.trangle-herizontal=${this.herizontal}></div>` : ''}
-			<slot></slot>
-		</template>`
-	}
-}
+import {Layer} from "./layer"
 
 
 // It's the base class for all the popup component.
 @define('f-popup')
-export class Popup extends Component {
+export class Popup<Events = {}> extends Component<Events> {
 
 	static style() {
 		let {mainColor} = theme
@@ -68,9 +17,7 @@ export class Popup extends Component {
 			vertical-align: top;
 		}
 		
-		.opened{
-			color: ${mainColor};
-		}
+		.opened{}
 
 		.layer{}
 	`}
@@ -83,21 +30,19 @@ export class Popup extends Component {
 	alignPosition: string = 't'
 	alignMargin: number | number[] = 3
 	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'hover'
-	showDelay: number = 0
+
+	// Such that mouse hover unexpected will not cause layer popup, only for `hover` and `focus` trigger.
+	showDelay: number = 100
+
+	// Such that when mouse hover from `el` to `layer` will not cause 
 	hideDelay: number = 100
 
-	/**
-	 * The selector to get HTML element to append to or the HTML element.
-	 * Note that don't specify this value to `document.body`, it may not prepared when class initialize. 
-	 */
-	appendLayerTo: Element | string | null = 'body'
-	
 	timeout: Timeout | null = null
 	private unwatch: (() => void) = () => {}
 	private unwatchLeave: (() => void) = () => {}
 
 	render() {
-		let layerPart = cache(this.opened ? (this.renderLayer()) : '', this.transition)
+		let layerPart = cache(this.opened ? this.renderLayer() : '', this.transition)
 		
 		return html`
 			<template :class.opened="${this.opened}">
@@ -129,6 +74,9 @@ export class Popup extends Component {
 			on(this.el, 'mouseenter', this.showLayerLater, this)
 			on(this.el, 'click', this.toggleOpened, this)
 		}
+		else if (this.trigger === 'click') {
+			on(this.el, 'click', this.toggleOpened, this)
+		}
 		else {
 			on(this.el, this.trigger, this.showLayerLater, this)
 		}
@@ -153,10 +101,10 @@ export class Popup extends Component {
 			this.showLayerLater()
 		}
 	}
-	
+
 	alignLayer() {
-		let trangle = (Component.get(this.refs.layer as HTMLElement) as Layer).refs.trangle as HTMLElement
-		align(this.refs.layer as HTMLElement, this.el, this.alignPosition, {margin: this.alignMargin, canShrinkInY: true, trangle})
+		let trangle = (Component.get(this.refs.layer) as Layer).refs.trangle
+		align(this.refs.layer, this.el, this.alignPosition, {margin: this.alignMargin, canShrinkInY: true, trangle})
 	}
 
 	onDisconnected() {
@@ -175,16 +123,18 @@ export class Popup extends Component {
 		}
 		
 		if (!this.opened) {
-			this.timeout = timeout(this.showLayer.bind(this), this.showDelay)
+			if (this.trigger === 'hover' || this.trigger === 'focus') {
+				this.timeout = timeout(this.showLayer.bind(this), this.showDelay)
 
-			if (this.trigger === 'hover') {
-				once(this.el, 'mouseleave', this.hideLayerLater, this)
+				if (this.trigger === 'hover') {
+					once(this.el, 'mouseleave', this.hideLayerLater, this)
+				}
+				else if (this.trigger === 'focus') {
+					once(this.el, 'blur', this.hideLayerLater, this)
+				}
 			}
-			else if (this.trigger === 'click' || this.trigger === 'contextmenu') {
-				once(document, 'mousedown', this.hideLayerLater, this)
-			}
-			else if (this.trigger === 'focus') {
-				once(this.el, 'blur', this.hideLayerLater, this)
+			else {
+				this.showLayer()
 			}
 		}
 	}
@@ -194,57 +144,16 @@ export class Popup extends Component {
 
 		// Wait for `refs.layer` to be referenced.
 		await renderComplete()
-		this.moveLayer()
-		
+
 		if (this.trigger === 'hover') {
 			off(this.el, 'mouseleave', this.hideLayerLater, this)
 			this.unwatchLeave = onceMouseLeaveAll([this.el, this.refs.layer], this.hideLayerLater.bind(this))
 		}
 		else if (this.trigger === 'click' || this.trigger === 'contextmenu') {
-			off(document, 'mousedown', this.hideLayerLater, this)
 			on(document, 'mousedown', this.onDocMouseDown, this)
-
-			if (this.trigger === 'click') {
-				on(this.el, 'click', this.hideLayerLater, this)
-			}
 		}
 
 		this.unwatch = watch(this.el, 'rect', this.onRectChanged.bind(this))
-	}
-
-	moveLayer() {
-		// Why render `<layer>` to body?
-		// It's very common that the `el` is covered or clipped,
-		// which will cause the `<layer>` is not fully visible.
-		// You can still render the `<layer>` in the same scroller with `<popup>`.
-
-		// Why inserted into body every time?
-		// Most layers share same `z-index`, append newly opened `<layer>` will makesure it covers others.
-
-		// Note that:
-		// The template `content` can't pass into `<layer>` as an argument,
-		// it will cause the template was parsed in `<layer>` context.
-
-		// The `<layer>` will be cached in `<popup>`, and element will be removed when not in use.
-		// After restored from `cache`, it will be inserted back into `<popup>`.
-		// So here we need to move it to `body` after every time rendered.
-
-		// If there are serval nodes which belong to an template you need to append into another element,
-		// Don't forget to move the anchor nodes, or the whole template nodes into the target element,
-		// or they will can't be removed because they are outside of the template node ranges.
-
-		// In the future, we may implement a flit directive `renderTo(..., ...)`, 
-		// to render elements and it's anchor node to another element.
-
-		if (typeof this.appendLayerTo === 'string') {
-			let target = document.querySelector(this.appendLayerTo)
-			if (target) {
-				target.append(this.refs.layer)
-			}
-		}
-		else if (this.appendLayerTo) {
-			this.appendLayerTo.append(this.refs.layer)
-		}
 	}
 
 	onDocMouseDown(e: Event) {
@@ -266,14 +175,9 @@ export class Popup extends Component {
 			}
 			else if (this.trigger === 'click' || this.trigger === 'contextmenu') {
 				off(document, 'mousedown', this.onDocMouseDown, this)
-	
-				if (this.trigger === 'click') {
-					off(this.el, 'click', this.hideLayerLater, this)
-				}
 			}
 
 			this.unwatch()
-			
 			this.timeout = timeout(this.hideLayer.bind(this), this.hideDelay)
 		}
 	}

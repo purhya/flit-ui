@@ -2,8 +2,12 @@ import {define, Component, html, css, off, once, svg} from 'flit'
 import {theme} from './theme'
 
 
+export interface RadioEvents {
+	change: (checked: boolean) => void
+}
+
 @define('f-radio')
-export class Radio extends Component<{change: (checked: true) => void}> {
+export class Radio extends Component<RadioEvents> {
 
 	static style() {
 		let {mainColor, lineHeight} = theme
@@ -62,9 +66,9 @@ export class Radio extends Component<{change: (checked: true) => void}> {
 			<template
 				tabindex="0"
 				:class.checked=${this.checked}
-				@@click=${this.onClick}
-				@@focus=${this.onFocus}
-				@@blur=${this.onBlur}
+				@click=${this.onClick}
+				@focus=${this.onFocus}
+				@blur=${this.onBlur}
 			>
 				<svg class="icon" viewBox="0 0 14 14" style="width: ${size}px; height: ${size}px;">
 					${this.checked? svg`<circle style="fill:currentColor;stroke:none;" cx="7" cy="7" r="4" />` : ''}

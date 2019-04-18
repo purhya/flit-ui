@@ -3,8 +3,12 @@ import {theme} from './theme'
 import {constrain, getRect, Rect} from 'ff'
 
 
+export interface SliderEvents {
+	change: (value: number) => void
+}
+
 @define('f-slider')
-export class Slider extends Component<{change: (value: boolean) => void}> {
+export class Slider extends Component<SliderEvents> {
 
 	static style() {
 		let {mainColor, lineHeight} = theme
@@ -89,10 +93,10 @@ export class Slider extends Component<{change: (value: boolean) => void}> {
 		<template
 			tabindex="0"
 			:class=${this.draging}
-			@@mousedown=${this.onMouseDown}
-			@@wheel.prevent=${this.onWheel}
-			@@focus=${this.onFocus}
-			@@blur=${this.onBlur}
+			@mousedown=${this.onMouseDown}
+			@wheel.prevent=${this.onWheel}
+			@focus=${this.onFocus}
+			@blur=${this.onBlur}
 		>
 			<div class="groove" :ref="groove">
 				<div class="groove-bg"></div>

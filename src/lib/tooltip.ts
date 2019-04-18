@@ -1,6 +1,7 @@
 import {css, define, html, off, defineBinding, on, renderAndFollowInContext, cache} from "flit"
 import {theme} from './theme'
-import {Layer, Popup} from "./popup"
+import {Popup} from "./popup"
+import {Layer} from "./layer"
 
 
 @define('f-tooltip-layer')

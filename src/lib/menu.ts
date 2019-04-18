@@ -2,7 +2,8 @@ import {css, define, Component, html, on, renderInContext, renderComplete, off} 
 import {theme} from "./theme"
 import {onceMouseLeaveAll, align, getPreviousElement, getNextElement} from "ff"
 import {Transition} from "flit/out/lib/transition"
-import {Layer} from "./popup"
+import {Popup} from "./popup"
+import {Layer} from "./layer"
 
 
 @define('f-menu')
@@ -32,17 +33,33 @@ export class Menu extends Component {
 
 	/** Assigned in `<dropdown>` */
 	layerEl: HTMLElement | null = null
-
-	private current: MenuItem | null = null
+	
+	topMenu: Menu | null = null
+	private selectedItem: MenuItem | null = null
+	private hoverItem: MenuItem | null = null
 	private openedSubMenus: SubMenu[] = []
 	private unwatchSubMenusLeave: (() => void) = () => {}
+
+	render() {
+		return html`
+		<template
+			tabindex="0"
+			@focus=${this.onFocus}
+			@blur=${this.onBlur}
+		>
+			<slot />
+		</template>
+	`}
 	
 	onCreated() {
+		this.topMenu = this
+
 		this.layerEl = this.el.closest('f-layer') as HTMLElement | null
 		if (this.layerEl) {
 			let layer = Component.get(this.layerEl) as Layer
-			let popup = layer.popup!
-			popup.watch('opened', (opened) => {
+			let popup = layer.popup as Popup
+
+			this.watch(() => popup.opened, (opened) => {
 				if (!opened) {
 					this.hideAllSubMenuLayers()
 				}
@@ -51,22 +68,40 @@ export class Menu extends Component {
 	}
 	
 	/** Called when child item or submenu selected. */
-	setCurrent(item: MenuItem) {
+	setSelectedItem(menuItem: MenuItem) {
 		if (this.selectable) {
-			if (this.current) {
-				this.current.active = false
+			if (this.selectedItem) {
+				this.selectedItem.selected = false
 			}
 			
-			item.active = true
-			this.current = item
+			menuItem.selected = true
+			this.selectedItem = menuItem
 		}
+
+		this.setHoverItem(menuItem)
 	}
 
-	focusFirstItem() {
-		let firstItem = [...this.el.children].find(item => item.localName === 'f-menuitem') as HTMLElement | null
-		if (firstItem) {
-			firstItem.focus()
+	setHoverItem(menuItem: MenuItem | null) {
+		if (this.hoverItem) {
+			this.hoverItem.hover = false
 		}
+		
+		if (menuItem) {
+			menuItem.hover = true
+
+			if (document.activeElement !== this.el) {
+				this.el.focus()
+			}
+
+			let siblingsMenuItems = ([...menuItem.el.parentElement!.children] as HTMLElement[]).filter(el => el.localName === 'f-menuitem').map(Component.get) as MenuItem[]
+			siblingsMenuItems.forEach(item => {
+				if (item !== menuItem && item.subMenu && item.subMenu.opened) {
+					item.subMenu.hideLayer()
+				}
+			})
+		}
+
+		this.hoverItem = menuItem
 	}
 
 	onSubMenuOpened(submenu: SubMenu) {
@@ -90,10 +125,124 @@ export class Menu extends Component {
 		this.unwatchSubMenusLeave = onceMouseLeaveAll(openedLayerEls, this.hideAllSubMenuLayers.bind(this))
 	}
 
-	private hideAllSubMenuLayers() {
+	hideAllSubMenuLayers() {
 		for (let subMenu of this.openedSubMenus) {
 			subMenu.hideLayer()
 		}
+		this.openedSubMenus = []
+	}
+	
+	onFocus() {
+		this.hoverOneItem()
+		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
+	}
+
+	onKeyDown(e: KeyboardEvent) {
+		let hoverItem = this.hoverItem
+		if (!hoverItem) {
+			return
+		}
+
+		if (e.key === 'Enter') {
+			e.preventDefault()
+			
+			if (this.layerEl && hoverItem.subMenu) {
+				if (hoverItem.subMenu.opened) {
+					hoverItem.subMenu.hideLayer()
+				}
+				else {
+					hoverItem.subMenu.showInLayer()
+				}
+			}
+			else if (hoverItem) {
+				hoverItem.onClick()
+				
+				if (this.layerEl) {
+					(Component.get(this.layerEl) as Layer).popup!.hideLayer()
+				}
+			}
+		}
+		else if (e.key === 'ArrowLeft') {
+			e.preventDefault()
+
+			if (this.layerEl && hoverItem.parentMenu && (hoverItem.parentMenu instanceof SubMenu) && hoverItem.parentMenu.parentMenu) {
+				hoverItem.parentMenu.parentMenu.hoverOneItem()
+			}
+		}
+		else if (e.key === 'ArrowRight') {
+			e.preventDefault()
+
+			if (this.layerEl && hoverItem.subMenu) {
+				if (hoverItem.subMenu.opened) {
+					hoverItem.subMenu.hoverOneItem()
+				}
+				else {
+					hoverItem.subMenu.showInLayer()
+				}
+			}
+		}
+		else if (e.key === 'ArrowUp') {
+			e.preventDefault()
+			this.hoverPreviousItem()
+		}
+		else if (e.key === 'ArrowDown') {
+			e.preventDefault()
+			this.hoverNextItem()
+		}
+		else if (e.key === 'Escape') {
+			e.preventDefault()
+
+			if (this.layerEl) {
+				(Component.get(this.layerEl) as Layer).popup!.hideLayer()
+			}
+		}
+	}
+
+	hoverOneItem() {
+		let menuItems = ([...this.el.children].filter(el => el.localName === 'f-menuitem') as HTMLElement[]).map(Component.get) as MenuItem[]
+
+		let menuItem = menuItems.find(item => !!item.subMenu && item.subMenu.opened)
+
+		if (!menuItem) {
+			menuItem = menuItems.find(item => item.selected)
+		}
+
+		if (!menuItem) {
+			menuItem = menuItems[0]
+		}
+		
+		if (menuItem) {
+			this.topMenu!.setHoverItem(menuItem)
+		}
+	}
+
+	hoverPreviousItem() {
+		let prev: HTMLElement | null = this.hoverItem!.el
+		do {
+			prev = getPreviousElement(prev, this.el) as HTMLElement | null
+		}
+		while (prev && prev.localName !== 'f-menuitem')
+
+		if (prev) {
+			this.setHoverItem(Component.get(prev) as MenuItem)
+		}
+	}
+
+	hoverNextItem() {
+		let next: HTMLElement | null = this.hoverItem!.el
+		do {
+			next = getNextElement(next, this.el) as HTMLElement | null
+		}
+		while (next && next.localName !== 'f-menuitem')
+
+		if (next) {
+			this.setHoverItem(Component.get(next) as MenuItem)
+		}
+	}
+
+	onBlur() {
+		this.setHoverItem(null)
+		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 }
 
@@ -112,23 +261,27 @@ export class MenuItem extends Component {
 			cursor: pointer;
 			padding: 0 ${lineHeight / 3}px;
 
-			&:hover, &:focus{
-				background: ${mainColor.alpha(0.1)};
+			&.hover{
+				background: #eee;
 			}
 
-			&.active{
+			&.selected{
 				color: ${mainColor};
-				background: ${mainColor.alpha(0.15)};
+				background: ${mainColor.alpha(0.1)};
 
-				&:focus{
-					background: ${mainColor.alpha(0.2)};
+				&.hover{
+					background: ${mainColor.alpha(0.15)};
 				}
 			}
-		}
 
-		.submenu-opened{
-			color: ${mainColor};
-			background: ${mainColor.alpha(0.05)};
+			&.submenu-opened{
+				color: ${mainColor};
+				background: ${mainColor.alpha(0.05)};
+
+				&.hover{
+					background: ${mainColor.alpha(0.1)};
+				}
+			}
 		}
 
 		// If at least one item in menu has icon, but current one not,
@@ -161,7 +314,8 @@ export class MenuItem extends Component {
 
 	icon: string = ''
 
-	active: boolean = false
+	selected: boolean = false
+	hover: boolean = false
 	parentMenu: Menu | SubMenu | null = null
 	topMenu: Menu | null = null
 	subMenu: SubMenu | null = null
@@ -188,13 +342,12 @@ export class MenuItem extends Component {
 
 		return html`
 			<template
-				tabindex="0"
-				:class.active=${this.active}
+				:class.selected=${this.selected}
+				:class.hover=${this.hover}
 				:class.submenu-opened=${topMenu!.layerEl && subMenu && subMenu.opened}
 				:style.padding-left.px=${topMenu!.layerEl ? '' : parentMenu.itemsHasIcon ? parentMenu.deep * 25 + 5 : parentMenu.deep * 25}
-				@@click=${this.onClick}
-				@@focus=${this.onFocus}
-				@@blur=${this.onBlur}
+				@click=${this.onClick}
+				@mouseenter=${this.onMouseEnter}
 			>
 				${icon}
 				<span class="text">
@@ -214,8 +367,8 @@ export class MenuItem extends Component {
 		this.parentMenu.itemsHasIcon = this.parentMenu.itemsHasIcon || !!this.icon
 		this.topMenu = this.parentMenu instanceof Menu ? this.parentMenu : this.parentMenu.topMenu
 
-		if (this.active) {
-			this.topMenu!.setCurrent(this)
+		if (this.selected) {
+			this.topMenu!.setSelectedItem(this)
 		}
 	}
 
@@ -225,7 +378,7 @@ export class MenuItem extends Component {
 		if (this.subMenu) {
 			// Can select current item as an directory
 			if (topMenu.selectable && topMenu.dirSelectable) {
-				topMenu.setCurrent(this)
+				topMenu.setSelectedItem(this)
 			}
 
 			// Otherwise it been controlled by registered 'mouseenter' event.
@@ -234,87 +387,12 @@ export class MenuItem extends Component {
 			}
 		}
 		else {
-			topMenu.setCurrent(this)
+			topMenu.setSelectedItem(this)
 		}
 	}
 
-	onFocus() {
-		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
-	}
-
-	onKeyDown(e: KeyboardEvent) {
-		if (e.key === 'Enter') {
-			e.preventDefault()
-
-			if (this.topMenu!.layerEl && this.subMenu) {
-				if (this.subMenu.opened) {
-					this.subMenu.hideLayer()
-				}
-				else {
-					this.subMenu.showInLayer()
-				}
-			}
-			else {
-				this.onClick()
-			}
-		}
-		else if (e.key === 'ArrowLeft') {
-			e.preventDefault()
-
-			if (this.topMenu!.layerEl) {
-				if (this.parentMenu && (this.parentMenu instanceof SubMenu) && this.parentMenu.parentMenu) {
-					this.parentMenu.parentMenu.focusFirstItem()
-				}
-			}
-		}
-		else if (e.key === 'ArrowRight') {
-			e.preventDefault()
-
-			if (this.topMenu!.layerEl && this.subMenu) {
-				if (this.subMenu.opened) {
-					this.subMenu.focusFirstItem()
-				}
-				else {
-					this.subMenu.showInLayer()
-				}
-			}
-		}
-		else if (e.key === 'ArrowUp') {
-			e.preventDefault()
-			this.focusPreviousItem()
-		}
-		else if (e.key === 'ArrowDown') {
-			e.preventDefault()
-			this.focusNextItem()
-		}
-	}
-
-	focusPreviousItem() {
-		let prev: HTMLElement | null = this.el
-		do {
-			prev = getPreviousElement(prev, this.topMenu!.el) as HTMLElement | null
-		}
-		while (prev && prev.localName !== 'f-menuitem')
-
-		if (prev) {
-			prev.focus()
-		}
-	}
-
-	focusNextItem() {
-		let next: HTMLElement | null = this.el
-		do {
-			next = getNextElement(next, this.topMenu!.el) as HTMLElement | null
-		}
-		while (next && next.localName !== 'f-menuitem')
-
-		if (next) {
-			next.focus()
-		}
-	}
-
-	onBlur() {
-		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
+	onMouseEnter() {
+		this.topMenu!.setHoverItem(this)
 	}
 }
 
@@ -426,15 +504,17 @@ export class SubMenu extends Component {
 	hideLayer() {
 		this.opened = false
 
-		new Transition(this.layerEl!, {name: 'fade'}).leave().then((finish: boolean) => {
-			if (finish) {
-				this.layerEl!.remove()
-			}
-		})
+		if (this.layerEl) {
+			new Transition(this.layerEl!, {name: 'fade'}).leave().then((finish: boolean) => {
+				if (finish) {
+					this.layerEl!.remove()
+				}
+			})
+		}
 	}
 
-	focusFirstItem() {
-		Menu.prototype.focusFirstItem.call(this)
+	hoverOneItem() {
+		Menu.prototype.hoverOneItem.call(this)
 	}
 }
 
