@@ -7,13 +7,15 @@ export interface ThemeOptions {
 	textColor?: string
 	successColor?: string
 	errorColor?: string
+	warningColor?: string
+	infoColor?:string
 	borderRadius?: number
 	layerRadius?: number
 	fontSize?: number
 	lineHeight?: number
 }
 
-type ColorOptions = {[key in 'mainColor' | 'textColor' | 'successColor' | 'errorColor']: Color}
+type ColorOptions = {[key in 'mainColor' | 'textColor' | 'successColor' | 'errorColor' | 'warningColor' | 'infoColor']: Color}
 type NotColorOptions = {[key in Exclude<keyof ThemeOptions, keyof ColorOptions>]: ThemeOptions[key]}
 
 
@@ -27,6 +29,8 @@ export class Theme implements ColorOptions, NotColorOptions {
 		textColor: '#333',
 		successColor: '#00af41',
 		errorColor: '#ff0000',
+		warningColor: '#f48862',
+		infoColor: '#3988e5',
 		borderRadius: 15,
 		layerRadius: 8,
 		fontSize: 14,	// Should set `font-size` and `line-height` on html or body to avoid flushing.
@@ -75,6 +79,14 @@ export class Theme implements ColorOptions, NotColorOptions {
 
 	get errorColor(): Color {
 		return new Color(this.getOption('errorColor'))
+	}
+
+	get warningColor(): Color {
+		return new Color(this.getOption('warningColor'))
+	}
+
+	get infoColor(): Color {
+		return new Color(this.getOption('infoColor'))
 	}
 
 	get borderRadius() {
