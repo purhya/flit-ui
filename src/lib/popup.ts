@@ -1,6 +1,5 @@
-import {css, define, Component, html, on, off, cache, once, renderComplete} from "flit"
+import {css, define, Component, html, on, off, cache, once, renderComplete, getComponent} from "flit"
 import {getAlignDirection, onceMouseLeaveAll, align, timeout, Timeout, watch, Rect} from "ff"
-import {theme} from "./theme"
 import {Layer} from "./layer"
 
 
@@ -9,8 +8,6 @@ import {Layer} from "./layer"
 export class Popup<Events = {}> extends Component<Events> {
 
 	static style() {
-		let {mainColor} = theme
-
 		return css`
 		:host{
 			display: inline-block;
@@ -18,7 +15,6 @@ export class Popup<Events = {}> extends Component<Events> {
 		}
 		
 		.opened{}
-
 		.layer{}
 	`}
 
@@ -42,6 +38,8 @@ export class Popup<Events = {}> extends Component<Events> {
 	private unwatchLeave: (() => void) | null = null
 
 	render() {
+		// When hide, layer was removed from body
+		// When show, layer was restored into popup, and then trigger connect, then update, then appended to body.
 		let layerPart = cache(this.opened ? this.renderLayer() : '', this.transition)
 		
 		return html`
@@ -50,7 +48,7 @@ export class Popup<Events = {}> extends Component<Events> {
 			</template>
 		`
 	}
-
+	
 	renderLayer() {
 		return html`
 		<f-layer
@@ -103,12 +101,12 @@ export class Popup<Events = {}> extends Component<Events> {
 	}
 
 	alignLayer() {
-		let trangle = (Component.get(this.refs.layer) as Layer).refs.trangle
+		let trangle = (getComponent(this.refs.layer) as Layer).refs.trangle
 		align(this.refs.layer, this.el, this.alignPosition, {margin: this.alignMargin, canShrinkInY: true, trangle})
 	}
 
 	onDisconnected() {
-		// After disconnected, the component imediately locked and will never update.
+		// After disconnected, the component imediately locked and will not update.
 		// So we must delete the layer element because it's in the body.
 		this.opened = false
 
@@ -117,7 +115,7 @@ export class Popup<Events = {}> extends Component<Events> {
 		}
 	}
 
-	clearTimeoutAndWatchings() {
+	clearTimeoutAndUnwatch() {
 		if (this.timeout) {
 			this.timeout.cancel()
 			this.timeout = null
@@ -135,7 +133,7 @@ export class Popup<Events = {}> extends Component<Events> {
 	}
 
 	showLayerLater() {
-		this.clearTimeoutAndWatchings()
+		this.clearTimeoutAndUnwatch()
 
 		if (!this.opened) {
 			if (this.trigger === 'hover' || this.trigger === 'focus') {
@@ -155,7 +153,7 @@ export class Popup<Events = {}> extends Component<Events> {
 	}
 
 	async showLayer() {
-		this.clearTimeoutAndWatchings()
+		this.clearTimeoutAndUnwatch()
 		this.opened = true
 
 		// Wait for `refs.layer` to be referenced.
@@ -181,7 +179,7 @@ export class Popup<Events = {}> extends Component<Events> {
 	}
 
 	hideLayerLater() {
-		this.clearTimeoutAndWatchings()
+		this.clearTimeoutAndUnwatch()
 		
 		if (this.opened) {
 			if (this.trigger === 'click' || this.trigger === 'contextmenu') {
@@ -193,7 +191,7 @@ export class Popup<Events = {}> extends Component<Events> {
 	}
 
 	hideLayer() {
-		this.clearTimeoutAndWatchings()
+		this.clearTimeoutAndUnwatch()
 		this.opened = false
 	}
 

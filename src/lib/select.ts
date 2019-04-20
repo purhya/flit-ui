@@ -19,7 +19,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		:host{
 			display: inline-flex;
 			vertical-align: top;
-			border-bottom: 1px solid ${textColor.lighten(20)};
+			border-bottom: 1px solid ${textColor.lighten(30)};
 			height: ${lineHeight}px;
 			background: #e5e5e5;
 			line-height: ${lineHeight}px;
@@ -304,6 +304,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	}
 
 	async showLayer() {
+		this.hoverAt = null
 		await super.showLayer()
 
 		if (this.editing && this.refs.input) {
@@ -406,7 +407,6 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	}
 
 	onBlur() {
-		this.hoverAt = null
 		off(document, 'keydown', this.onKeyDown as (e: Event) => Promise<void>, this)
 	}
 

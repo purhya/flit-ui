@@ -1,4 +1,4 @@
-import {define, Component, html, css, svg, on, off} from 'flit'
+import {define, Component, getComponent, html, css, svg, on, off} from 'flit'
 import {theme} from './theme'
 import {removeWhere, orderBy} from 'ff'
 
@@ -98,7 +98,7 @@ export class Checkbox extends Component<CheckboxEvents> {
 	onCreated() {
 		let groupEl = this.el.closest('f-checkbox-group') as HTMLElement
 		if (groupEl) {
-			this.checkboxGroup = Component.get(groupEl) as CheckboxGroup
+			this.checkboxGroup = getComponent(groupEl) as CheckboxGroup
 			this.checked = this.checkboxGroup.value == this.value
 			this.checkboxGroup.register(this)
 		}

@@ -139,11 +139,15 @@ export class Slider extends Component<SliderEvents> {
 
 	onMouseDown(e: MouseEvent) {
 		let rect = getRect(this.refs.groove)
-		this.changeValueByEvent(e, rect)
 		this.draging = true
 
+		// If clicked the ball, not move; only move when clicked the groove.
+		if (!(e.target as Element).matches(this.scopeClassName('.ball'))) {
+			this.changeValueByEvent(e, rect)
+		}
+
 		let onMouseMove = (e: MouseEvent) => {
-			// Disable selecting text unexpectedly
+			// Disable selecting text unexpectedly, and makesure ball not lose focus.
 			e.preventDefault()
 			this.changeValueByEvent(e, rect)
 		}
@@ -208,7 +212,7 @@ export class Slider extends Component<SliderEvents> {
 		if (this.vertical) {
 			if (e.key === 'ArrowUp') {
 				e.preventDefault()
-				newValue = Math.max(this.value + this.step, this.min)
+				newValue = Math.min(this.value + this.step, this.max)
 			}
 			else if (e.key === 'ArrowDown') {
 				e.preventDefault()
@@ -222,7 +226,7 @@ export class Slider extends Component<SliderEvents> {
 			}
 			else if (e.key === 'ArrowRight') {
 				e.preventDefault()
-				newValue = Math.max(this.value + this.step, this.min)
+				newValue = Math.min(this.value + this.step, this.max)
 			}
 		}
 		

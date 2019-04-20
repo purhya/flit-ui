@@ -1,5 +1,5 @@
 import {define, Component, html, css} from 'flit'
-import {svgSymbols} from '../../icons/svg-symbol'
+import {svgSymbols} from '../icons/svg-symbol'
 import {subMatches, animateByFunction} from 'ff'
 import {theme} from './theme'
 

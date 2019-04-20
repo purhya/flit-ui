@@ -1,6 +1,5 @@
 import {define, Component, html, css, getEasing, on, off} from 'flit'
 import {theme} from './theme'
-import {Color} from './color'
 
 
 export interface SwitchEvents {
@@ -21,7 +20,7 @@ export class Switch extends Component<SwitchEvents> {
 			vertical-align: top;
 			width: ${w}px;
 			height: ${h}px;
-			color: ${textColor.lighten(10)};
+			color: ${textColor.lighten(20)};
 			border: 1px solid currentColor;
 			border-radius: ${h / 2}px;
 			padding: 1px;
@@ -42,7 +41,7 @@ export class Switch extends Component<SwitchEvents> {
 			width: ${h - 4}px;
 			height: ${h - 4}px;
 			background: #fff;
-			border: 1px solid currentColor;
+			border: 1px solid ${textColor.lighten(10)};;
 			border-radius: 50%;
 			transition: all 0.2s ${getEasing('ease-out-cubic')};
 		}
@@ -57,7 +56,7 @@ export class Switch extends Component<SwitchEvents> {
 			}
 
 			&:hover{
-				background: ${mainColor.darken(5)};
+				background: ${mainColor.darken(10)};
 			}
 		}
 	`}

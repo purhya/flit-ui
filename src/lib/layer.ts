@@ -1,6 +1,7 @@
 import {css, define, Component, html} from "flit"
 import {theme} from "./theme"
 import {Popup} from "./popup"
+import {appendTo} from "flit/out/lib/render"
 
 
 // It's the base class for all the layer which will align with another element.
@@ -59,8 +60,8 @@ export class Layer extends Component {
 		</template>`
 	}
 	
-	// Call `update` every time after restored from `cache`.
-	onUpdated() {
+	// Call `update` every time after restored from `cache(...)`.
+	onReady() {
 		// Why render `<layer>` to body?
 		// It's very common that the `el` is covered or clipped,
 		// which will cause the `<layer>` is not fully visible.
@@ -84,14 +85,8 @@ export class Layer extends Component {
 		// In the future, we may implement a flit directive `renderTo(..., ...)`, 
 		// to render elements and it's anchor node to another element.
 
-		if (typeof this.appendTo === 'string') {
-			let target = document.querySelector(this.appendTo)
-			if (target) {
-				target.append(this.el)
-			}
-		}
-		else if (this.appendTo) {
-			this.appendTo.append(this.el)
+		if (this.appendTo) {
+			appendTo(this.el, this.appendTo)
 		}
 	}
 }

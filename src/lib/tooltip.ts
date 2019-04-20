@@ -1,4 +1,4 @@
-import {css, define, html, off, defineBinding, on, renderAndFollowInContext, cache} from "flit"
+import {css, define, html, off, defineBinding, on, renderAndWatch, cache} from "flit"
 import {theme} from './theme'
 import {Popup} from "./popup"
 import {Layer} from "./layer"
@@ -8,7 +8,7 @@ import {Layer} from "./layer"
 export class TooltipLayer extends Layer {
 
 	static style() {
-		let {lineHeight, borderRadius} = theme
+		let {lineHeight} = theme
 		
 		return css`
 		:host{
@@ -102,11 +102,13 @@ export class GlobalTooltip extends Tooltip {
 	}
 
 	async showLayer() {
-		// Can't render `<layer>` in current `el` since it's dynamic.
+		// Can't render `<layer>` in current `el` since it's dynamic and blongs to another component.
 		if (!this.refs.layer) {
-			let {fragment} = renderAndFollowInContext(this, () => {
+			let {fragment} = renderAndWatch(() => {
 				return html`${cache(this.opened ? (this.renderLayer()) : '', this.transition)}`
-			})
+			}, this)
+			
+			// Must append to document, or it will not be linked.
 			document.body.append(fragment)
 		}
 
@@ -162,8 +164,8 @@ defineBinding('tooltip', class TooltipBinding {
 	private el: HTMLElement
 	private options!: TooltipOptions
 
-	constructor(el: HTMLElement, value: unknown) {
-		this.el = el
+	constructor(el: Element, value: unknown) {
+		this.el = el as HTMLElement
 		on(this.el, 'mouseenter', this.showTooltipLayer, this)
 		this.update(value as any)
 	}
