@@ -1,15 +1,14 @@
-import {css, define, html, on, renderComplete, cache, repeat, off, Component} from "flit"
+import {css, define, html, on, renderComplete, off, Component} from "flit"
 import {theme} from "./theme"
-import {Popup} from "./popup"
-import {Color} from "./color"
-import {remove, scrollToView, scrollToTop} from "ff"
+import {debounce, setDraggable, align} from "ff"
+import {appendTo} from "flit/out/lib/render"
 
 
-@define('f-model')
-class Model extends Component {
+@define('f-modal')
+export class Modal extends Component {
 
 	static style() {
-		let {mainColor, textColor, lineHeight, layerRadius} = theme
+		let {textColor, lineHeight, layerRadius} = theme
 
 		return css`
 		:host{
@@ -63,12 +62,16 @@ class Model extends Component {
 				cursor: pointer;
 				color: #5e5e5e;
 				transition: color 0.2s ease-out;
+
+				f-icon{
+					margin: auto;
+				}
 				
 				&:hover{
-					color: #333;
+					color: #000;
 				}
 
-				&:active .icon{
+				&:active f-icon{
 					transform: translateY(1px);
 				}
 			}
@@ -110,108 +113,101 @@ class Model extends Component {
 		}
 	`}
 
-	opened: boolean = false
+	opened: boolean = true
 	movable: boolean = false
 	mask: boolean = true
-
-	//win may zoom out and collapse to a button
-	transition: 'fade',
+	transition: string = 'fade'
+	title: string = ''
+	appendTo: string | HTMLElement | null = 'body'
 
 	//extensions may make win wrapped by a mask, so we need a win el
-	template: {
-		main: `
-			<win class="win" f-show="opened" f-transition="{{transition}}" @leaved="onLeaved">
-				{mask}
-				{top}
-				{body}
-				{foot}
-			</win>
-		`,
+	render() {
+		return html`
+		<template
+			:show=${{when: this.opened, runAtStart: true, transition: {name: this.transition, callback: this.onTransitionEnd.bind(this)}}}
+		>
+		${this.mask ? html`
+			<div class="mask"
+				:ref="mask"
+				:show=${{when: this.opened, runAtStart: true, transition: this.transition}}
+			/>` : ''
+		}
+			<div class="top">
+				<div class="head" :ref="head" :style.cursor=${this.movable ? 'move' : ''}">
+					${this.title}
+				</div>
+				<div class="actions">
+					<div @click=${this.hide}>
+						<f-icon type="close" />
+					</div>
+				</div>
+			</div>
+			<div class="body"><slot name="body" /></div>
+			<div class="foot"><slot name="foot" /></div>
+		</template>
+	`}
 
-		mask:  `<div class="win-mask" f-if="mask" f-show="opened" f-transition="{{transition}}" :class="maskClass" f-ref="mask"></div>`,
-		top: `<div class="win-top">{head}{actions}</div>`,
+	onTransitionEnd(type: string, finish: boolean) {
+		if (type === 'leave' && finish) {
+			if (this.mask) {
+				this.refs.mask.remove()
+			}
+			this.el.remove()
+		}
+	}
 
-		actions: `<div class="win-actions" f-ref="actions">{close}</div>`,
-		close: `<div class="win-close" @click="hide" f-ref="close"><icon type="close"></icon></div>`,
-
-		head:  `<slot name="whead" class="win-head" f-ref="head" :style.cursor="movable ? 'move' : ''"></slot>`,
-		body:  `<slot name="wbody" class="win-body" f-ref="body"></slot>`,
-		foot:  `<slot name="wfoot" class="win-foot" f-ref="foot"></slot>`,
-	},
-
-	//if appendTo is a getter, it will can't be overwrite easily with "=" by child
-	appendTo () {
-		return document.body
-	},
-
-
-	onReady () {
+	onReady() {
 		if (this.movable && this.refs.head) {
-			this.el.setMovable(this.el)
+			setDraggable(this.el, this.refs.head)
 		}
 
 		if (this.opened) {
 			this.show()
 		}
 
-		window.on('resize', ff.debounce(this.onWindowResize, 200), this)
-	},
+		on(window, 'resize', debounce(this.onWindowResize, 200).wrapped, this)
+	}
 
+	onDisconnected() {
+		off(window, 'resize', this.onWindowResize, this)
+	}
 
-	onLeaved () {
-		if (this.destroyAfterHide) {
-			this.destroy()
-		}
-	},
-
-
-	onDestroy () {
-		window.off('resize', this.onWindowResize, this)
-	},
-
-
-	show () {
-		if (this.mask) {
-			this.el.before(this.refs.mask)
-			this.refs.mask.setCSS('z-index', this.el.getCSS('z-index'))
-		}
-
+	onWindowResize() {
 		if (this.opened) {
 			this.toCenter()
 		}
-		else {
-			this.el.show()
-			this.toCenter()
-			this.el.hide()
+	}
 
+	async onUpdated() {
+		if (this.opened) {
+			await renderComplete()
+			this.toCenter()
+		}
+	}
+
+	async show() {
+		if (!this.opened) {
 			this.opened = true
 
-			FF.nextTick(() => {
-				this.emit('show')
-			})
+			if (this.appendTo) {
+				appendTo(this.el, this.appendTo)
+			}
 		}
-	},
+		
+		if (this.mask && this.el.previousElementSibling !== this.refs.mask) {
+			this.el.before(this.refs.mask)
+		}
+	}
 
-
-	hide () {
+	hide() {
 		this.opened = false
-		this.emit('hide')
-	},
+	}
 
+	toCenter() {
+		align(this.el, document.documentElement, 'c')
+	}
 
-	toCenter () {
-		this.el.alignTo(document.html, 'c')
-	},
-
-
-	toggle () {
-		this.hidden ? this.show() : this.hide()
-	},
-
-
-	onWindowResize () {
-		if (this.opened) {
-			this.toCenter()
-		}
-	},
-})
+	toggleOpened() {
+		this.opened ? this.hide() : this.show()
+	}
+}
