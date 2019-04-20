@@ -1,8 +1,6 @@
-import {css, define, Component, html, on, renderInContext, renderComplete, off} from "flit"
+import {css, define, Component, html, on, getComponent, renderComplete, off, cache, renderAndWatch} from "flit"
 import {theme} from "./theme"
 import {onceMouseLeaveAll, align, getPreviousElement, getNextElement} from "ff"
-import {Transition} from "flit/out/lib/transition"
-import {Popup} from "./popup"
 import {Layer} from "./layer"
 
 
@@ -31,8 +29,7 @@ export class Menu extends Component {
 	/** If any direct items in it has icon */
 	itemsHasIcon: boolean = false
 
-	/** Assigned in `<dropdown>` */
-	layerEl: HTMLElement | null = null
+	layer: Layer | null = null
 	
 	topMenu!: Menu
 
@@ -55,13 +52,15 @@ export class Menu extends Component {
 	onCreated() {
 		this.topMenu = this
 
-		this.layerEl = this.el.closest('f-layer') as HTMLElement | null
-		if (this.layerEl) {
-			let layer = Component.get(this.layerEl) as Layer
-			let popup = layer.popup as Popup
+		let layerEl = this.el.closest('f-layer') as HTMLElement | null
+		this.layer = layerEl ? getComponent(layerEl) as Layer : null
 
-			this.watch(() => popup.opened, (opened) => {
-				if (!opened) {
+		if (this.layer && this.layer.popup) {
+			this.watch(() => this.layer!.popup!.opened, (opened) => {
+				if (opened) {
+					this.setHoverItem(null)
+				}
+				else {
 					this.hideAllSubMenuLayers()
 				}
 			})
@@ -96,7 +95,7 @@ export class Menu extends Component {
 				this.el.focus()
 			}
 
-			let siblingsMenuItems = ([...menuItem.el.parentElement!.children] as HTMLElement[]).filter(el => el.localName === 'f-menuitem').map(Component.get) as MenuItem[]
+			let siblingsMenuItems = ([...menuItem.el.parentElement!.children] as HTMLElement[]).filter(el => el.localName === 'f-menuitem').map(getComponent) as MenuItem[]
 			siblingsMenuItems.forEach(item => {
 				if (item !== menuItem && item.subMenu && item.subMenu.opened) {
 					this.hideSubMenuLayer(item.subMenu)
@@ -121,7 +120,7 @@ export class Menu extends Component {
 			}
 		}
 
-		let openedLayerEls = [this.layerEl!, ...newOpenedSubMenus.map(subMenu => subMenu.layerEl!)]
+		let openedLayerEls = [this.layer!.el, ...newOpenedSubMenus.map(subMenu => subMenu.layer!.el)]
 		if (this.unwatchSubMenusLeave) {
 			this.unwatchSubMenusLeave()
 		}
@@ -164,7 +163,7 @@ export class Menu extends Component {
 		if (e.key === 'Enter') {
 			e.preventDefault()
 			
-			if (this.layerEl && hoverItem.subMenu) {
+			if (this.layer && hoverItem.subMenu) {
 				if (hoverItem.subMenu.opened) {
 					hoverItem.subMenu.hideLayer()
 				}
@@ -175,22 +174,22 @@ export class Menu extends Component {
 			else if (hoverItem) {
 				hoverItem.onClick()
 				
-				if (this.layerEl) {
-					(Component.get(this.layerEl) as Layer).popup!.hideLayer()
+				if (this.layer) {
+					this.layer.popup!.hideLayer()
 				}
 			}
 		}
 		else if (e.key === 'ArrowLeft') {
 			e.preventDefault()
 
-			if (this.layerEl && hoverItem.parentMenu && (hoverItem.parentMenu instanceof SubMenu) && hoverItem.parentMenu.parentMenu) {
+			if (this.layer && hoverItem.parentMenu && (hoverItem.parentMenu instanceof SubMenu) && hoverItem.parentMenu.parentMenu) {
 				hoverItem.parentMenu.parentMenu.hoverOneItem()
 			}
 		}
 		else if (e.key === 'ArrowRight') {
 			e.preventDefault()
 
-			if (this.layerEl && hoverItem.subMenu) {
+			if (this.layer && hoverItem.subMenu) {
 				if (hoverItem.subMenu.opened) {
 					hoverItem.subMenu.hoverOneItem()
 				}
@@ -210,8 +209,8 @@ export class Menu extends Component {
 		else if (e.key === 'Escape') {
 			e.preventDefault()
 
-			if (this.layerEl) {
-				(Component.get(this.layerEl) as Layer).popup!.hideLayer()
+			if (this.layer) {
+				this.layer.popup!.hideLayer()
 			}
 		}
 	}
@@ -224,7 +223,7 @@ export class Menu extends Component {
 		while (prev && prev.localName !== 'f-menuitem')
 
 		if (prev) {
-			this.setHoverItem(Component.get(prev) as MenuItem)
+			this.setHoverItem(getComponent(prev) as MenuItem)
 		}
 	}
 
@@ -236,12 +235,12 @@ export class Menu extends Component {
 		while (next && next.localName !== 'f-menuitem')
 
 		if (next) {
-			this.setHoverItem(Component.get(next) as MenuItem)
+			this.setHoverItem(getComponent(next) as MenuItem)
 		}
 	}
 
 	hoverOneItem() {
-		let menuItems = ([...this.el.children].filter(el => el.localName === 'f-menuitem') as HTMLElement[]).map(Component.get) as MenuItem[]
+		let menuItems = ([...this.el.children].filter(el => el.localName === 'f-menuitem') as HTMLElement[]).map(getComponent) as MenuItem[]
 
 		let menuItem = menuItems.find(item => !!item.subMenu && item.subMenu.opened)
 
@@ -259,7 +258,6 @@ export class Menu extends Component {
 	}
 
 	onBlur() {
-		this.setHoverItem(null)
 		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 }
@@ -336,7 +334,7 @@ export class MenuItem extends Component {
 	hoverAt: boolean = false
 	parentMenu!: Menu | SubMenu
 	topMenu!: Menu
-	subMenu!: SubMenu
+	subMenu: SubMenu | null = null
 
 	render() {
 		let parentMenu = this.parentMenu
@@ -351,7 +349,7 @@ export class MenuItem extends Component {
 
 		let rightIcon: any = ''
 		if (subMenu) {
-			let rightIconType = topMenu.layerEl
+			let rightIconType = topMenu.layer
 				? 'right' : subMenu.opened
 				? 'up' : 'down'
 			
@@ -364,8 +362,8 @@ export class MenuItem extends Component {
 			<template
 				:class.selected=${this.selected}
 				:class.hover=${this.hoverAt}
-				:class.submenu-opened=${topMenu.layerEl && subMenu && subMenu.opened}
-				:style.padding-left.px=${topMenu.layerEl ? '' : parentMenu.itemsHasIcon ? parentMenu.deep * iconSize + 5 : parentMenu.deep * iconSize}
+				:class.submenu-opened=${topMenu.layer && subMenu && subMenu.opened}
+				:style.padding-left.px=${topMenu.layer ? '' : parentMenu.itemsHasIcon ? parentMenu.deep * iconSize + 5 : parentMenu.deep * iconSize}
 				@click=${this.onClick}
 				@mouseenter=${this.onMouseEnter}
 			>
@@ -379,7 +377,7 @@ export class MenuItem extends Component {
 	}
 
 	onCreated() {
-		this.parentMenu = Component.get(this.el.closest('f-menu, f-submenu') as HTMLElement) as Menu | SubMenu
+		this.parentMenu = getComponent(this.el.closest('f-menu, f-submenu') as HTMLElement) as Menu | SubMenu
 		if (!this.parentMenu) {
 			throw new Error(`"<f-menuitem>" must be contained in a "<f-menu>"`)
 		}
@@ -402,7 +400,7 @@ export class MenuItem extends Component {
 			}
 
 			// Otherwise it been controlled by registered 'mouseenter' event.
-			if (!topMenu.layerEl) {
+			if (!topMenu.layer) {
 				this.subMenu.opened = !this.subMenu.opened
 			}
 		}
@@ -451,14 +449,14 @@ export class SubMenu extends Component {
 	itemsHasIcon: boolean = false
 	parentMenu!: Menu | SubMenu
 	topMenu!: Menu
-	layerEl: HTMLElement | null = null
+	layer: Layer | null = null
 
 	private menuItem: MenuItem | null = null
 
 	render() {
 		return html`
 		<template
-			:show=${{when: this.topMenu.layerEl ? true : this.opened, transition: this.topMenu.layerEl ? '' : 'height'}}
+			:show=${{when: this.topMenu.layer ? true : this.opened, transition: this.topMenu.layer ? '' : 'height'}}
 			:class.has-icon="${this.itemsHasIcon}"
 		>
 			<slot></slot>
@@ -466,7 +464,7 @@ export class SubMenu extends Component {
 	`}
 
 	onCreated() {
-		this.parentMenu = Component.get(this.el.parentElement!.closest('f-menu, f-submenu') as HTMLElement) as Menu | SubMenu
+		this.parentMenu = getComponent(this.el.parentElement!.closest('f-menu, f-submenu') as HTMLElement) as Menu | SubMenu
 		if (!this.parentMenu) {
 			throw new Error(`"<f-submenu>" must be contained in a "<f-menu>"`)
 		}
@@ -474,14 +472,14 @@ export class SubMenu extends Component {
 		this.deep = this.parentMenu.deep + 1
 
 		if (this.el.previousElementSibling) {
-			let menuItem = Component.get(this.el.previousElementSibling as HTMLElement)
+			let menuItem = getComponent(this.el.previousElementSibling as HTMLElement)
 			if (menuItem instanceof MenuItem) {
 				menuItem.subMenu = this
 				this.menuItem = menuItem
 			}
 		}
 
-		if (this.topMenu.layerEl) {
+		if (this.topMenu.layer) {
 			this.initWhenInLayer()
 		}
 	}
@@ -492,45 +490,43 @@ export class SubMenu extends Component {
 		if (this.menuItem) {
 			on(this.menuItem.el, 'mouseenter', this.showInLayer, this)
 		}
-
-		if (this.opened) {
-			this.opened = false
-			this.showInLayer()
-		}
 	}
 
 	async showInLayer() {
-		// If already opened, just hide included submenus.
+		// If already opened and mouseenter, reset all opened submenus.
 		if (this.opened) {
 			this.topMenu.onSubMenuOpened(this)
 		}
 		else {
 			this.opened = true
 
-			if (!this.layerEl) {
-				this.layerEl = renderInContext(this, html`<f-layer class="layer" :trangle=${false} />`).firstElementChild as HTMLElement
-				this.layerEl.append(this.el)
+			if (this.layer) {
+				// Must insert into document, or the watcher will be disconnected since current menu in it is not in document.
+				document.body.append(this.layer.el)
+				this.topMenu.onSubMenuOpened(this)
 			}
+			else {
+				let {fragment} = renderAndWatch(() => {
+					return html`${
+						cache(this.opened ? html`<f-layer class="layer" :trangle=${false} :ref=${this.onRefLayer} />` : '', 'fade')
+					}`
+				}, this)
 
-			document.body.append(this.layerEl)
-			this.topMenu.onSubMenuOpened(this)
-
-			await renderComplete()
-			align(this.layerEl, this.menuItem!.el, 'rt', {margin: [5, 0]})
-			new Transition(this.layerEl, {name: 'fade'}).enter()
+				document.body.append(fragment)
+			}
 		}
+	}
+
+	async onRefLayer(layerEl: HTMLElement) {
+		layerEl.append(this.el)
+		await renderComplete()
+		this.layer = getComponent(layerEl) as Layer
+		align(this.layer!.el, this.menuItem!.el, 'rt', {margin: [5, 0]})
+		this.topMenu.onSubMenuOpened(this)
 	}
 
 	hideLayer() {
 		this.opened = false
-
-		if (this.layerEl) {
-			new Transition(this.layerEl!, {name: 'fade'}).leave().then((finish: boolean) => {
-				if (finish) {
-					this.layerEl!.remove()
-				}
-			})
-		}
 	}
 
 	hoverOneItem() {
