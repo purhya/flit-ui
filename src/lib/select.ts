@@ -65,7 +65,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		.layer{
 			border-radius: 0;
 			filter: none;
-			box-shadow: 0 2px 10px ${new Color('#000').alpha(0.2)};
+			box-shadow: 0 0 6px ${new Color('#000').alpha(0.2)};
 		}
 	
 		.list{

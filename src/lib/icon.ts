@@ -9,11 +9,15 @@ export class Icon extends Component {
 
 	static style = css`
 	:host{
-		display: inline-block;
+		display: inline-flex;
 		stroke: currentColor;
 		fill: none;
 		margin: auto 0;
 		vertical-align: top;
+
+		svg{
+			margin: auto;
+		}
 	}
 	`
 
@@ -34,13 +38,13 @@ export class Icon extends Component {
 		let height = Math.round(Number(h) * rate)
 
 		return html`
-		<template
-			:style=${{width, height}}
-		>
+		<template>
 			<svg
 				viewBox=${viewBox}
+				width=${width}
+				height=${height}
 				:html=${inner}
-			></svg>
+			/>
 		</template>
 		`
 	}

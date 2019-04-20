@@ -1,0 +1,308 @@
+import {css, define, html, onRenderComplete, renderComponent} from "flit"
+import {theme} from "./theme"
+import {Modal} from "./modal"
+
+
+export type MessageType = 'info' | 'success' | 'alert' | 'confirm' | 'prompt'
+
+export interface MessageOptions {
+	type?: MessageType
+	title?: string
+	content?: string
+	buttons?: {[key: string]: string}
+	list?: string[]
+	wide?: boolean
+	inputValue?: string
+	inputValidator?: ((value: string) => string)
+	resolve?: (value: string | [string, string]) => void
+}
+
+
+@define('f-message-modal')
+export class MessageModal extends Modal {
+	
+	static style() {
+		let {fontSize, mainColor, infoColor, lineHeight, successColor, errorColor, warningColor} = theme
+
+		return css`
+		${super.style()}
+
+		:host{
+			z-index: 1200;	// Higher that modal & layer - 1000, and tooltip - 1100
+			width: 350px;
+	
+			&.wide, &.has-title{
+				width: 500px;
+			}
+		}
+
+		.body{
+			display: flex;
+			padding: ${lineHeight / 2}px 0 0 0;
+			line-height: ${lineHeight * 0.8}px;
+			min-height: ${lineHeight * 0.8}px;
+		}
+
+		.left{}
+
+		.icon{
+			margin: 0 8px auto 0;
+			stroke-width: 0.666px;
+
+			svg{
+				width: ${lineHeight}px;
+				height: ${lineHeight}px;
+			}
+		}
+
+		.right{
+			flex: 1;
+		}
+
+		.text{
+			padding-top: 4px;
+			min-width: 0;
+			word-wrap: break-word;
+
+			a{
+				text-decoration: underline;
+
+				&:hover{
+					color: ${mainColor.darken(10)};
+				}
+			}
+		}
+
+		.field{
+			margin-top: 10px;
+		}
+
+		.input{
+			width: 100%;
+		}
+
+		.error-text{
+			color: ${errorColor};
+			margin-top: 3px;
+			font-size: ${fontSize * 6 / 7};
+		}
+
+		.list{
+			margin-top: 5px;
+			overflow-y: auto;
+			max-height: ${lineHeight * 8}px;
+		}
+
+		.icon-alert{
+			color: ${errorColor};
+		}
+
+		.icon-info{
+			color: ${infoColor};
+		}
+
+		.icon-success{
+			color: ${successColor};
+		}
+
+		.icon-confirm{
+			color: ${warningColor};
+		}
+	`}
+
+	options: MessageOptions | null = null
+	movable: boolean =false
+	stack: MessageOptions[] = []
+	isTouched: boolean = false
+	inputErrorText: string = ''
+
+	constructor(el: HTMLElement) {
+		super(el)
+	}
+
+	render() {
+		let options = this.options! || {}
+
+		return html`
+		<template 
+			tabindex="0"	
+			:class.has-title=${options.title}
+			:class.wide=${!!options.wide}
+			:show=${{when: this.opened, transition: {name: this.transition, callback: this.onTransitionEnd.bind(this)}}}
+		>
+		${this.mask ? html`
+			<div class="mask"
+				:ref="mask"
+				:show=${{when: this.opened, transition: this.transition}}
+			/>` : ''
+		}
+		${
+			options.title ? html`
+			<div class="top head">${options.title}</whead>
+			` : ''
+		}
+			<div class="body">
+				<div class="left">
+					${options.type !== 'prompt' ? html`<f-icon :class="icon icon-${options.type}" :type="${options.type}" />` : ''}
+				</div>
+				<div class="right">
+					<div class="text" :html=${options.content} />
+				${
+					options.type === 'prompt' ? html`
+					<div class="field">
+						<input class="input" type="text"
+							:ref="input"
+							:class.touched=${this.isTouched}
+							:model="options.inputValue"
+							@keydown.enter=${this.onMouseEnter}
+						>
+						<div class="error-text">${this.inputErrorText}</div>
+					</div>
+					` : ''
+				}
+				</div>
+			</div>
+
+			<div class="foot">
+			${
+				options.buttons ? Object.entries(options.buttons).map(([key, text]) => {
+					return html`
+					<button
+						?filled=${key === 'ok'}
+						@click=${() => this.onClickButton(key)}
+						?disabled=${options.type === 'prompt' && key === 'ok' && !options.inputValue}
+					>
+						${text}
+					</button>
+				`}) : ''
+			}
+			</div>
+		</template>
+	`}
+
+	onMouseEnter() {
+		this.onClickButton('ok')
+	}
+
+	onClickButton(btn: string) {
+		let {type, inputValidator, inputValue, resolve} = this.options!
+		let input = this.refs.input as HTMLInputElement | null
+
+		if (btn === 'ok' && type === 'prompt' && input && !input.validity.valid) {
+			input.checkValidity()
+			this.isTouched = true
+
+			if (inputValidator) {
+				this.inputErrorText = inputValidator(inputValue || '')
+			}
+			return
+		}
+
+		if (type === 'prompt') {
+			this.isTouched = false
+			this.inputErrorText = ''
+
+			let value = btn === 'ok' && inputValue ? inputValue : ''
+			resolve!([btn, value])
+		}
+		else {
+			resolve!(btn)
+		}
+
+		if (this.stack.length > 0) {
+			this.showMessage(this.stack.shift()!)
+		}
+		else {
+			this.hide()
+		}
+	}
+
+	async showMessage(options: MessageOptions) {
+		let {list} = options
+
+		if (list) {
+			options.content = options.content || ''
+			options.content += '<div class="list">' + list.map(html => '<div>' + html.replace(/</g, '&lt;') + '</div>').join('') + '</div>'
+		}
+
+		let promise = new Promise((resolve) => {
+			options.resolve = resolve
+		})
+
+		this.options = options
+
+		if (options.type === 'prompt') {
+			onRenderComplete(() => {
+				this.refs.input.focus()
+				;(this.refs.input as HTMLInputElement).select()
+			})
+		}
+
+		this.show()
+
+		return promise 
+	}
+}
+
+
+export class Message {
+
+	private modal: MessageModal | null = null
+
+	private showMessage(options: MessageOptions) {
+		if (!this.modal) {
+			this.modal = renderComponent(html`<f-message-modal />`) as MessageModal
+		}
+
+		this.modal.showMessage(options)
+	}
+	
+	/** Show info type message. */
+	info(content: string, options: MessageOptions = {}) {
+		return this.showMessage(Object.assign({
+			type: 'info',
+			content,
+			buttons: {ok: 'OK@'},
+		}, options) as MessageOptions)
+	}
+
+	/** Show success type message. */
+	success(content: string, options: MessageOptions = {}) {
+		return this.showMessage(Object.assign({
+			type: 'success',
+			content,
+			buttons: {ok: 'OK'},
+		}, options) as MessageOptions)
+	}
+
+	/** Show alert type message. */
+	alert(content: string, options: MessageOptions = {}) {
+		return this.showMessage(Object.assign({
+			type: 'alert',
+			content,
+			buttons: {ok: 'OK'},
+		}, options) as MessageOptions)
+	}
+
+	/** Show confirm type message. */
+	confirm(content: string, options: MessageOptions = {}) {
+		return this.showMessage(Object.assign({
+			type: 'confirm',
+			content,
+			buttons: {cancel: 'Cancel', ok: 'Yes'},
+		}, options) as MessageOptions)
+	}
+
+	/** Show prompt type message. */
+	prompt(content: string, options: MessageOptions = {}) {
+		return this.showMessage(Object.assign({
+			type: 'prompt',
+			content,
+			inputValue: '',
+			buttons: {cancel: 'Cancel', ok: 'OK'},
+		}, options) as MessageOptions)
+	}
+}
+
+
+export const message = new Message()

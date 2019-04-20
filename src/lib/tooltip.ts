@@ -8,7 +8,7 @@ import {Layer} from "./layer"
 export class TooltipLayer extends Layer {
 
 	static style() {
-		let {lineHeight} = theme
+		let {lineHeight, layerRadius} = theme
 		
 		return css`
 		:host{
@@ -21,7 +21,7 @@ export class TooltipLayer extends Layer {
 			line-height: ${lineHeight * 0.8}px;
 			background: #333;
 			color: #fff;
-			border-radius: 4px;
+			border-radius: ${layerRadius / 2}px;
 		}
 
 		.trangle{
@@ -105,7 +105,7 @@ export class GlobalTooltip extends Tooltip {
 		// Can't render `<layer>` in current `el` since it's dynamic and blongs to another component.
 		if (!this.refs.layer) {
 			let {fragment} = renderAndWatch(() => {
-				return html`${cache(this.opened ? (this.renderLayer()) : '', this.transition)}`
+				return cache(this.opened ? (this.renderLayer()) : '', this.transition)
 			}, this)
 			
 			// Must append to document, or it will not be linked.

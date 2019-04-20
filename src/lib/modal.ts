@@ -1,4 +1,4 @@
-import {css, define, html, on, renderComplete, off, Component} from "flit"
+import {css, define, html, on, renderComplete, off, Component, TemplateResult} from "flit"
 import {theme} from "./theme"
 import {debounce, setDraggable, align} from "ff"
 import {appendTo} from "flit/out/lib/render"
@@ -8,7 +8,7 @@ import {appendTo} from "flit/out/lib/render"
 export class Modal extends Component {
 
 	static style() {
-		let {textColor, lineHeight, layerRadius} = theme
+		let {mainColor, textColor, lineHeight, layerRadius} = theme
 
 		return css`
 		:host{
@@ -56,9 +56,13 @@ export class Modal extends Component {
 			display: flex;
 			margin-right: -10px;
 
-			> div{
+			button{
+				all: unset;
+				border: none;
+				margin: auto 0;
 				display: flex;
-				width: 32px;
+				width: ${lineHeight}px;
+				height: ${lineHeight}px;
 				cursor: pointer;
 				color: #5e5e5e;
 				transition: color 0.2s ease-out;
@@ -71,7 +75,11 @@ export class Modal extends Component {
 					color: #000;
 				}
 
-				&:active f-icon{
+				&:focus{
+					color: ${mainColor};
+				}
+
+				&:active{
 					transform: translateY(1px);
 				}
 			}
@@ -90,30 +98,30 @@ export class Modal extends Component {
 			justify-content: flex-end;
 			padding: 16px 0;
 
-			> :nth-child(n+2){
+			button:nth-child(n+2){
 				margin-left: 4px;
 			}
 
-			> :nth-last-child(n+2){
+			button:nth-last-child(n+2){
 				margin-right: 4px;
 			}
 
-			> [align=left]{
+			button[align=left]{
 				margin-right: auto;
 			}
 
-			> [align=right]{
+			button[align=right]{
 				margin-left: auto;
 			}
 
-			> [align=center]{
+			button[align=center]{
 				margin-left: auto;
 				margin-right: auto;
 			}
 		}
 	`}
 
-	opened: boolean = true
+	opened: boolean = false
 	movable: boolean = false
 	mask: boolean = true
 	transition: string = 'fade'
@@ -121,15 +129,16 @@ export class Modal extends Component {
 	appendTo: string | HTMLElement | null = 'body'
 
 	//extensions may make win wrapped by a mask, so we need a win el
-	render() {
+	render(): TemplateResult | string | null {
 		return html`
 		<template
-			:show=${{when: this.opened, runAtStart: true, transition: {name: this.transition, callback: this.onTransitionEnd.bind(this)}}}
+			tabindex="0"
+			:show=${{when: this.opened, transition: {name: this.transition, callback: this.onTransitionEnd.bind(this)}}}
 		>
 		${this.mask ? html`
 			<div class="mask"
 				:ref="mask"
-				:show=${{when: this.opened, runAtStart: true, transition: this.transition}}
+				:show=${{when: this.opened, transition: this.transition}}
 			/>` : ''
 		}
 			<div class="top">
@@ -137,9 +146,9 @@ export class Modal extends Component {
 					${this.title}
 				</div>
 				<div class="actions">
-					<div @click=${this.hide}>
+					<button tabindex="0" @click=${this.hide}>
 						<f-icon type="close" />
-					</div>
+					</button>
 				</div>
 			</div>
 			<div class="body"><slot name="body" /></div>
@@ -161,10 +170,6 @@ export class Modal extends Component {
 			setDraggable(this.el, this.refs.head)
 		}
 
-		if (this.opened) {
-			this.show()
-		}
-
 		on(window, 'resize', debounce(this.onWindowResize, 200).wrapped, this)
 	}
 
@@ -178,33 +183,28 @@ export class Modal extends Component {
 		}
 	}
 
-	async onUpdated() {
-		if (this.opened) {
-			await renderComplete()
-			this.toCenter()
-		}
-	}
-
 	async show() {
-		if (!this.opened) {
-			this.opened = true
+		this.opened = true
 
-			if (this.appendTo) {
-				appendTo(this.el, this.appendTo)
-			}
+		if (this.appendTo) {
+			appendTo(this.el, this.appendTo)
 		}
 		
-		if (this.mask && this.el.previousElementSibling !== this.refs.mask) {
+		if (this.mask && this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
 			this.el.before(this.refs.mask)
 		}
-	}
 
-	hide() {
-		this.opened = false
+		await renderComplete()
+		this.toCenter()
+		this.el.focus()
 	}
 
 	toCenter() {
 		align(this.el, document.documentElement, 'c')
+	}
+
+	hide() {
+		this.opened = false
 	}
 
 	toggleOpened() {

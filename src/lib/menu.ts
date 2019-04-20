@@ -258,6 +258,7 @@ export class Menu extends Component {
 	}
 
 	onBlur() {
+		this.setHoverItem(null)
 		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 }
@@ -507,9 +508,10 @@ export class SubMenu extends Component {
 			}
 			else {
 				let {fragment} = renderAndWatch(() => {
-					return html`${
-						cache(this.opened ? html`<f-layer class="layer" :trangle=${false} :ref=${this.onRefLayer} />` : '', 'fade')
-					}`
+					return cache(
+						this.opened ? html`<f-layer class="layer" :trangle=${false} :ref=${this.onRefLayer} />` : '',
+						{enterAtStart: true, transition: 'fade'}
+					)
 				}, this)
 
 				document.body.append(fragment)

@@ -70,7 +70,6 @@ export class Popup<Events = {}> extends Component<Events> {
 	onCreated() {
 		if (this.trigger === 'hover') {
 			on(this.el, 'mouseenter', this.showLayerLater, this)
-			on(this.el, 'click', this.toggleOpened, this)
 		}
 		else if (this.trigger === 'click') {
 			on(this.el, 'click', this.toggleOpened, this)
