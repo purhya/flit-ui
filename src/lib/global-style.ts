@@ -17,8 +17,8 @@ addGlobalStyle(() => {
 		justify-content: center;
 		height: ${lineHeight}px;
 		line-height: ${lineHeight - 2}px;
-		border: 1px solid ${textColor.lighten(20)};
-		color: ${textColor.lighten(10)};
+		border: 1px solid ${textColor.lighten(30)};
+		color: ${textColor.lighten(20)};
 		border-radius: ${borderRadius}px;
 		padding: 0 ${lineHeight / 2 + Math.max(0, (borderRadius - 5) / 2)}px;
 		background: #fff;
@@ -105,7 +105,7 @@ addGlobalStyle(() => {
 	
 	[type=text], [type=number], [type=email], textarea{
 		border: none;
-		box-shadow: inset 0 -1px 0 0 ${textColor.lighten(20)};
+		box-shadow: inset 0 -1px 0 0 ${textColor.lighten(30)};
 		background: #e5e5e5;
 		
 		&:focus{
