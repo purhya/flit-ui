@@ -1,11 +1,15 @@
-import {css, define, Component, html, on, getComponent, renderComplete, off, cache, renderAndWatch} from "flit"
-import {theme} from "./theme"
-import {onceMouseLeaveAll, align, getPreviousElement, getNextElement} from "ff"
-import {Layer} from "./layer"
+import {css, define, Component, html, on, getComponent, renderComplete, off, cache, renderAndWatch, getComponentAsync} from 'flit'
+import {theme} from './theme'
+import {onceMouseLeaveAll, align, getPreviousElement, getNextElement} from 'ff'
+import {Layer} from './layer'
 
+
+interface MenuEvents {
+	select: (item: MenuItem) => void
+}
 
 @define('f-menu')
-export class Menu extends Component {
+export class Menu extends Component<MenuEvents> {
 
 	static style() {
 		return css`
@@ -79,6 +83,7 @@ export class Menu extends Component {
 		}
 
 		this.setHoverItem(menuItem)
+		this.emit('select', menuItem)
 	}
 
 	setHoverItem(menuItem: MenuItem | null) {
@@ -146,8 +151,7 @@ export class Menu extends Component {
 	}
 	
 	onFocus() {
-		// May have `hoverItem` from `mouseenter` event before got focus.
-		if (!this.hoverItem) {
+		if (!this.layer) {
 			this.hoverOneItem()
 		}
 		
@@ -157,6 +161,10 @@ export class Menu extends Component {
 	private onKeyDown(e: KeyboardEvent) {
 		let hoverItem = this.hoverItem
 		if (!hoverItem) {
+			if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+				e.preventDefault()
+				this.hoverOneItem()
+			}
 			return
 		}
 
@@ -268,7 +276,7 @@ export class Menu extends Component {
 export class MenuItem extends Component {
 
 	static style() {
-		let {lineHeight, mainColor} = theme
+		let {lpx, mainColor} = theme
 
 		return css`
 		:host{
@@ -276,7 +284,7 @@ export class MenuItem extends Component {
 			position: relative;
 			display: flex;
 			cursor: pointer;
-			padding: 0 ${lineHeight / 3}px;
+			padding: 0 ${lpx(10)}px;
 
 			&.hover{
 				background: #eee;
@@ -305,8 +313,8 @@ export class MenuItem extends Component {
 		// still need an element to place.
 		.icon-place{
 			display: flex;
-			width: ${lineHeight}px;
-			margin-right: -${lineHeight / 3}px;
+			width: ${lpx(30)}px;
+			margin-right: ${lpx(-10)}px;
 
 			f-icon{
 				margin: auto;
@@ -320,7 +328,7 @@ export class MenuItem extends Component {
 
 		.text{
 			flex: 1;
-			padding: 0 ${lineHeight / 3}px;
+			padding: 0 ${lpx(10)}px;
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
@@ -357,7 +365,7 @@ export class MenuItem extends Component {
 			rightIcon = html`<f-icon class="right-arrow" :type=${rightIconType} />`
 		}
 
-		let iconSize = theme.lineHeight - 5
+		let iconSize = theme.lpx(25)
 
 		return html`
 			<template
@@ -377,7 +385,7 @@ export class MenuItem extends Component {
 		`
 	}
 
-	onCreated() {
+	async onCreated() {
 		this.parentMenu = getComponent(this.el.closest('f-menu, f-submenu') as HTMLElement) as Menu | SubMenu
 		if (!this.parentMenu) {
 			throw new Error(`"<f-menuitem>" must be contained in a "<f-menu>"`)
@@ -388,6 +396,11 @@ export class MenuItem extends Component {
 
 		if (this.selected) {
 			this.topMenu.setSelectedItem(this)
+		}
+
+		let nextEl = this.el.nextElementSibling
+		if (nextEl && nextEl.localName === 'f-submenu') {
+			this.subMenu = await getComponentAsync(nextEl as HTMLElement) as SubMenu
 		}
 	}
 
@@ -431,7 +444,7 @@ export class MenuSpliter extends Component {
 export class SubMenu extends Component {
 
 	static style() {
-		let {fontSize} = theme
+		let {fpx} = theme
 
 		return css`
 		:host{
@@ -441,7 +454,7 @@ export class SubMenu extends Component {
 		
 		.layer{
 			padding: 5px 0;
-			font-size: ${fontSize * 6 / 7}px;
+			font-size: ${fpx(12)}px;
 		}
 	`}
 
@@ -452,7 +465,7 @@ export class SubMenu extends Component {
 	topMenu!: Menu
 	layer: Layer | null = null
 
-	private menuItem: MenuItem | null = null
+	private menuItem!: MenuItem
 
 	render() {
 		return html`
@@ -472,12 +485,12 @@ export class SubMenu extends Component {
 		this.topMenu = this.parentMenu instanceof Menu ? this.parentMenu : this.parentMenu.topMenu
 		this.deep = this.parentMenu.deep + 1
 
-		if (this.el.previousElementSibling) {
-			let menuItem = getComponent(this.el.previousElementSibling as HTMLElement)
-			if (menuItem instanceof MenuItem) {
-				menuItem.subMenu = this
-				this.menuItem = menuItem
-			}
+		let menuItem = getComponent(this.el.previousElementSibling as HTMLElement)
+		if (menuItem && (menuItem instanceof MenuItem)) {
+			this.menuItem = menuItem
+		}
+		else {
+			throw new Error(`"<f-submenu>" must after "<f-menuitem>"`)
 		}
 
 		if (this.topMenu.layer) {
@@ -487,10 +500,7 @@ export class SubMenu extends Component {
 
 	private initWhenInLayer() {
 		this.el.remove()
-
-		if (this.menuItem) {
-			on(this.menuItem.el, 'mouseenter', this.showInLayer, this)
-		}
+		on(this.menuItem.el, 'mouseenter', this.showInLayer, this)
 	}
 
 	async showInLayer() {
@@ -523,7 +533,7 @@ export class SubMenu extends Component {
 		layerEl.append(this.el)
 		await renderComplete()
 		this.layer = getComponent(layerEl) as Layer
-		align(this.layer!.el, this.menuItem!.el, 'rt', {margin: [5, 0]})
+		align(this.layer!.el, this.menuItem.el, 'rt', {margin: [5, 0]})
 		this.topMenu.onSubMenuOpened(this)
 	}
 

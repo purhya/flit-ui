@@ -3,7 +3,7 @@ import {Color} from './color'
 
 
 export interface ThemeOptions {
-	mainColor: string
+	mainColor?: string
 	textColor?: string
 	successColor?: string
 	errorColor?: string
@@ -19,41 +19,63 @@ type ColorOptions = {[key in 'mainColor' | 'textColor' | 'successColor' | 'error
 type NotColorOptions = {[key in Exclude<keyof ThemeOptions, keyof ColorOptions>]: ThemeOptions[key]}
 
 
+export const defaultThemeOptions: Required<ThemeOptions> = {
+	mainColor: '#0077cf',
+	textColor: '#333',
+	successColor: '#00af41',
+	errorColor: '#ff0000',
+	warningColor: '#f48862',
+	infoColor: '#3988e5',
+	borderRadius: 15,
+	layerRadius: 8,
+	fontSize: 14,	// Should set `font-size` and `line-height` on html or body to avoid flushing.
+	lineHeight: 30,
+}
+
 export class Theme implements ColorOptions, NotColorOptions {
 	
 	private themeMap: Map<string, ThemeOptions> = new Map()
 	private options: ThemeOptions
+	private willUpdate: boolean = false
 
-	defaultThemeOptions: Required<ThemeOptions> = {
-		mainColor: '#0077cf',
-		textColor: '#333',
-		successColor: '#00af41',
-		errorColor: '#ff0000',
-		warningColor: '#f48862',
-		infoColor: '#3988e5',
-		borderRadius: 15,
-		layerRadius: 8,
-		fontSize: 14,	// Should set `font-size` and `line-height` on html or body to avoid flushing.
-		lineHeight: 30,
-	}
 
 	constructor() {
-		this.options = this.defaultThemeOptions
+		this.options = Object.assign({}, defaultThemeOptions)
 	}
 
-	define(name: string, options: ThemeOptions) {
+	defineTheme(name: string, options: ThemeOptions) {
 		this.themeMap.set(name, options)
 	}
 
-	set(name: string) {
+	changeTheme(name: string) {
 		if (!this.themeMap.has(name)) {
 			throw new Error(`"${name}" is not a defined theme`)
 		}
 
 		this.options = this.themeMap.get(name)!
-		
-		updateStyles()
-		updateComponents()
+		this.updateStylesAndComponents()
+	}
+
+	set<K extends keyof ThemeOptions>(key: K, value: ThemeOptions[K]) {
+		this.options[key] = value
+		this.updateStylesAndComponents()
+	}
+
+	restore() {
+		this.options = Object.assign({}, defaultThemeOptions)
+		this.updateStylesAndComponents()
+	}
+
+	updateStylesAndComponents() {
+		if (!this.willUpdate) {
+			this.willUpdate = true
+
+			Promise.resolve().then(() => {
+				updateStyles()
+				updateComponents()
+				this.willUpdate = false
+			})
+		}
 	}
 
 	private getOption<P extends keyof ThemeOptions>(property: P): Required<ThemeOptions>[P] {
@@ -61,7 +83,21 @@ export class Theme implements ColorOptions, NotColorOptions {
 			return this.options[property]!
 		}
 		else {
-			return this.defaultThemeOptions[property]
+			return defaultThemeOptions[property]
+		}
+	}
+
+	/** Pass the px value for `font-size` on default theme settings, returns the size in current theme settings. */
+	get fpx() {
+		return (size: number): number =>  {
+			return Math.max(Math.ceil(size * this.fontSize / defaultThemeOptions.fontSize), 11)
+		}
+	}
+
+	/** Pass the px value for `line-height` on default theme settings, returns the line height in current theme settings. */
+	get lpx() {
+		return (size: number): number => {
+			return Math.round(size * this.lineHeight / defaultThemeOptions.lineHeight)
 		}
 	}
 
@@ -107,20 +143,3 @@ export class Theme implements ColorOptions, NotColorOptions {
 }
 
 export const theme = new Theme()
-
-
-
-
-// export const suggestColors = {
-// 	'cyan'     : '#48c7c7',
-// 	'blue'     : '#3988e5',
-// 	'darkblue' : '#0077cf',
-// 	'skyblue'  : '#4eb2ea',
-// 	'purple'   : '#be66cc',
-// 	'red'      : '#ff6666',
-// 	'pink'     : '#ff8095',
-// 	'brown'    : '#d65c5c',
-// 	'orange'   : '#f67d51',
-// 	'green'    : '#15af78',
-// 	'grey'     : '#888888',
-// }

@@ -2,11 +2,11 @@ import {define, Component, css} from 'flit'
 import {theme} from './theme'
 
 
-@define('f-button-group')
+@define('f-buttongroup')
 export class ButtonGroup extends Component {
 
 	static style() {
-		let {lineHeight} = theme
+		let {lpx} = theme
 
 		return css`
 		:host{
@@ -19,13 +19,13 @@ export class ButtonGroup extends Component {
 				margin-left: -1px;
 				border-top-left-radius: 0;
 				border-bottom-left-radius: 0;
-				padding-left: ${lineHeight / 3}px;
+				padding-left: ${lpx(10)}px;
 			}
 	
 			&:nth-last-child(n+2){
 				border-top-right-radius: 0;
 				border-bottom-right-radius: 0;
-				padding-right: ${lineHeight / 3 + 1}px;
+				padding-right: ${lpx(11)}px;
 			}
 	
 			&[filled]{
@@ -35,14 +35,14 @@ export class ButtonGroup extends Component {
 
 			&[round]{
 				width: auto;
-				padding: 0 ${lineHeight / 5}px;
+				padding: 0 ${lpx(6)}px;
 
 				&:first-child{
-					padding-left: ${lineHeight / 5 + 3}px;
+					padding-left: ${lpx(8)}px;
 				}
 		
 				&:last-child{
-					padding-right: ${lineHeight / 5 + 3}px;
+					padding-right: ${lpx(8)}px;
 				}
 			}
 		}

@@ -1,14 +1,14 @@
-import {css, define, html, off, defineBinding, on, renderAndWatch, cache} from "flit"
+import {css, define, html, off, defineBinding, on, renderAndWatch, cache} from 'flit'
 import {theme} from './theme'
-import {Popup} from "./popup"
-import {Layer} from "./layer"
+import {Popup} from './popup'
+import {Layer} from './layer'
 
 
 @define('f-tooltip-layer')
 export class TooltipLayer extends Layer {
 
 	static style() {
-		let {lineHeight, layerRadius} = theme
+		let {lpx, layerRadius} = theme
 		
 		return css`
 		:host{
@@ -18,7 +18,7 @@ export class TooltipLayer extends Layer {
 			z-index: 1100;
 			max-width: 220px;
 			padding: 4px 8px;
-			line-height: ${lineHeight * 0.8}px;
+			line-height: ${lpx(24)}px;
 			background: #333;
 			color: #fff;
 			border-radius: ${layerRadius / 2}px;

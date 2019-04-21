@@ -1,6 +1,6 @@
 import {define, Component, html, css} from 'flit'
 import {svgSymbols} from '../icons/svg-symbol'
-import {subMatches, animateByFunction} from 'ff'
+import {subMatches, animateByFunction, toPower} from 'ff'
 import {theme} from './theme'
 
 
@@ -33,9 +33,9 @@ export class Icon extends Component {
 
 		let [viewBox, inner] = subMatches(svgCode, /<svg viewBox="(.+?)">([\s\S]+?)<\/svg>/) as string[]
 		let [,, w, h] = viewBox.split(' ')
-		let rate = theme.lineHeight / 30
-		let width = Math.round(Number(w) * rate)
-		let height = Math.round(Number(h) * rate)
+		let width = theme.lpx(Number(w))
+		let height = theme.lpx(Number(h))
+		let strokeWidth = Math.max(1, toPower(20 / width, -2))
 
 		return html`
 		<template>
@@ -43,6 +43,7 @@ export class Icon extends Component {
 				viewBox=${viewBox}
 				width=${width}
 				height=${height}
+				stroke-width=${strokeWidth}
 				:html=${inner}
 			/>
 		</template>

@@ -1,14 +1,14 @@
-import {css, define, html, on, renderComplete, off, Component, TemplateResult} from "flit"
-import {theme} from "./theme"
-import {debounce, setDraggable, align} from "ff"
-import {appendTo} from "flit/out/lib/render"
+import {css, define, html, on, renderComplete, off, Component, TemplateResult} from 'flit'
+import {theme} from './theme'
+import {debounce, setDraggable, align} from 'ff'
+import {appendTo} from 'flit/out/lib/render'
 
 
 @define('f-modal')
 export class Modal extends Component {
 
 	static style() {
-		let {mainColor, textColor, lineHeight, layerRadius} = theme
+		let {mainColor, textColor, layerRadius, lpx} = theme
 
 		return css`
 		:host{
@@ -21,7 +21,7 @@ export class Modal extends Component {
 			background: #fff;
 			max-width: 100%;
 			max-height: 100%;
-			padding: 0 16px;
+			padding: 0 ${lpx(15)}px;
 			overflow: hidden;
 		}
 
@@ -37,15 +37,15 @@ export class Modal extends Component {
 
 		.top{
 			display: flex;
-			height: ${lineHeight * 1.3 + 2}px;
-			line-height: ${lineHeight * 1.3}px;
+			height: ${lpx(40) + 2}px;
+			line-height: ${lpx(40)}px;
 			border-bottom: 2px solid ${textColor};
 		}
 
 		.head{
 			flex: 1;
 			min-width: 0;
-			padding: 0 ${lineHeight / 2}px 0 0;
+			padding: 0 ${lpx(15)}px 0 0;
 			font-weight: bold;
 			overflow: hidden;
 			white-space: nowrap;
@@ -61,8 +61,8 @@ export class Modal extends Component {
 				border: none;
 				margin: auto 0;
 				display: flex;
-				width: ${lineHeight}px;
-				height: ${lineHeight}px;
+				width: ${lpx(30)}px;
+				height: ${lpx(30)}px;
 				cursor: pointer;
 				color: #5e5e5e;
 				transition: color 0.2s ease-out;
@@ -133,12 +133,12 @@ export class Modal extends Component {
 		return html`
 		<template
 			tabindex="0"
-			:show=${{when: this.opened, transition: {name: this.transition, callback: this.onTransitionEnd.bind(this)}}}
+			:show=${{when: this.opened, transition: this.transition, enterAtStart: true, onend: this.onTransitionEnd}}
 		>
 		${this.mask ? html`
 			<div class="mask"
 				:ref="mask"
-				:show=${{when: this.opened, transition: this.transition}}
+				:show=${{when: this.opened, transition: this.transition, enterAtStart: true}}
 			/>` : ''
 		}
 			<div class="top">
@@ -190,11 +190,12 @@ export class Modal extends Component {
 			appendTo(this.el, this.appendTo)
 		}
 		
+		await renderComplete()
+		
 		if (this.mask && this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
 			this.el.before(this.refs.mask)
 		}
 
-		await renderComplete()
 		this.toCenter()
 		this.el.focus()
 	}

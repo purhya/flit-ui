@@ -1,7 +1,7 @@
-import {css, define, html, Component, repeat, renderComponent} from "flit"
-import {theme} from "./theme"
-import {remove, Timeout, timeout} from "ff";
-import {Color} from "./color"
+import {css, define, html, Component, repeat, renderComponent} from 'flit'
+import {theme} from './theme'
+import {remove, Timeout, timeout} from 'ff'
+import {Color} from './color'
 
 
 export type NotificationType = 'info' | 'success' | 'alert'
@@ -26,7 +26,7 @@ export interface NotificationItem extends NotificationOptions {
 @define('f-notification-tips')
 export class NotificationTips extends Component {
 	static style() {
-		let {fontSize, infoColor, lineHeight, successColor, errorColor, layerRadius} = theme
+		let {infoColor, lpx, successColor, errorColor, layerRadius, fpx} = theme
 
 		return css`
 		:host{
@@ -35,7 +35,7 @@ export class NotificationTips extends Component {
 			bottom: 10px;
 			width: 300px;
 			z-index: 1300;	// Higher than content
-			font-size: ${fontSize * 6 / 7};
+			font-size: ${fpx(12)}px;
 		}
 
 		.item{
@@ -72,37 +72,37 @@ export class NotificationTips extends Component {
 		}
 
 		.left{
-			padding: 10px;
+			padding: ${lpx(10)}px;
 		}
 
 		.icon{
 			display: block;
-			width: 20px;
-			height: 20px;
+			width: ${lpx(20)}px;
+			height: ${lpx(20)}px;
 			color: #fff;
 
 			svg{
-				width: 20px;
-				height: 20px;
+				width: ${lpx(20)}px;
+				height: ${lpx(20)}px;
 			}
 		}
 
 		.right{
 			flex: 1;
 			min-width: 0;
-			padding: 10px;
+			padding: ${lpx(10)}px;
 		}
 
 		.head{
 			font-weight: bold;
-			line-height: 20px;
-			margin-bottom: 4px;
+			line-height: ${lpx(20)}px;
+			margin-bottom: ${lpx(4)}px;
 		}
 
 		.body{
 			flex: 1;
 			min-width: 0;
-			line-height: 20px;
+			line-height: ${lpx(20)}px;
 			text-align: left;
 			word-wrap: break-word;
 
@@ -113,22 +113,22 @@ export class NotificationTips extends Component {
 
 		.buttons{
 			display: flex;
-			margin-top: 8px;
+			margin-top: ${lpx(8)}px;
 		}
 
 		
 		button{
-			height: ${lineHeight * 0.8}px;
-			line-height: ${lineHeight * 0.8 - 2}px;
-			margin-right: 8px;
-			padding: 0 ${lineHeight * 0.4}px;
+			height: ${lpx(24)}px;
+			line-height: ${lpx(24) - 2}px;
+			margin-right: ${lpx(8)}px;
+			padding: 0 ${lpx(12)}px;
 		}
 
 		${
 			([['alert', errorColor], ['info', infoColor], ['success', successColor]] as [string, Color][]).map(([type, color]) => css`
 			.type-${type}{
 				&:hover{
-					background: ${color.alpha(0.05)};
+					background: ${color.alpha(0.03)};
 				}
 
 				.left{
@@ -171,7 +171,7 @@ export class NotificationTips extends Component {
 					</div>` : ''}
 				</div>
 			</div>`
-		, 'fade')
+		, {transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd})
 	}
 
 	onMouseEnter(item: NotificationItem) {
@@ -194,6 +194,10 @@ export class NotificationTips extends Component {
 		if (item.callback) {
 			item.callback(btn)
 		}
+	}
+
+	onTransitionEnd(_type: string) {
+
 	}
 
 	showNotification(options: NotificationOptions): number {
@@ -241,11 +245,6 @@ export class NotificationTips extends Component {
 		let item = this.items.find(v => v.id === id)
 		if (item) {
 			remove(this.items, item)
-
-			if (this.items.length === 0) {
-				this.el.remove()
-			}
-
 			return true
 		}
 		else {

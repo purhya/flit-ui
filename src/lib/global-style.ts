@@ -3,24 +3,24 @@ import {theme} from './theme'
 
 
 addGlobalStyle(() => {
-	let {mainColor, textColor, successColor, errorColor, borderRadius, lineHeight} = theme
+	let {mainColor, textColor, successColor, errorColor, fontSize, borderRadius, lpx} = theme
 
 	return css`
 	html{
-		color: ${theme.textColor};
-		font-size: ${theme.fontSize}px;
-		line-height: ${theme.lineHeight}px;
+		color: ${textColor};
+		font-size: ${fontSize}px;
+		line-height: ${lpx(30)}px;
 	}
 
 	button{
 		display: inline-flex;
 		justify-content: center;
-		height: ${lineHeight}px;
-		line-height: ${lineHeight - 2}px;
+		height: ${lpx(30)}px;
+		line-height: ${lpx(30) - 2}px;
 		border: 1px solid ${textColor.lighten(30)};
 		color: ${textColor.lighten(20)};
 		border-radius: ${borderRadius}px;
-		padding: 0 ${lineHeight / 2 + Math.max(0, (borderRadius - 5) / 2)}px;
+		padding: 0 ${lpx(15) + Math.max(0, (borderRadius - 5) / 2)}px;
 		background: #fff;
 		text-align: center;
 		cursor: pointer;
@@ -31,7 +31,7 @@ addGlobalStyle(() => {
 			color: ${mainColor};
 		}
 
-		&:focus{
+		&:focus:not([borderless]){
 			box-shadow: 0 0 3px ${mainColor};
 		}
 	
@@ -43,13 +43,13 @@ addGlobalStyle(() => {
 	
 		f-icon, f-icon-loading{
 			&:first-child{
-				margin-left: ${-(lineHeight / 10 - 1)}px;
-				margin-right: ${lineHeight / 5 - 2}px;
+				margin-left: ${lpx(-3)}px;
+				margin-right: ${lpx(4)}px;
 			}
 
 			&:last-child{
-				margin-left: ${lineHeight / 10 - 1}px;
-				margin-right: ${-(lineHeight / 5 - 2)}px;
+				margin-left: ${lpx(2)}px;
+				margin-right: ${lpx(-4)}px;
 			}
 		}
 
@@ -71,9 +71,9 @@ addGlobalStyle(() => {
 
 		&[borderless]{
 			border: none;
-			padding-left: ${lineHeight / 3}px;
-			padding-right: ${lineHeight / 3}px;
-			line-height: ${lineHeight}px;
+			padding-left: ${lpx(10)}px;
+			padding-right: ${lpx(10)}px;
+			line-height: ${lpx(30)}px;
 
 			&:active{
 				background: none;
@@ -81,8 +81,8 @@ addGlobalStyle(() => {
 		}
 
 		&[round]{
-			width: ${lineHeight}px;
-			border-radius: ${lineHeight / 2}px;
+			width: ${lpx(30)}px;
+			border-radius: ${lpx(15)}px;
 			padding: 0;
 			font-size: 0;
 
@@ -94,13 +94,13 @@ addGlobalStyle(() => {
 	}
 
 	[type=text], [type=number], [type=email]{
-		height: ${lineHeight}px;
-		padding: 0 0 0 ${lineHeight / 5 + 2}px;
+		height: ${lpx(30)}px;
+		padding: 0 0 0 ${lpx(8)}px;
 	}
 	
 	textarea{
-		padding: ${lineHeight / 5 - 2}px ${lineHeight / 5 + 2}px;
-		line-height: ${lineHeight * 0.7 + 1}px;
+		padding: ${lpx(4)}px ${lpx(8)}px;
+		line-height: ${lpx(22)}px;
 	}
 	
 	[type=text], [type=number], [type=email], textarea{

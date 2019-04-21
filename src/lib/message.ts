@@ -1,6 +1,6 @@
-import {css, define, html, onRenderComplete, renderComponent} from "flit"
-import {theme} from "./theme"
-import {Modal} from "./modal"
+import {css, define, html, onRenderComplete, renderComponent} from 'flit'
+import {theme} from './theme'
+import {Modal} from './modal'
 
 
 export type MessageType = 'info' | 'success' | 'alert' | 'confirm' | 'prompt'
@@ -22,7 +22,7 @@ export interface MessageOptions {
 export class MessageModal extends Modal {
 	
 	static style() {
-		let {fontSize, mainColor, infoColor, lineHeight, successColor, errorColor, warningColor} = theme
+		let {mainColor, infoColor, lpx, successColor, errorColor, warningColor, fpx} = theme
 
 		return css`
 		${super.style()}
@@ -38,9 +38,9 @@ export class MessageModal extends Modal {
 
 		.body{
 			display: flex;
-			padding: ${lineHeight / 2}px 0 0 0;
-			line-height: ${lineHeight * 0.8}px;
-			min-height: ${lineHeight * 0.8}px;
+			padding: ${lpx(15)}px 0 0 0;
+			line-height: ${lpx(24)}px;
+			min-height: ${lpx(24)}px;
 		}
 
 		.left{}
@@ -50,8 +50,8 @@ export class MessageModal extends Modal {
 			stroke-width: 0.666px;
 
 			svg{
-				width: ${lineHeight}px;
-				height: ${lineHeight}px;
+				width: ${lpx(30)}px;
+				height: ${lpx(30)}px;
 			}
 		}
 
@@ -84,13 +84,13 @@ export class MessageModal extends Modal {
 		.error-text{
 			color: ${errorColor};
 			margin-top: 3px;
-			font-size: ${fontSize * 6 / 7};
+			font-size: ${fpx(12)};
 		}
 
 		.list{
 			margin-top: 5px;
 			overflow-y: auto;
-			max-height: ${lineHeight * 8}px;
+			max-height: ${lpx(240)}px;
 		}
 
 		.icon-alert{
@@ -128,12 +128,12 @@ export class MessageModal extends Modal {
 			tabindex="0"	
 			:class.has-title=${options.title}
 			:class.wide=${!!options.wide}
-			:show=${{when: this.opened, transition: {name: this.transition, callback: this.onTransitionEnd.bind(this)}}}
+			:show=${{when: this.opened, transition: this.transition, enterAtStart: true, onend: this.onTransitionEnd}}
 		>
 		${this.mask ? html`
 			<div class="mask"
 				:ref="mask"
-				:show=${{when: this.opened, transition: this.transition}}
+				:show=${{when: this.opened, transition: this.transition, enterAtStart: true}}
 			/>` : ''
 		}
 		${

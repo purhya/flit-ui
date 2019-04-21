@@ -1,7 +1,7 @@
 import './lib/global-style'
 export * from './lib/theme'
 export * from './lib/color'
-export * from './lib/button-group'
+export * from './lib/buttongroup'
 export * from './lib/icon'
 export * from './lib/radio'
 export * from './lib/checkbox'

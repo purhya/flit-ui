@@ -10,8 +10,8 @@ export interface SwitchEvents {
 export class Switch extends Component<SwitchEvents> {
 
 	static style() {
-		let {mainColor, lineHeight, textColor} = theme
-		let h = Math.round(lineHeight * 0.32) * 2
+		let {mainColor, lpx, textColor} = theme
+		let h = Math.round(lpx(10)) * 2
 		let w = h * 2 - 6
 
 		return css`
@@ -24,8 +24,8 @@ export class Switch extends Component<SwitchEvents> {
 			border: 1px solid currentColor;
 			border-radius: ${h / 2}px;
 			padding: 1px;
-			margin: ${(lineHeight - h ) / 2}px 0;
-			transition: all 0.2s ${getEasing('ease-out-cubic')};
+			margin: ${(lpx(30) - h ) / 2}px 0;
+			transition: background-color 0.2s ${getEasing('ease-out-cubic')};
 			cursor: pointer;
 
 			&:hover{
@@ -43,7 +43,7 @@ export class Switch extends Component<SwitchEvents> {
 			background: #fff;
 			border: 1px solid ${textColor.lighten(10)};;
 			border-radius: 50%;
-			transition: all 0.2s ${getEasing('ease-out-cubic')};
+			transition: margin 0.2s ${getEasing('ease-out-cubic')};
 		}
 	
 		.on{		

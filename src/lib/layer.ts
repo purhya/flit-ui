@@ -1,7 +1,7 @@
-import {css, define, Component, html} from "flit"
-import {theme} from "./theme"
-import {Popup} from "./popup"
-import {appendTo} from "flit/out/lib/render"
+import {css, define, Component, html} from 'flit'
+import {theme} from './theme'
+import {Popup} from './popup'
+import {appendTo} from 'flit/out/lib/render'
 
 
 // It's the base class for all the layer which will align with another element.
@@ -54,7 +54,7 @@ export class Layer extends Component {
 
 	render() {
 		return html`
-		<template>
+		<template tabindex="0">
 			${this.trangle ? html`<div class="trangle" :ref="trangle" :class.trangle-herizontal=${this.herizontal}></div>` : ''}
 			<slot></slot>
 		</template>`

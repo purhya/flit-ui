@@ -10,7 +10,7 @@ export interface RadioEvents {
 export class Radio extends Component<RadioEvents> {
 
 	static style() {
-		let {mainColor, lineHeight} = theme
+		let {mainColor, lpx} = theme
 
 		return css`
 		:host{
@@ -35,7 +35,7 @@ export class Radio extends Component<RadioEvents> {
 		.icon{
 			border-radius: 50%;
 			border: 1px solid currentColor;
-			margin-right: ${lineHeight / 5 - 1}px;
+			margin-right: ${lpx(5)}px;
 		}
 
 		.checked{
@@ -59,8 +59,7 @@ export class Radio extends Component<RadioEvents> {
 	value: any = null
 
 	render() {
-		let {lineHeight} = theme
-		let size = Math.round(16 / 30 * lineHeight)
+		let {lpx} = theme
 
 		return html`
 			<template
@@ -70,7 +69,7 @@ export class Radio extends Component<RadioEvents> {
 				@focus=${this.onFocus}
 				@blur=${this.onBlur}
 			>
-				<svg class="icon" viewBox="0 0 14 14" style="width: ${size}px; height: ${size}px;">
+				<svg class="icon" viewBox="0 0 14 14" style="width: ${lpx(16)}px; height: ${lpx(16)}px;">
 					${this.checked? svg`<circle style="fill:currentColor;stroke:none;" cx="7" cy="7" r="4" />` : ''}
 				</svg>
 				<div class="label">
@@ -81,7 +80,7 @@ export class Radio extends Component<RadioEvents> {
 	}
 
 	onCreated() {
-		let groupEl = this.el.closest('f-radio-group') as HTMLElement
+		let groupEl = this.el.closest('f-radiogroup') as HTMLElement
 		if (groupEl) {
 			this.radioGroup = getComponent(groupEl) as RadioGroup
 			this.checked = this.radioGroup.value == this.value
@@ -114,7 +113,8 @@ export class Radio extends Component<RadioEvents> {
 }
 
 
-@define('f-radio-group')
+// No `-` to correspond with `radiogroup` in `https://www.w3.org/TR/wai-aria-practices-1.2/`.
+@define('f-radiogroup')
 export class RadioGroup extends Component<{change: (value: (string | number)[]) => void}> {
 
 	static properties = ['value']

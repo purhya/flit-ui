@@ -11,7 +11,7 @@ export interface CheckboxEvents {
 export class Checkbox extends Component<CheckboxEvents> {
 
 	static style() {
-		let {mainColor, lineHeight} = theme
+		let {mainColor, lpx} = theme
 
 		return css`
 		:host{
@@ -34,11 +34,11 @@ export class Checkbox extends Component<CheckboxEvents> {
 		}
 
 		.icon{
-			width: ${lineHeight / 2}px;
-			height: ${lineHeight / 2}px;
+			width: ${lpx(15)}px;
+			height: ${lpx(15)}px;
 			border: 1px solid currentColor;
 			border-radius: 2px;
-			margin-right: ${lineHeight / 5 - 1}px;
+			margin-right: ${lpx(5)}px;
 		}
 
 		.indeterminate, .checked{
@@ -96,7 +96,7 @@ export class Checkbox extends Component<CheckboxEvents> {
 	}
 
 	onCreated() {
-		let groupEl = this.el.closest('f-checkbox-group') as HTMLElement
+		let groupEl = this.el.closest('f-checkboxgroup') as HTMLElement
 		if (groupEl) {
 			this.checkboxGroup = getComponent(groupEl) as CheckboxGroup
 			this.checked = this.checkboxGroup.value == this.value
@@ -125,7 +125,7 @@ export class Checkbox extends Component<CheckboxEvents> {
 }
 
 
-@define('f-checkbox-group')
+@define('f-checkboxgroup')
 export class CheckboxGroup extends Component<{change: (value: string | number) => void}> {
 
 	static properties = ['value', 'ordered']

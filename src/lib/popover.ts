@@ -1,6 +1,6 @@
-import {css, define, html} from "flit"
-import {theme} from "./theme"
-import {Popup} from "./popup"
+import {css, define, html} from 'flit'
+import {theme} from './theme'
+import {Popup} from './popup'
 
 
 // Compare to `<popup>`, it can set title.
@@ -8,7 +8,7 @@ import {Popup} from "./popup"
 export class Popover extends Popup {
 
 	static style() {
-		let {lineHeight, mainColor} = theme
+		let {lpx, mainColor} = theme
 
 		return css`
 		:host{
@@ -20,11 +20,11 @@ export class Popover extends Popup {
 		}
 
 		.layer{
-			padding: 0 ${lineHeight / 2}px;
+			padding: 0 ${lpx(15)}px;
 		}
 
 		.header{
-			line-height: ${lineHeight}px;
+			line-height: ${lpx(30)}px;
 			padding: 5px 0;
 			border-bottom: 2px solid #333;
 		}
@@ -32,7 +32,7 @@ export class Popover extends Popup {
 		.title{
 			flex: 1;
 			min-width: 0;
-			padding: 0 ${lineHeight / 2}px 0 0;
+			padding: 0 ${lpx(15)}px 0 0;
 			font-weight: bold;
 			overflow: hidden;
 			white-space: nowrap;
@@ -40,7 +40,7 @@ export class Popover extends Popup {
 		}
 
 		.content{
-			padding: ${lineHeight / 4}px 0;
+			padding: ${lpx(8)}px 0;
 		}
 	`}
 
