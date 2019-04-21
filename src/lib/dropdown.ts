@@ -7,7 +7,7 @@ import {theme} from './theme'
 export class Dropdown extends Popup {
 
 	static style() {
-		let {lpx, fpx} = theme
+		let {lh, fs: fpx} = theme
 
 		return css`
 		${super.style()}
@@ -16,7 +16,7 @@ export class Dropdown extends Popup {
 			font-size: ${fpx(12)}px;
 
 			f-menuitem{
-				padding: 0 ${lpx(10)}px;
+				padding: 0 ${lh(10)}px;
 			}
 		}
 	`}

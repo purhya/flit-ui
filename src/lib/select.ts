@@ -13,7 +13,7 @@ export interface SelectEvents<T = unknown> {
 export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	
 	static style() {
-		let {mainColor, lpx, textColor} = theme
+		let {mainColor, lh, textColor} = theme
 
 		return css`
 		:host{
@@ -21,9 +21,9 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 			vertical-align: top;
 			border-bottom: 1px solid ${textColor.lighten(30)};
 			width: 150px;
-			height: ${lpx(30)}px;
+			height: ${lh(30)}px;
 			background: #e5e5e5;
-			line-height: ${lpx(30)}px;
+			line-height: ${lh(30)}px;
 			justify-content: space-between;
 			align-items: center;
 			cursor: pointer;
@@ -49,8 +49,8 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		.input{
 			flex: 1;
 			min-width: 0;
-			padding: 0 0 0 ${lpx(8)}px;
-			height: ${lpx(30)}px;
+			padding: 0 0 0 ${lh(8)}px;
+			height: ${lh(30)}px;
 			border: none;
 			background: transparent;
 			white-space: nowrap;
@@ -397,7 +397,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 			await renderComplete()
 			let el = this.refs.layer.querySelector(this.scopeClassName('.hover')) as HTMLElement | null
 			if (el) {
-				scrollToView(el, theme.lpx(30))
+				scrollToView(el, theme.lh(30))
 			}
 		}
 	}

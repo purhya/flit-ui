@@ -10,7 +10,7 @@ export interface RadioEvents {
 export class Radio extends Component<RadioEvents> {
 
 	static style() {
-		let {mainColor, lpx} = theme
+		let {mainColor, lh} = theme
 
 		return css`
 		:host{
@@ -35,7 +35,7 @@ export class Radio extends Component<RadioEvents> {
 		.icon{
 			border-radius: 50%;
 			border: 1px solid currentColor;
-			margin-right: ${lpx(5)}px;
+			margin-right: ${lh(5)}px;
 		}
 
 		.checked{
@@ -59,7 +59,7 @@ export class Radio extends Component<RadioEvents> {
 	value: any = null
 
 	render() {
-		let {lpx} = theme
+		let {lh} = theme
 
 		return html`
 			<template
@@ -69,7 +69,7 @@ export class Radio extends Component<RadioEvents> {
 				@focus=${this.onFocus}
 				@blur=${this.onBlur}
 			>
-				<svg class="icon" viewBox="0 0 14 14" style="width: ${lpx(16)}px; height: ${lpx(16)}px;">
+				<svg class="icon" viewBox="0 0 14 14" style="width: ${lh(16)}px; height: ${lh(16)}px;">
 					${this.checked? svg`<circle style="fill:currentColor;stroke:none;" cx="7" cy="7" r="4" />` : ''}
 				</svg>
 				<div class="label">

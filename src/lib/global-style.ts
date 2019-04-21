@@ -3,24 +3,24 @@ import {theme} from './theme'
 
 
 addGlobalStyle(() => {
-	let {mainColor, textColor, successColor, errorColor, fontSize, borderRadius, lpx} = theme
+	let {mainColor, textColor, successColor, errorColor, fontSize, borderRadius, lh} = theme
 
 	return css`
 	html{
 		color: ${textColor};
 		font-size: ${fontSize}px;
-		line-height: ${lpx(30)}px;
+		line-height: ${lh(30)}px;
 	}
 
 	button{
 		display: inline-flex;
 		justify-content: center;
-		height: ${lpx(30)}px;
-		line-height: ${lpx(30) - 2}px;
+		height: ${lh(30)}px;
+		line-height: ${lh(30) - 2}px;
 		border: 1px solid ${textColor.lighten(30)};
 		color: ${textColor.lighten(20)};
 		border-radius: ${borderRadius}px;
-		padding: 0 ${lpx(15) + Math.max(0, (borderRadius - 5) / 2)}px;
+		padding: 0 ${lh(15) + Math.max(0, (borderRadius - 5) / 2)}px;
 		background: #fff;
 		text-align: center;
 		cursor: pointer;
@@ -43,13 +43,13 @@ addGlobalStyle(() => {
 	
 		f-icon, f-icon-loading{
 			&:first-child{
-				margin-left: ${lpx(-3)}px;
-				margin-right: ${lpx(4)}px;
+				margin-left: ${lh(-3)}px;
+				margin-right: ${lh(4)}px;
 			}
 
 			&:last-child{
-				margin-left: ${lpx(2)}px;
-				margin-right: ${lpx(-4)}px;
+				margin-left: ${lh(2)}px;
+				margin-right: ${lh(-4)}px;
 			}
 		}
 
@@ -71,9 +71,9 @@ addGlobalStyle(() => {
 
 		&[borderless]{
 			border: none;
-			padding-left: ${lpx(10)}px;
-			padding-right: ${lpx(10)}px;
-			line-height: ${lpx(30)}px;
+			padding-left: ${lh(10)}px;
+			padding-right: ${lh(10)}px;
+			line-height: ${lh(30)}px;
 
 			&:active{
 				background: none;
@@ -81,8 +81,8 @@ addGlobalStyle(() => {
 		}
 
 		&[round]{
-			width: ${lpx(30)}px;
-			border-radius: ${lpx(15)}px;
+			width: ${lh(30)}px;
+			border-radius: ${lh(15)}px;
 			padding: 0;
 			font-size: 0;
 
@@ -94,13 +94,13 @@ addGlobalStyle(() => {
 	}
 
 	[type=text], [type=number], [type=email]{
-		height: ${lpx(30)}px;
-		padding: 0 0 0 ${lpx(8)}px;
+		height: ${lh(30)}px;
+		padding: 0 0 0 ${lh(8)}px;
 	}
 	
 	textarea{
-		padding: ${lpx(4)}px ${lpx(8)}px;
-		line-height: ${lpx(22)}px;
+		padding: ${lh(4)}px ${lh(8)}px;
+		line-height: ${lh(22)}px;
 	}
 	
 	[type=text], [type=number], [type=email], textarea{

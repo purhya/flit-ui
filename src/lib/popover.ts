@@ -8,7 +8,7 @@ import {Popup} from './popup'
 export class Popover extends Popup {
 
 	static style() {
-		let {lpx, mainColor} = theme
+		let {lh, mainColor} = theme
 
 		return css`
 		:host{
@@ -20,11 +20,11 @@ export class Popover extends Popup {
 		}
 
 		.layer{
-			padding: 0 ${lpx(15)}px;
+			padding: 0 ${lh(15)}px;
 		}
 
 		.header{
-			line-height: ${lpx(30)}px;
+			line-height: ${lh(30)}px;
 			padding: 5px 0;
 			border-bottom: 2px solid #333;
 		}
@@ -32,7 +32,7 @@ export class Popover extends Popup {
 		.title{
 			flex: 1;
 			min-width: 0;
-			padding: 0 ${lpx(15)}px 0 0;
+			padding: 0 ${lh(15)}px 0 0;
 			font-weight: bold;
 			overflow: hidden;
 			white-space: nowrap;
@@ -40,7 +40,7 @@ export class Popover extends Popup {
 		}
 
 		.content{
-			padding: ${lpx(8)}px 0;
+			padding: ${lh(8)}px 0;
 		}
 	`}
 

@@ -26,7 +26,7 @@ export interface NotificationItem extends NotificationOptions {
 @define('f-notification-tips')
 export class NotificationTips extends Component {
 	static style() {
-		let {infoColor, lpx, successColor, errorColor, layerRadius, fpx} = theme
+		let {infoColor, lh, successColor, errorColor, layerRadius, fs: fpx} = theme
 
 		return css`
 		:host{
@@ -72,37 +72,37 @@ export class NotificationTips extends Component {
 		}
 
 		.left{
-			padding: ${lpx(10)}px;
+			padding: ${lh(10)}px;
 		}
 
 		.icon{
 			display: block;
-			width: ${lpx(20)}px;
-			height: ${lpx(20)}px;
+			width: ${lh(20)}px;
+			height: ${lh(20)}px;
 			color: #fff;
 
 			svg{
-				width: ${lpx(20)}px;
-				height: ${lpx(20)}px;
+				width: ${lh(20)}px;
+				height: ${lh(20)}px;
 			}
 		}
 
 		.right{
 			flex: 1;
 			min-width: 0;
-			padding: ${lpx(10)}px;
+			padding: ${lh(10)}px;
 		}
 
 		.head{
 			font-weight: bold;
-			line-height: ${lpx(20)}px;
-			margin-bottom: ${lpx(4)}px;
+			line-height: ${lh(20)}px;
+			margin-bottom: ${lh(4)}px;
 		}
 
 		.body{
 			flex: 1;
 			min-width: 0;
-			line-height: ${lpx(20)}px;
+			line-height: ${lh(20)}px;
 			text-align: left;
 			word-wrap: break-word;
 
@@ -113,15 +113,15 @@ export class NotificationTips extends Component {
 
 		.buttons{
 			display: flex;
-			margin-top: ${lpx(8)}px;
+			margin-top: ${lh(8)}px;
 		}
 
 		
 		button{
-			height: ${lpx(24)}px;
-			line-height: ${lpx(24) - 2}px;
-			margin-right: ${lpx(8)}px;
-			padding: 0 ${lpx(12)}px;
+			height: ${lh(24)}px;
+			line-height: ${lh(24) - 2}px;
+			margin-right: ${lh(8)}px;
+			padding: 0 ${lh(12)}px;
 		}
 
 		${

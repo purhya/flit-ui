@@ -33,8 +33,8 @@ export class Icon extends Component {
 
 		let [viewBox, inner] = subMatches(svgCode, /<svg viewBox="(.+?)">([\s\S]+?)<\/svg>/) as string[]
 		let [,, w, h] = viewBox.split(' ')
-		let width = theme.lpx(Number(w))
-		let height = theme.lpx(Number(h))
+		let width = theme.lh(Number(w))
+		let height = theme.lh(Number(h))
 		let strokeWidth = Math.max(1, toPower(20 / width, -2))
 
 		return html`

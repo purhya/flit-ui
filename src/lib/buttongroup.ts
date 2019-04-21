@@ -6,7 +6,7 @@ import {theme} from './theme'
 export class ButtonGroup extends Component {
 
 	static style() {
-		let {lpx} = theme
+		let {lh} = theme
 
 		return css`
 		:host{
@@ -19,13 +19,13 @@ export class ButtonGroup extends Component {
 				margin-left: -1px;
 				border-top-left-radius: 0;
 				border-bottom-left-radius: 0;
-				padding-left: ${lpx(10)}px;
+				padding-left: ${lh(10)}px;
 			}
 	
 			&:nth-last-child(n+2){
 				border-top-right-radius: 0;
 				border-bottom-right-radius: 0;
-				padding-right: ${lpx(11)}px;
+				padding-right: ${lh(11)}px;
 			}
 	
 			&[filled]{
@@ -35,14 +35,14 @@ export class ButtonGroup extends Component {
 
 			&[round]{
 				width: auto;
-				padding: 0 ${lpx(6)}px;
+				padding: 0 ${lh(6)}px;
 
 				&:first-child{
-					padding-left: ${lpx(8)}px;
+					padding-left: ${lh(8)}px;
 				}
 		
 				&:last-child{
-					padding-right: ${lpx(8)}px;
+					padding-right: ${lh(8)}px;
 				}
 			}
 		}

@@ -11,7 +11,7 @@ export interface CheckboxEvents {
 export class Checkbox extends Component<CheckboxEvents> {
 
 	static style() {
-		let {mainColor, lpx} = theme
+		let {mainColor, lh} = theme
 
 		return css`
 		:host{
@@ -34,11 +34,11 @@ export class Checkbox extends Component<CheckboxEvents> {
 		}
 
 		.icon{
-			width: ${lpx(15)}px;
-			height: ${lpx(15)}px;
+			width: ${lh(15)}px;
+			height: ${lh(15)}px;
 			border: 1px solid currentColor;
 			border-radius: 2px;
-			margin-right: ${lpx(5)}px;
+			margin-right: ${lh(5)}px;
 		}
 
 		.indeterminate, .checked{

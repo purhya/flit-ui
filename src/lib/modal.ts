@@ -8,7 +8,7 @@ import {appendTo} from 'flit/out/lib/render'
 export class Modal extends Component {
 
 	static style() {
-		let {mainColor, textColor, layerRadius, lpx} = theme
+		let {mainColor, textColor, layerRadius, lh} = theme
 
 		return css`
 		:host{
@@ -21,7 +21,7 @@ export class Modal extends Component {
 			background: #fff;
 			max-width: 100%;
 			max-height: 100%;
-			padding: 0 ${lpx(15)}px;
+			padding: 0 ${lh(15)}px;
 			overflow: hidden;
 		}
 
@@ -37,15 +37,15 @@ export class Modal extends Component {
 
 		.top{
 			display: flex;
-			height: ${lpx(40) + 2}px;
-			line-height: ${lpx(40)}px;
+			height: ${lh(40) + 2}px;
+			line-height: ${lh(40)}px;
 			border-bottom: 2px solid ${textColor};
 		}
 
 		.head{
 			flex: 1;
 			min-width: 0;
-			padding: 0 ${lpx(15)}px 0 0;
+			padding: 0 ${lh(15)}px 0 0;
 			font-weight: bold;
 			overflow: hidden;
 			white-space: nowrap;
@@ -61,8 +61,8 @@ export class Modal extends Component {
 				border: none;
 				margin: auto 0;
 				display: flex;
-				width: ${lpx(30)}px;
-				height: ${lpx(30)}px;
+				width: ${lh(30)}px;
+				height: ${lh(30)}px;
 				cursor: pointer;
 				color: #5e5e5e;
 				transition: color 0.2s ease-out;

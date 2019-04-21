@@ -22,7 +22,7 @@ export interface MessageOptions {
 export class MessageModal extends Modal {
 	
 	static style() {
-		let {mainColor, infoColor, lpx, successColor, errorColor, warningColor, fpx} = theme
+		let {mainColor, infoColor, lh, successColor, errorColor, warningColor, fs: fpx} = theme
 
 		return css`
 		${super.style()}
@@ -38,9 +38,9 @@ export class MessageModal extends Modal {
 
 		.body{
 			display: flex;
-			padding: ${lpx(15)}px 0 0 0;
-			line-height: ${lpx(24)}px;
-			min-height: ${lpx(24)}px;
+			padding: ${lh(15)}px 0 0 0;
+			line-height: ${lh(24)}px;
+			min-height: ${lh(24)}px;
 		}
 
 		.left{}
@@ -50,8 +50,8 @@ export class MessageModal extends Modal {
 			stroke-width: 0.666px;
 
 			svg{
-				width: ${lpx(30)}px;
-				height: ${lpx(30)}px;
+				width: ${lh(30)}px;
+				height: ${lh(30)}px;
 			}
 		}
 
@@ -90,7 +90,7 @@ export class MessageModal extends Modal {
 		.list{
 			margin-top: 5px;
 			overflow-y: auto;
-			max-height: ${lpx(240)}px;
+			max-height: ${lh(240)}px;
 		}
 
 		.icon-alert{

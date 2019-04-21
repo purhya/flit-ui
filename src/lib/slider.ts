@@ -11,9 +11,9 @@ export interface SliderEvents {
 export class Slider extends Component<SliderEvents> {
 
 	static style() {
-		let {mainColor, textColor, lpx} = theme
+		let {mainColor, textColor, lh} = theme
 		let grooveSize = 1
-		let ballSize = Math.ceil(lpx(9)) * 2 + grooveSize
+		let ballSize = Math.ceil(lh(9)) * 2 + grooveSize
 
 		return css`
 		:host{
@@ -22,8 +22,8 @@ export class Slider extends Component<SliderEvents> {
 			flex-direction: column;
 			justify-content: center;
 			position: relative;
-			width: ${lpx(150)}px;
-			height: ${lpx(30)}px;
+			width: ${lh(150)}px;
+			height: ${lh(30)}px;
 			cursor: pointer;
 
 			&:focus .ball{
@@ -74,8 +74,8 @@ export class Slider extends Component<SliderEvents> {
 		}
 
 		:host[vertical]{
-			width: ${lpx(30)}px;
-			height: ${lpx(150)}px;
+			width: ${lh(30)}px;
+			height: ${lh(150)}px;
 			flex-direction: row;
 
 			.groove{

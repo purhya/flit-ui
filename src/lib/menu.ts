@@ -276,7 +276,7 @@ export class Menu extends Component<MenuEvents> {
 export class MenuItem extends Component {
 
 	static style() {
-		let {lpx, mainColor} = theme
+		let {lh, mainColor} = theme
 
 		return css`
 		:host{
@@ -284,7 +284,7 @@ export class MenuItem extends Component {
 			position: relative;
 			display: flex;
 			cursor: pointer;
-			padding: 0 ${lpx(10)}px;
+			padding: 0 ${lh(10)}px;
 
 			&.hover{
 				background: #eee;
@@ -313,8 +313,8 @@ export class MenuItem extends Component {
 		// still need an element to place.
 		.icon-place{
 			display: flex;
-			width: ${lpx(30)}px;
-			margin-right: ${lpx(-10)}px;
+			width: ${lh(30)}px;
+			margin-right: ${lh(-10)}px;
 
 			f-icon{
 				margin: auto;
@@ -328,7 +328,7 @@ export class MenuItem extends Component {
 
 		.text{
 			flex: 1;
-			padding: 0 ${lpx(10)}px;
+			padding: 0 ${lh(10)}px;
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
@@ -365,7 +365,7 @@ export class MenuItem extends Component {
 			rightIcon = html`<f-icon class="right-arrow" :type=${rightIconType} />`
 		}
 
-		let iconSize = theme.lpx(25)
+		let iconSize = theme.lh(25)
 
 		return html`
 			<template
@@ -444,7 +444,7 @@ export class MenuSpliter extends Component {
 export class SubMenu extends Component {
 
 	static style() {
-		let {fpx} = theme
+		let {fs: fpx} = theme
 
 		return css`
 		:host{

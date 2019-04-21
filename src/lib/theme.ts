@@ -88,14 +88,14 @@ export class Theme implements ColorOptions, NotColorOptions {
 	}
 
 	/** Pass the px value for `font-size` on default theme settings, returns the size in current theme settings. */
-	get fpx() {
+	get fs() {
 		return (size: number): number =>  {
 			return Math.max(Math.ceil(size * this.fontSize / defaultThemeOptions.fontSize), 11)
 		}
 	}
 
 	/** Pass the px value for `line-height` on default theme settings, returns the line height in current theme settings. */
-	get lpx() {
+	get lh() {
 		return (size: number): number => {
 			return Math.round(size * this.lineHeight / defaultThemeOptions.lineHeight)
 		}

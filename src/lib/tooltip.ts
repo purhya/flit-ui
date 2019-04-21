@@ -8,7 +8,7 @@ import {Layer} from './layer'
 export class TooltipLayer extends Layer {
 
 	static style() {
-		let {lpx, layerRadius} = theme
+		let {lh, layerRadius} = theme
 		
 		return css`
 		:host{
@@ -16,9 +16,9 @@ export class TooltipLayer extends Layer {
 			left: 0;
 			top: 0;
 			z-index: 1100;
-			max-width: 220px;
-			padding: 4px 8px;
-			line-height: ${lpx(24)}px;
+			max-width: ${lh(220)}px;
+			padding: ${lh(4)}px ${lh(8)}px;
+			line-height: ${lh(24)}px;
 			background: #333;
 			color: #fff;
 			border-radius: ${layerRadius / 2}px;
