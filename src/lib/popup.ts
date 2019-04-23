@@ -207,7 +207,7 @@ export class Popup<Events = {}> extends Component<Events> {
 		else if (this.trigger === 'click' || this.trigger === 'contextmenu') {
 			on(document, 'mousedown', this.onDocMouseDown, this)
 		}
-
+		
 		this.unwatchRect = watch(this.el, 'rect', this.onLayerRectChanged.bind(this))
 	}
 

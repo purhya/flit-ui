@@ -59,10 +59,10 @@ export class IconLoading extends Icon {
 
 	static style = css`
 	:host{
-		display: inline-block;
+		display: inline-flex;
 		stroke: currentColor;
 		fill: none;
-		margin: auto;
+		margin: auto 0;
 		vertical-align: top;
 		position: relative;
 	}`

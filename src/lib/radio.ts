@@ -1,4 +1,4 @@
-import {define, Component, html, css, off, once, svg, getComponent} from 'flit'
+import {define, Component, html, css, off, once, svg} from 'flit'
 import {theme} from './theme'
 
 
@@ -80,9 +80,9 @@ export class Radio extends Component<RadioEvents> {
 	}
 
 	onCreated() {
-		let groupEl = this.el.closest('f-radiogroup') as HTMLElement
-		if (groupEl) {
-			this.radioGroup = getComponent(groupEl) as RadioGroup
+		let group = this.closest(RadioGroup)
+		if (group) {
+			this.radioGroup = group
 			this.checked = this.radioGroup.value == this.value
 			this.radioGroup.register(this)
 		}

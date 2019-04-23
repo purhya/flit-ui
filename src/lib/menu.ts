@@ -55,20 +55,22 @@ export class Menu extends Component<MenuEvents> {
 	
 	onCreated() {
 		this.topMenu = this
-
-		let layerEl = this.el.closest('f-layer') as HTMLElement | null
-		this.layer = layerEl ? getComponent(layerEl) as Layer : null
+		this.layer = this.closest(Layer)
 
 		if (this.layer && this.layer.popup) {
-			this.watch(() => this.layer!.popup!.opened, (opened) => {
-				if (opened) {
-					this.setHoverItem(null)
-				}
-				else {
-					this.hideAllSubMenuLayers()
-				}
-			})
+			this.initWhenInLayer()
 		}
+	}
+
+	private initWhenInLayer() {
+		this.watch(() => this.layer!.popup!.opened, (opened) => {
+			if (opened) {
+				this.setHoverItem(null)
+			}
+			else {
+				this.hideAllSubMenuLayers()
+			}
+		})
 	}
 	
 	/** Called when child item or submenu selected. */
@@ -95,10 +97,6 @@ export class Menu extends Component<MenuEvents> {
 
 		if (menuItem) {
 			menuItem.hoverAt = true
-
-			if (document.activeElement !== this.el) {
-				this.el.focus()
-			}
 
 			let siblingsMenuItems = ([...menuItem.el.parentElement!.children] as HTMLElement[]).filter(el => el.localName === 'f-menuitem').map(getComponent) as MenuItem[]
 			siblingsMenuItems.forEach(item => {
@@ -151,7 +149,7 @@ export class Menu extends Component<MenuEvents> {
 	}
 	
 	onFocus() {
-		if (!this.layer) {
+		if (!this.layer && !this.hoverItem) {
 			this.hoverOneItem()
 		}
 		
@@ -386,7 +384,7 @@ export class MenuItem extends Component {
 	}
 
 	async onCreated() {
-		this.parentMenu = getComponent(this.el.closest('f-menu, f-submenu') as HTMLElement) as Menu | SubMenu
+		this.parentMenu = this.closest(SubMenu) || this.closest(Menu)!
 		if (!this.parentMenu) {
 			throw new Error(`"<f-menuitem>" must be contained in a "<f-menu>"`)
 		}
@@ -478,7 +476,7 @@ export class SubMenu extends Component {
 	`}
 
 	onCreated() {
-		this.parentMenu = getComponent(this.el.parentElement!.closest('f-menu, f-submenu') as HTMLElement) as Menu | SubMenu
+		this.parentMenu = this.closest(SubMenu) || this.closest(Menu)!
 		if (!this.parentMenu) {
 			throw new Error(`"<f-submenu>" must be contained in a "<f-menu>"`)
 		}

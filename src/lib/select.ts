@@ -123,33 +123,26 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	private hoverAt: T | null = null
 
 	render() {
-		let layerPart = cache(this.opened ? this.renderLayer() : '', this.transition)
-
-		let inputPart = html`
-			<input type="text"
-				class="input"
-				:ref="input"
-				.value=${this.editing ? this.inputed : this.getDisplay()}
-				?readonly=${!this.editing}
-				@click=${this.onClick}
-				@input=${this.onInput}
-			>
-		`
-
 		return html`
 		<template
 			:class.opened=${this.opened}
 			:class.not-inputable=${!this.searchable}
 		>
-			${inputPart}
+			<input type="text"
+				class="input"
+				:ref="input"
+				.value=${this.editing ? this.inputed : this.renderCurrentDisplay()}
+				?readonly=${!this.editing}
+				@click=${this.onClick}
+				@input=${this.onInput}
+			>
 			${this.icon && !this.editing ? html`<f-icon class="icon" :type="${this.icon}" />` : ''}
-			${layerPart}
+			${cache(this.opened ? this.renderLayer() : '', this.transition)}
 		</template>
 	`}
 
 	renderLayer() {
 		let data = this.getMaySuggestedData()
-
 		let listPart = repeat(data, ([key, display]) => this.renderOption(key, display))
 
 		return html`
@@ -176,19 +169,20 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 			:class.hover=${this.hoverAt !== null && this.hoverAt === key}
 			@click.prevent=${() => this.select(key)}
 			@mouseenter=${() => this.onMouseEnter(key)}
+			style=${this.renderOptionStyle(key)}
 		>
-			<span class="text">${display}</span>
+			<span class="text">${this.renderOptionDisplay(key, display)}</span>
 			${selected ? html`<f-icon class="selected-icon" type="selected" />` : ''}
 		</li>
 	`}
 
-	getDisplay(): string {
+	renderCurrentDisplay(): string | number {
 		if (this.multiple) {
-			let displays: string[] = []
+			let displays: (string | number)[] = []
 
 			for (let [key, display] of this.data) {
 				if ((this.value as T[]).includes(key)) {
-					displays.push(String(display))
+					displays.push(this.renderOptionDisplay(key, display))
 				}
 			}
 
@@ -197,12 +191,20 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		else {
 			for (let [key, display] of this.data) {
 				if (this.value === key) {
-					return String(display)
+					return this.renderOptionDisplay(key, display)
 				}
 			}
 
 			return ''
 		}
+	}
+
+	renderOptionStyle(_key: T) {
+		return ''
+	}
+
+	renderOptionDisplay(_key: T, display: string | number): string | number {
+		return display
 	}
 
 	getMaySuggestedData(): Iterable<[T, string | number]> {
@@ -233,8 +235,11 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	}
 	
 	onCreated() {
-		super.onCreated()
+		this.initValue()
+		this.initEditing()
+	}
 
+	private initValue() {
 		if (this.multiple && !Array.isArray(this.value)) {
 			if (this.value === null || this.value === undefined) {
 				this.value = []
@@ -243,7 +248,9 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 				this.value = [this.value as unknown as T]
 			}
 		}
+	}
 
+	private initEditing() {
 		if (this.searchable) {
 			this.watch(() => this.opened, (opened) => {
 				if (!opened && this.editing) {
@@ -251,14 +258,6 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 				}
 			})
 		}
-	}
-
-	async onUpdated() {
-		if (this.refs.layer) {
-			this.refs.layer.style.minWidth = String(this.el.offsetWidth) + 'px'
-		}
-
-		await super.onUpdated()
 	}
 
 	onClick() {
@@ -317,6 +316,11 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		}
 	}
 
+	async alignLayer() {
+		this.refs.layer.style.minWidth = String(this.el.offsetWidth) + 'px'
+		await super.alignLayer()
+	}
+
 	onInput() {
 		this.inputed = (this.refs.input as HTMLInputElement).value
 		this.showLayer()
@@ -325,6 +329,10 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	async onKeyDown(e: KeyboardEvent) {
 		let keys = [...this.getMaySuggestedData()].map(([key]) => key)
 		let moved = false
+
+		if (keys.length === 0 && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+			return
+		}
 
 		if (e.key === 'Enter') {
 			e.preventDefault()
@@ -343,9 +351,6 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		}
 		else if (e.key === 'ArrowUp') {
 			e.preventDefault()
-			if (keys.length === 0) {
-				return
-			}
 
 			if (!this.opened) {
 				this.showLayer()
@@ -366,9 +371,6 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		}
 		else if (e.key === 'ArrowDown') {
 			e.preventDefault()
-			if (keys.length === 0) {
-				return
-			}
 
 			if (!this.opened) {
 				this.showLayer()
