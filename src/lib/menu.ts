@@ -1,6 +1,6 @@
 import {css, define, Component, html, on, getComponent, renderComplete, off, cache, renderAndWatch, getComponentAsync} from 'flit'
 import {theme} from './theme'
-import {onceMouseLeaveAll, align, getPreviousElement, getNextElement} from 'ff'
+import {onceMouseLeaveAll, align, getPreviousVisibleElement, getNextVisibleElement} from 'ff'
 import {Layer} from './layer'
 
 
@@ -74,43 +74,43 @@ export class Menu extends Component<MenuEvents> {
 	}
 	
 	/** Called when child item or submenu selected. */
-	selectItem(menuItem: MenuItem) {
+	selectItem(item: MenuItem) {
 		if (this.selectable) {
 			if (this.selectedItem) {
 				this.selectedItem.selected = false
 			}
 			
-			menuItem.selected = true
-			this.selectedItem = menuItem
+			item.selected = true
+			this.selectedItem = item
 		}
 
-		this.setHoverItem(menuItem)
-		this.emit('select', menuItem)
+		this.setHoverItem(item)
+		this.emit('select', item)
 	}
 
-	setHoverItem(menuItem: MenuItem | null) {
+	setHoverItem(item: MenuItem | null) {
 		if (this.hoverItem) {
 			this.hoverItem.hoverAt = false
 		}
 		
-		this.hoverItem = menuItem
+		this.hoverItem = item
 
-		if (menuItem) {
-			menuItem.hoverAt = true
+		if (item) {
+			item.hoverAt = true
 
-			let siblingsMenuItems = ([...menuItem.el.parentElement!.children] as HTMLElement[]).filter(el => el.localName === 'f-menuitem').map(getComponent) as MenuItem[]
+			let siblingsMenuItems = ([...item.el.parentElement!.children] as HTMLElement[]).filter(el => el.localName === 'f-menuitem').map(getComponent) as MenuItem[]
 			siblingsMenuItems.forEach(item => {
-				if (item !== menuItem && item.subMenu && item.subMenu.opened) {
+				if (item !== item && item.subMenu && item.subMenu.opened) {
 					this.hideSubMenuLayer(item.subMenu)
 				}
 			})
 		}
 	}
 
-	onSubMenuOpened(submenu: SubMenu) {
+	onSubMenuOpened(subMenu: SubMenu) {
 		let oldOpenedSubMenus = this.openedSubMenus
-		let newOpenedSubMenus = this.openedSubMenus = [submenu]
-		let parentSubMenu = submenu.parentMenu
+		let newOpenedSubMenus = this.openedSubMenus = [subMenu]
+		let parentSubMenu = subMenu.parentMenu
 
 		while (parentSubMenu && (parentSubMenu instanceof SubMenu)) {
 			newOpenedSubMenus.unshift(parentSubMenu)
@@ -177,7 +177,7 @@ export class Menu extends Component<MenuEvents> {
 					hoverItem.subMenu.showInLayer()
 				}
 			}
-			else if (hoverItem) {
+			else {
 				hoverItem.onClick()
 				
 				if (this.layer) {
@@ -223,10 +223,11 @@ export class Menu extends Component<MenuEvents> {
 
 	private hoverPreviousItem() {
 		let prev: HTMLElement | null = this.hoverItem!.el
+		
 		do {
-			prev = getPreviousElement(prev, this.el) as HTMLElement | null
+			prev = getPreviousVisibleElement(prev, this.el) as HTMLElement | null
 		}
-		while (prev && prev.localName !== 'f-menuitem')
+		while (prev && !(getComponent(prev) instanceof MenuItem))
 
 		if (prev) {
 			this.setHoverItem(getComponent(prev) as MenuItem)
@@ -236,9 +237,9 @@ export class Menu extends Component<MenuEvents> {
 	private hoverNextItem() {
 		let next: HTMLElement | null = this.hoverItem!.el
 		do {
-			next = getNextElement(next, this.el) as HTMLElement | null
+			next = getNextVisibleElement(next, this.el) as HTMLElement | null
 		}
-		while (next && next.localName !== 'f-menuitem')
+		while (next && !(getComponent(next) instanceof MenuItem))
 
 		if (next) {
 			this.setHoverItem(getComponent(next) as MenuItem)
@@ -246,20 +247,19 @@ export class Menu extends Component<MenuEvents> {
 	}
 
 	hoverOneItem() {
-		let menuItems = ([...this.el.children].filter(el => el.localName === 'f-menuitem') as HTMLElement[]).map(getComponent) as MenuItem[]
+		let items = ([...this.el.children] as HTMLElement[]).map(getComponent).filter(com => com instanceof MenuItem) as MenuItem[]
+		let item = items.find(item => !!item.subMenu && item.subMenu.opened)
 
-		let menuItem = menuItems.find(item => !!item.subMenu && item.subMenu.opened)
-
-		if (!menuItem) {
-			menuItem = menuItems.find(item => item.selected)
+		if (!item) {
+			item = items.find(item => item.selected)
 		}
 
-		if (!menuItem) {
-			menuItem = menuItems[0]
+		if (!item) {
+			item = items[0]
 		}
 		
-		if (menuItem) {
-			this.topMenu.setHoverItem(menuItem)
+		if (item) {
+			this.setHoverItem(item)
 		}
 	}
 

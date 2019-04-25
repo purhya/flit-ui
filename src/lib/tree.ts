@@ -1,5 +1,5 @@
-import {Component, css, define, html, repeat, renderComplete} from 'flit'
-import {scrollToView} from 'ff'
+import {Component, css, define, html, repeat, renderComplete, on, getComponent, off} from 'flit'
+import {scrollToView, getPreviousVisibleElement, getNextVisibleElement} from 'ff'
 import {theme} from './theme'
 
 
@@ -23,21 +23,28 @@ export class Tree extends Component<TreeEvents> {
 		:host{
 			display: block;
 			position: relative;
-			//overflow: auto;
+			
 		}
 
-		// As a scroll inner, items are always too wide
-		.inner{
-			position: absolute;
-			left: 0;
-			top: 0;
-			min-width: 100%;
+		.scrollable{
+			overflow: auto;
+
+			// As a scroll inne because items in tree are always wide.
+			.inner{
+				position: absolute;
+				left: 0;
+				top: 0;
+				min-width: 100%;
+			}
 		}
 	`}
+
+	static properties = ['scrollable']
 
 	data: TreeDataItem | null = null
 	children: TreeDataItem[] | null = null
 	currentPath: string = ''
+	scrollable: boolean = false
 
 	loading: boolean = false
 	selectedItem: TreeItem | null = null
@@ -47,6 +54,7 @@ export class Tree extends Component<TreeEvents> {
 	deep: number = 0
 	hasChildren: boolean = false
 	itemsHasIcon: boolean = false
+	hoverItem: TreeItem | null = null
 
 	render() {
 		let innerPart = this.data ? repeat(this.children, (item) => html`
@@ -58,8 +66,13 @@ export class Tree extends Component<TreeEvents> {
 			: html`<slot />`
 
 		return html`
-		<template tabindex="0">
-			<div class="inner">
+		<template
+			tabindex="0"
+			:class.scrollable=${this.scrollable}
+			@focus=${this.onFocus}
+			@blur=${this.onBlur}
+		>
+			<div class="inner" :ref="inner">
 				${innerPart}
 			</div>
 		</template>
@@ -98,8 +111,96 @@ export class Tree extends Component<TreeEvents> {
 			item.selected = true
 			this.selectedItem = item
 			this.currentPath = item.path
+			this.setHoverItem(item)
 			this.emit('select', item)
 		}
+	}
+
+	setHoverItem(item: TreeItem | null) {
+		if (this.hoverItem) {
+			this.hoverItem.hoverAt = false
+		}
+		
+		this.hoverItem = item
+
+		if (item) {
+			item.hoverAt = true
+		}
+	}
+
+	onFocus() {
+		this.hoverOneItem()
+		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
+	}
+
+	private onKeyDown(e: KeyboardEvent) {
+		let hoverItem = this.hoverItem
+		if (!hoverItem) {
+			if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+				e.preventDefault()
+				this.hoverOneItem()
+			}
+			return
+		}
+
+		if (e.key === 'Enter') {
+			e.preventDefault()
+			hoverItem.onClick()
+		}
+		else if (e.key === 'ArrowUp') {
+			e.preventDefault()
+			this.hoverPreviousItem()
+		}
+		else if (e.key === 'ArrowDown') {
+			e.preventDefault()
+			this.hoverNextItem()
+		}
+	}
+
+	private hoverPreviousItem() {
+		let prev: HTMLElement | null = this.hoverItem!.el
+		do {
+			prev = getPreviousVisibleElement(prev, this.el) as HTMLElement | null
+		}
+		while (prev && !(getComponent(prev) instanceof TreeItem))
+
+		if (prev) {
+			this.setHoverItem(getComponent(prev) as TreeItem)
+		}
+	}
+
+	private hoverNextItem() {
+		let next: HTMLElement | null = this.hoverItem!.el
+		do {
+			next = getNextVisibleElement(next, this.el) as HTMLElement | null
+		}
+		while (next && !(getComponent(next) instanceof TreeItem))
+
+		if (next) {
+			this.setHoverItem(getComponent(next) as TreeItem)
+		}
+	}
+
+	hoverOneItem() {
+		let items = ([...this.refs.inner.children] as HTMLElement[]).map(getComponent).filter(com => com instanceof TreeItem) as TreeItem[]
+		let item = items.find(item => item.selected)
+
+		if (!item) {
+			item = items.find(item => item.expanded)
+		}
+
+		if (!item) {
+			item = items[0]
+		}
+		
+		if (item) {
+			this.setHoverItem(item)
+		}
+	}
+
+	onBlur() {
+		this.setHoverItem(null)
+		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 
 	// Set current path from outside, will open all the directories on the way.
@@ -151,22 +252,11 @@ export class TreeItem extends Component {
 			display: flex;
 			cursor: pointer;
 
-			&:hover{
-				color: ${mainColor};
-			}
-
 			&.hover{
 				background: #eee;
 			}
 
 			&.expanded{
-				color: ${mainColor};
-				background: ${mainColor.alpha(0.05)};
-
-				&.hover{
-					background: ${mainColor.alpha(0.1)};
-				}
-
 				.arrow{
 					transform: rotate(180deg);
 				}
@@ -229,6 +319,7 @@ export class TreeItem extends Component {
 	expanded: boolean = false
 	loading: boolean = false
 	selected: boolean = false
+	hoverAt: boolean = false
 	hasChildren: boolean = false
 	itemsHasIcon: boolean = false
 
@@ -246,10 +337,12 @@ export class TreeItem extends Component {
 		return html `
 		<template>
 			<div class="line"
+				:class.hover=${this.hoverAt}
 				:class.selected=${this.selected}
 				:class.expanded=${this.expanded}
 				:style.padding-left.px=${lh(25) * this.deep}
 				@click=${this.onClick}
+				@mouseenter=${this.onMouseEnter}
 			>
 				<div class="arrow-placeholder" @click.stop=${this.toggleExpanded}>
 					${this.children && this.children.length > 0 || this.hasChildren ? html`<f-icon class="arrow" type="down" />` : ''}
@@ -300,12 +393,15 @@ export class TreeItem extends Component {
 
 	onClick() {
 		// First click to selected, secondary click to expand
-		if (this.selected) {
-			this.expand()
-		}
-		else {
+		if (!this.selected) {
 			this.select()
 		}
+
+		this.toggleExpanded()
+	}
+
+	onMouseEnter() {
+		this.root.setHoverItem(this)
 	}
 
 	select() {
