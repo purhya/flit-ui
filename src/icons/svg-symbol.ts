@@ -1,5 +1,5 @@
 export const svgSymbols = {
-	'account': `
+	'user': `
 		<svg viewBox="0 0 20 20">
 			<ellipse style="fill:none;stroke:currentColor;stroke-linecap:round;" cx="10.1" cy="6" rx="4.6" ry="4.5"/>
 			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M10.1,3.7c1.4,0,2.5,1.1,2.5,2.5"/>

@@ -74,7 +74,7 @@ export class Menu extends Component<MenuEvents> {
 	}
 	
 	/** Called when child item or submenu selected. */
-	setSelectedItem(menuItem: MenuItem) {
+	selectItem(menuItem: MenuItem) {
 		if (this.selectable) {
 			if (this.selectedItem) {
 				this.selectedItem.selected = false
@@ -288,21 +288,21 @@ export class MenuItem extends Component {
 				background: #eee;
 			}
 
-			&.selected{
-				color: ${mainColor};
-				background: ${mainColor.alpha(0.1)};
-
-				&.hover{
-					background: ${mainColor.alpha(0.15)};
-				}
-			}
-
 			&.submenu-opened{
 				color: ${mainColor};
 				background: ${mainColor.alpha(0.05)};
 
 				&.hover{
 					background: ${mainColor.alpha(0.1)};
+				}
+			}
+
+			&.selected{
+				color: ${mainColor};
+				background: ${mainColor.alpha(0.1)};
+
+				&.hover{
+					background: ${mainColor.alpha(0.15)};
 				}
 			}
 		}
@@ -319,7 +319,7 @@ export class MenuItem extends Component {
 			}
 		}
 
-		.right-arrow{
+		.arrow{
 			margin-left: auto;
 			margin-right: 4px;
 		}
@@ -360,7 +360,7 @@ export class MenuItem extends Component {
 				? 'right' : subMenu.opened
 				? 'up' : 'down'
 			
-			rightIcon = html`<f-icon class="right-arrow" :type=${rightIconType} />`
+			rightIcon = html`<f-icon class="arrow" :type=${rightIconType} />`
 		}
 
 		let iconSize = theme.lh(25)
@@ -393,7 +393,7 @@ export class MenuItem extends Component {
 		this.topMenu = this.parentMenu instanceof Menu ? this.parentMenu : this.parentMenu.topMenu
 
 		if (this.selected) {
-			this.topMenu.setSelectedItem(this)
+			this.topMenu.selectItem(this)
 		}
 
 		let nextEl = this.el.nextElementSibling
@@ -408,7 +408,7 @@ export class MenuItem extends Component {
 		if (this.subMenu) {
 			// Can select current item as an directory
 			if (topMenu.selectable && topMenu.dirSelectable) {
-				topMenu.setSelectedItem(this)
+				topMenu.selectItem(this)
 			}
 
 			// Otherwise it been controlled by registered 'mouseenter' event.
@@ -417,7 +417,7 @@ export class MenuItem extends Component {
 			}
 		}
 		else {
-			topMenu.setSelectedItem(this)
+			topMenu.selectItem(this)
 		}
 	}
 
@@ -468,7 +468,7 @@ export class SubMenu extends Component {
 	render() {
 		return html`
 		<template
-			:show=${{when: this.topMenu.layer ? true : this.opened, transition: this.topMenu.layer ? '' : 'height'}}
+			:show=${{when: this.topMenu.layer ? true : this.opened, transition: this.topMenu.layer ? null : {properties: ['height', 'opacity']}}}
 			:class.has-icon="${this.itemsHasIcon}"
 		>
 			<slot></slot>

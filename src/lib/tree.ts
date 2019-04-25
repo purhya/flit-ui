@@ -1,306 +1,331 @@
-// import {Component, css, define, html, repeat} from 'flit'
-
-
-// class Tree extends Component {
-
-// 	static style() {
-// 		return css`
-// 		:host{
-// 			display: block;
-// 			overflow: auto;
-// 			position: relative;
-// 		}
-
-// 		// As a scroll inner, items are always too wide
-// 		.inner{
-// 			position: absolute;
-// 			left: 0;
-// 			top: 0;
-// 			min-width: 100%;
-// 		}
-// 	`}
-
-// 	render() {
-// 		return html`
-// 		<div class="inner">
-// 		${
-// 			repeat(this.children, (item) => html`
-// 			<f-tree-item
-// 				f-for="item of children"
-// 				:root="root"
-// 				:data="item"
-// 				:deep=${0}
-// 			/>
-// 			`)
-// 		}
-			
-// 		</div>
-// 	`}
-
-// 	data: null,
-
-// 	path: '/',
-
-// 	//its a promise interface, you can overwrite this
-// 	getChildren (data) {
-// 		return data.children
-// 	}
-
-// 	//you can overwrite this
-// 	getPath (data) {
-// 		return data.path
-// 	}
-
-// 	//you can overwrite this
-// 	getName (data) {
-// 		return this.getPath(data).afterLast('/')
-// 	}
-
-// 	//you can overwrite this
-// 	getIcon (data) {
-// 		return data.icon
-// 	}
-
-
-// 	async onCreated () {
-// 		this.root = this
-// 		this.leafMap = {}
-// 		this.children = await this.getChildren(this.data)
-// 	}
-
-
-// 	register (path, leaf) {
-// 		this.leafMap[path] = leaf
-// 	}
-
-
-// 	isCurrentPath (path) {
-// 		return this.path === path
-// 	}
-
-
-// 	//from leaf
-// 	onSelectPathFromLeaf (path) {
-// 		this.setPath(path)
-// 		this.emit('select', path)
-// 	}
-
-
-// 	//from outside
-// 	async setPath (path, willExpand = true) {
-// 		let map = this.leafMap
-
-// 		if (this.path) {
-// 			let oldLeaf = map[this.path]
-// 			if (oldLeaf) {
-// 				oldLeaf.deselect()
-// 			}
-// 		}
-
-// 		this.path = path
-
-// 		if (willExpand) {
-// 			let parentPath = ''
-// 			let pathParts = path.split('/')
-
-// 			for (let part of pathParts) {
-// 				parentPath += (parentPath.endsWith('/') ? '' : '/') + part
-
-// 				let leaf = map[parentPath]
-// 				if (leaf) {
-// 					await leaf.expand()
-// 				}
-// 			}
-// 		}
-
-// 		FF.nextTick(() => {
-// 			let leaf = map[path]
-// 			if (leaf) {
-// 				leaf.select()
-// 				leaf.el.scrollToView()
-// 			}
-// 		})
-// 	}
-// }
-
-
-// @define('f-tree-item')
-// class TreeItem extends Component {
-
-// 	static style() {
-// 		return css`
-// 		:host{
-// 			display: block;
-// 		}
-
-// 		&-leaf{
-// 			line-height: 36px;
-// 		}
-
-// 		&-title{
-// 			height: 36px;
-// 			padding-left: 4px;
-// 			padding-right: 10px;
-// 			display: flex;
-// 			cursor: pointer;
-
-// 			&:hover{
-// 				color: $main-color;
-// 			}
-
-// 			&.active{
-// 				background: $main-color-opacity-5;
-// 				color: $main-color;
-// 			}
-// 		}
-
-// 		&-expand{
-// 			width: 24px;
-// 			display: flex;
-
-// 			&-empty .icon{
-// 				visibility: hidden;
-// 			}
-// 		}
-
-// 		.icon-down{
-// 			transition: transform 0.25s ease;
-// 		}
-
-// 		&-icon{
-// 			width: 24px;
-// 			display: flex;
-// 		}
-
-// 		&-name{
-// 			white-space: nowrap;
-// 			overflow: hidden;
-// 			text-overflow: ellipsis;
-// 			margin-left: 7px;
-// 		}
-
-// 		&-expanded{
-// 			.icon-down{
-// 				transform: rotate(180deg);
-// 			}
-// 		}
-
-// 		&-menu{
-// 			overflow: hidden;
-// 		}
-// 	`}
-
-// 	template: `
-// 		<tree-leaf class="tree-leaf">
-// 			<div class="tree-title"
-// 				:class.tree-expanded="expanded"
-// 				:class.active="isSelected"
-// 				:style.padding-left.px="4 + 24 * deep"
-// 				@click="onClickLeaf"
-// 			>
-// 				<div class="tree-expand"
-// 					:class.tree-expand-empty="isEmpty()"
-// 					@click.stop="toggleExpanded"
-// 				>
-// 					<icon type="down"></icon>
-// 				</div>
-// 				<div class="tree-icon">
-// 					<icon :type="getIcon()"></icon>
-// 				</div>
-// 				<div class="tree-name">{{getName()}}</div>
-// 			</div>
-// 			<ul class="tree-menu" f-show="expanded" f-transition="height, opacity">
-// 				<tree-leaf
-// 					f-for="item of children"
-// 					:root="root"
-// 					:data="item"
-// 					:deep="deep + 1"
-// 				></tree-leaf>
-// 			</ul>
-// 		</tree-leaf>
-// 	`,
-
-// 	data: null,
-
-// 	root: null,
-
-// 	//inner properties
-// 	deep: 0,
-
-// 	expanded: false,
-
-// 	loading: false,
-
-// 	children: null,
-
-// 	isSelected: false,
-
-
-// 	onReady () {
-// 		this.root.register(this.root.getPath(this.data), this)
-// 	}
-
-
-// 	getName () {
-// 		return this.root.getName(this.data)
-// 	}
-
-
-// 	getIcon () {
-// 		return this.root.getIcon(this.data) || 'folder'
-// 	}
-
-
-// 	isEmpty () {
-// 		return this.children && this.children.length === 0
-// 	}
-
-
-// 	onClickLeaf () {
-// 		let path = this.root.getPath(this.data)
-
-// 		if (!this.root.isCurrentPath(path)) {
-// 			this.select()
-// 			this.root.onSelectPathFromLeaf(path)
-// 		}
-// 		else {
-// 			this.expand()
-// 		}
-// 	}
-
-
-// 	toggleExpanded () {
-// 		if (this.expanded) {
-// 			this.expanded = false
-// 		}
-// 		else {
-// 			this.expand()
-// 		}
-// 	}
-
-
-// 	async expand () {
-// 		if (this.children) {
-// 			this.expanded = true
-// 		}
-// 		else {
-// 			this.loading = true
-// 			this.children = await this.root.getChildren(this.data)
-// 			this.loading = false
-
-// 			FF.nextTick(() => {
-// 				this.expanded = true
-// 			})
-// 		}
-// 	}
-
-
-// 	select () {
-// 		this.isSelected = true
-// 	}
-
-
-// 	deselect () {
-// 		this.isSelected = false
-// 	}
-// })
+import {Component, css, define, html, repeat, renderComplete} from 'flit'
+import {scrollToView} from 'ff'
+import {theme} from './theme'
+
+
+interface TreeDataItem {
+	icon: string
+	text: string
+	path: string
+	children: Promise<TreeDataItem[]> | TreeDataItem[]
+}
+
+interface TreeEvents {
+	select: (item: TreeItem) => void
+}
+
+
+@define('f-tree')
+export class Tree extends Component<TreeEvents> {
+
+	static style() {
+		return css`
+		:host{
+			display: block;
+			position: relative;
+			//overflow: auto;
+		}
+
+		// As a scroll inner, items are always too wide
+		.inner{
+			position: absolute;
+			left: 0;
+			top: 0;
+			min-width: 100%;
+		}
+	`}
+
+	data: TreeDataItem | null = null
+	children: TreeDataItem[] | null = null
+	currentPath: string = ''
+
+	loading: boolean = false
+	selectedItem: TreeItem | null = null
+	itemMap: {[key: string]: TreeItem} = {}
+	root!: Tree
+	parent: null = null
+	deep: number = 0
+	hasChildren: boolean = false
+	itemsHasIcon: boolean = false
+
+	render() {
+		let innerPart = this.data ? repeat(this.children, (item) => html`
+			<f-treeitem
+				:root=${this}
+				:data=${item}
+				:deep=${this.deep}
+			/>`)
+			: html`<slot />`
+
+		return html`
+		<template tabindex="0">
+			<div class="inner">
+				${innerPart}
+			</div>
+		</template>
+	`}
+
+	async onCreated() {
+		this.root = this
+
+		if (this.data) {
+			if (this.data.children instanceof Promise) {
+				this.loading = true
+				this.children = await this.data.children
+				this.loading = false
+			}
+			else {
+				this.children = this.data.children
+			}
+
+			this.currentPath = this.data.path
+		}
+		else {
+			this.hasChildren = this.el.children.length > 0
+		}
+	}
+
+	register(item: TreeItem) {
+		this.itemMap[item.path] = item
+	}
+
+	selectItem(item: TreeItem) {
+		if (this.selectedItem !== item) {
+			if (this.selectedItem) {
+				this.selectedItem.deselect()
+			}
+
+			item.selected = true
+			this.selectedItem = item
+			this.currentPath = item.path
+			this.emit('select', item)
+		}
+	}
+
+	// Set current path from outside, will open all the directories on the way.
+	async setPath(path: string) {
+		let map = this.itemMap
+
+		let oldItem = map[this.currentPath]
+		if (oldItem) {
+			oldItem.deselect()
+		}
+
+		this.currentPath = path
+
+		// Here to expand directories on the way.
+		let parentPath = ''
+		let pathParts = path.split('/')
+
+		for (let part of pathParts) {
+			parentPath += (parentPath.endsWith('/') ? '' : '/') + part
+
+			let item = map[parentPath]
+			if (item) {
+				await item.expand()
+			}
+		}
+
+		await renderComplete()
+		let item = map[path]
+		if (item) {
+			item.select()
+			scrollToView(item.el)
+		}
+	}
+}
+
+
+@define('f-treeitem')
+export class TreeItem extends Component {
+
+	static style() {
+		let {lh, mainColor} = theme
+
+		return css`
+		:host{
+			display: block;
+		}
+
+		.line{
+			display: flex;
+			cursor: pointer;
+
+			&:hover{
+				color: ${mainColor};
+			}
+
+			&.hover{
+				background: #eee;
+			}
+
+			&.expanded{
+				color: ${mainColor};
+				background: ${mainColor.alpha(0.05)};
+
+				&.hover{
+					background: ${mainColor.alpha(0.1)};
+				}
+
+				.arrow{
+					transform: rotate(180deg);
+				}
+			}
+
+			&.selected{
+				color: ${mainColor};
+				background: ${mainColor.alpha(0.1)};
+
+				&.hover{
+					background: ${mainColor.alpha(0.15)};
+				}
+			}
+		}
+
+		.arrow-placeholder{
+			display: flex;
+			width: ${lh(30)}px;
+
+			.arrow{
+				margin: auto;
+			}
+		}
+
+		.icon{
+			display: flex;
+			width: ${lh(30)}px;
+			margin-left: ${lh(-5)}px;
+
+			f-icon{
+				margin: auto;
+			}
+		}
+
+		.text{
+			flex: 1;
+			min-width: 0;
+			padding: 0 ${lh(10)} 0 0px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.menu{
+			overflow: hidden;
+		}
+	`}
+
+	static properties = ['text']
+
+	data: TreeDataItem | null = null
+	text: string = ''
+	icon: string = ''
+	path: string = ''
+	children: TreeDataItem[] | null = null
+	deep: number = -1
+
+	root!: Tree
+	parent!: TreeItem | Tree
+	expanded: boolean = false
+	loading: boolean = false
+	selected: boolean = false
+	hasChildren: boolean = false
+	itemsHasIcon: boolean = false
+
+	render() {
+		let {lh} = theme
+
+		let innerPart = this.children ? repeat(this.children, (item) => html`
+			<f-treeitem
+				:root=${this.root}
+				:data=${item}
+				:deep=${this.deep + 1}
+			/>`
+		) : html`<slot />`
+
+		return html `
+		<template>
+			<div class="line"
+				:class.selected=${this.selected}
+				:class.expanded=${this.expanded}
+				:style.padding-left.px=${lh(25) * this.deep}
+				@click=${this.onClick}
+			>
+				<div class="arrow-placeholder" @click.stop=${this.toggleExpanded}>
+					${this.children && this.children.length > 0 || this.hasChildren ? html`<f-icon class="arrow" type="down" />` : ''}
+				</div>
+
+			${this.parent.itemsHasIcon ? html`
+				<div class="icon">
+					${this.icon ? html`<f-icon :type=${this.icon} />` : ''}
+				</div>` : ''
+			}
+				<div class="text">${this.text}</div>
+			</div>
+			<ul class="menu" :show=${{when: this.expanded, transition: {properties: ['height', 'opacity']}}}>
+				${innerPart}
+			</ul>
+		</template>
+	`}
+
+	async onCreated() {
+		if (!this.root) {
+			this.root = this.closest(Tree)!
+		}
+
+		if (this.deep === -1) {
+			let closestItem = this.closest(TreeItem)
+			this.deep = closestItem ? closestItem.deep + 1 : 0
+		}
+
+		if (this.data) {
+			this.text = this.data.text
+			this.icon = this.data.icon
+			this.path = this.data.path
+
+			if (this.data.children instanceof Promise) {
+				this.children = await this.data.children
+			}
+			else {
+				this.children = this.data.children
+			}
+		}
+		else {
+			this.hasChildren = this.el.children.length > 0
+		}
+		
+		this.parent = this.closest(TreeItem) || this.closest(Tree)!
+		this.parent.itemsHasIcon = this.parent.itemsHasIcon || !!this.icon
+	}
+
+	onClick() {
+		// First click to selected, secondary click to expand
+		if (this.selected) {
+			this.expand()
+		}
+		else {
+			this.select()
+		}
+	}
+
+	select() {
+		this.root.selectItem(this)
+	}
+
+	deselect() {
+		this.selected = false
+	}
+
+	toggleExpanded() {
+		if (this.expanded) {
+			this.expanded = false
+		}
+		else {
+			this.expand()
+		}
+	}
+
+	expand() {
+		this.expanded = true
+	}
+}

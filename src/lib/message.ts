@@ -1,4 +1,4 @@
-import {css, define, html, onRenderComplete, renderComponent} from 'flit'
+import {css, define, html, renderComponent, renderComplete} from 'flit'
 import {theme} from './theme'
 import {Modal} from './modal'
 
@@ -217,7 +217,7 @@ export class MessageModal extends Modal {
 		}
 	}
 
-	async showMessage(options: MessageOptions) {
+	async showMessage(options: MessageOptions): Promise<string | [string, string]> {
 		let {list} = options
 
 		if (list) {
@@ -227,18 +227,16 @@ export class MessageModal extends Modal {
 
 		let promise = new Promise((resolve) => {
 			options.resolve = resolve
-		})
+		}) as Promise<string | [string, string]>
 
 		this.options = options
+		this.show()
 
 		if (options.type === 'prompt') {
-			onRenderComplete(() => {
-				this.refs.input.focus()
-				;(this.refs.input as HTMLInputElement).select()
-			})
+			await renderComplete()
+			this.refs.input.focus()
+			;(this.refs.input as HTMLInputElement).select()
 		}
-
-		this.show()
 
 		return promise 
 	}
@@ -262,7 +260,7 @@ export class Message {
 		return this.showMessage(Object.assign({
 			type: 'info',
 			content,
-			buttons: {ok: 'OK@'},
+			buttons: {ok: 'OK'},
 		}, options) as MessageOptions)
 	}
 

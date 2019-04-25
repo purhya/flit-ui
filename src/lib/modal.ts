@@ -197,7 +197,10 @@ export class Modal extends Component {
 		}
 
 		this.toCenter()
-		this.el.focus()
+
+		if (this.el.tabIndex === 0) {
+			this.el.focus()
+		}
 	}
 
 	toCenter() {
