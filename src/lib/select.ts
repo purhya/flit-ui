@@ -77,9 +77,12 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 		.item{
 			display: flex;
 			padding: 0 8px;
-			box-shadow: inset 0 -1px 0 0 #fff;	// Add a white line as spliter for adjacent selected items.
 			cursor: pointer;
-			
+
+			&:not(:last-child){
+				box-shadow: inset 0 -1px 0 0 #fff;	// Add a white line as spliter for adjacent selected items.
+			}
+
 			&.hover{
 				background: #eee;
 

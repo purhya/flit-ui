@@ -344,7 +344,7 @@ export class TreeItem extends Component {
 				@click=${this.onClick}
 				@mouseenter=${this.onMouseEnter}
 			>
-				<div class="arrow-placeholder" @click.stop=${this.toggleExpanded}>
+				<div class="arrow-placeholder" @click.stop=${this.toggleExpanded}> <!-- Stop to avoid trigger click on ".line" -->
 					${this.children && this.children.length > 0 || this.hasChildren ? html`<f-icon class="arrow" type="down" />` : ''}
 				</div>
 
