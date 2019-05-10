@@ -126,7 +126,7 @@ export class Checkbox extends Component<CheckboxEvents> {
 
 
 @define('f-checkboxgroup')
-export class CheckboxGroup extends Component<{change: (value: string | number) => void}> {
+export class CheckboxGroup extends Component<{change: (value: any[]) => void}> {
 
 	static properties = ['value', 'ordered']
 

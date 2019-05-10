@@ -5,12 +5,12 @@ import {Color} from './color'
 import {remove, scrollToView, scrollToTop} from 'ff'
 
 
-export interface SelectEvents<T = unknown> {
-	change: (value: T | T[]) => void
+export interface SelectEvents<T> {
+	change: (value: T) => void
 }
 
 @define('f-select')
-export class Select<T = unknown> extends Popup<SelectEvents<T>> {
+export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> {
 	
 	static style() {
 		let {mainColor, lh, textColor} = theme
@@ -116,7 +116,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 
 	icon: string = 'down'
 	data: Iterable<[T, string | number]> = []
-	value: T | T[] | null = null
+	value: T | null = null
 	multiple: boolean = false
 	searchable: boolean = false
 	ordered: boolean = false
@@ -184,7 +184,7 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 			let displays: (string | number)[] = []
 
 			for (let [key, display] of this.data) {
-				if ((this.value as T[]).includes(key)) {
+				if ((this.value as any[]).includes(key)) {
 					displays.push(this.renderOptionDisplay(key, display))
 				}
 			}
@@ -245,10 +245,10 @@ export class Select<T = unknown> extends Popup<SelectEvents<T>> {
 	private initValue() {
 		if (this.multiple && !Array.isArray(this.value)) {
 			if (this.value === null || this.value === undefined) {
-				this.value = []
+				this.value = [] as T
 			}
 			else {
-				this.value = [this.value as unknown as T]
+				this.value = [this.value] as T
 			}
 		}
 	}
