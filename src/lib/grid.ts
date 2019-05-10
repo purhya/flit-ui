@@ -49,6 +49,15 @@ export class Grid<Item extends object> extends Component {
 			align-items: stretch;
 			padding: 0 8px;
 
+			&:last-child{
+				padding-right: 0;
+			}
+		}
+
+		.column-left{
+			flex: 1;
+			display: flex;
+
 			&:hover .order{
 				display: flex;
 			}
@@ -187,12 +196,15 @@ export class Grid<Item extends object> extends Component {
 		return this.columns.map((column, index) => {
 			return html`
 			<div class="column" @click=${(e: MouseEvent) => this.doOrdering(e, index)}>
-				<div class="column-title">${column.title}</div>
-				${column.orderable || column.orderBy ? html`
-					<div class="order" :class.current=${this.orderedColumnIndex === index && this.orderDirection !== ''}>
-						<f-icon :type=${this.getOrderIcon(index)} />
-					</div>`
-				: ''}
+				<div class="column-left">
+					<div class="column-title">${column.title}</div>
+					${column.orderable || column.orderBy ? html`
+						<div class="order" :class.current=${this.orderedColumnIndex === index && this.orderDirection !== ''}>
+							<f-icon :type=${this.getOrderIcon(index)} />
+						</div>`
+					: ''}
+				</div>
+
 				${this.resizable && index < this.columns.length - 1 ? html`
 					<div class="resizer" @mousedown=${(e: MouseEvent) => this.onStartResize(e, index)} />`
 				: ''}

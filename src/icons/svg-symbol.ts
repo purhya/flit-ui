@@ -1,12 +1,4 @@
 export const svgSymbols = {
-	'user': `
-		<svg viewBox="0 0 20 20">
-			<ellipse style="fill:none;stroke:currentColor;stroke-linecap:round;" cx="10.1" cy="6" rx="4.6" ry="4.5"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M10.1,3.7c1.4,0,2.5,1.1,2.5,2.5"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M5.5,11.5c-1,1.1-1.7,2.5-2,4.1c-0.1,0.5,0.3,0.9,0.8,0.9h0.1h11.3c0.5,0,0.9-0.3,0.9-0.9c0-0.1,0-0.1,0-0.1c-0.3-1.6-1-2.9-2-4.1"/>
-		</svg>
-	`,
-
 	'add': `
 		<svg viewBox="0 0 20 20">
 			<line style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" x1="3.5" y1="9.5" x2="17.5" y2="9.5"/>
@@ -222,20 +214,20 @@ export const svgSymbols = {
 
 	'order-asc': `
 		<svg viewBox="0 0 20 20">
-			<polygon style="fill:currentColor;" points="10,7 7,12 13,12"/>
+			<polygon style="fill:currentColor; stroke:none;" points="10,7 7,12 13,12"/>
 		</svg>
 	`,
 
 	'order-default': `
 		<svg viewBox="0 0 20 20">
-			<polygon style="fill:currentColor;" points="10,16 7,11 13,11"/>
-			<polygon style="fill:currentColor;" points="10,4 7,9 13,9"/>
+			<polygon style="fill:currentColor; stroke:none;" points="10,16 7,11 13,11"/>
+			<polygon style="fill:currentColor; stroke:none;" points="10,4 7,9 13,9"/>
 		</svg>
 	`,
 
 	'order-desc': `
 		<svg viewBox="0 0 20 20">
-			<polygon style="fill:currentColor;" points="10,13 7,8 13,8"/>
+			<polygon style="fill:currentColor; stroke:none;" points="10,13 7,8 13,8"/>
 		</svg>
 	`,
 
@@ -323,6 +315,14 @@ export const svgSymbols = {
 	'up': `
 		<svg viewBox="0 0 20 20">
 			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="14,12.5 10,6.5 6,12.5"/>
+		</svg>
+	`,
+
+	'user': `
+		<svg viewBox="0 0 20 20">
+			<ellipse style="fill:none;stroke:currentColor;stroke-linecap:round;" cx="10.1" cy="6" rx="4.6" ry="4.5"/>
+			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M10.1,3.7c1.4,0,2.5,1.1,2.5,2.5"/>
+			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M5.5,11.5c-1,1.1-1.7,2.5-2,4.1c-0.1,0.5,0.3,0.9,0.8,0.9h0.1h11.3c0.5,0,0.9-0.3,0.9-0.9c0-0.1,0-0.1,0-0.1c-0.3-1.6-1-2.9-2-4.1"/>
 		</svg>
 	`,
 }
