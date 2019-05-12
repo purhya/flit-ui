@@ -129,7 +129,10 @@ export class Tree extends Component<TreeEvents> {
 	}
 
 	onFocus() {
-		this.hoverOneItem()
+		if (!this.hoverItem) {
+			this.hoverOneItem()
+		}
+		
 		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 
