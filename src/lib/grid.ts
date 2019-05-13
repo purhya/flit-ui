@@ -1,7 +1,7 @@
 import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once} from 'flit'
 import {theme} from './theme'
 import {Store} from './store'
-import {getScrollbarWidth, watch, Order, getNumeric, sum, toDecimal} from 'ff'
+import {getScrollbarWidth, watch, Order, getNumeric, sum, toDecimal, repeatTimes} from 'ff'
 
 
 interface Column<Item = any> {
@@ -22,7 +22,7 @@ interface Column<Item = any> {
 export class Grid<Item extends object> extends Component {
 
 	static style() {
-		let {fs, mainColor} = theme
+		let {fs, lh, mainColor} = theme
 
 		return css`
 		:host{
@@ -32,7 +32,7 @@ export class Grid<Item extends object> extends Component {
 		}
 
 		.head{
-			padding-right: 8px;
+			padding-right: 8px;	// Same with defined scrollbar width.
 			border-bottom: 1px solid #ddd;
 			color: #888;
 			font-size: ${fs(12)}px;
@@ -47,7 +47,7 @@ export class Grid<Item extends object> extends Component {
 			position: relative;
 			display: flex;
 			align-items: stretch;
-			padding: 0 8px;
+			padding: 0 ${lh(8)}px;
 
 			&:last-child{
 				padding-right: 0;
@@ -76,10 +76,10 @@ export class Grid<Item extends object> extends Component {
 		}
 
 		.order{
-			width: 20px;
+			width: ${lh(20)}px;
 			display: none;
 			flex: none;
-			margin-right: -5px;
+			margin-right: ${lh(-5)}px;
 
 			&.current{
 				display: flex;
@@ -91,7 +91,7 @@ export class Grid<Item extends object> extends Component {
 			z-index: 1;
 			width: 17px;
 			margin-left: auto;
-			margin-right: -16px;
+			margin-right: ${lh(-16)}px;
 			cursor: e-resize;
 
 			&::before{
@@ -135,7 +135,7 @@ export class Grid<Item extends object> extends Component {
 
 		td{
 			vertical-align: middle;
-			padding: 0 8px;
+			padding: 0 ${lh(8)}px;
 			border-bottom: 1px solid #eee;
 			cursor: default;
 		}
@@ -145,7 +145,7 @@ export class Grid<Item extends object> extends Component {
 			height: 100%;
 
 			f-icon{
-				margin-right: 10px;
+				margin-right: ${lh(10)}px;
 			}
 		}
 
@@ -167,13 +167,14 @@ export class Grid<Item extends object> extends Component {
 	groupSize: number = 50
 	columns!: Column<Item>[]
 	store!: Store<Item>
-	minWidth: number = 64
+	minColumnWidth: number = 64
 
 	private orderedColumnIndex: number = -1
 	private orderDirection: 'asc' | 'desc' | '' = ''
 	private unwatchSize: (() => void) | null = null
 	private columnWidths: number[] | null = null
 	private resizingColumnWidths: number[] | null = null
+	private columnResized: boolean = false
 
 	render() {
 		return html`
@@ -307,38 +308,22 @@ export class Grid<Item extends object> extends Component {
 	}
 
 
-	// Resize part
+	// Resizing part
 	updatColumnWidths() {
-		let totalWidth = this.refs.head.clientWidth - getNumeric(this.refs.head, 'paddingLeft') - getNumeric(this.refs.head, 'paddingRight')
-		let totalBaseWidth = 0
-		let totalFlex = 0
-		let addFlexToEveryColumn = false
+		let clientWidth = this.refs.head.clientWidth - getNumeric(this.refs.head, 'paddingLeft') - getNumeric(this.refs.head, 'paddingRight')
 
-		let widthAndFlexArray = this.columns.map(({flex, width, minWidth}) => {
-			let baseWidth = Math.max(width || 0, minWidth || this.minWidth)
+		let widthAndFlexArray = this.columns.map(({flex, width, minWidth}, index) => {
+			minWidth = minWidth || this.minColumnWidth
+
+			let baseWidthInColumnConfig = Math.max(width || 0, minWidth)
+
+			// If column resized, we use the column width percentage to calculate new column width.
+			let baseWidth = this.columnResized ? this.columnWidths![index] : baseWidthInColumnConfig
+
 			return [baseWidth, flex || 0]
-		})
-
-		for (let [baseWidth, flex] of widthAndFlexArray) {
-			totalBaseWidth += baseWidth
-			totalFlex += flex
-		}
-
-		if (totalFlex === 0) {
-			totalFlex = this.columns.length
-			addFlexToEveryColumn = true
-		}
-
-		let widthPerFlex = (totalWidth - totalBaseWidth) / totalFlex
-
-		let widths = widthAndFlexArray.map(([baseWidth, flex]) => {
-			if (addFlexToEveryColumn) {
-				flex = 1
-			}
-
-			return flex * widthPerFlex + baseWidth
-		})
-
+		}) as [number, number][]
+		
+		let widths = flexWidthCalculator(widthAndFlexArray, clientWidth, this.minColumnWidth)
 		this.columnWidths = widths
 		this.setColumnWidths(widths)
 	}
@@ -371,17 +356,15 @@ export class Grid<Item extends object> extends Component {
 				this.columnWidths = this.resizingColumnWidths
 				this.resizingColumnWidths = null
 			}
-			
-			for (let i = 0; i < this.columns.length; i++) {
-				this.columns[i].width = this.columnWidths![i]
-			}
 
 			off(document, 'mousemove', onMouseMove as (e: Event) => void)
 			this.resizeColumnByMovementX(e.clientX - startX, index)
 			cursorMask.remove()
+
+			this.columnResized = true
 		}
 
-		let cursorMask = render('<div class="grid-resizing-mask" />', this).firstElementChild as HTMLElement
+		let cursorMask = render(html`<div class="resizing-mask" />`, this).firstElementChild as HTMLElement
 		document.body.append(cursorMask)
 
 		on(document, 'mousemove', onMouseMove as (e: Event) => void)
@@ -402,7 +385,7 @@ export class Grid<Item extends object> extends Component {
 		// then we add the reduced width to current column.
 		for (let i = firstShrinkIndex; (moveLeft ? i >= 0 : i < this.columns.length) && needShrink > 0; moveLeft ? i-- : i++) {
 			let width = widths[i]
-			let minWidth = this.columns![i].minWidth || this.minWidth
+			let minWidth = this.columns![i].minWidth || this.minColumnWidth
 			let shrink = needShrink
 
 			if (width - shrink < minWidth) {
@@ -417,4 +400,64 @@ export class Grid<Item extends object> extends Component {
 		this.resizingColumnWidths = widths
 		this.setColumnWidths(widths)
 	}
+}
+
+
+/**
+	Calculate column widths from `{width, minWidth, flex}` values in column config.
+	The algorithm is nearly same with the flex layout,
+	except that the total column widths will always equal the available client width.
+*/
+function flexWidthCalculator(widthAndFlexArray: [number, number][], clientWidth: number, minColumnWidth: number): number[] {
+	// Not enough space for even `minColumnWidth`, then average `clientWidth` to each column.
+	if (clientWidth < minColumnWidth * widthAndFlexArray.length) {
+		return repeatTimes(clientWidth / widthAndFlexArray.length, widthAndFlexArray.length)
+	}
+
+	let totalBaseWidth = 0
+	let totalFlex = 0
+	let widths = repeatTimes(minColumnWidth, widthAndFlexArray.length)
+	let excludedIndexSet: Set<number> = new Set()
+
+	for (let [baseWidth, flex] of widthAndFlexArray) {
+		totalBaseWidth += baseWidth
+		totalFlex += flex
+	}
+
+	// If no `flex` set for any column, set `flex` to `1` for all the columns.
+	if (totalFlex === 0) {
+		totalFlex = widthAndFlexArray.length
+		widthAndFlexArray.forEach(a => a[1] = 1)
+	}
+
+	while (true) {
+		let widthPerFlex = (clientWidth - totalBaseWidth) / totalFlex
+		let moreColumnExcluded = false
+
+		for (let index = 0; index < widthAndFlexArray.length; index++) {
+			if (excludedIndexSet.has(index)) {
+				continue
+			}
+
+			let [baseWidth, flex] = widthAndFlexArray[index]
+			let width = flex * widthPerFlex + baseWidth
+
+			if (width < minColumnWidth) {
+				clientWidth -= minColumnWidth
+				totalBaseWidth -= minColumnWidth
+				totalFlex -= flex
+				excludedIndexSet.add(index)
+				moreColumnExcluded = true
+			}
+			else {
+				widths[index] = width
+			}
+		}
+
+		if (!moreColumnExcluded) {
+			break
+		}
+	}
+
+	return widths
 }
