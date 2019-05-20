@@ -1,3 +1,5 @@
+// You need to add compiled css file in your HTML.
+
 *, *::before, *::after{
 	box-sizing: border-box;
 	margin: 0;
@@ -20,7 +22,7 @@ html{
 body{
 	// By default, `absolute` element's offsetParent is `body`,
 	// but it still align `top` pixels relative to document.
-	// Which means, set `margin-top` on `html` or `body` will no cause
+	// Which means, set `margin-top` on `html` or `body` will not cause
 	// `absolute` element moved. So we added a `position: relative` here.
 	position: relative;
 

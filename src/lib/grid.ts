@@ -323,7 +323,7 @@ export class Grid<Item extends object> extends Component {
 			return [baseWidth, flex || 0]
 		}) as [number, number][]
 		
-		let widths = flexWidthCalculator(widthAndFlexArray, clientWidth, this.minColumnWidth)
+		let widths = columnWidthCalculator(widthAndFlexArray, clientWidth, this.minColumnWidth)
 		this.columnWidths = widths
 		this.setColumnWidths(widths)
 	}
@@ -406,9 +406,10 @@ export class Grid<Item extends object> extends Component {
 /**
 	Calculate column widths from `{width, minWidth, flex}` values in column config.
 	The algorithm is nearly same with the flex layout,
-	except that the total column widths will always equal the available client width.
+	except that the total column widths will always equal the available client width,
+	and no column width should less than `minColumnWidth`.
 */
-function flexWidthCalculator(widthAndFlexArray: [number, number][], clientWidth: number, minColumnWidth: number): number[] {
+function columnWidthCalculator(widthAndFlexArray: [number, number][], clientWidth: number, minColumnWidth: number): number[] {
 	// Not enough space for even `minColumnWidth`, then average `clientWidth` to each column.
 	if (clientWidth < minColumnWidth * widthAndFlexArray.length) {
 		return repeatTimes(clientWidth / widthAndFlexArray.length, widthAndFlexArray.length)

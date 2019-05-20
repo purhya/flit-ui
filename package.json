@@ -1,7 +1,7 @@
 {
 	"name": "fui",
 	"version": "1.0.0",
-	"description": "A small Web UI library",
+	"description": "A small web UI library",
 	"main": "src/index.ts",
 	"scripts": {
 		"compile": "tsc -b",

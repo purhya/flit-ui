@@ -1,7 +1,6 @@
-import {css, define, Component, html} from 'flit'
+import {css, define, Component, html, appendTo} from 'flit'
 import {theme} from './theme'
 import {Popup} from './popup'
-import {appendTo} from 'flit/out/lib/render'
 
 
 // It's the base class for all the layer which will align with another element.

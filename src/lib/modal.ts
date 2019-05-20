@@ -1,7 +1,6 @@
-import {css, define, html, on, renderComplete, off, Component, TemplateResult} from 'flit'
+import {css, define, html, on, renderComplete, off, Component, appendTo} from 'flit'
 import {theme} from './theme'
 import {debounce, setDraggable, align} from 'ff'
-import {appendTo} from 'flit/out/lib/render'
 
 
 @define('f-modal')
@@ -129,7 +128,7 @@ export class Modal extends Component {
 	appendTo: string | HTMLElement | null = 'body'
 
 	//extensions may make win wrapped by a mask, so we need a win el
-	render(): TemplateResult | string | null {
+	render() {
 		return html`
 		<template
 			tabindex="0"

@@ -31,7 +31,7 @@ export class Icon extends Component {
 			return ''
 		}
 
-		let [viewBox, inner] = subMatches(svgCode, /<svg viewBox="(.+?)">([\s\S]+?)<\/svg>/) as string[]
+		let [viewBox, inner] = subMatches(svgCode, /<svg viewBox="(.+?)">([\s\S]+?)<\/svg>/)[0]
 		let [,, w, h] = viewBox.split(' ')
 		let width = theme.lh(Number(w))
 		let height = theme.lh(Number(h))

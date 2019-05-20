@@ -252,7 +252,7 @@ export class Message {
 			this.modal = renderComponent(html`<f-message-modal />`) as MessageModal
 		}
 
-		this.modal.showMessage(options)
+		return this.modal.showMessage(options)
 	}
 	
 	/** Show info type message. */
@@ -261,7 +261,7 @@ export class Message {
 			type: 'info',
 			content,
 			buttons: {ok: 'OK'},
-		}, options) as MessageOptions)
+		}, options) as MessageOptions) as Promise<string>
 	}
 
 	/** Show success type message. */
@@ -270,7 +270,7 @@ export class Message {
 			type: 'success',
 			content,
 			buttons: {ok: 'OK'},
-		}, options) as MessageOptions)
+		}, options) as MessageOptions) as Promise<string>
 	}
 
 	/** Show alert type message. */
@@ -279,7 +279,7 @@ export class Message {
 			type: 'alert',
 			content,
 			buttons: {ok: 'OK'},
-		}, options) as MessageOptions)
+		}, options) as MessageOptions) as Promise<string>
 	}
 
 	/** Show confirm type message. */
@@ -288,7 +288,7 @@ export class Message {
 			type: 'confirm',
 			content,
 			buttons: {cancel: 'Cancel', ok: 'Yes'},
-		}, options) as MessageOptions)
+		}, options) as MessageOptions) as Promise<string>
 	}
 
 	/** Show prompt type message. */
@@ -296,9 +296,10 @@ export class Message {
 		return this.showMessage(Object.assign({
 			type: 'prompt',
 			content,
+			
 			inputValue: '',
 			buttons: {cancel: 'Cancel', ok: 'OK'},
-		}, options) as MessageOptions)
+		}, options) as MessageOptions) as Promise<[string, string]>
 	}
 }
 
