@@ -1,7 +1,8 @@
 import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once} from 'flit'
 import {theme} from './theme'
 import {Store} from './store'
-import {getScrollbarWidth, watch, Order, getNumeric, sum, toDecimal, repeatTimes} from 'ff'
+import {getScrollbarWidth, watch, Order, getNumeric, sum, repeatTimes} from 'ff'
+import {LiveStore} from './live-store'
 
 
 interface Column<Item = any> {
@@ -9,12 +10,12 @@ interface Column<Item = any> {
 	width?: number
 	minWidth?: number
 	flex?: number
-	orderable?: boolean
 
-	// If not specified, implies that the `render` will return string | number to sort.
-	orderBy?: (item: Item) => string | number
+	/** Must be specified as string when using `liveStore`. */
+	orderBy?: ((item: Item) => string | number) | string
 
-	render: (item: Item, index: number) => TemplateResult | string | number
+	/**Returns cell content or `<td>...</td>`. */
+	render?: (item: Item, index: number) => TemplateResult | string | number
 }
 
 
@@ -160,13 +161,13 @@ export class Grid<Item extends object> extends Component {
 		}
 	`}
 
-	static properties = ['resizable', 'live', 'groupSize']
+	static properties = ['resizable', 'live', 'groupSize', 'minColumnWidth']
 
 	resizable: boolean = false
 	live: boolean = false
 	groupSize: number = 50
 	columns!: Column<Item>[]
-	store!: Store<Item>
+	store!: Store<Item> | LiveStore<Item>
 	minColumnWidth: number = 64
 
 	private orderedColumnIndex: number = -1
@@ -178,7 +179,7 @@ export class Grid<Item extends object> extends Component {
 
 	render() {
 		return html`
-		<div class="head" :ref="head" ?disabled=${this.store.currentData.length === 0}>
+		<div class="head" :ref="head">
 			<div class="columns" :ref="columns">
 				${this.renderColumns()}
 			</div>
@@ -187,7 +188,7 @@ export class Grid<Item extends object> extends Component {
 		<div class="body">
 			<table class="rows">
 				<colgroup :ref="colgroup">
-					${this.columns.map(_c => html`<col />`)}
+					${this.columns.map(() => html`<col />`)}
 				</colgroup>
 				${this.renderRows()}
 			</table>
@@ -200,7 +201,7 @@ export class Grid<Item extends object> extends Component {
 			<div class="column" @click=${(e: MouseEvent) => this.doOrdering(e, index)}>
 				<div class="column-left">
 					<div class="column-title">${column.title}</div>
-					${column.orderable || column.orderBy ? html`
+					${column.orderBy ? html`
 						<div class="order" :class.current=${this.orderedColumnIndex === index && this.orderDirection !== ''}>
 							<f-icon :type=${this.getOrderIcon(index)} />
 						</div>`
@@ -215,11 +216,24 @@ export class Grid<Item extends object> extends Component {
 	}
 
 	renderRows() {
-		if (this.live) {
+		if (this.store instanceof LiveStore) {
+			return liveRepeat(
+				{
+					groupSize: this.groupSize,
+					dataCount: this.store.dataCount,
+					dataGetter: this.store.dataGetter.bind(this.store),
+					version: this.store.version,
+					averageItemHeight: 31
+				},
+				this.renderRow.bind(this)
+			)
+		}
+		else if (this.live) {
 			return liveRepeat(
 				{
 					data: this.store.currentData,
-					groupSize: this.groupSize
+					groupSize: this.groupSize,
+					averageItemHeight: 31
 				},
 				this.renderRow.bind(this)
 			)
@@ -232,9 +246,10 @@ export class Grid<Item extends object> extends Component {
 		}
 	}
 
-	renderRow(item: Item, index: number) {
-		let tds = this.columns.map((column) => column.render(item, index)).map(content => {
-			return html`<td>${content}</td>`
+	renderRow(item: Item | null, index: number) {
+		let tds = this.columns.map((column) => {
+			let result = item && column.render ? column.render(item, index) : ''
+			return html`<td>${result}</td>`
 		})
 
 		return html`<tr>${tds}</tr>`
@@ -251,6 +266,16 @@ export class Grid<Item extends object> extends Component {
 		}
 
 		return 'order-default'
+	}
+
+	onCreated() {
+		if (this.store instanceof LiveStore) {
+			for (let column of this.columns) {
+				if (column.orderBy && typeof column.orderBy !== 'string') {
+					throw new Error(`"orderBy" in "columns" configuration must be string type when using "liveStore"`)
+				}
+			}
+		}
 	}
 
 	onReady() {
@@ -280,7 +305,7 @@ export class Grid<Item extends object> extends Component {
 			return
 		}
 
-		let canOrder = this.columns[index].orderable || this.columns[index].orderBy
+		let canOrder = this.columns[index].orderBy
 		if (!canOrder) {
 			return
 		}
@@ -295,7 +320,11 @@ export class Grid<Item extends object> extends Component {
 		}
 
 		if (direction === '') {
-			this.store.setOrder(null)
+			this.store.clearOrder()
+		}
+		else if (this.store instanceof LiveStore) {
+			let column = this.columns[index]
+			this.store.setOrderKey(column.orderBy as string)
 		}
 		else {
 			let column = this.columns[index]
@@ -330,16 +359,11 @@ export class Grid<Item extends object> extends Component {
 
 	private setColumnWidths(widths: number[]) {
 		let totalWidth = sum(widths)
-		let percentSum = 0
 		
 		for (let index = 0; index < widths.length; index++) {
-			let percent = index === widths.length - 1
-				? 1 - percentSum
-				: toDecimal(widths[index] / totalWidth, 4)
-
+			let percent = widths[index] / totalWidth
 			;(this.refs.colgroup.children[index] as HTMLElement).style.width = percent * 100 + '%'
 			;(this.refs.columns.children[index] as HTMLElement).style.width = percent * 100 + '%'
-			percentSum += percent
 		}
 	}
 
