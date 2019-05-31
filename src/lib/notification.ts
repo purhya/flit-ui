@@ -128,7 +128,7 @@ export class NotificationTips extends Component {
 			([['alert', errorColor], ['info', infoColor], ['success', successColor]] as [string, Color][]).map(([type, color]) => css`
 			.type-${type}{
 				&:hover{
-					background: ${color.alpha(0.03)};
+					background: ${color.mix('#fff', 0.95)};
 				}
 
 				.left{

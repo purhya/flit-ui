@@ -202,6 +202,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		}
 	}
 
+	// Used to render like color select
 	renderOptionStyle(_key: T) {
 		return ''
 	}

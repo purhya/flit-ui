@@ -47,7 +47,7 @@ export class Popup<Events = {}> extends Component<Events> {
 	private timeout: Timeout | null = null
 	private unwatchRect: (() => void) | null = null
 	private unwatchLeave: (() => void) | null = null
-	focusEl!: HTMLElement
+	private focusEl!: HTMLElement
 
 	render() {
 		// When hide, layer was removed from body
@@ -113,7 +113,7 @@ export class Popup<Events = {}> extends Component<Events> {
 
 	onKeyDown(e: KeyboardEvent) {
 		if (e.key === 'Enter') {
-			// May cause button tigger additional click event if not prevent.
+			// May cause button tiggering additional click event if not prevent.
 			e.preventDefault()
 			this.toggleOpened()
 		}
@@ -233,8 +233,14 @@ export class Popup<Events = {}> extends Component<Events> {
 	}
 
 	private onLayerRectChanged(rect: Rect) {
+		let dw = document.documentElement.offsetWidth
+		let dh = document.documentElement.offsetHeight
+
 		if (rect.width > 0 && rect.height > 0) {
-			this.alignLayer()
+			let inViewport = rect.top < dh && rect.bottom > 0 && rect.left < dw && rect.right > 0
+			if (inViewport) {
+				this.alignLayer()
+			}
 		}
 		else {
 			this.hideLayerLater()

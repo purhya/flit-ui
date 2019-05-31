@@ -1,10 +1,7 @@
 import {Emitter, Order} from 'ff'
 
 
-interface StoreEvents<Item> {
-	add: (items: Item[]) => void
-	remove: (items: Item[]) => void
-	clear: () => void
+interface StoreEvents {
 	change: () => void
 }
 
@@ -54,7 +51,7 @@ class KeyMap<Item extends object> {
 
 
 /* Used to cache object type data and support selection, ordering and filtering. */
-export class Store<Item extends object> extends Emitter<StoreEvents<Item>> {
+export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 
 	/** The whole data. */
 	data: Item[] = []
@@ -140,11 +137,19 @@ export class Store<Item extends object> extends Emitter<StoreEvents<Item>> {
 		this.emit('change')
 	}
 
-	setFilter(filter: (item: Item) => boolean) {
+	clearOrder() {
+		this.setOrder(null)
+	}
+
+	setFilter(filter: ((item: Item) => boolean) | null) {
 		this.filter = filter
 		this.updateCurrentData()
 		this.deselectAll()
 		this.emit('change')
+	}
+
+	clearFilter() {
+		this.setFilter(null)
 	}
 
 	private updateCurrentData() {
