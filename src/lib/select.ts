@@ -193,7 +193,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		}
 		else {
 			for (let [key, display] of this.data) {
-				if (this.value === key) {
+				if (this.value == key) {
 					return this.renderOptionDisplay(key, display)
 				}
 			}
@@ -234,7 +234,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 			return (this.value as T[]).includes(key)
 		}
 		else {
-			return this.value === key
+			return this.value == key
 		}
 	}
 	

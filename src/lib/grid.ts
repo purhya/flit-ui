@@ -1,11 +1,11 @@
-import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once} from 'flit'
+import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective} from 'flit'
 import {theme} from './theme'
 import {Store} from './store'
 import {getScrollbarWidth, watch, Order, getNumeric, sum, repeatTimes} from 'ff'
-import {LiveStore} from './live-store'
+import {AsyncStore} from './async-store'
 
 
-interface Column<Item = any> {
+export interface Column<Item = any> {
 	title: string
 	width?: number
 	minWidth?: number
@@ -13,6 +13,9 @@ interface Column<Item = any> {
 
 	/** Must be specified as string when using `liveStore`. */
 	orderBy?: ((item: Item) => string | number) | string
+
+	/** If specified as `true`, will using desc ordering firstly, then asc ordering */
+	descFirst?: boolean
 
 	/**Returns cell content or `<td>...</td>`. */
 	render?: (item: Item, index: number) => TemplateResult | string | number
@@ -138,6 +141,9 @@ export class Grid<Item extends object> extends Component {
 			vertical-align: middle;
 			padding: 0 ${lh(8)}px;
 			border-bottom: 1px solid #eee;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
 			cursor: default;
 		}
 
@@ -161,13 +167,13 @@ export class Grid<Item extends object> extends Component {
 		}
 	`}
 
-	static properties = ['resizable', 'live', 'groupSize', 'minColumnWidth']
+	static properties = ['resizable', 'live', 'pageSize', 'minColumnWidth']
 
 	resizable: boolean = false
 	live: boolean = false
-	groupSize: number = 50
+	pageSize: number = 50
 	columns!: Column<Item>[]
-	store!: Store<Item> | LiveStore<Item>
+	store!: Store<Item> | AsyncStore<Item>
 	minColumnWidth: number = 64
 
 	private orderedColumnIndex: number = -1
@@ -176,6 +182,7 @@ export class Grid<Item extends object> extends Component {
 	private columnWidths: number[] | null = null
 	private resizingColumnWidths: number[] | null = null
 	private columnResized: boolean = false
+	private repeatDir: LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item> | null = null
 
 	render() {
 		return html`
@@ -216,24 +223,25 @@ export class Grid<Item extends object> extends Component {
 	}
 
 	renderRows() {
-		if (this.store instanceof LiveStore) {
-			return liveRepeat(
+		if (this.store instanceof AsyncStore) {
+			return liveAsyncRepeat(
 				{
-					groupSize: this.groupSize,
-					dataCount: this.store.dataCount,
+					pageSize: this.pageSize,
+					dataCount: this.store.dataCount.bind(this.store),
 					dataGetter: this.store.dataGetter.bind(this.store),
-					version: this.store.version,
-					averageItemHeight: 31
+					averageItemHeight: theme.lineHeight + 1,
+					ref: (dir) => this.setRepeatDirective(dir as any)
 				},
-				this.renderRow.bind(this)
+				this.renderRow.bind(this) as any
 			)
 		}
 		else if (this.live) {
 			return liveRepeat(
 				{
 					data: this.store.currentData,
-					groupSize: this.groupSize,
-					averageItemHeight: 31
+					pageSize: this.pageSize,
+					averageItemHeight: theme.lineHeight + 1,
+					ref: (dir) => this.setRepeatDirective(dir)
 				},
 				this.renderRow.bind(this)
 			)
@@ -255,6 +263,14 @@ export class Grid<Item extends object> extends Component {
 		return html`<tr>${tds}</tr>`
 	}
 
+	setRepeatDirective(dir: LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item>) {
+		this.repeatDir = dir
+
+		if (this.store instanceof AsyncStore) {
+			this.store.setRepeatDirective(dir as LiveAsyncRepeatDirective<Item>)
+		}
+	}
+
 	getOrderIcon(index: number): string {
 		if (index === this.orderedColumnIndex) {
 			if (this.orderDirection === 'asc') {
@@ -269,7 +285,7 @@ export class Grid<Item extends object> extends Component {
 	}
 
 	onCreated() {
-		if (this.store instanceof LiveStore) {
+		if (this.store instanceof AsyncStore) {
 			for (let column of this.columns) {
 				if (column.orderBy && typeof column.orderBy !== 'string') {
 					throw new Error(`"orderBy" in "columns" configuration must be string type when using "liveStore"`)
@@ -311,20 +327,26 @@ export class Grid<Item extends object> extends Component {
 		}
 
 		let direction: 'asc' | 'desc' | '' = ''
+		let descFirst = this.columns[index].descFirst
 
 		if (index === this.orderedColumnIndex) {
-			direction = this.orderDirection === '' ? 'asc' : this.orderDirection === 'asc' ? 'desc' : ''
+			if (descFirst) {
+				direction = this.orderDirection === '' ? 'desc' : this.orderDirection === 'desc' ? 'asc' : ''
+			}
+			else {
+				direction = this.orderDirection === '' ? 'asc' : this.orderDirection === 'asc' ? 'desc' : ''
+			}
 		}
 		else {
-			direction = 'asc'
+			direction = descFirst ? 'desc' : 'asc'
 		}
 
 		if (direction === '') {
 			this.store.clearOrder()
 		}
-		else if (this.store instanceof LiveStore) {
+		else if (this.store instanceof AsyncStore) {
 			let column = this.columns[index]
-			this.store.setOrderKey(column.orderBy as string)
+			this.store.setOrder(column.orderBy as string, direction)
 		}
 		else {
 			let column = this.columns[index]
@@ -338,7 +360,7 @@ export class Grid<Item extends object> extends Component {
 
 
 	// Resizing part
-	updatColumnWidths() {
+	private updatColumnWidths() {
 		let clientWidth = this.refs.head.clientWidth - getNumeric(this.refs.head, 'paddingLeft') - getNumeric(this.refs.head, 'paddingRight')
 
 		let widthAndFlexArray = this.columns.map(({flex, width, minWidth}, index) => {
@@ -395,7 +417,7 @@ export class Grid<Item extends object> extends Component {
 		once(document, 'mouseup', onMouseUp)
 	}
 
-	resizeColumnByMovementX(movementX: number, index: number) {
+	private resizeColumnByMovementX(movementX: number, index: number) {
 		let widths = [...this.columnWidths!]
 		let needShrink = Math.abs(movementX)
 		let moveLeft = movementX < 0
@@ -423,6 +445,18 @@ export class Grid<Item extends object> extends Component {
 
 		this.resizingColumnWidths = widths
 		this.setColumnWidths(widths)
+	}
+
+	setStartIndex(index: number) {
+		if (this.repeatDir) {
+			this.repeatDir.setStartIndex(index)
+		}
+	}
+
+	scrollToViewIndex(index: number) {
+		if (this.repeatDir) {
+			this.repeatDir.scrollToViewIndex(index)
+		}
 	}
 }
 
