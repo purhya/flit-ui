@@ -49,7 +49,7 @@ export class Tooltip extends Popup {
 
 	title: string = ''
 
-	renderLayer() {
+	protected renderLayer() {
 		return html`
 		<f-tooltip-layer
 			:ref="layer"
@@ -68,7 +68,7 @@ export class GlobalTooltip extends Tooltip {
 	keepVisible: boolean = false
 
 	// When `keepVisible = true`, keep visible until `keepVisible = false`.
-	private mouseLeaved: boolean = false
+	protected mouseLeaved: boolean = false
 
 	// Can't update `el` since it uses dynamic `el`
 	// Otherwise, `onRendered` and `alignLayer` will not be called.

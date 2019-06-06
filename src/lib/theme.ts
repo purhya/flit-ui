@@ -34,10 +34,9 @@ export const defaultThemeOptions: Required<ThemeOptions> = {
 
 export class Theme implements ColorOptions, NotColorOptions {
 	
-	private themeMap: Map<string, ThemeOptions> = new Map()
-	private options: ThemeOptions
-	private willUpdate: boolean = false
-
+	protected themeMap: Map<string, ThemeOptions> = new Map()
+	protected options: ThemeOptions
+	protected willUpdate: boolean = false
 
 	constructor() {
 		this.options = Object.assign({}, defaultThemeOptions)
@@ -78,9 +77,9 @@ export class Theme implements ColorOptions, NotColorOptions {
 		}
 	}
 
-	private getOption<P extends keyof ThemeOptions>(property: P): Required<ThemeOptions>[P] {
+	protected getOption<P extends keyof ThemeOptions>(property: P): Required<ThemeOptions>[P] {
 		if (this.options[property] !== undefined) {
-			return this.options[property]!
+			return this.options[property]! as Required<ThemeOptions>[P]
 		}
 		else {
 			return defaultThemeOptions[property]

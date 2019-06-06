@@ -27,7 +27,7 @@ export class Dropdown extends Popup {
 	alignPosition: string = 'b'
 	icon: string = 'down'
 
-	render() {
+	protected render() {
 		let layerPart = cache(this.opened ? (this.renderLayer()) : '', this.transition)
 		
 		return html`

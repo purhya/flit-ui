@@ -121,11 +121,11 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 	searchable: boolean = false
 	ordered: boolean = false
 
-	private inputed: string = ''
-	private editing: boolean = false
-	private hoverAt: T | null = null
+	protected inputed: string = ''
+	protected editing: boolean = false
+	protected hoverAt: T | null = null
 
-	render() {
+	protected render() {
 		return html`
 		<template
 			:class.opened=${this.opened}
@@ -144,7 +144,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		</template>
 	`}
 
-	renderLayer() {
+	protected renderLayer() {
 		let data = this.getMaySuggestedData()
 		let listPart = repeat(data, ([key, display]) => this.renderOption(key, display))
 
@@ -162,7 +162,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		</f-layer>
 	`}
 
-	renderOption(key: T, display: string | number) {
+	protected renderOption(key: T, display: string | number) {
 		let selected = this.isSelected(key)
 
 		return html`
@@ -179,7 +179,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		</li>
 	`}
 
-	renderCurrentDisplay(): string | number {
+	protected renderCurrentDisplay(): string | number {
 		if (this.multiple) {
 			let displays: (string | number)[] = []
 
@@ -203,15 +203,15 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 	}
 
 	// Used to render like color select
-	renderOptionStyle(_key: T) {
+	protected renderOptionStyle(_key: T) {
 		return ''
 	}
 
-	renderOptionDisplay(_key: T, display: string | number): string | number {
+	protected renderOptionDisplay(_key: T, display: string | number): string | number {
 		return display
 	}
 
-	getMaySuggestedData(): Iterable<[T, string | number]> {
+	protected getMaySuggestedData(): Iterable<[T, string | number]> {
 		if (this.searchable && this.inputed) {
 			let lowerSearchWord = this.inputed.toLowerCase()
 			let filteredData: [T, string | number][] = []
@@ -229,7 +229,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		}
 	}
 
-	isSelected(key: T) {
+	protected isSelected(key: T) {
 		if (this.multiple) {
 			return (this.value as T[]).includes(key)
 		}
@@ -238,12 +238,12 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		}
 	}
 	
-	onCreated() {
+	protected onCreated() {
 		this.initValue()
 		this.initEditing()
 	}
 
-	private initValue() {
+	protected initValue() {
 		if (this.multiple && !Array.isArray(this.value)) {
 			if (this.value === null || this.value === undefined) {
 				this.value = [] as T
@@ -254,7 +254,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		}
 	}
 
-	private initEditing() {
+	protected initEditing() {
 		if (this.searchable) {
 			this.watch(() => this.opened, (opened) => {
 				if (!opened && this.editing) {
@@ -264,13 +264,13 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		}
 	}
 
-	onClick() {
+	protected onClick() {
 		if (this.searchable && !this.editing) {
 			this.startEditing()
 		}
 	}
 
-	select(key: T) {
+	protected select(key: T) {
 		if (this.multiple) {
 			if ((this.value as T[]).includes(key)) {
 				remove(this.value as T[], key)
@@ -294,7 +294,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		this.emit('change', this.value as T)
 	}
 
-	private async startEditing() {
+	protected async startEditing() {
 		this.editing = true
 		this.inputed = ''
 
@@ -302,7 +302,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		this.refs.input.focus()
 	}
 
-	private endEditing() {
+	protected endEditing() {
 		this.editing = false
 	}
 
@@ -320,17 +320,17 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		}
 	}
 
-	async alignLayer() {
+	protected async alignLayer() {
 		this.refs.layer.style.minWidth = String(this.el.offsetWidth) + 'px'
 		await super.alignLayer()
 	}
 
-	onInput() {
+	protected onInput() {
 		this.inputed = (this.refs.input as HTMLInputElement).value
 		this.showLayer()
 	}
 
-	async onKeyDown(e: KeyboardEvent) {
+	protected async onKeyDown(e: KeyboardEvent) {
 		let keys = [...this.getMaySuggestedData()].map(([key]) => key)
 		let moved = false
 
@@ -408,7 +408,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		}
 	}
 
-	onMouseEnter(key: T) {
+	protected onMouseEnter(key: T) {
 		this.hoverAt = key
 
 		if (document.activeElement !== this.refs.input) {

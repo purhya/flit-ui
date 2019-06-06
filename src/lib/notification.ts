@@ -142,10 +142,10 @@ export class NotificationTips extends Component {
 	hideDelay: number = 5000
 	appendTo: string | HTMLElement | null = 'body'
 
-	private seed: number = 1
-	private items: NotificationItem[] = []
+	protected seed: number = 1
+	protected items: NotificationItem[] = []
 
-	render() {
+	protected render() {
 		return repeat(this.items, (item) => 
 			html`<div class="item"
 				:class="type-${item.type}"
@@ -175,11 +175,11 @@ export class NotificationTips extends Component {
 		, {transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd})
 	}
 
-	onMouseEnter(item: NotificationItem) {
+	protected onMouseEnter(item: NotificationItem) {
 		item.entered = true
 	}
 
-	onMouseLeave(item: NotificationItem) {
+	protected onMouseLeave(item: NotificationItem) {
 		item.entered = false
 
 		if (!item.timeout) {
@@ -187,17 +187,17 @@ export class NotificationTips extends Component {
 		}
 	}
 
-	onClickClose(item: NotificationItem) {
+	protected onClickClose(item: NotificationItem) {
 		remove(this.items, item)
 	}
 
-	onClickBtn(item: NotificationItem, btn: string) {
+	protected onClickBtn(item: NotificationItem, btn: string) {
 		if (item.callback) {
 			item.callback(btn)
 		}
 	}
 
-	onTransitionEnd(type: string) {
+	protected onTransitionEnd(type: string) {
 		if (type === 'leave' && this.items.length === 0) {
 			this.el.remove()
 		}
@@ -230,7 +230,7 @@ export class NotificationTips extends Component {
 		return item.id
 	}
 
-	hideLater(item: NotificationItem) {
+	protected hideLater(item: NotificationItem) {
 		if (item.timeout) {
 			item.timeout.cancel()
 		}
@@ -267,7 +267,7 @@ export class NotificationTips extends Component {
 
 export class Notification {
 
-	tips: NotificationTips | null = null
+	protected tips: NotificationTips | null = null
 
 	showNotification(options: NotificationOptions): number {
 		if (!this.tips) {

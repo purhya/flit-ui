@@ -109,18 +109,19 @@ export class MessageModal extends Modal {
 			color: ${warningColor};
 		}
 	`}
-
-	options: MessageOptions | null = null
+	
 	movable: boolean =false
-	stack: MessageOptions[] = []
-	isTouched: boolean = false
-	inputErrorText: string = ''
+
+	protected options: MessageOptions | null = null
+	protected stack: MessageOptions[] = []
+	protected isTouched: boolean = false
+	protected inputErrorText: string = ''
 
 	constructor(el: HTMLElement) {
 		super(el)
 	}
 
-	render() {
+	protected render() {
 		let options = this.options! || {}
 
 		return html`
@@ -180,11 +181,11 @@ export class MessageModal extends Modal {
 		</template>
 	`}
 
-	onMouseEnter() {
+	protected onMouseEnter() {
 		this.onClickButton('ok')
 	}
 
-	onClickButton(btn: string) {
+	protected onClickButton(btn: string) {
 		let {type, inputValidator, inputValue, resolve} = this.options!
 		let input = this.refs.input as HTMLInputElement | null
 
@@ -245,9 +246,9 @@ export class MessageModal extends Modal {
 
 export class Message {
 
-	private modal: MessageModal | null = null
+	protected modal: MessageModal | null = null
 
-	private showMessage(options: MessageOptions) {
+	protected showMessage(options: MessageOptions) {
 		if (!this.modal) {
 			this.modal = renderComponent(html`<f-message-modal />`) as MessageModal
 		}

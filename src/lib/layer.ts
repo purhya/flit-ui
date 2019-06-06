@@ -51,7 +51,7 @@ export class Layer extends Component {
 	// Although this property is not used to render, it can be used to get current opened state and can be captured by inner content.
 	popup: Popup | null = null
 
-	render() {
+	protected render() {
 		return html`
 		<template tabindex="0">
 			${this.trangle ? html`<div class="trangle" :ref="trangle" :class.trangle-herizontal=${this.herizontal}></div>` : ''}
@@ -60,7 +60,7 @@ export class Layer extends Component {
 	}
 	
 	// Call `update` every time after restored from `cache(...)`.
-	onReady() {
+	protected onReady() {
 		// Why render `<layer>` to body?
 		// It's very common that the `el` is covered or clipped,
 		// which will cause the `<layer>` is not fully visible.

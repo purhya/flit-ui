@@ -61,12 +61,13 @@ export class Checkbox extends Component<CheckboxEvents> {
 
 	checked: boolean = false
 	indeterminate: boolean = false
-	checkboxGroup: CheckboxGroup | null = null
 
 	// Used to compare with `checkboxGroup.value`
 	value: any = null
 
-	render() {
+	protected checkboxGroup: CheckboxGroup | null = null
+
+	protected render() {
 		let svgInner: any = ''
 		if (this.checked) {
 			svgInner = svg`<polyline style="fill:none;stroke:#FFFFFF;stroke-linecap:round;stroke-linejoin:round;" points="1.5,7 5.7,10.5 10.5,1.5"/>`
@@ -95,7 +96,7 @@ export class Checkbox extends Component<CheckboxEvents> {
 		`
 	}
 
-	onCreated() {
+	protected onCreated() {
 		let group = this.closest(CheckboxGroup)
 		if (group) {
 			this.checkboxGroup = group
@@ -104,22 +105,22 @@ export class Checkbox extends Component<CheckboxEvents> {
 		}
 	}
 
-	onClick() {
+	protected onClick() {
 		this.checked = !this.checked
 		this.indeterminate = false
 		this.emit('change', this.checked)
 	}
 
-	onFocus() {
+	protected onFocus() {
 		on(document, 'keydown.enter', this.onEnter, this)
 	}
 
-	onEnter(e: Event) {
+	protected onEnter(e: Event) {
 		e.preventDefault()
 		this.onClick()
 	}
 
-	onBlur() {
+	protected onBlur() {
 		off(document, 'keydown', this.onEnter, this)
 	}
 }
@@ -139,7 +140,7 @@ export class CheckboxGroup extends Component<{change: (value: any[]) => void}> {
 		checkbox.on('change', this.onCheckboxChange.bind(this, checkbox))
 	}
 
-	onCheckboxChange(checkbox: Checkbox) {
+	protected onCheckboxChange(checkbox: Checkbox) {
 		if (checkbox.checked) {
 			this.value.push(checkbox.value)
 		}

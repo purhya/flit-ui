@@ -129,7 +129,7 @@ export class Modal extends Component {
 	appendTo: string | HTMLElement | null = 'body'
 
 	//extensions may make win wrapped by a mask, so we need a win el
-	render() {
+	protected render() {
 		return html`
 		<template
 			tabindex="0"
@@ -156,7 +156,7 @@ export class Modal extends Component {
 		</template>
 	`}
 
-	onTransitionEnd(type: string, finish: boolean) {
+	protected onTransitionEnd(type: string, finish: boolean) {
 		if (type === 'leave' && finish) {
 			if (this.mask) {
 				this.refs.mask.remove()
@@ -165,7 +165,7 @@ export class Modal extends Component {
 		}
 	}
 
-	onReady() {
+	protected onReady() {
 		if (this.movable && this.refs.head) {
 			setDraggable(this.el, this.refs.head)
 		}
@@ -173,11 +173,11 @@ export class Modal extends Component {
 		on(window, 'resize', debounce(this.onWindowResize, 200).wrapped, this)
 	}
 
-	onDisconnected() {
+	protected onDisconnected() {
 		off(window, 'resize', this.onWindowResize, this)
 	}
 
-	onWindowResize() {
+	protected onWindowResize() {
 		if (this.opened) {
 			this.toCenter()
 		}

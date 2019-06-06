@@ -44,12 +44,12 @@ export class Popup<Events = {}> extends Component<Events> {
 	// Such that when mouse hover from `el` to `layer` will not cause 
 	hoverHideDelay: number = 100
 
-	private timeout: Timeout | null = null
-	private unwatchRect: (() => void) | null = null
-	private unwatchLeave: (() => void) | null = null
-	private focusEl!: HTMLElement
+	protected timeout: Timeout | null = null
+	protected unwatchRect: (() => void) | null = null
+	protected unwatchLeave: (() => void) | null = null
+	protected focusEl!: HTMLElement
 
-	render() {
+	protected render() {
 		// When hide, layer was removed from body
 		// When show, layer was restored into popup, and then trigger connect, then update, then appended to body.
 		let layerPart = cache(this.opened ? this.renderLayer() : '', this.transition)
@@ -61,7 +61,7 @@ export class Popup<Events = {}> extends Component<Events> {
 		`
 	}
 	
-	renderLayer() {
+	protected renderLayer() {
 		return html`
 		<f-layer
 			class="layer"
@@ -74,12 +74,12 @@ export class Popup<Events = {}> extends Component<Events> {
 		</f-layer>
 	`}
 
-	isHerizontal() {
+	protected isHerizontal() {
 		let direction = getAlignDirection(this.alignPosition)
 		return direction === 'l' || direction === 'r'
 	}
 
-	onReady() {
+	protected onReady() {
 		if (this.trigger === 'hover') {
 			on(this.el, 'mouseenter', this.showLayerLater, this)
 		}
@@ -97,7 +97,7 @@ export class Popup<Events = {}> extends Component<Events> {
 		}
 	}
 
-	private initFocus() {
+	protected initFocus() {
 		this.focusEl = this.el.querySelector('button, a, input, [tabindex="0"]') || this.el
 		if (this.focusEl === this.el) {
 			this.el.setAttribute('tabindex', '0')
@@ -107,11 +107,11 @@ export class Popup<Events = {}> extends Component<Events> {
 		on(this.focusEl, 'blur', this.onBlur, this)
 	}
 
-	private onFocus() {
+	protected onFocus() {
 		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 
-	onKeyDown(e: KeyboardEvent) {
+	protected onKeyDown(e: KeyboardEvent) {
 		if (e.key === 'Enter') {
 			// May cause button tiggering additional click event if not prevent.
 			e.preventDefault()
@@ -129,7 +129,7 @@ export class Popup<Events = {}> extends Component<Events> {
 		}
 	}
 
-	private onBlur() {
+	protected onBlur() {
 		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 
@@ -142,7 +142,7 @@ export class Popup<Events = {}> extends Component<Events> {
 		}
 	}
 
-	onDisconnected() {
+	protected onDisconnected() {
 		// After disconnected, the component imediately locked and will not update.
 		// So we must delete the layer element because it's in the body.
 		this.opened = false
@@ -152,7 +152,7 @@ export class Popup<Events = {}> extends Component<Events> {
 		}
 	}
 
-	clearTimeoutAndUnwatch() {
+	protected clearTimeoutAndUnwatch() {
 		if (this.timeout) {
 			this.timeout.cancel()
 			this.timeout = null
@@ -211,7 +211,7 @@ export class Popup<Events = {}> extends Component<Events> {
 		this.unwatchRect = watch(this.el, 'rect', this.onLayerRectChanged.bind(this))
 	}
 
-	private mayFocusLayer() {
+	protected mayFocusLayer() {
 		let layer = this.refs.layer as HTMLElement
 		let layerHasTrangle = (getComponent(layer) as Layer).trangle
 		let children = (layerHasTrangle ? [...layer.children].slice(1) : [...layer.children]) as HTMLElement[]
@@ -224,7 +224,7 @@ export class Popup<Events = {}> extends Component<Events> {
 		}
 	}
 
-	private onDocMouseDown(e: Event) {
+	protected onDocMouseDown(e: Event) {
 		let target = e.target as Element
 
 		if (!this.el.contains(target) && !this.refs.layer.contains(target)) {
@@ -232,7 +232,7 @@ export class Popup<Events = {}> extends Component<Events> {
 		}
 	}
 
-	private onLayerRectChanged(rect: Rect) {
+	protected onLayerRectChanged(rect: Rect) {
 		let dw = document.documentElement.offsetWidth
 		let dh = document.documentElement.offsetHeight
 
@@ -247,7 +247,7 @@ export class Popup<Events = {}> extends Component<Events> {
 		}
 	}
 
-	alignLayer() {
+	protected alignLayer() {
 		let trangle = (getComponent(this.refs.layer) as Layer).refs.trangle
 		align(this.refs.layer, this.el, this.alignPosition, {margin: this.alignMargin, canShrinkInY: true, trangle})
 	}
@@ -272,13 +272,13 @@ export class Popup<Events = {}> extends Component<Events> {
 		this.opened = false
 	}
 
-	private unbindEventsBeforeHide() {
+	protected unbindEventsBeforeHide() {
 		if (this.trigger === 'click' || this.trigger === 'contextmenu') {
 			off(document, 'mousedown', this.onDocMouseDown, this)
 		}
 	}
 
-	private restoreFocusFromLayer() {
+	protected restoreFocusFromLayer() {
 		if (document.activeElement && this.refs.layer.contains(document.activeElement)) {
 			this.focusEl.focus()
 		}

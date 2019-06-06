@@ -46,7 +46,7 @@ export class Popover extends Popup {
 
 	title: string = ''
 
-	renderLayer() {
+	protected renderLayer() {
 		let content = html`
 		${
 			this.title ? html`

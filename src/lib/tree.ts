@@ -46,17 +46,17 @@ export class Tree extends Component<TreeEvents> {
 	currentPath: string = ''
 	scrollable: boolean = false
 
-	loading: boolean = false
-	selectedItem: TreeItem | null = null
-	itemMap: {[key: string]: TreeItem} = {}
-	root!: Tree
-	parent: null = null
-	deep: number = 0
-	hasChildren: boolean = false
+	protected loading: boolean = false
+	protected selectedItem: TreeItem | null = null
+	protected itemMap: {[key: string]: TreeItem} = {}
+	protected root!: Tree
+	protected parent: null = null
+	protected deep: number = 0
+	protected hasChildren: boolean = false
+	protected hoverItem: TreeItem | null = null
 	itemsHasIcon: boolean = false
-	hoverItem: TreeItem | null = null
 
-	render() {
+	protected render() {
 		let innerPart = this.data ? repeat(this.children, (item) => html`
 			<f-treeitem
 				:root=${this}
@@ -78,7 +78,7 @@ export class Tree extends Component<TreeEvents> {
 		</template>
 	`}
 
-	async onCreated() {
+	protected async onCreated() {
 		this.root = this
 
 		if (this.data) {
@@ -128,7 +128,7 @@ export class Tree extends Component<TreeEvents> {
 		}
 	}
 
-	onFocus() {
+	protected onFocus() {
 		if (!this.hoverItem) {
 			this.hoverOneItem()
 		}
@@ -136,7 +136,7 @@ export class Tree extends Component<TreeEvents> {
 		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 
-	private onKeyDown(e: KeyboardEvent) {
+	protected onKeyDown(e: KeyboardEvent) {
 		let hoverItem = this.hoverItem
 		if (!hoverItem) {
 			if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -148,7 +148,7 @@ export class Tree extends Component<TreeEvents> {
 
 		if (e.key === 'Enter') {
 			e.preventDefault()
-			hoverItem.onClick()
+			hoverItem.click()
 		}
 		else if (e.key === 'ArrowUp') {
 			e.preventDefault()
@@ -160,7 +160,7 @@ export class Tree extends Component<TreeEvents> {
 		}
 	}
 
-	private hoverPreviousItem() {
+	protected hoverPreviousItem() {
 		let prev: HTMLElement | null = this.hoverItem!.el
 		do {
 			prev = getPreviousVisibleElement(prev, this.el) as HTMLElement | null
@@ -172,7 +172,7 @@ export class Tree extends Component<TreeEvents> {
 		}
 	}
 
-	private hoverNextItem() {
+	protected hoverNextItem() {
 		let next: HTMLElement | null = this.hoverItem!.el
 		do {
 			next = getNextVisibleElement(next, this.el) as HTMLElement | null
@@ -201,7 +201,7 @@ export class Tree extends Component<TreeEvents> {
 		}
 	}
 
-	onBlur() {
+	protected onBlur() {
 		this.setHoverItem(null)
 		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
@@ -317,16 +317,16 @@ export class TreeItem extends Component {
 	children: TreeDataItem[] | null = null
 	deep: number = -1
 
-	root!: Tree
-	parent!: TreeItem | Tree
+	protected root!: Tree
+	protected parent!: TreeItem | Tree
+	protected loading: boolean = false
+	protected hasChildren: boolean = false
 	expanded: boolean = false
-	loading: boolean = false
 	selected: boolean = false
 	hoverAt: boolean = false
-	hasChildren: boolean = false
 	itemsHasIcon: boolean = false
 
-	render() {
+	protected render() {
 		let {lh} = theme
 
 		let innerPart = this.children ? repeat(this.children, (item) => html`
@@ -364,7 +364,7 @@ export class TreeItem extends Component {
 		</template>
 	`}
 
-	async onCreated() {
+	protected async onCreated() {
 		if (!this.root) {
 			this.root = this.closest(Tree)!
 		}
@@ -394,7 +394,11 @@ export class TreeItem extends Component {
 		this.parent.itemsHasIcon = this.parent.itemsHasIcon || !!this.icon
 	}
 
-	onClick() {
+	protected onClick() {
+		this.click()
+	}
+
+	click() {
 		// First click to selected, secondary click to expand
 		if (!this.selected) {
 			this.select()
@@ -403,7 +407,7 @@ export class TreeItem extends Component {
 		this.toggleExpanded()
 	}
 
-	onMouseEnter() {
+	protected onMouseEnter() {
 		this.root.setHoverItem(this)
 	}
 
@@ -415,7 +419,7 @@ export class TreeItem extends Component {
 		this.selected = false
 	}
 
-	toggleExpanded() {
+	protected toggleExpanded() {
 		if (this.expanded) {
 			this.expanded = false
 		}

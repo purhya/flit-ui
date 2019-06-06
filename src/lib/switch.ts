@@ -65,7 +65,7 @@ export class Switch extends Component<SwitchEvents> {
 
 	checked: boolean = false
 
-	render() {
+	protected render() {
 		return html`
 		<template
 			tabindex="0"
@@ -78,16 +78,16 @@ export class Switch extends Component<SwitchEvents> {
 		</template>
 	`}
 
-	onClick () {
+	protected onClick () {
 		this.checked = !this.checked
 		this.emit('change', this.checked)
 	}
 
-	onFocus() {
+	protected onFocus() {
 		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 
-	private onKeyDown(e: KeyboardEvent) {
+	protected onKeyDown(e: KeyboardEvent) {
 		if (e.key === 'Enter') {
 			e.preventDefault()
 			this.onClick()
@@ -106,7 +106,7 @@ export class Switch extends Component<SwitchEvents> {
 		}
 	}
 
-	onBlur() {
+	protected onBlur() {
 		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 }

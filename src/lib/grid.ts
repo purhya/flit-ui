@@ -166,7 +166,7 @@ export class Grid<Item extends object> extends Component {
 		}
 	`}
 
-	static properties = ['resizable', 'live', 'pageSize', 'minColumnWidth']
+	static properties = ['resizable', 'live']
 
 	resizable: boolean = false
 	live: boolean = false
@@ -175,13 +175,22 @@ export class Grid<Item extends object> extends Component {
 	store!: Store<Item> | AsyncStore<Item>
 	minColumnWidth: number = 64
 
-	private orderedColumnIndex: number = -1
-	private orderDirection: 'asc' | 'desc' | '' = ''
-	private unwatchSize: (() => void) | null = null
-	private columnWidths: number[] | null = null
-	private resizingColumnWidths: number[] | null = null
-	private columnResized: boolean = false
-	private repeatDir: LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item> | null = null
+	renderRow = function<Item extends object>(this: Grid<Item>, item: Item | null, index: number) {
+		let tds = this.columns.map((column) => {
+			let result = item && column.render ? column.render(item, index) : ''
+			return html`<td>${result}</td>`
+		})
+
+		return html`<tr>${tds}</tr>`
+	}
+
+	protected orderedColumnIndex: number = -1
+	protected orderDirection: 'asc' | 'desc' | '' = ''
+	protected unwatchSize: (() => void) | null = null
+	protected columnWidths: number[] | null = null
+	protected resizingColumnWidths: number[] | null = null
+	protected columnResized: boolean = false
+	protected repeatDir: LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item> | null = null
 
 	render() {
 		return html`
@@ -201,7 +210,7 @@ export class Grid<Item extends object> extends Component {
 		</div>
 	`}
 
-	renderColumns() {
+	protected renderColumns() {
 		return this.columns.map((column, index) => {
 			return html`
 			<div class="column" @click=${(e: MouseEvent) => this.doOrdering(e, index)}>
@@ -221,7 +230,7 @@ export class Grid<Item extends object> extends Component {
 		})
 	}
 
-	renderRows() {
+	protected renderRows() {
 		if (this.store instanceof AsyncStore) {
 			return liveAsyncRepeat(
 				{
@@ -231,7 +240,7 @@ export class Grid<Item extends object> extends Component {
 					averageItemHeight: theme.lineHeight + 1,
 					ref: (dir) => this.setRepeatDirective(dir as any)
 				},
-				this.renderRow.bind(this) as any
+				this.renderRow.bind(this as any) as any
 			)
 		}
 		else if (this.live) {
@@ -242,27 +251,18 @@ export class Grid<Item extends object> extends Component {
 					averageItemHeight: theme.lineHeight + 1,
 					ref: (dir) => this.setRepeatDirective(dir)
 				},
-				this.renderRow.bind(this)
+				this.renderRow.bind(this as any)
 			)
 		}
 		else {
 			return repeat(
 				this.store.currentData,
-				this.renderRow.bind(this)
+				this.renderRow.bind(this as any)
 			)
 		}
 	}
 
-	renderRow(item: Item | null, index: number) {
-		let tds = this.columns.map((column) => {
-			let result = item && column.render ? column.render(item, index) : ''
-			return html`<td>${result}</td>`
-		})
-
-		return html`<tr>${tds}</tr>`
-	}
-
-	setRepeatDirective(dir: LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item>) {
+	protected setRepeatDirective(dir: LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item>) {
 		this.repeatDir = dir
 
 		if (this.store instanceof AsyncStore) {
@@ -270,7 +270,7 @@ export class Grid<Item extends object> extends Component {
 		}
 	}
 
-	getOrderIcon(index: number): string {
+	protected getOrderIcon(index: number): string {
 		if (index === this.orderedColumnIndex) {
 			if (this.orderDirection === 'asc') {
 				return 'order-asc'
@@ -315,7 +315,7 @@ export class Grid<Item extends object> extends Component {
 
 
 	// Order part
-	doOrdering(e: MouseEvent, index: number) {
+	protected doOrdering(e: MouseEvent, index: number) {
 		if ((e.target as HTMLElement).closest(this.scopeClassName('.resizer'))) {
 			return
 		}
@@ -359,7 +359,7 @@ export class Grid<Item extends object> extends Component {
 
 
 	// Resizing part
-	private updatColumnWidths() {
+	protected updatColumnWidths() {
 		let clientWidth = this.refs.head.clientWidth - getNumeric(this.refs.head, 'paddingLeft') - getNumeric(this.refs.head, 'paddingRight')
 
 		let widthAndFlexArray = this.columns.map(({flex, width}, index) => {
@@ -387,7 +387,7 @@ export class Grid<Item extends object> extends Component {
 		this.setColumnWidths(widths)
 	}
 
-	private setColumnWidths(widths: number[]) {
+	protected setColumnWidths(widths: number[]) {
 		let totalWidth = sum(widths)
 		
 		for (let index = 0; index < widths.length; index++) {
@@ -397,7 +397,7 @@ export class Grid<Item extends object> extends Component {
 		}
 	}
 
-	onStartResize(e: MouseEvent, index: number) {
+	protected onStartResize(e: MouseEvent, index: number) {
 		let startX = e.clientX
 
 		let onMouseMove = (e: MouseEvent) => {
@@ -425,7 +425,7 @@ export class Grid<Item extends object> extends Component {
 		once(document, 'mouseup', onMouseUp as (e: Event) => void)
 	}
 
-	private resizeColumnByMovementX(movementX: number, index: number) {
+	protected resizeColumnByMovementX(movementX: number, index: number) {
 		let widths = [...this.columnWidths!]
 		let needShrink = Math.abs(movementX)
 		let moveLeft = movementX < 0

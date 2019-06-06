@@ -69,14 +69,14 @@ export class Resizer extends Component<ResizerEvents> {
 		}
 	`}
 
-	static properties = ['position', 'resizeRate', 'min', 'max']
+	static properties = ['position', 'rate', 'min', 'max']
 
 	position: ResizerPosition = 'right'
-	resizeRate: number = 1	// You may set this to `2` for parent that aligns to center .
+	rate: number = 1	// You may set this to `2` for parent that aligns to center .
 	max: number = Infinity
 	min: number = 0
 
-	render() {
+	protected render() {
 		return html`
 		<template
 			:class=${this.position}
@@ -84,13 +84,13 @@ export class Resizer extends Component<ResizerEvents> {
 		/>
 	`}
 
-	onReady() {
+	protected onReady() {
 		if (getStyle(this.el.parentElement!, 'position') === 'static') {
 			throw new Error('Parent of "<f-resizer>" must can\'t have an "static" position')
 		}
 	}
 
-	onStartResize(e: MouseEvent) {
+	protected onStartResize(e: MouseEvent) {
 		let startX = e.clientX
 		let startY = e.clientY
 		let startParentWidth = this.el.parentElement!.offsetWidth
@@ -117,20 +117,20 @@ export class Resizer extends Component<ResizerEvents> {
 		once(document, 'mouseup', onMouseUp as (e: Event) => void)
 	}
 
-	private resize(startParentWidth: number, startParentHeight: number, movementX: number, movementY: number, isLastResize: boolean) {
+	protected resize(startParentWidth: number, startParentHeight: number, movementX: number, movementY: number, isLastResize: boolean) {
 		let value: number
 
 		if (this.position === 'top' || this.position === 'bottom') {
 			let flag = this.position === 'bottom' ? 1 : -1
 
-			value = startParentHeight + flag * movementY * this.resizeRate
+			value = startParentHeight + flag * movementY * this.rate
 			value = constrain(value, this.min, this.max)
 			this.el.parentElement!.style.height = value + 'px'
 		}
 		else {
 			let flag = this.position === 'right' ? 1 : -1
 
-			value = startParentWidth + flag * movementX * this.resizeRate
+			value = startParentWidth + flag * movementX * this.rate
 			value = constrain(value, this.min, this.max)
 			this.el.parentElement!.style.width = value + 'px'
 		}

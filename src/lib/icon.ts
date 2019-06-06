@@ -25,7 +25,7 @@ export class Icon extends Component {
 
 	type: string = ''
 	
-	render() {
+	protected render() {
 		let svgCode = (svgSymbols as any)[this.type]
 		if (!svgCode) {
 			return ''

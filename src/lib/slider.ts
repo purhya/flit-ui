@@ -98,7 +98,7 @@ export class Slider extends Component<SliderEvents> {
 
 	static properties = ['vertical', 'min', 'max', 'step', 'value']
 
-	render() {
+	protected render() {
 		return html`
 		<template
 			tabindex="0"
@@ -126,9 +126,9 @@ export class Slider extends Component<SliderEvents> {
 	step: number = 1
 	value: number = 0
 
-	private draging: boolean = false
+	protected draging: boolean = false
 
-	getPercent() {
+	protected getPercent() {
 		if (this.value === this.min) {
 			return 0
 		}
@@ -137,7 +137,7 @@ export class Slider extends Component<SliderEvents> {
 		return constrain(percentage, 0, 100)
 	}
 
-	onMouseDown(e: MouseEvent) {
+	protected onMouseDown(e: MouseEvent) {
 		let rect = getRect(this.refs.groove)
 		this.draging = true
 
@@ -160,7 +160,7 @@ export class Slider extends Component<SliderEvents> {
 		})
 	}
 
-	private changeValueByEvent(e: MouseEvent, rect: Rect) {
+	protected changeValueByEvent(e: MouseEvent, rect: Rect) {
 		let rate
 
 		if (this.vertical) {
@@ -184,7 +184,7 @@ export class Slider extends Component<SliderEvents> {
 		}
 	}
 
-	onWheel(e: WheelEvent) {
+	protected onWheel(e: WheelEvent) {
 		if (this.step) {
 			let newValue
 
@@ -202,11 +202,11 @@ export class Slider extends Component<SliderEvents> {
 		}
 	}
 
-	onFocus() {
+	protected onFocus() {
 		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 
-	private onKeyDown(e: KeyboardEvent) {
+	protected onKeyDown(e: KeyboardEvent) {
 		let newValue
 
 		if (this.vertical) {
@@ -235,7 +235,7 @@ export class Slider extends Component<SliderEvents> {
 		}
 	}
 
-	onBlur() {
+	protected onBlur() {
 		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 	}
 }
