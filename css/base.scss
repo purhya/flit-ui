@@ -95,13 +95,13 @@ table{
 }
 
 ::-webkit-scrollbar-thumb{
-	background: #ddd;
+	background: #bbb;
 
 	&:hover{
-		background: #ccc;
+		background: #999;
 	}
 
 	&:active{
-		background: #bbb;
+		background: #777;
 	}
 }

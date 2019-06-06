@@ -67,8 +67,8 @@ table {
   background: #f3f3f3; }
 
 ::-webkit-scrollbar-thumb {
-  background: #ddd; }
+  background: #bbb; }
   ::-webkit-scrollbar-thumb:hover {
-    background: #ccc; }
+    background: #999; }
   ::-webkit-scrollbar-thumb:active {
-    background: #bbb; }
+    background: #777; }

@@ -76,6 +76,7 @@ export class Modal extends Component {
 
 				&:focus{
 					color: ${mainColor};
+					box-shadow: none;
 				}
 
 				&:active{
