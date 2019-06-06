@@ -33,7 +33,7 @@ export class NotificationTips extends Component {
 			position: fixed;
 			right: 10px;
 			bottom: 10px;
-			width: 300px;
+			max-width: 300px;
 			z-index: 1300;	// Higher than content
 			font-size: ${fpx(12)}px;
 		}
@@ -91,6 +91,7 @@ export class NotificationTips extends Component {
 			flex: 1;
 			min-width: 0;
 			padding: ${lh(10)}px;
+			padding-right: ${lh(40)}px;
 		}
 
 		.head{
@@ -196,8 +197,10 @@ export class NotificationTips extends Component {
 		}
 	}
 
-	onTransitionEnd(_type: string) {
-
+	onTransitionEnd(type: string) {
+		if (type === 'leave' && this.items.length === 0) {
+			this.el.remove()
+		}
 	}
 
 	showNotification(options: NotificationOptions): number {

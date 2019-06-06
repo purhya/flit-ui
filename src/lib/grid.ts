@@ -162,7 +162,7 @@ export class Grid<Item extends object> extends Component {
 			right: 0;
 			top: 0;
 			bottom: 0;
-			cursor: e-resize;
+			cursor: ew-resize;
 		}
 	`}
 
@@ -405,7 +405,7 @@ export class Grid<Item extends object> extends Component {
 			this.resizeColumnByMovementX(e.clientX - startX, index)
 		}
 
-		let onMouseUp = () => {
+		let onMouseUp = (e: MouseEvent) => {
 			if (this.resizingColumnWidths) {
 				this.columnWidths = this.resizingColumnWidths
 				this.resizingColumnWidths = null
@@ -422,7 +422,7 @@ export class Grid<Item extends object> extends Component {
 		document.body.append(cursorMask)
 
 		on(document, 'mousemove', onMouseMove as (e: Event) => void)
-		once(document, 'mouseup', onMouseUp)
+		once(document, 'mouseup', onMouseUp as (e: Event) => void)
 	}
 
 	private resizeColumnByMovementX(movementX: number, index: number) {
