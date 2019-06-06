@@ -33,23 +33,23 @@ export abstract class AsyncStore<Item extends object = object> extends Emitter<A
 		this.emit('change')
 	}
 
-	setOrder(key: string, direction: 'asc' | 'desc' | '') {
-		this.orderKey = key
-		this.orderDirection = direction
-
+	reload() {
 		if (this.repeatDir) {
 			this.repeatDir.reload()
 		}
+
 		this.emit('change')
+	}
+
+	setOrder(key: string, direction: 'asc' | 'desc' | '') {
+		this.orderKey = key
+		this.orderDirection = direction
+		this.reload()
 	}
 
 	clearOrder() {
 		this.orderKey = ''
 		this.orderDirection = ''
-
-		if (this.repeatDir) {
-			this.repeatDir.reload()
-		}
-		this.emit('change')
+		this.reload()
 	}
 }
