@@ -8,8 +8,7 @@ import {AsyncStore} from './async-store'
 export interface Column<Item = any> {
 	title: string
 	width?: number
-	minWidth?: number
-	flex?: number
+	flex?: number | string
 
 	/** Must be specified as string when using `liveStore`. */
 	orderBy?: ((item: Item) => string | number) | string
@@ -363,16 +362,25 @@ export class Grid<Item extends object> extends Component {
 	private updatColumnWidths() {
 		let clientWidth = this.refs.head.clientWidth - getNumeric(this.refs.head, 'paddingLeft') - getNumeric(this.refs.head, 'paddingRight')
 
-		let widthAndFlexArray = this.columns.map(({flex, width, minWidth}, index) => {
-			minWidth = minWidth || this.minColumnWidth
-
-			let baseWidthInColumnConfig = Math.max(width || 0, minWidth)
+		let widthAndFlexArray = this.columns.map(({flex, width}, index) => {
+			let baseWidthInColumnConfig = Math.max(width || 0, this.minColumnWidth)
 
 			// If column resized, we use the column width percentage to calculate new column width.
 			let baseWidth = this.columnResized ? this.columnWidths![index] : baseWidthInColumnConfig
+			let extendFlex = 0
+			let shrinkFlex = 0
 
-			return [baseWidth, flex || 0]
-		}) as [number, number][]
+			if (typeof flex === 'string') {
+				let flexs = flex.split(/\s+/).map(Number)
+				extendFlex = flexs[0] >= 0 ? flexs[0] : 0
+				shrinkFlex = flexs[1] >= 0 ? flexs[1] : extendFlex
+			}
+			else if (typeof flex === 'number' && flex >= 0) {
+				extendFlex = shrinkFlex = flex
+			}
+
+			return [baseWidth, extendFlex, shrinkFlex]
+		}) as [number, number, number][]
 		
 		let widths = columnWidthCalculator(widthAndFlexArray, clientWidth, this.minColumnWidth)
 		this.columnWidths = widths
@@ -431,11 +439,10 @@ export class Grid<Item extends object> extends Component {
 		// then we add the reduced width to current column.
 		for (let i = firstShrinkIndex; (moveLeft ? i >= 0 : i < this.columns.length) && needShrink > 0; moveLeft ? i-- : i++) {
 			let width = widths[i]
-			let minWidth = this.columns![i].minWidth || this.minColumnWidth
 			let shrink = needShrink
 
-			if (width - shrink < minWidth) {
-				shrink = width - minWidth
+			if (width - shrink < this.minColumnWidth) {
+				shrink = width - this.minColumnWidth
 			}
 
 			widths[i] -= shrink
@@ -467,29 +474,37 @@ export class Grid<Item extends object> extends Component {
 	except that the total column widths will always equal the available client width,
 	and no column width should less than `minColumnWidth`.
 */
-function columnWidthCalculator(widthAndFlexArray: [number, number][], clientWidth: number, minColumnWidth: number): number[] {
+function columnWidthCalculator(widthAndFlexArray: [number, number, number][], clientWidth: number, minColumnWidth: number): number[] {
 	// Not enough space for even `minColumnWidth`, then average `clientWidth` to each column.
 	if (clientWidth < minColumnWidth * widthAndFlexArray.length) {
 		return repeatTimes(clientWidth / widthAndFlexArray.length, widthAndFlexArray.length)
 	}
 
 	let totalBaseWidth = 0
-	let totalFlex = 0
+	let totalExtendFlex = 0
+	let totalShrinkFlex = 0
 	let widths = repeatTimes(minColumnWidth, widthAndFlexArray.length)
 	let excludedIndexSet: Set<number> = new Set()
 
-	for (let [baseWidth, flex] of widthAndFlexArray) {
+	for (let [baseWidth, extendFlex, shrinkFlex] of widthAndFlexArray) {
 		totalBaseWidth += baseWidth
-		totalFlex += flex
+		totalExtendFlex += extendFlex
+		totalShrinkFlex += shrinkFlex
 	}
 
 	// If no `flex` set for any column, set `flex` to `1` for all the columns.
-	if (totalFlex === 0) {
-		totalFlex = widthAndFlexArray.length
+	if (totalExtendFlex === 0) {
+		totalExtendFlex = widthAndFlexArray.length
 		widthAndFlexArray.forEach(a => a[1] = 1)
 	}
 
+	if (totalShrinkFlex === 0) {
+		totalShrinkFlex = widthAndFlexArray.length
+		widthAndFlexArray.forEach(a => a[2] = 1)
+	}
+
 	while (true) {
+		let totalFlex = clientWidth >= totalBaseWidth ? totalExtendFlex : totalShrinkFlex
 		let widthPerFlex = (clientWidth - totalBaseWidth) / totalFlex
 		let moreColumnExcluded = false
 
@@ -498,13 +513,14 @@ function columnWidthCalculator(widthAndFlexArray: [number, number][], clientWidt
 				continue
 			}
 
-			let [baseWidth, flex] = widthAndFlexArray[index]
+			let [baseWidth, extendFlex, shrinkFlex] = widthAndFlexArray[index]
+			let flex = widthPerFlex >= 0 ? extendFlex : shrinkFlex
 			let width = flex * widthPerFlex + baseWidth
 
 			if (width < minColumnWidth) {
 				clientWidth -= minColumnWidth
 				totalBaseWidth -= minColumnWidth
-				totalFlex -= flex
+				totalExtendFlex -= flex
 				excludedIndexSet.add(index)
 				moreColumnExcluded = true
 			}
