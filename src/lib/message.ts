@@ -249,6 +249,13 @@ export class Message {
 
 	protected modal: MessageModal | null = null
 
+	protected labels: {[key: string]: string} = {
+		ok: 'OK',
+		cancel: 'Cancel',
+		yes: 'Yes',
+		no: 'No'
+	}
+
 	protected showMessage(options: MessageOptions) {
 		if (!this.modal) {
 			this.modal = renderComponent(html`<f-message-modal />`) as MessageModal
@@ -256,13 +263,17 @@ export class Message {
 
 		return this.modal.showMessage(options)
 	}
+
+	setLabels(labels: {[key: string]: string}) {
+		Object.assign(this.labels, labels)
+	}
 	
 	/** Show info type message. */
 	info(content: string, options: MessageOptions = {}) {
 		return this.showMessage(Object.assign({
 			type: 'info',
 			content,
-			buttons: {ok: 'OK'},
+			buttons: {ok: this.labels.ok},
 		}, options) as MessageOptions) as Promise<string>
 	}
 
@@ -271,7 +282,7 @@ export class Message {
 		return this.showMessage(Object.assign({
 			type: 'success',
 			content,
-			buttons: {ok: 'OK'},
+			buttons: {ok: this.labels.ok},
 		}, options) as MessageOptions) as Promise<string>
 	}
 
@@ -280,7 +291,7 @@ export class Message {
 		return this.showMessage(Object.assign({
 			type: 'alert',
 			content,
-			buttons: {ok: 'OK'},
+			buttons: {ok: this.labels.ok},
 		}, options) as MessageOptions) as Promise<string>
 	}
 
@@ -289,7 +300,7 @@ export class Message {
 		return this.showMessage(Object.assign({
 			type: 'confirm',
 			content,
-			buttons: {cancel: 'Cancel', ok: 'Yes'},
+			buttons: {cancel: this.labels.cancel, ok: this.labels.ok},
 		}, options) as MessageOptions) as Promise<string>
 	}
 
@@ -300,7 +311,7 @@ export class Message {
 			content,
 			
 			inputValue: '',
-			buttons: {cancel: 'Cancel', ok: 'OK'},
+			buttons: {cancel: this.labels.cancel, ok: this.labels.ok},
 		}, options) as MessageOptions) as Promise<[string, string]>
 	}
 }
