@@ -1,53 +1,82 @@
-import {html, defineBinding, on, renderComponent, off} from 'flit'
+import {defineBinding, on, off, renderComplete, define, css, Transition} from 'flit'
 import {Layer} from './layer'
-import {Menu} from './menu'
-import {alignToEvent} from 'ff';
+import {alignToEvent} from 'ff'
+import {theme} from './theme'
 
 
-export interface ContextMenuItem {
-	id: number | string
-	title: string
-	icon: string
+interface ContextMenuBindOptions {
+	contextmenu: ContextMenu
+	data: unknown
+}
+
+interface ContextMenuEvents {
+	select: (data: unknown) => void
+}
+
+
+@define('f-contextmenu')
+export class ContextMenu<Data = unknown, Events = any> extends Layer<Events & ContextMenuEvents> {
+
+	static style() {
+		let {lh} = theme
+		
+		return css`
+		${super.style()}
+		:host{
+			f-menuitem{
+				padding: 0 ${lh(2)}px;
+			}
+		}
+	`}
+
+	trangle: boolean = false
+	data: Data | null = null
 }
 
 
 defineBinding('contextmenu', class ContextMenuBinding {
 
 	private el: HTMLElement
-	private menu!: Menu
-	private layer: Layer | null = null
+	private contextMenu!: ContextMenu
+	private data: unknown | null = null
 
-	constructor(el: Element, menu: unknown) {
+	constructor(el: Element, value: unknown) {
 		this.el = el as HTMLElement
-		this.update(menu as Menu)
+		this.update(value as ContextMenuBindOptions)
 		on(this.el, 'contextmenu', this.showMenuInLayer as (e: Event) => void, this)
 	}
 
-	async update(menu: Menu) {
-		this.menu = menu
+	async update(value: ContextMenuBindOptions) {
+		this.contextMenu = value.contextmenu
+		this.data = value.data
 	}
 
-	private showMenuInLayer(e: Event) {
-		let layer = renderComponent(html`<f-layer/>`) as Layer
-		layer.el.append(this.menu.el)
-		document.body.append(layer.el)
+	private async showMenuInLayer(e: Event) {
+		this.contextMenu.data = this.data
+		this.contextMenu.applyAppendTo()
+		await renderComplete()
 
-		alignToEvent(layer.el, e as MouseEvent)
+		alignToEvent(this.contextMenu.el, e as MouseEvent)
+		this.contextMenu.el.focus()
+
+		new Transition(this.contextMenu.el, 'fade').enter()
 		on(document, 'mousedown', this.onDocMouseDown, this)
 	}
 
 	private onDocMouseDown(e: Event) {
 		let target = e.target as Element
 
-		if (this.layer && !this.layer.el.contains(target)) {
+		if (this.contextMenu && !this.contextMenu.el.contains(target)) {
 			off(document, 'mousedown', this.onDocMouseDown, this)
-			this.hideLayer()
+			this.hideContextMenu()
 		}
 	}
 
-	private hideLayer() {
-		this.layer!.el.remove()
-		this.layer = null
-		this.menu.el.remove()
+	private hideContextMenu() {
+		new Transition(this.contextMenu!.el, 'fade').leave().then((finish: boolean) => {
+			if (finish) {
+				this.contextMenu.el.remove()
+			}
+		})
 	}
 })
