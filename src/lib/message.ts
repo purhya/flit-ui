@@ -83,8 +83,8 @@ export class MessageModal<Events = any> extends Modal<Events> {
 
 		.error-text{
 			color: ${errorColor};
-			margin-top: 3px;
-			font-size: ${fs(12)};
+			margin-top: 5px;
+			font-size: ${fs(12)}px;
 		}
 
 		.list{
@@ -189,19 +189,19 @@ export class MessageModal<Events = any> extends Modal<Events> {
 		let {type, inputValidator, inputValue, resolve} = this.options!
 		let input = this.refs.input as HTMLInputElement | null
 
-		if (btn === 'ok' && type === 'prompt' && input && !input.validity.valid) {
-			input.checkValidity()
+		if (btn === 'ok' && type === 'prompt' && input) {
 			this.isTouched = true
 
 			if (inputValidator) {
 				this.inputErrorText = inputValidator(inputValue || '')
+				if (this.inputErrorText) {
+					return
+				}
 			}
-			return
 		}
 
 		if (type === 'prompt') {
 			this.isTouched = false
-			this.inputErrorText = ''
 
 			let value = btn === 'ok' && inputValue ? inputValue : ''
 			resolve!([btn, value])
@@ -231,6 +231,7 @@ export class MessageModal<Events = any> extends Modal<Events> {
 		}) as Promise<string | [string, string]>
 
 		this.options = options
+		this.inputErrorText = ''
 		this.show()
 
 		if (options.type === 'prompt') {
