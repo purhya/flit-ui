@@ -8,7 +8,7 @@ export interface CheckboxEvents {
 }
 
 @define('f-checkbox')
-export class Checkbox extends Component<CheckboxEvents> {
+export class Checkbox<Events = any> extends Component<Events & CheckboxEvents> {
 
 	static style() {
 		let {mainColor, lh} = theme
@@ -126,8 +126,12 @@ export class Checkbox extends Component<CheckboxEvents> {
 }
 
 
+interface CheckboxGroupEvents {
+	change: (value: any[]) => void
+}
+
 @define('f-checkboxgroup')
-export class CheckboxGroup extends Component<{change: (value: any[]) => void}> {
+export class CheckboxGroup<Events = any> extends Component<Events & CheckboxGroupEvents> {
 
 	static properties = ['value', 'ordered']
 

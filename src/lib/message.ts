@@ -19,10 +19,10 @@ export interface MessageOptions {
 
 
 @define('f-message-modal')
-export class MessageModal extends Modal {
+export class MessageModal<Events = any> extends Modal<Events> {
 	
 	static style() {
-		let {mainColor, infoColor, lh, successColor, errorColor, warningColor, fs: fpx} = theme
+		let {mainColor, infoColor, lh, successColor, errorColor, warningColor, fs} = theme
 
 		return css`
 		${super.style()}
@@ -84,7 +84,7 @@ export class MessageModal extends Modal {
 		.error-text{
 			color: ${errorColor};
 			margin-top: 3px;
-			font-size: ${fpx(12)};
+			font-size: ${fs(12)};
 		}
 
 		.list{

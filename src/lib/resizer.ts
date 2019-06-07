@@ -10,7 +10,7 @@ type ResizerPosition = 'top' | 'right' | 'bottom' | 'left'
 
 
 @define('f-resizer')
-export class Resizer extends Component<ResizerEvents> {
+export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
 	
 	static style() {
 		return css`

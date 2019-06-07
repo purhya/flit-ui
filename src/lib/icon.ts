@@ -5,7 +5,7 @@ import {theme} from './theme'
 
 
 @define('f-icon')
-export class Icon extends Component {
+export class Icon<Events = any> extends Component<Events> {
 
 	static style = css`
 	:host{

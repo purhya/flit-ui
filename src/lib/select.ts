@@ -1,4 +1,4 @@
-import {css, define, html, renderComplete, cache, repeat} from 'flit'
+import {css, html, renderComplete, cache, repeat} from 'flit'
 import {theme} from './theme'
 import {Popup} from './popup'
 import {Color} from './color'
@@ -9,8 +9,7 @@ export interface SelectEvents<T> {
 	change: (value: T) => void
 }
 
-@define('f-select')
-export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> {
+export class Select<T extends unknown = unknown, Events = any> extends Popup<Events & SelectEvents<T>> {
 	
 	static style() {
 		let {mainColor, lh, textColor} = theme
@@ -140,7 +139,7 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 				@input=${this.onInput}
 			>
 			${this.icon && !this.editing ? html`<f-icon class="icon" :type="${this.icon}" />` : ''}
-			${cache(this.opened ? this.renderLayer() : '', this.transition)}
+			${cache(this.opened ? this.renderLayer() : '', {transition: this.transition, enterAtStart: true})}
 		</template>
 	`}
 
@@ -414,5 +413,8 @@ export class Select<T extends unknown = unknown> extends Popup<SelectEvents<T>> 
 		if (document.activeElement !== this.refs.input) {
 			this.refs.input.focus()
 		}
+
+		this.on('change', () => {})
+		this.emit('change', key)
 	}
 }

@@ -1,4 +1,4 @@
-import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective} from 'flit'
+import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult} from 'flit'
 import {theme} from './theme'
 import {Store} from './store'
 import {getScrollbarWidth, watch, Order, getNumeric, sum, repeatTimes} from 'ff'
@@ -22,7 +22,7 @@ export interface Column<Item = any> {
 
 
 @define('f-grid')
-export class Grid<Item extends object> extends Component {
+export class Grid<Item extends object, Events = any> extends Component<Events> {
 
 	static style() {
 		let {fs, lh, mainColor} = theme
@@ -192,7 +192,7 @@ export class Grid<Item extends object> extends Component {
 	protected columnResized: boolean = false
 	protected repeatDir: LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item> | null = null
 
-	render() {
+	render(): TemplateResult {
 		return html`
 		<div class="head" :ref="head">
 			<div class="columns" :ref="columns">
@@ -230,7 +230,7 @@ export class Grid<Item extends object> extends Component {
 		})
 	}
 
-	protected renderRows() {
+	protected renderRows(): DirectiveResult {
 		if (this.store instanceof AsyncStore) {
 			return liveAsyncRepeat(
 				{

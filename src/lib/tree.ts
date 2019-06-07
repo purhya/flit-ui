@@ -16,7 +16,7 @@ interface TreeEvents {
 
 
 @define('f-tree')
-export class Tree extends Component<TreeEvents> {
+export class Tree<Events = any> extends Component<Events & TreeEvents> {
 
 	static style() {
 		return css`
@@ -241,7 +241,7 @@ export class Tree extends Component<TreeEvents> {
 
 
 @define('f-treeitem')
-export class TreeItem extends Component {
+export class TreeItem<Events = any> extends Component<Events> {
 
 	static style() {
 		let {lh, mainColor} = theme

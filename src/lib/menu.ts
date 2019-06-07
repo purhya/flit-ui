@@ -9,7 +9,7 @@ interface MenuEvents {
 }
 
 @define('f-menu')
-export class Menu extends Component<MenuEvents> {
+export class Menu<Events = any> extends Component<Events & MenuEvents> {
 
 	static style() {
 		return css`
@@ -82,10 +82,16 @@ export class Menu extends Component<MenuEvents> {
 			
 			item.selected = true
 			this.selectedItem = item
+			this.emit('select', item)
 		}
 
 		this.setHoverItem(item)
-		this.emit('select', item)
+	}
+
+	mayHideLayer() {
+		if (this.layer && this.layer.popup) {
+			this.layer.popup.hideLayer()
+		}
 	}
 
 	setHoverItem(item: MenuItem | null) {
@@ -271,7 +277,7 @@ export class Menu extends Component<MenuEvents> {
 
 
 @define('f-menuitem')
-export class MenuItem extends Component {
+export class MenuItem<Events = any> extends Component<Events> {
 
 	static style() {
 		let {lh, mainColor} = theme
@@ -321,7 +327,7 @@ export class MenuItem extends Component {
 
 		.arrow{
 			margin-left: auto;
-			margin-right: 4px;
+			margin-right: 0;
 		}
 
 		.text{
@@ -407,22 +413,22 @@ export class MenuItem extends Component {
 	}
 
 	click() {
-		let topMenu = this.topMenu
-
 		if (this.subMenu) {
 			// Can select current item as an directory
-			if (topMenu.selectable && topMenu.dirSelectable) {
-				topMenu.selectItem(this)
+			if (this.topMenu.selectable && this.topMenu.dirSelectable) {
+				this.topMenu.selectItem(this)
 			}
 
 			// Otherwise it been controlled by registered 'mouseenter' event.
-			if (!topMenu.layer) {
+			if (!this.topMenu.layer) {
 				this.subMenu.opened = !this.subMenu.opened
 			}
 		}
 		else {
-			topMenu.selectItem(this)
+			this.topMenu.selectItem(this)
 		}
+
+		this.topMenu.mayHideLayer()
 	}
 
 	protected onMouseEnter() {
@@ -432,7 +438,7 @@ export class MenuItem extends Component {
 
 
 @define('f-menuspliter')
-export class MenuSpliter extends Component {
+export class MenuSpliter<Events = any> extends Component<Events> {
 	static style = css`
 	:host{
 		background-color: #eee;
@@ -443,10 +449,10 @@ export class MenuSpliter extends Component {
 
 
 @define('f-submenu')
-export class SubMenu extends Component {
+export class SubMenu<Events = any> extends Component<Events> {
 
 	static style() {
-		let {fs: fpx} = theme
+		let {lh, fs} = theme
 
 		return css`
 		:host{
@@ -456,7 +462,11 @@ export class SubMenu extends Component {
 		
 		.layer{
 			padding: 5px 0;
-			font-size: ${fpx(12)}px;
+			font-size: ${fs(12)}px;
+
+			f-menuitem{
+				padding: 0 ${lh(7)}px;
+			}
 		}
 	`}
 

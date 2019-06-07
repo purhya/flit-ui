@@ -3,7 +3,7 @@ import {theme} from './theme'
 
 
 @define('f-buttongroup')
-export class ButtonGroup extends Component {
+export class ButtonGroup<Events = any> extends Component<Events> {
 
 	static style() {
 		let {lh} = theme

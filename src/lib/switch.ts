@@ -7,7 +7,7 @@ export interface SwitchEvents {
 }
 
 @define('f-switch')
-export class Switch extends Component<SwitchEvents> {
+export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 
 	static style() {
 		let {mainColor, lh, textColor} = theme

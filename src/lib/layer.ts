@@ -5,7 +5,7 @@ import {Popup} from './popup'
 
 // It's the base class for all the layer which will align with another element.
 @define('f-layer')
-export class Layer extends Component {
+export class Layer<Events = any> extends Component<Events> {
 
 	static style() {
 		let {layerRadius} = theme
@@ -84,6 +84,10 @@ export class Layer extends Component {
 		// In the future, we may implement a flit directive `renderTo(..., ...)`, 
 		// to render elements and it's anchor node to another element.
 
+		this.applyAppendTo()
+	}
+
+	applyAppendTo() {
 		if (this.appendTo) {
 			appendTo(this.el, this.appendTo)
 		}

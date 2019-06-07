@@ -4,19 +4,19 @@ import {theme} from './theme'
 
 
 @define('f-dropdown')
-export class Dropdown extends Popup {
+export class Dropdown<Events = any> extends Popup<Events> {
 
 	static style() {
-		let {lh, fs: fpx} = theme
+		let {lh, fs} = theme
 
 		return css`
 		${super.style()}
 		.layer{
 			padding: 5px 0;
-			font-size: ${fpx(12)}px;
+			font-size: ${fs(12)}px;
 
 			f-menuitem{
-				padding: 0 ${lh(10)}px;
+				padding: 0 ${lh(7)}px;
 			}
 		}
 	`}

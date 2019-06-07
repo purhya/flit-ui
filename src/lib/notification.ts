@@ -24,9 +24,9 @@ export interface NotificationItem extends NotificationOptions {
 
 
 @define('f-notification-tips')
-export class NotificationTips extends Component {
+export class NotificationTips<Events = any> extends Component<Events> {
 	static style() {
-		let {infoColor, lh, successColor, errorColor, layerRadius, fs: fpx} = theme
+		let {infoColor, lh, successColor, errorColor, layerRadius, fs} = theme
 
 		return css`
 		:host{
@@ -35,7 +35,7 @@ export class NotificationTips extends Component {
 			bottom: 10px;
 			max-width: 300px;
 			z-index: 1300;	// Higher than content
-			font-size: ${fpx(12)}px;
+			font-size: ${fs(12)}px;
 		}
 
 		.item{

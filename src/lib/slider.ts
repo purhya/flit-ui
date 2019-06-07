@@ -8,7 +8,7 @@ export interface SliderEvents {
 }
 
 @define('f-slider')
-export class Slider extends Component<SliderEvents> {
+export class Slider<Events = any> extends Component<Events & SliderEvents> {
 
 	static style() {
 		let {mainColor, textColor, lh} = theme

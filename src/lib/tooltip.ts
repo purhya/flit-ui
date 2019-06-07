@@ -45,7 +45,7 @@ export class TooltipLayer extends Layer {
 
 
 @define('f-tooltip')
-export class Tooltip extends Popup {
+export class Tooltip<Events = any> extends Popup<Events> {
 
 	title: string = ''
 

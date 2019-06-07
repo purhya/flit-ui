@@ -6,7 +6,7 @@ import {theme} from './theme'
 
 // It's the base class for all the popup component.
 @define('f-popup')
-export class Popup<Events = {}> extends Component<Events> {
+export class Popup<Events = any> extends Component<Events> {
 
 	static style() {
 		let {mainColor} = theme
@@ -52,7 +52,7 @@ export class Popup<Events = {}> extends Component<Events> {
 	protected render() {
 		// When hide, layer was removed from body
 		// When show, layer was restored into popup, and then trigger connect, then update, then appended to body.
-		let layerPart = cache(this.opened ? this.renderLayer() : '', this.transition)
+		let layerPart = cache(this.opened ? this.renderLayer() : '', {transition: this.transition, enterAtStart: true})
 		
 		return html`
 			<template :class.opened="${this.opened}">

@@ -5,7 +5,7 @@ import {Popup} from './popup'
 
 // Compare to `<popup>`, it can set title.
 @define('f-popover')
-export class Popover extends Popup {
+export class Popover<Events = any> extends Popup<Events> {
 
 	static style() {
 		let {lh, mainColor} = theme

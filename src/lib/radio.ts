@@ -7,7 +7,7 @@ export interface RadioEvents {
 }
 
 @define('f-radio')
-export class Radio extends Component<RadioEvents> {
+export class Radio<Events = any> extends Component<Events & RadioEvents> {
 
 	static style() {
 		let {mainColor, lh} = theme

@@ -4,7 +4,7 @@ import {debounce, setDraggable, align} from 'ff'
 
 
 @define('f-modal')
-export class Modal extends Component {
+export class Modal<Events = any> extends Component<Events> {
 
 	static style() {
 		let {mainColor, textColor, layerRadius, lh} = theme
