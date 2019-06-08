@@ -59,9 +59,9 @@ export class Tree<Events = any> extends Component<Events & TreeEvents> {
 	protected render() {
 		let innerPart = this.data ? repeat(this.children, (item) => html`
 			<f-treeitem
-				:root=${this}
-				:data=${item}
-				:deep=${this.deep}
+				.root=${this}
+				.data=${item}
+				.deep=${this.deep}
 			/>`)
 			: html`<slot />`
 
@@ -69,8 +69,8 @@ export class Tree<Events = any> extends Component<Events & TreeEvents> {
 		<template
 			tabindex="0"
 			:class.scrollable=${this.scrollable}
-			@focus=${this.onFocus}
-			@blur=${this.onBlur}
+			@@focus=${this.onFocus}
+			@@blur=${this.onBlur}
 		>
 			<div class="inner" :ref="inner">
 				${innerPart}
@@ -331,9 +331,9 @@ export class TreeItem<Events = any> extends Component<Events> {
 
 		let innerPart = this.children ? repeat(this.children, (item) => html`
 			<f-treeitem
-				:root=${this.root}
-				:data=${item}
-				:deep=${this.deep + 1}
+				.root=${this.root}
+				.data=${item}
+				.deep=${this.deep + 1}
 			/>`
 		) : html`<slot />`
 
@@ -344,8 +344,8 @@ export class TreeItem<Events = any> extends Component<Events> {
 				:class.selected=${this.selected}
 				:class.expanded=${this.expanded}
 				:style.padding-left.px=${lh(25) * this.deep}
-				@click=${this.onClick}
-				@mouseenter=${this.onMouseEnter}
+				@@click=${this.onClick}
+				@@mouseenter=${this.onMouseEnter}
 			>
 				<div class="arrow-placeholder" @click.stop=${this.toggleExpanded}> <!-- Stop to avoid trigger click on ".line" -->
 					${this.children && this.children.length > 0 || this.hasChildren ? html`<f-icon class="arrow" type="down" />` : ''}
@@ -353,7 +353,7 @@ export class TreeItem<Events = any> extends Component<Events> {
 
 			${this.parent.itemsHasIcon ? html`
 				<div class="icon">
-					${this.icon ? html`<f-icon :type=${this.icon} />` : ''}
+					${this.icon ? html`<f-icon .type=${this.icon} />` : ''}
 				</div>` : ''
 			}
 				<div class="text">${this.text}</div>

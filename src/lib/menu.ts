@@ -46,8 +46,8 @@ export class Menu<Events = any> extends Component<Events & MenuEvents> {
 		return html`
 		<template
 			tabindex="0"
-			@focus=${this.onFocus}
-			@blur=${this.onBlur}
+			@@focus=${this.onFocus}
+			@@blur=${this.onBlur}
 		>
 			<slot />
 		</template>
@@ -356,7 +356,7 @@ export class MenuItem<Events = any> extends Component<Events> {
 		
 		let icon = parentMenu.itemsHasIcon ? html`
 			<div class="icon-place">
-				${this.icon ? html`<f-icon :type=${this.icon} />` : ''}
+				${this.icon ? html`<f-icon .type=${this.icon} />` : ''}
 			</div>
 		` : ''
 
@@ -366,7 +366,7 @@ export class MenuItem<Events = any> extends Component<Events> {
 				? 'right' : subMenu.opened
 				? 'up' : 'down'
 			
-			rightIcon = html`<f-icon class="arrow" :type=${rightIconType} />`
+			rightIcon = html`<f-icon class="arrow" .type=${rightIconType} />`
 		}
 
 		let iconSize = theme.lh(25)
@@ -377,8 +377,8 @@ export class MenuItem<Events = any> extends Component<Events> {
 				:class.hover=${this.hoverAt}
 				:class.submenu-opened=${topMenu.layer && subMenu && subMenu.opened}
 				:style.padding-left.px=${topMenu.layer ? '' : parentMenu.itemsHasIcon ? parentMenu.deep * iconSize + 5 : parentMenu.deep * iconSize}
-				@click=${this.onClick}
-				@mouseenter=${this.onMouseEnter}
+				@@click=${this.onClick}
+				@@mouseenter=${this.onMouseEnter}
 			>
 				${icon}
 				<span class="text">
@@ -531,7 +531,7 @@ export class SubMenu<Events = any> extends Component<Events> {
 			else {
 				let {fragment} = renderAndWatch(() => {
 					return cache(
-						this.opened ? html`<f-layer class="layer" :trangle=${false} :ref=${this.onRefLayer} />` : '',
+						this.opened ? html`<f-layer class="layer" .trangle=${false} :ref=${this.onRefLayer} />` : '',
 						{enterAtStart: true, transition: 'fade'}
 					)
 				}, this)

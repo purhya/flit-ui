@@ -81,9 +81,9 @@ export class Checkbox<Events = any> extends Component<Events & CheckboxEvents> {
 				tabindex="0"
 				:class.checked=${this.checked}
 				:class.indeterminate=${this.indeterminate}
-				@click=${this.onClick}
-				@focus=${this.onFocus}
-				@blur=${this.onBlur}
+				@@click=${this.onClick}
+				@@focus=${this.onFocus}
+				@@blur=${this.onBlur}
 			>
 				<svg class="icon" viewBox="0 0 13 13">
 					${svgInner}

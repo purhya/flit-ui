@@ -156,7 +156,7 @@ export class NotificationTips<Events = any> extends Component<Events> {
 					<f-icon type="close" />
 				</div>
 				<div class="left">
-					<f-icon class="icon" :type=${item.type} />
+					<f-icon class="icon" .type=${item.type} />
 				</div>
 				<div class="right">
 					${item.title ? html`<div class="head">${item.title}</div>` : ''}

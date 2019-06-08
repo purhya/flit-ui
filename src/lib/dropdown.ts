@@ -33,7 +33,7 @@ export class Dropdown<Events = any> extends Popup<Events> {
 		return html`
 		<template :class.opened="${this.opened}">
 			<slot />
-			${this.icon ? html`<f-icon :type="${this.icon}" />` : ''}
+			${this.icon ? html`<f-icon .type="${this.icon}" />` : ''}
 			${layerPart}
 		</template>
 	`}

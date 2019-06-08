@@ -1,4 +1,4 @@
-import {css, html, renderComplete, cache, repeat} from 'flit'
+import {css, html, renderComplete, cache, repeat, define} from 'flit'
 import {theme} from './theme'
 import {Popup} from './popup'
 import {Color} from './color'
@@ -9,6 +9,8 @@ export interface SelectEvents<T> {
 	change: (value: T) => void
 }
 
+
+@define('f-select')
 export class Select<T extends unknown = unknown, Events = any> extends Popup<Events & SelectEvents<T>> {
 	
 	static style() {
@@ -138,7 +140,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 				@click=${this.onClick}
 				@input=${this.onInput}
 			>
-			${this.icon && !this.editing ? html`<f-icon class="icon" :type="${this.icon}" />` : ''}
+			${this.icon && !this.editing ? html`<f-icon class="icon" .type="${this.icon}" />` : ''}
 			${cache(this.opened ? this.renderLayer() : '', {transition: this.transition, enterAtStart: true})}
 		</template>
 	`}
@@ -151,9 +153,9 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		<f-layer
 			class="layer"
 			:ref="layer"
-			:popup=${this}
-			:herizontal=${false}
-			:trangle=${false}
+			.popup=${this}
+			.herizontal=${false}
+			.trangle=${false}
 		>
 			<ul class="list">
 			${listPart}
@@ -413,8 +415,5 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		if (document.activeElement !== this.refs.input) {
 			this.refs.input.focus()
 		}
-
-		this.on('change', () => {})
-		this.emit('change', key)
 	}
 }

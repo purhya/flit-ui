@@ -65,9 +65,9 @@ export class Radio<Events = any> extends Component<Events & RadioEvents> {
 			<template
 				tabindex="0"
 				:class.checked=${this.checked}
-				@click=${this.onClick}
-				@focus=${this.onFocus}
-				@blur=${this.onBlur}
+				@@click=${this.onClick}
+				@@focus=${this.onFocus}
+				@@blur=${this.onBlur}
 			>
 				<svg class="icon" viewBox="0 0 14 14" style="width: ${lh(16)}px; height: ${lh(16)}px;">
 					${this.checked? svg`<circle style="fill:currentColor;stroke:none;" cx="7" cy="7" r="4" />` : ''}

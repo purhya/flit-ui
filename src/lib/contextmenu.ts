@@ -4,18 +4,14 @@ import {alignToEvent} from 'ff'
 import {theme} from './theme'
 
 
-interface ContextMenuBindOptions {
+export interface ContextMenuBindingOptions {
 	contextmenu: ContextMenu
 	data: unknown
 }
 
-interface ContextMenuEvents {
-	select: (data: unknown) => void
-}
-
 
 @define('f-contextmenu')
-export class ContextMenu<Data = unknown, Events = any> extends Layer<Events & ContextMenuEvents> {
+export class ContextMenu<Data = unknown, Events = any> extends Layer<Events> {
 
 	static style() {
 		let {lh} = theme
@@ -42,11 +38,11 @@ defineBinding('contextmenu', class ContextMenuBinding {
 
 	constructor(el: Element, value: unknown) {
 		this.el = el as HTMLElement
-		this.update(value as ContextMenuBindOptions)
+		this.update(value as ContextMenuBindingOptions)
 		on(this.el, 'contextmenu', this.showMenuInLayer as (e: Event) => void, this)
 	}
 
-	async update(value: ContextMenuBindOptions) {
+	async update(value: ContextMenuBindingOptions) {
 		this.contextMenu = value.contextmenu
 		this.data = value.data
 	}

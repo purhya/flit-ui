@@ -70,9 +70,9 @@ export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 		<template
 			tabindex="0"
 			:class.on=${this.checked}
-			@click=${this.onClick}
-			@focus=${this.onFocus}
-			@blur=${this.onBlur}
+			@@click=${this.onClick}
+			@@focus=${this.onFocus}
+			@@blur=${this.onBlur}
 		>
 			<div class="ball"></div>
 		</template>

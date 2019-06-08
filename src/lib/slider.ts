@@ -103,10 +103,10 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 		<template
 			tabindex="0"
 			:class.dragging=${this.draging}
-			@mousedown=${this.onMouseDown}
-			@wheel.prevent=${this.onWheel}
-			@focus=${this.onFocus}
-			@blur=${this.onBlur}
+			@@mousedown=${this.onMouseDown}
+			@@wheel.prevent=${this.onWheel}
+			@@focus=${this.onFocus}
+			@@blur=${this.onBlur}
 		>
 			<div class="groove" :ref="groove">
 				<div class="groove-bg"></div>

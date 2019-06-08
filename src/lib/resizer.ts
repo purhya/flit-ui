@@ -80,7 +80,7 @@ export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
 		return html`
 		<template
 			:class=${this.position}
-			@mousedown=${this.onStartResize}
+			@@mousedown=${this.onStartResize}
 		/>
 	`}
 

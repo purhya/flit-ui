@@ -144,7 +144,7 @@ export class MessageModal<Events = any> extends Modal<Events> {
 		}
 			<div class="body">
 				<div class="left">
-					${options.type !== 'prompt' ? html`<f-icon :class="icon icon-${options.type}" :type="${options.type}" />` : ''}
+					${options.type !== 'prompt' ? html`<f-icon :class="icon icon-${options.type}" .type="${options.type}" />` : ''}
 				</div>
 				<div class="right">
 					<div class="text" :html=${options.content} />

@@ -61,9 +61,9 @@ export class Popover<Events = any> extends Popup<Events> {
 			<f-layer
 				class="layer"
 				:ref="layer"
-				:popup=${this}
-				:herizontal=${this.isHerizontal()}
-				:trangle=${this.hasTrangle}
+				.popup=${this}
+				.herizontal=${this.isHerizontal()}
+				.trangle=${this.hasTrangle}
 			>
 				${content}
 			</f-layer>

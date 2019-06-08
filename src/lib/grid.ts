@@ -218,7 +218,7 @@ export class Grid<Item extends object, Events = any> extends Component<Events> {
 					<div class="column-title">${column.title}</div>
 					${column.orderBy ? html`
 						<div class="order" :class.current=${this.orderedColumnIndex === index && this.orderDirection !== ''}>
-							<f-icon :type=${this.getOrderIcon(index)} />
+							<f-icon .type=${this.getOrderIcon(index)} />
 						</div>`
 					: ''}
 				</div>
