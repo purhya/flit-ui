@@ -234,9 +234,10 @@ export class Grid<Item extends object, Events = any> extends Component<Events> {
 		if (this.store instanceof AsyncStore) {
 			return liveAsyncRepeat(
 				{
-					pageSize: this.pageSize,
+					key: this.store.key,
 					dataCount: this.store.dataCount.bind(this.store),
-					dataGetter: this.store.dataGetter.bind(this.store),
+					dataGetter: this.store.dataGetter.bind(this.store) as any,
+					pageSize: this.pageSize,
 					averageItemHeight: theme.lineHeight + 1,
 					ref: (dir) => this.setRepeatDirective(dir as any)
 				},
