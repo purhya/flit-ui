@@ -1,4 +1,4 @@
-import {defineBinding, on, off, renderComplete, define, css, Transition} from 'flit'
+import {defineBinding, on, off, renderComplete, define, css, Transition, Binding} from 'flit'
 import {Layer} from './layer'
 import {alignToEvent} from 'ff'
 import {theme} from './theme'
@@ -30,7 +30,7 @@ export class ContextMenu<Data = unknown, Events = any> extends Layer<Events> {
 }
 
 
-defineBinding('contextmenu', class ContextMenuBinding {
+defineBinding('contextmenu', class ContextMenuBinding implements Binding {
 
 	private el: HTMLElement
 	private contextMenu!: ContextMenu

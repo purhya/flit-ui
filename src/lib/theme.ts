@@ -1,4 +1,4 @@
-import {updateStyles, updateComponents} from 'flit'
+import {updateStyles, update} from 'flit'
 import {Color} from './color'
 
 
@@ -71,7 +71,7 @@ export class Theme implements ColorOptions, NotColorOptions {
 
 			Promise.resolve().then(() => {
 				updateStyles()
-				updateComponents()
+				update()
 				this.willUpdate = false
 			})
 		}
