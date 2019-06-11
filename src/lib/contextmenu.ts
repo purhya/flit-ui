@@ -1,4 +1,4 @@
-import {defineBinding, on, off, renderComplete, define, css, Transition, Binding} from 'flit'
+import {defineBinding, on, off, renderComplete, define, css, Transition, Binding, once} from 'flit'
 import {Layer} from './layer'
 import {alignToEvent} from 'ff'
 import {theme} from './theme'
@@ -57,18 +57,21 @@ defineBinding('contextmenu', class ContextMenuBinding implements Binding {
 
 		new Transition(this.contextMenu.el, 'fade').enter()
 		on(document, 'mousedown', this.onDocMouseDown, this)
+		once(this.contextMenu.el, 'click', this.hideContextMenu, this)
 	}
 
 	private onDocMouseDown(e: Event) {
 		let target = e.target as Element
 
 		if (this.contextMenu && !this.contextMenu.el.contains(target)) {
-			off(document, 'mousedown', this.onDocMouseDown, this)
 			this.hideContextMenu()
 		}
 	}
 
 	private hideContextMenu() {
+		off(document, 'mousedown', this.onDocMouseDown, this)
+		off(this.contextMenu.el, 'click', this.hideContextMenu, this)
+
 		new Transition(this.contextMenu!.el, 'fade').leave().then((finish: boolean) => {
 			if (finish) {
 				this.contextMenu.el.remove()
