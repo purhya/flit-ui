@@ -405,16 +405,14 @@ export class Grid<Item extends object, Events = any> extends Component<Events> {
 			this.resizeColumnByMovementX(e.clientX - startX, index)
 		}
 
-		let onMouseUp = (e: MouseEvent) => {
+		let onMouseUp = () => {
 			if (this.resizingColumnWidths) {
 				this.columnWidths = this.resizingColumnWidths
 				this.resizingColumnWidths = null
 			}
 
 			off(document, 'mousemove', onMouseMove as (e: Event) => void)
-			this.resizeColumnByMovementX(e.clientX - startX, index)
 			cursorMask.remove()
-
 			this.columnResized = true
 		}
 
@@ -422,7 +420,7 @@ export class Grid<Item extends object, Events = any> extends Component<Events> {
 		document.body.append(cursorMask)
 
 		on(document, 'mousemove', onMouseMove as (e: Event) => void)
-		once(document, 'mouseup', onMouseUp as (e: Event) => void)
+		once(document, 'mouseup', onMouseUp)
 	}
 
 	protected resizeColumnByMovementX(movementX: number, index: number) {

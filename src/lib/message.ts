@@ -309,7 +309,6 @@ export class Message {
 		return this.showMessage(Object.assign({
 			type: 'prompt',
 			content,
-			
 			inputValue: '',
 			buttons: {cancel: this.labels.cancel, ok: this.labels.ok},
 		}, options) as MessageOptions) as Promise<[string, string]>

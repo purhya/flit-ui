@@ -101,20 +101,19 @@ export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
 			this.resize(startParentWidth, startParentHeight, e.clientX - startX, e.clientY - startY, false)
 		}
 
-		let onMouseUp = (e: MouseEvent) => {
+		let onMouseUp = () => {
 			off(document, 'mousemove', onMouseMove as (e: Event) => void)
-			this.resize(startParentWidth, startParentHeight, e.clientX - startX, e.clientY - startY, true)
 			cursorMask.remove()
 		}
 
 		let cursorMask = render(html`
-			<div class="resizing-mask" :class=${this.position === 'left' || this.position === 'right' ? 'herizontal' : 'vertical'}
+			<div class="resizing-mask" class="${this.position === 'left' || this.position === 'right' ? 'herizontal' : 'vertical'}"
 		/>`, this).firstElementChild as HTMLElement
 
 		document.body.append(cursorMask)
 
 		on(document, 'mousemove', onMouseMove as (e: Event) => void)
-		once(document, 'mouseup', onMouseUp as (e: Event) => void)
+		once(document, 'mouseup', onMouseUp)
 	}
 
 	protected resize(startParentWidth: number, startParentHeight: number, movementX: number, movementY: number, isLastResize: boolean) {
