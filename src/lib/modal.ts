@@ -1,6 +1,6 @@
 import {css, define, html, on, renderComplete, off, Component, appendTo} from 'flit'
 import {theme} from './theme'
-import {debounce, setDraggable, align} from 'ff'
+import {debounce, align} from 'ff'
 
 
 @define('f-modal')
@@ -122,7 +122,6 @@ export class Modal<Events = any> extends Component<Events> {
 	`}
 
 	opened: boolean = false
-	movable: boolean = false
 	mask: boolean = true
 	transition: string = 'fade'
 	title: string = ''
@@ -142,7 +141,7 @@ export class Modal<Events = any> extends Component<Events> {
 			/>` : ''
 		}
 			<div class="top">
-				<div class="head" :ref="head" :style.cursor=${this.movable ? 'move' : ''}">
+				<div class="head" :ref="head">
 					${this.title}
 				</div>
 				<div class="actions">
@@ -166,10 +165,6 @@ export class Modal<Events = any> extends Component<Events> {
 	}
 
 	protected onReady() {
-		if (this.movable && this.refs.head) {
-			setDraggable(this.el, this.refs.head)
-		}
-
 		on(window, 'resize', debounce(this.onWindowResize, 200).wrapped, this)
 	}
 
