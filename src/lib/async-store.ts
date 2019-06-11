@@ -2,7 +2,7 @@ import {Emitter} from 'ff'
 import {LiveAsyncRepeatDirective} from 'flit'
 
 
-interface AsyncStoreEvents {
+interface AsyncStoreEvents<Item> {
 	change: () => void
 }
 
@@ -13,9 +13,11 @@ interface AsyncStoreEvents {
  * It's an extension for `liveRepeat` directive, to cache data,
  * you should extends this class to supports like column ordering and searching.
  */
-export abstract class AsyncStore<Item extends object = object> extends Emitter<AsyncStoreEvents> {
+export abstract class AsyncStore<Item extends object = object> extends Emitter<AsyncStoreEvents<Item>> {
 
-	repeatDir!: LiveAsyncRepeatDirective<Item>
+	private repeatDir!: LiveAsyncRepeatDirective<Item>
+
+	key: string = ''
 	orderKey: string = ''
 	orderDirection: 'asc' | 'desc' | '' = ''
 
