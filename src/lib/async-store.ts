@@ -26,9 +26,9 @@ export abstract class AsyncStore<Item extends object = object> extends Emitter<A
 		this.repeatDir = dir
 	}
 	
-	reset() {
+	reset(startIndex: number = 0) {
 		if (this.repeatDir) {
-			this.repeatDir.reset()
+			this.repeatDir.reset(startIndex)
 		}
 		this.emit('change')
 	}
@@ -51,5 +51,9 @@ export abstract class AsyncStore<Item extends object = object> extends Emitter<A
 		this.orderKey = ''
 		this.orderDirection = ''
 		this.reload()
+	}
+
+	getFirstVisibleIndex() {
+		return this.repeatDir.getFirstVisibleIndex()
 	}
 }
