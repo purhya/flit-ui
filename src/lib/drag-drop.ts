@@ -1,5 +1,6 @@
 import {defineBinding, Binding, on, once, off} from "flit"
 import {getNumeric, animateTo, getRect, stopAnimation, getElementIndex, Rect} from "ff"
+import {theme} from "./theme";
 
 
 export interface DraggableOptions {
@@ -311,6 +312,7 @@ class Mover {
 		this.el.style.height = rect.height + 'px'
 		this.el.style.left = rect.left + 'px'
 		this.el.style.top = rect.top + 'px'
+		this.el.style.boxShadow = `1px 1px ${theme.shadowBlurRadius}px #888`
 		this.el.style.pointerEvents = 'none'
 		;(this.el.style as any).willChange = 'transform'
 	}

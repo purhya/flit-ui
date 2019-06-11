@@ -3,7 +3,7 @@ import {theme} from './theme'
 
 
 addGlobalStyle(() => {
-	let {mainColor, textColor, successColor, errorColor, fontSize, borderRadius, lh} = theme
+	let {mainColor, textColor, successColor, errorColor, fontSize, borderRadius, focusBlurRadius, lh} = theme
 
 	return css`
 	html{
@@ -32,7 +32,7 @@ addGlobalStyle(() => {
 		}
 
 		&:focus:not([borderless]){
-			box-shadow: 0 0 3px ${mainColor};
+			box-shadow: 0 0 ${focusBlurRadius}px ${mainColor};
 		}
 	
 		&:active{

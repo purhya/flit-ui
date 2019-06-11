@@ -10,7 +10,7 @@ export interface RadioEvents {
 export class Radio<Events = any> extends Component<Events & RadioEvents> {
 
 	static style() {
-		let {mainColor, lh} = theme
+		let {mainColor, lh, focusBlurRadius} = theme
 
 		return css`
 		:host{
@@ -27,7 +27,7 @@ export class Radio<Events = any> extends Component<Events & RadioEvents> {
 				color: ${mainColor};
 
 				.icon{
-					box-shadow: 0 0 3px ${mainColor};
+					box-shadow: 0 0 ${focusBlurRadius}px ${mainColor};
 				}
 			}
 		}

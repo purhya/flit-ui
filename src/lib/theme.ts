@@ -10,7 +10,9 @@ export interface ThemeOptions {
 	warningColor?: string
 	infoColor?:string
 	borderRadius?: number
-	layerRadius?: number
+	layerBorderRadius?: number
+	shadowBlurRadius?: number
+	focusBlurRadius?: number
 	fontSize?: number
 	lineHeight?: number
 }
@@ -27,7 +29,9 @@ export const defaultThemeOptions: Required<ThemeOptions> = {
 	warningColor: '#f48862',
 	infoColor: '#3988e5',
 	borderRadius: 15,
-	layerRadius: 8,
+	layerBorderRadius: 8,
+	shadowBlurRadius: 6,
+	focusBlurRadius: 3,
 	fontSize: 14,	// Should set `font-size` and `line-height` on html or body to avoid flushing.
 	lineHeight: 30,
 }
@@ -128,8 +132,16 @@ export class Theme implements ColorOptions, NotColorOptions {
 		return this.getOption('borderRadius')
 	}
 
-	get layerRadius() {
-		return this.getOption('layerRadius')
+	get layerBorderRadius() {
+		return this.getOption('layerBorderRadius')
+	}
+
+	get focusBlurRadius() {
+		return this.getOption('focusBlurRadius')
+	}
+
+	get shadowBlurRadius() {
+		return this.getOption('shadowBlurRadius')
 	}
 
 	get fontSize() {

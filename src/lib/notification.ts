@@ -26,7 +26,7 @@ export interface NotificationItem extends NotificationOptions {
 @define('f-notification-tips')
 export class NotificationTips<Events = any> extends Component<Events> {
 	static style() {
-		let {infoColor, lh, successColor, errorColor, layerRadius, fs} = theme
+		let {infoColor, lh, successColor, errorColor, layerBorderRadius, shadowBlurRadius, fs} = theme
 
 		return css`
 		:host{
@@ -43,10 +43,10 @@ export class NotificationTips<Events = any> extends Component<Events> {
 			display: flex;
 			margin-top: 10px;
 			background: #fff;
-			box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+			box-shadow: 0 0 ${shadowBlurRadius}px rgba(0, 0, 0, 0.2);
 			cursor: pointer;
 			overflow: hidden;
-			border-radius: ${layerRadius}px;
+			border-radius: ${layerBorderRadius}px;
 		}
 
 		.close{

@@ -14,7 +14,7 @@ export interface SelectEvents<T> {
 export class Select<T extends unknown = unknown, Events = any> extends Popup<Events & SelectEvents<T>> {
 	
 	static style() {
-		let {mainColor, lh, textColor} = theme
+		let {mainColor, lh, textColor, shadowBlurRadius} = theme
 
 		return css`
 		:host{
@@ -67,7 +67,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		.layer{
 			border-radius: 0;
 			filter: none;
-			box-shadow: 0 0 6px ${new Color('#000').alpha(0.2)};
+			box-shadow: 0 0 ${shadowBlurRadius}px ${new Color('#000').alpha(0.2)};
 		}
 	
 		.list{

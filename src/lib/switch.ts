@@ -10,7 +10,7 @@ export interface SwitchEvents {
 export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 
 	static style() {
-		let {mainColor, lh, textColor} = theme
+		let {mainColor, lh, textColor, focusBlurRadius} = theme
 		let h = Math.round(lh(10)) * 2
 		let w = h * 2 - 6
 
@@ -33,7 +33,7 @@ export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 			}
 			
 			&:focus{
-				box-shadow: 0 0 3px ${mainColor};
+				box-shadow: 0 0 ${focusBlurRadius}px ${mainColor};
 			}
 		}
 	

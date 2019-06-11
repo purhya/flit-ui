@@ -11,7 +11,7 @@ export interface CheckboxEvents {
 export class Checkbox<Events = any> extends Component<Events & CheckboxEvents> {
 
 	static style() {
-		let {mainColor, lh} = theme
+		let {mainColor, focusBlurRadius, lh} = theme
 
 		return css`
 		:host{
@@ -28,7 +28,7 @@ export class Checkbox<Events = any> extends Component<Events & CheckboxEvents> {
 				color: ${mainColor};
 
 				.icon{
-					box-shadow: 0 0 3px ${mainColor};
+					box-shadow: 0 0 ${focusBlurRadius}px ${mainColor};
 				}
 			}
 		}

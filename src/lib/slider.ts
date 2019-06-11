@@ -11,7 +11,7 @@ export interface SliderEvents {
 export class Slider<Events = any> extends Component<Events & SliderEvents> {
 
 	static style() {
-		let {mainColor, textColor, lh} = theme
+		let {mainColor, textColor, lh, focusBlurRadius} = theme
 		let grooveSize = 1
 		let ballSize = Math.ceil(lh(9)) * 2 + grooveSize
 
@@ -27,7 +27,7 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 			cursor: pointer;
 
 			&:focus .ball{
-				box-shadow: 0 0 5px ${mainColor};
+				box-shadow: 0 0 ${focusBlurRadius}px ${mainColor};
 				border-color: ${mainColor};
 			}
 		}
