@@ -63,7 +63,7 @@ export class Modal<Events = any> extends Component<Events> {
 				width: ${lh(30)}px;
 				height: ${lh(30)}px;
 				cursor: pointer;
-				color: #5e5e5e;
+				color: #333;
 				transition: color 0.2s ease-out;
 
 				f-icon{
@@ -71,12 +71,18 @@ export class Modal<Events = any> extends Component<Events> {
 				}
 				
 				&:hover{
-					color: #000;
+					svg{
+						stroke-width: 1.5;
+					}
 				}
 
 				&:focus{
 					color: ${mainColor};
 					box-shadow: none;
+
+					svg{
+						stroke-width: 1.5;
+					}
 				}
 
 				&:active{
