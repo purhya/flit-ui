@@ -308,15 +308,15 @@ export class TreeItem<Events = any> extends Component<Events> {
 		}
 	`}
 
-	static properties = ['text']
+	static properties = ['text', 'icon', 'path']
 
-	data: TreeDataItem | null = null
 	text: string = ''
 	icon: string = ''
 	path: string = ''
+	data: TreeDataItem | null = null
 	children: TreeDataItem[] | null = null
-	deep: number = -1
 
+	protected deep: number = -1
 	protected root!: Tree
 	protected parent!: TreeItem | Tree
 	protected loading: boolean = false

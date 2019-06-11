@@ -108,12 +108,12 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		}
 	`}
 
-	static properties = ['trigger', 'icon', 'value', 'multiple', 'searchable', 'ordered']
+	static properties = [...Popup.properties, 'icon', 'value', 'multiple', 'searchable', 'ordered']
 
 	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'click'
 	alignPosition: string = 'b'
 	alignMargin: number | number[] = 0
-	hasTrangle: boolean = false
+	trangle: boolean = false
 
 	icon: string = 'down'
 	data: Iterable<[T, string | number]> = []

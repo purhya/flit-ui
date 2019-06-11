@@ -44,6 +44,8 @@ export class Popover<Events = any> extends Popup<Events> {
 		}
 	`}
 
+	static properties = [...Popup.properties, 'title']
+
 	title: string = ''
 
 	protected renderLayer() {
@@ -63,7 +65,7 @@ export class Popover<Events = any> extends Popup<Events> {
 				:ref="layer"
 				.popup=${this}
 				.herizontal=${this.isHerizontal()}
-				.trangle=${this.hasTrangle}
+				.trangle=${this.trangle}
 			>
 				${content}
 			</f-layer>

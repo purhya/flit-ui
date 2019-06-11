@@ -166,7 +166,7 @@ export class Grid<Item extends object, Events = any> extends Component<Events> {
 		}
 	`}
 
-	static properties = ['resizable', 'live']
+	static properties = ['resizable', 'live', 'pageSize', 'minColumnWidth']
 
 	resizable: boolean = false
 	live: boolean = false

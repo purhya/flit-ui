@@ -26,7 +26,7 @@ export class ContextMenu<Data = unknown, Events = any> extends Layer<Events> {
 	`}
 
 	trangle: boolean = false
-	data: Data | null = null
+	currentData: Data | null = null
 }
 
 
@@ -48,7 +48,7 @@ defineBinding('contextmenu', class ContextMenuBinding implements Binding {
 	}
 
 	private async showMenuInLayer(e: Event) {
-		this.contextMenu.data = this.data
+		this.contextMenu.currentData = this.data
 		this.contextMenu.applyAppendTo()
 		await renderComplete()
 

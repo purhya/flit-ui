@@ -135,9 +135,10 @@ export class CheckboxGroup<Events = any> extends Component<Events & CheckboxGrou
 
 	static properties = ['value', 'ordered']
 
-	value: any[] = []
+	value: unknown[] = []
 	ordered: boolean = false
-	checkboxs: Checkbox[] = []
+
+	protected checkboxs: Checkbox[] = []
 
 	register(checkbox: Checkbox) {
 		this.checkboxs.push(checkbox)
@@ -154,7 +155,7 @@ export class CheckboxGroup<Events = any> extends Component<Events & CheckboxGrou
 
 		if (this.ordered) {
 			let values = this.checkboxs.map(checkbox => checkbox.value)
-			orderBy(this.value, item => values.findIndex(value => value == item))
+			orderBy(this.value as any[], item => values.findIndex(value => value == item))
 		}
 
 		this.emit('change', this.value)

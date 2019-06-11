@@ -55,7 +55,7 @@ export class Tooltip<Events = any> extends Popup<Events> {
 			:ref="layer"
 			.popup=${this}
 			.herizontal=${this.isHerizontal()}
-			.trangle=${this.hasTrangle}
+			.trangle=${this.trangle}
 		>
 			${this.title}
 		</f-layer>

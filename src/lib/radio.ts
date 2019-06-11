@@ -120,7 +120,8 @@ export class RadioGroup extends Component<{change: (value: (string | number)[]) 
 	static properties = ['value']
 
 	value: any = null
-	radios: Radio[] = []
+	
+	protected radios: Radio[] = []
 
 	register(radio: Radio) {
 		this.radios.push(radio)

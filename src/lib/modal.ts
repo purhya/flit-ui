@@ -121,10 +121,12 @@ export class Modal<Events = any> extends Component<Events> {
 		}
 	`}
 
-	opened: boolean = false
+	static properties: ['mask', 'title']
+
 	mask: boolean = true
-	transition: string = 'fade'
 	title: string = ''
+	opened: boolean = false
+	transition: string = 'fade'
 	appendTo: string | HTMLElement | null = 'body'
 
 	//extensions may make win wrapped by a mask, so we need a win el

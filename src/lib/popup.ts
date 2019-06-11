@@ -29,14 +29,14 @@ export class Popup<Events = any> extends Component<Events> {
 		.layer{}
 	`}
 
-	static properties = ['trigger']
+	static properties = ['trigger', 'opened', 'trangle', 'alignPosition', 'alignMargin']
 
+	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'hover'
 	opened: boolean = false
-	transition: string = 'fade'
-	hasTrangle: boolean = true
+	trangle: boolean = true
 	alignPosition: string = 't'
 	alignMargin: number | number[] = 3
-	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'hover'
+	transition: string = 'fade'
 
 	// Such that mouse hover unexpected will not cause layer popup, only for `hover` and `focus` trigger.
 	hoverShowDelay: number = 100
@@ -68,7 +68,7 @@ export class Popup<Events = any> extends Component<Events> {
 			:ref="layer"
 			.popup=${this}
 			.herizontal=${this.isHerizontal()}
-			.trangle=${this.hasTrangle}
+			.trangle=${this.trangle}
 		>
 			<slot name="content" />
 		</f-layer>

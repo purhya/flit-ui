@@ -18,7 +18,7 @@ export class Menu<Events = any> extends Component<Events & MenuEvents> {
 		}
 	`}
 
-	static properties = ['selectable']
+	static properties = ['selectable', 'dirSelectable']
 
 	/** Can select bottom most item as current. */
 	selectable: boolean = false
@@ -339,11 +339,11 @@ export class MenuItem<Events = any> extends Component<Events> {
 		}
 	`}
 
-	static properties = ['icon']
+	static properties = ['icon', 'selected']
 
 	icon: string = ''
-
 	selected: boolean = false
+	
 	hoverAt: boolean = false
 	parentMenu!: Menu | SubMenu
 	topMenu!: Menu
