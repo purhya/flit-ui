@@ -1,11 +1,11 @@
 import {Emitter, Order} from 'ff'
 
 
-interface StoreEvents {
+export interface StoreEvents {
 	change: () => void
 }
 
-interface StoreOptions<Item> {
+export interface StoreOptions<Item> {
 	data?: Item[] | null
 	key?: string | number
 	filter?: ((item: Item) => boolean)
@@ -217,12 +217,12 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 	}
 
 	remove(...items: Item[]): Item[] {
-		let toRemoveSet = new Set()
+		let toRemoveSet: Set<Item> = new Set()
 
 		if (this.map) {
 			for (let item of items) {
 				if (this.map.has(item)) {
-					toRemoveSet.add(this.map.get(item))
+					toRemoveSet.add(this.map.get(item)!)
 					this.map.delete(item)
 				}
 			}

@@ -1,4 +1,4 @@
-import {css, define, html, off, defineBinding, on, renderAndWatch, cache} from 'flit'
+import {css, define, html, off, defineBinding, on, renderAndWatch, cache, Binding} from 'flit'
 import {theme} from './theme'
 import {Popup} from './popup'
 import {Layer} from './layer'
@@ -159,10 +159,10 @@ export let defaultTooltipOptions: Required<TooltipOptions> = {
 }
 
 
-defineBinding('tooltip', class TooltipBinding {
+defineBinding('tooltip', class TooltipBinding implements Binding {
 
-	private el: HTMLElement
-	private options!: TooltipOptions
+	protected el: HTMLElement
+	protected options!: TooltipOptions
 
 	constructor(el: Element, value: unknown) {
 		this.el = el as HTMLElement
@@ -184,12 +184,12 @@ defineBinding('tooltip', class TooltipBinding {
 		}
 	}
 
-	private hasTitle() {
+	protected hasTitle() {
 		let title = this.options!.title
 		return title !== null && title !== undefined && String(title)
 	}
 
-	private async showTooltipLayer() {
+	protected async showTooltipLayer() {
 		if (this.hasTitle()) {
 			let tooltip = await getGlobalTooltip(this.el)
 			tooltip.setOptions(this.options!)
