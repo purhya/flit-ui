@@ -43,6 +43,10 @@ defineBinding('contextmenu', class ContextMenuBinding implements Binding {
 	}
 
 	async update(value: ContextMenuBindingOptions) {
+		if (!value || !value.contextmenu || value.data === undefined) {
+			throw new Error(`Value of ":contextmenu" must be provided as "{contextmenu, data}" type`)
+		}
+
 		this.contextMenu = value.contextmenu
 		this.data = value.data
 	}

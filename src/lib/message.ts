@@ -171,7 +171,7 @@ export class MessageModal<Events = any> extends Modal<Events> {
 					<button
 						?filled=${key === 'ok'}
 						@click=${() => this.onClickButton(key)}
-						:disabled=${options.type === 'prompt' && key === 'ok' && !options.inputValue}
+						:disable=${options.type === 'prompt' && key === 'ok' && !options.inputValue}
 					>
 						${text}
 					</button>
