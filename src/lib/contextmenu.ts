@@ -19,6 +19,8 @@ export class ContextMenu<Data = unknown, Events = any> extends Layer<Events> {
 		return css`
 		${super.style()}
 		:host{
+			position: fixed;
+			
 			f-menuitem{
 				padding: 0 ${lh(2)}px;
 			}
@@ -39,7 +41,7 @@ defineBinding('contextmenu', class ContextMenuBinding implements Binding {
 	constructor(el: Element, value: unknown) {
 		this.el = el as HTMLElement
 		this.update(value as ContextMenuBindingOptions)
-		on(this.el, 'contextmenu', this.showMenuInLayer as (e: Event) => void, this)
+		on(this.el, 'contextmenu.prevent', this.showMenuInLayer as (e: Event) => void, this)
 	}
 
 	async update(value: ContextMenuBindingOptions) {
