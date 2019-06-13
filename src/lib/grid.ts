@@ -5,6 +5,11 @@ import {getScrollbarWidth, watch, Order, getNumeric, sum, repeatTimes} from 'ff'
 import {AsyncStore} from './async-store'
 
 
+interface GridEvents<Item> {
+	rendered: (data: Item[], index: number) => void
+}
+
+
 export interface Column<Item = any> {
 	title: string
 	width?: number
@@ -22,7 +27,7 @@ export interface Column<Item = any> {
 
 
 @define('f-grid')
-export class Grid<Item extends object, Events = any> extends Component<Events> {
+export class Grid<Item extends object, Events = any> extends Component<GridEvents<Item> & Events> {
 
 	static style() {
 		let {fs, lh, mainColor} = theme
@@ -239,7 +244,8 @@ export class Grid<Item extends object, Events = any> extends Component<Events> {
 					dataGetter: this.store.dataGetter.bind(this.store) as any,
 					pageSize: this.pageSize,
 					averageItemHeight: theme.lineHeight + 1,
-					ref: (dir) => this.setRepeatDirective(dir as any)
+					ref: (dir) => this.setRepeatDirective(dir as any),
+					onrendered: this.onRendered.bind(this) as any
 				},
 				this.renderRow.bind(this as any) as any
 			)
@@ -250,7 +256,8 @@ export class Grid<Item extends object, Events = any> extends Component<Events> {
 					data: this.store.currentData,
 					pageSize: this.pageSize,
 					averageItemHeight: theme.lineHeight + 1,
-					ref: (dir) => this.setRepeatDirective(dir)
+					ref: (dir) => this.setRepeatDirective(dir),
+					onrendered: this.onRendered.bind(this)
 				},
 				this.renderRow.bind(this as any)
 			)
@@ -269,6 +276,10 @@ export class Grid<Item extends object, Events = any> extends Component<Events> {
 		if (this.store instanceof AsyncStore) {
 			this.store.setRepeatDirective(dir as LiveAsyncRepeatDirective<Item>)
 		}
+	}
+
+	protected onRendered(data: Item[], index: number) {
+		this.emit('rendered', data, index)
 	}
 
 	protected getOrderIcon(index: number): string {
