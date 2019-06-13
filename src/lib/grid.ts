@@ -40,7 +40,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 		}
 
 		.head{
-			padding-right: 8px;	// Same with defined scrollbar width.
+			padding-right: 10px;	// Same with defined scrollbar width.
 			border-bottom: 1px solid #ddd;
 			color: #888;
 			font-size: ${fs(12)}px;
