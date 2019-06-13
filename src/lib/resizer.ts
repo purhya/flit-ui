@@ -76,6 +76,8 @@ export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
 	max: number = Infinity
 	min: number = 0
 
+	protected resizedValue: number = -1
+
 	protected render() {
 		return html`
 		<template
@@ -98,12 +100,13 @@ export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
 
 		let onMouseMove = (e: MouseEvent) => {
 			e.preventDefault()
-			this.resize(startParentWidth, startParentHeight, e.clientX - startX, e.clientY - startY, false)
+			this.resize(startParentWidth, startParentHeight, e.clientX - startX, e.clientY - startY)
 		}
 
 		let onMouseUp = () => {
 			off(document, 'mousemove', onMouseMove as (e: Event) => void)
 			cursorMask.remove()
+			this.emit('change', this.resizedValue)
 		}
 
 		let cursorMask = render(html`
@@ -116,7 +119,7 @@ export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
 		once(document, 'mouseup', onMouseUp)
 	}
 
-	protected resize(startParentWidth: number, startParentHeight: number, movementX: number, movementY: number, isLastResize: boolean) {
+	protected resize(startParentWidth: number, startParentHeight: number, movementX: number, movementY: number) {
 		let value: number
 
 		if (this.position === 'top' || this.position === 'bottom') {
@@ -134,8 +137,6 @@ export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
 			this.el.parentElement!.style.width = value + 'px'
 		}
 
-		if (isLastResize) {
-			this.emit('change', value)
-		}
+		this.resizedValue = value
 	}
 }
