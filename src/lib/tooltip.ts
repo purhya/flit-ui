@@ -18,8 +18,8 @@ export class TooltipLayer extends Layer {
 			z-index: 1100;
 			max-width: ${lh(220)}px;
 			padding: ${lh(4)}px ${lh(8)}px;
-			line-height: ${lh(24)}px;
-			background: #333;
+			line-height: ${lh(22)}px;
+			background: #666;
 			color: #fff;
 			border-radius: ${layerBorderRadius / 2}px;
 		}
