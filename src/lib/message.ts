@@ -88,7 +88,7 @@ export class MessageModal<Events = any> extends Modal<Events> {
 		}
 
 		.list{
-			margin-top: 5px;
+			margin-top: 10px;
 			overflow-y: auto;
 			max-height: ${lh(240)}px;
 		}
@@ -223,7 +223,7 @@ export class MessageModal<Events = any> extends Modal<Events> {
 
 		if (list) {
 			options.content = options.content || ''
-			options.content += '<div class="list">' + list.map(html => '<div>' + html.replace(/</g, '&lt;') + '</div>').join('') + '</div>'
+			options.content += '<div class="' + this.scopeClassName('list') + '">' + list.map(html => '<div>' + html.replace(/</g, '&lt;') + '</div>').join('') + '</div>'
 		}
 
 		let promise = new Promise((resolve) => {
