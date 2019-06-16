@@ -1,4 +1,4 @@
-import {css, define, html, on, renderComplete, off, Component, appendTo} from 'flit'
+import {css, define, html, on, renderComplete, off, Component, appendTo, show} from 'flit'
 import {theme} from './theme'
 import {debounce, align} from 'ff'
 
@@ -140,12 +140,12 @@ export class Modal<Events = any> extends Component<Events> {
 		return html`
 		<template
 			tabindex="0"
-			:show=${{when: this.opened, transition: this.transition, enterAtStart: true, onend: this.onTransitionEnd}}
+			${show(this.opened, {transition: this.transition, enterAtStart: true, onend: this.onTransitionEnd})}
 		>
 		${this.mask ? html`
 			<div class="mask"
 				:ref="mask"
-				:show=${{when: this.opened, transition: this.transition, enterAtStart: true}}
+				${show(this.opened, {transition: this.transition, enterAtStart: true})}
 			/>` : ''
 		}
 			<div class="top">

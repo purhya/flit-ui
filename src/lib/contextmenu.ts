@@ -1,17 +1,11 @@
-import {defineBinding, on, off, renderComplete, define, css, Transition, Binding, once} from 'flit'
+import {defineBinding, on, off, renderComplete, define, css, Transition, Binding, once, BindingResult} from 'flit'
 import {Layer} from './layer'
 import {alignToEvent} from 'ff'
 import {theme} from './theme'
 
 
-export interface ContextMenuBindingOptions {
-	contextmenu: ContextMenu
-	data: unknown
-}
-
-
 @define('f-contextmenu')
-export class ContextMenu<Data = unknown, Events = any> extends Layer<Events> {
+export class ContextMenu<Item = unknown, Events = any> extends Layer<Events> {
 
 	static style() {
 		let {lh} = theme
@@ -28,29 +22,28 @@ export class ContextMenu<Data = unknown, Events = any> extends Layer<Events> {
 	`}
 
 	trangle: boolean = false
-	currentData: Data | null = null
+	currentData: Item | null = null
 }
 
 
-defineBinding('contextmenu', class ContextMenuBinding implements Binding {
+class ContextMenuBinding<Item> implements Binding<[ContextMenu<Item>, Item]> {
 
 	private el: HTMLElement
 	private contextMenu!: ContextMenu
-	private data: unknown | null = null
+	private data: Item | null = null
 
-	constructor(el: Element, value: unknown) {
+	constructor(el: Element) {
 		this.el = el as HTMLElement
-		this.update(value as ContextMenuBindingOptions)
-		on(this.el, 'contextmenu.prevent', this.showMenuInLayer as (e: Event) => void, this)
+		on(this.el, 'contextmenu.prevent', this.showMenuInLayer, this)
 	}
 
-	async update(value: ContextMenuBindingOptions) {
-		if (!value || !value.contextmenu || value.data === undefined) {
-			throw new Error(`Value of ":contextmenu" must be provided as "{contextmenu, data}" type`)
+	async update(contextmenu: ContextMenu<Item>, data: Item) {
+		if (!contextmenu) {
+			throw new Error(`The first argument "contextmenu" of ":contextmenu" binding must be provided`)
 		}
 
-		this.contextMenu = value.contextmenu
-		this.data = value.data
+		this.contextMenu = contextmenu
+		this.data = data
 	}
 
 	private async showMenuInLayer(e: Event) {
@@ -84,4 +77,10 @@ defineBinding('contextmenu', class ContextMenuBinding implements Binding {
 			}
 		})
 	}
-})
+
+	remove() {
+		off(this.el, 'contextmenu.prevent', this.showMenuInLayer, this)
+	}
+}
+
+export const contextmenu = defineBinding('contextmenu', ContextMenuBinding) as <Item>(contextMenu: ContextMenu<Item>, data: Item) => BindingResult

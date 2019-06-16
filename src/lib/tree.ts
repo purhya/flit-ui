@@ -1,4 +1,4 @@
-import {Component, css, define, html, repeat, renderComplete, on, getComponent, off} from 'flit'
+import {Component, css, define, html, repeat, renderComplete, on, getComponent, off, show} from 'flit'
 import {scrollToView, getPreviousVisibleElement, getNextVisibleElement} from 'ff'
 import {theme} from './theme'
 
@@ -358,7 +358,7 @@ export class TreeItem<Events = any> extends Component<Events> {
 			}
 				<div class="text">${this.text}</div>
 			</div>
-			<ul class="menu" :show=${{when: this.expanded, transition: {properties: ['height', 'opacity']}}}>
+			<ul class="menu" ${show(this.expanded, {transition: {properties: ['height', 'opacity']}})}>
 				${innerPart}
 			</ul>
 		</template>

@@ -1,4 +1,4 @@
-import {css, define, Component, html, on, getComponent, renderComplete, off, cache, renderAndWatch, getComponentAsync} from 'flit'
+import {css, define, Component, html, on, getComponent, renderComplete, off, cache, renderAndWatch, getComponentAsync, show} from 'flit'
 import {theme} from './theme'
 import {onceMouseLeaveAll, align, getPreviousVisibleElement, getNextVisibleElement} from 'ff'
 import {Layer} from './layer'
@@ -482,7 +482,10 @@ export class SubMenu<Events = any> extends Component<Events> {
 	protected render() {
 		return html`
 		<template
-			:show=${{when: this.topMenu.layer ? true : this.opened, transition: this.topMenu.layer ? null : {properties: ['height', 'opacity']}}}
+			${show(
+				this.topMenu.layer ? true : this.opened,
+				this.topMenu.layer ? undefined : {transition: {properties: ['height', 'opacity']}}
+			)}
 			:class.has-icon="${this.itemsHasIcon}"
 		>
 			<slot></slot>

@@ -1,6 +1,7 @@
 import {define, Component, html, css, on, once, off} from 'flit'
 import {theme} from './theme'
 import {constrain, getRect, Rect} from 'ff'
+import {tooltip} from './tooltip';
 
 
 export interface SliderEvents {
@@ -114,7 +115,7 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 					:style.width.percent=${this.vertical ? '' : this.getPercent()}
 					:style.height.percent=${this.vertical ? this.getPercent() : ''}
 				>
-					<div class="ball" :tooltip=${{title: this.value, alignPosition: this.vertical ? 'r' : 't', keepVisible: this.draging}}></div>
+					<div class="ball" ${tooltip(String(this.value), {alignPosition: this.vertical ? 'r' : 't', keepVisible: this.draging})}></div>
 				</div>
 			</div>
 		</template>

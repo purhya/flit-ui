@@ -1,4 +1,4 @@
-import {css, define, html, off, defineBinding, on, renderAndWatch, cache, Binding} from 'flit'
+import {css, define, html, off, defineBinding, on, renderAndWatch, cache, Binding, BindingResult} from 'flit'
 import {theme} from './theme'
 import {Popup} from './popup'
 import {Layer} from './layer'
@@ -82,7 +82,8 @@ export class GlobalTooltip extends Tooltip {
 		}
 	}
 
-	async setOptions(options: TooltipOptions) {
+	async setTitleAndOptions(title: string, options: TooltipOptions = {}) {
+		this.title = title
 		Object.assign(this, defaultTooltipOptions, options)
 
 		// When no need to keep `layer` visible.
@@ -142,7 +143,6 @@ async function getGlobalTooltip(el: HTMLElement): Promise<GlobalTooltip> {
 
 
 export interface TooltipOptions {
-	title: string
 	alignPosition?: string
 	alignMargin?: number | number[]
 	showDelay?: number
@@ -151,7 +151,6 @@ export interface TooltipOptions {
 }
 
 export let defaultTooltipOptions: Required<TooltipOptions> = {
-	title: '',
 	alignPosition: 't',
 	alignMargin: 3,
 	showDelay: 0,
@@ -160,44 +159,45 @@ export let defaultTooltipOptions: Required<TooltipOptions> = {
 }
 
 
-defineBinding('tooltip', class TooltipBinding implements Binding {
+class TooltipBinding implements Binding<[string, TooltipOptions | undefined]> {
 
-	protected el: HTMLElement
-	protected options!: TooltipOptions
+	private el: HTMLElement
+	private title: string = ''
+	private options!: TooltipOptions
 
-	constructor(el: Element, value: unknown) {
+	constructor(el: Element) {
 		this.el = el as HTMLElement
 		on(this.el, 'mouseenter', this.showTooltipLayer, this)
-		this.update(value as any)
 	}
 
-	async update(value: TooltipOptions | string) {
-		if (typeof value === 'object') {
-			this.options = value
-		}
-		else {
-			this.options = {title: value}
-		}
+	async update(title: string, options?: TooltipOptions) {
+		this.title = title
+		this.options = options || {}
 
 		// Update options when the title are showing at current el.
 		if (globalTooltip && globalTooltip.el === this.el && this.hasTitle()) {
-			globalTooltip.setOptions(this.options)
+			globalTooltip.setTitleAndOptions(title, options)
 		}
 	}
 
-	protected hasTitle() {
-		let title = this.options!.title
-		return title !== null && title !== undefined && String(title)
+	private hasTitle() {
+		return this.title !== null && this.title !== undefined && this.title
 	}
 
-	protected async showTooltipLayer() {
+	private async showTooltipLayer() {
 		if (this.hasTitle()) {
 			let tooltip = await getGlobalTooltip(this.el)
-			tooltip.setOptions(this.options!)
+			tooltip.setTitleAndOptions(this.title, this.options!)
 
 			if (!tooltip.opened) {
 				tooltip.showLayerLater()
 			}
 		}
 	}
-})
+
+	remove() {
+		off(this.el, 'mouseenter', this.showTooltipLayer, this)
+	}
+}
+
+export const tooltip = defineBinding('tooltip', TooltipBinding) as (title: string, options?: TooltipOptions) => BindingResult

@@ -1,49 +1,47 @@
 import {defineBinding, Binding, on, once, off} from "flit"
-import {getNumeric, animateTo, getRect, stopAnimation, getElementIndex, Rect} from "ff"
+import {getNumeric, animateTo, getRect, stopAnimation, Rect} from "ff"
 import {theme} from "./theme";
 
 
 export interface DraggableOptions {
 	name?: string
-	data?: unknown
-	index?: number
 }
 
-export interface DroppableOptions {
+export interface DroppableOptions<Item> {
 	name?: string
-	onenter?: (data: unknown) => void
-	onleave?: (data: unknown) => void
-	ondrop?: (data: unknown, index: number) => void
+	onenter?: DropHandler<Item>
+	onleave?: DropHandler<Item>
 }
 
+type DropHandler<Item> = (data: Item, index: number) => void
+type Draggable = DraggableBinding<any>
+type Droppable = DroppableBinding<any>
 
-@defineBinding('draggable')
-class Draggable implements Binding {
+
+class DraggableBinding<Item> implements Binding<[Item, number, DraggableOptions | undefined]> {
 
 	el: HTMLElement
 	name: string = ''
-	data: unknown = null
+	data: unknown | null = null
 	index: number = -1
 
-	constructor(el: Element, value: unknown) {
+	constructor(el: Element) {
 		this.el = el as HTMLElement
-		this.update(value as DraggableOptions)
-
-		if (this.index === -1) {
-			this.index = getElementIndex(el)
-		}
 
 		// To avoid image dragging handled be HTML5 drag & drop
 		this.el.setAttribute('draggable', 'false')
 		this.el.style.cursor = 'grab'
 
 		on(this.el, 'mousedown', this.onMouseDown as any, this)
-		on(this.el, 'mouseenter', this.onMouseEnter as any, this)
+		on(this.el, 'mouseenter', this.onMouseEnter, this)
 	}
 
-	update(value: DraggableOptions) {
-		if (value && typeof value === 'object') {
-			Object.assign(this, value)
+	update(data: Item, index: number, options?: DraggableOptions) {
+		this.data = data
+		this.index = index
+
+		if (options) {
+			Object.assign(this, options)
 		}
 	}
 
@@ -79,30 +77,37 @@ class Draggable implements Binding {
 	private onMouseEnter() {
 		manager.enterDraggable(this)
 	}
+
+	remove() {
+		off(this.el, 'mousedown', this.onMouseDown as any, this)
+		off(this.el, 'mouseenter', this.onMouseEnter, this)
+	}
 }
 
+export const draggable = defineBinding('draggable', DraggableBinding) as (data: any, index: number, options?: DraggableOptions) => void
 
-@defineBinding('droppable')
-class Droppable implements Binding {
+
+
+class DroppableBinding<Item> implements Binding<[DropHandler<Item>, DroppableOptions<Item>]> {
 	
 	el: HTMLElement
 	name: string = ''
 	direction: 'x' | 'y' | null = null
 
-	private onenter: ((data: unknown) => void) | null = null
-	private onleave: ((data: unknown) => void) | null = null
-	private ondrop: ((data: unknown, index: number) => void) | null = null
+	private onenter: DropHandler<Item> | null = null
+	private onleave: DropHandler<Item> | null = null
+	private ondrop!: DropHandler<Item>
 
-	constructor(el: Element, value: unknown) {
+	constructor(el: Element) {
 		this.el = el as HTMLElement
-		this.update(value as DroppableOptions)
-
 		on(this.el, 'mouseenter', this.onMouseEnter as any, this)
 	}
 
-	update(value: DroppableOptions) {
-		if (value && typeof value === 'object') {
-			Object.assign(this, value)
+	update(ondrop: DropHandler<Item>, options?: DroppableOptions<Item>) {
+		this.ondrop = ondrop
+
+		if (options) {
+			Object.assign(this, options)
 		}
 	}
 
@@ -115,7 +120,7 @@ class Droppable implements Binding {
 		this.updateDirection()
 
 		if (this.onenter) {
-			this.onenter(dragging.data)
+			this.onenter(dragging.data as Item, dragging.index)
 		}
 	}
 
@@ -147,16 +152,22 @@ class Droppable implements Binding {
 
 	emitLeave(dragging: Draggable) {
 		if (this.onleave) {
-			this.onleave(dragging.data)
+			this.onleave(dragging.data as Item, dragging.index)
 		}
 	}
 
 	emitDrop(dragging: Draggable, index: number) {
 		if (this.ondrop) {
-			this.ondrop(dragging.data, index)
+			this.ondrop(dragging.data as Item, index)
 		}
 	}
+
+	remove() {
+		off(this.el, 'mouseenter', this.onMouseEnter as any, this)
+	}
 }
+
+export const droppable = defineBinding('droppable', DroppableBinding) as <Item>(ondrop: DropHandler<Item>, options?: DroppableOptions<Item>) => void
 
 
 // Used to:

@@ -1,4 +1,4 @@
-import {css, define, html, renderComponent, renderComplete} from 'flit'
+import {css, define, html, renderComponent, renderComplete, show} from 'flit'
 import {theme} from './theme'
 import {Modal} from './modal'
 
@@ -129,12 +129,12 @@ export class MessageModal<Events = any> extends Modal<Events> {
 			tabindex="0"	
 			:class.has-title=${options.title}
 			:class.wide=${!!options.wide}
-			:show=${{when: this.opened, transition: this.transition, enterAtStart: true, onend: this.onTransitionEnd}}
+			${show(this.opened, {transition: this.transition, enterAtStart: true, onend: this.onTransitionEnd})}
 		>
 		${this.mask ? html`
 			<div class="mask"
 				:ref="mask"
-				:show=${{when: this.opened, transition: this.transition, enterAtStart: true}}
+				${show(this.opened, {transition: this.transition, enterAtStart: true})}
 			/>` : ''
 		}
 		${
