@@ -1,5 +1,5 @@
 import {css, define, html} from 'flit'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 import {Popup} from './popup'
 
 

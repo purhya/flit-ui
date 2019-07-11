@@ -1,5 +1,5 @@
 import {define, Component, css} from 'flit'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 
 
 @define('f-buttongroup')

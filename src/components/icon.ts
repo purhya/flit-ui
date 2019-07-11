@@ -1,7 +1,7 @@
 import {define, Component, html, css} from 'flit'
 import {svgSymbols} from '../icons/svg-symbol'
 import {subMatches, animateByFunction, toPower} from 'ff'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 
 
 @define('f-icon')

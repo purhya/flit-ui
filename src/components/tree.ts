@@ -1,6 +1,6 @@
 import {Component, css, define, html, repeat, renderComplete, on, getComponent, off, show} from 'flit'
 import {scrollToView, getPreviousVisibleElement, getNextVisibleElement} from 'ff'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 
 
 interface TreeDataItem {

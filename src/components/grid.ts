@@ -1,8 +1,8 @@
 import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult} from 'flit'
-import {theme} from './theme'
-import {Store} from './store'
+import {theme} from '../style/theme'
+import {Store} from '../store/store'
 import {getScrollbarWidth, watch, Order, getNumeric, sum, repeatTimes} from 'ff'
-import {AsyncStore} from './async-store'
+import {AsyncStore} from '../store/async-store'
 
 
 interface GridEvents<Item> {

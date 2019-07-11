@@ -1,5 +1,5 @@
 import {css, define, html, renderComponent, renderComplete, show} from 'flit'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 import {Modal} from './modal'
 
 

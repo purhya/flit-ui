@@ -1,6 +1,6 @@
 import {css, define, html, cache} from 'flit'
 import {Popup} from './popup'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 
 
 @define('f-dropdown')

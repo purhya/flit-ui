@@ -1,7 +1,7 @@
 import {css, html, renderComplete, cache, repeat, define} from 'flit'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 import {Popup} from './popup'
-import {Color} from './color'
+import {Color} from '../style/color'
 import {remove, scrollToView, scrollToTop} from 'ff'
 
 

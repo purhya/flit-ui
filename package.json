@@ -11,8 +11,8 @@
 	"author": "pucelle",
 	"license": "MIT",
 	"dependencies": {
-		"ff": "^1.0.0",
-		"flit": "^1.0.0"
+		"ff": "pucelle/ff",
+		"flit": "pucelle/flit"
 	},
 	"devDependencies": {
 		"browserify": "^16.2.3",

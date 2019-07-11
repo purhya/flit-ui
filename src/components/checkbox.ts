@@ -1,5 +1,5 @@
 import {define, Component, html, css, svg, on, off} from 'flit'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 import {removeWhere, orderBy} from 'ff'
 
 

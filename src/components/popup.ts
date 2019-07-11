@@ -1,7 +1,7 @@
 import {css, define, Component, html, on, off, cache, once, renderComplete, getComponent} from 'flit'
 import {getAlignDirection, onceMouseLeaveAll, align, timeout, Timeout, watch, Rect} from 'ff'
 import {Layer} from './layer'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 
 
 // It's the base class for all the popup component.

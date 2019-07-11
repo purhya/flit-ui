@@ -1,5 +1,5 @@
 import {css, define, html, on, renderComplete, off, Component, appendTo, show} from 'flit'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 import {debounce, align} from 'ff'
 
 

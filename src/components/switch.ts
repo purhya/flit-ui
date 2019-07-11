@@ -1,5 +1,5 @@
 import {define, Component, html, css, getEasing, on, off} from 'flit'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 
 
 export interface SwitchEvents {

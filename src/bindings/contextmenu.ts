@@ -1,7 +1,7 @@
 import {defineBinding, on, off, renderComplete, define, css, Transition, Binding, once, BindingResult} from 'flit'
-import {Layer} from './layer'
+import {Layer} from '../components/layer'
 import {alignToEvent} from 'ff'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 
 
 @define('f-contextmenu')

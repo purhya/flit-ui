@@ -1,7 +1,7 @@
 import {css, define, html, Component, repeat, renderComponent} from 'flit'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 import {remove, Timeout, timeout} from 'ff'
-import {Color} from './color'
+import {Color} from '../style/color'
 
 
 export type NotificationType = 'info' | 'success' | 'alert'

@@ -1,7 +1,7 @@
 import {define, Component, html, css, on, once, off} from 'flit'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 import {constrain, getRect, Rect} from 'ff'
-import {tooltip} from './tooltip';
+import {tooltip} from '../bindings/tooltip';
 
 
 export interface SliderEvents {

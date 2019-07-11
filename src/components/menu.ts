@@ -1,5 +1,5 @@
 import {css, define, Component, html, on, getComponent, renderComplete, off, cache, renderAndWatch, getComponentAsync, show} from 'flit'
-import {theme} from './theme'
+import {theme} from '../style/theme'
 import {onceMouseLeaveAll, align, getPreviousVisibleElement, getNextVisibleElement} from 'ff'
 import {Layer} from './layer'
 
