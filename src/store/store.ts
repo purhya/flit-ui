@@ -75,7 +75,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 	private map: KeyMap<Item> | null = null
 	private selectedMap: KeyMap<Item> | null = null
 
-	constructor(options: StoreOptions<Item>) {
+	constructor(options: StoreOptions<Item> = {}) {
 		super()
 
 		if (options.key) {
