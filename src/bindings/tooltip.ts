@@ -1,4 +1,4 @@
-import {css, define, html, off, defineBinding, on, renderAndWatch, cache, Binding, BindingResult} from 'flit'
+import {css, define, html, off, defineBinding, on, render, cache, Binding, BindingResult} from 'flit'
 import {theme} from '../style/theme'
 import {Popup} from '../components/popup'
 import {Layer} from '../components/layer'
@@ -106,7 +106,7 @@ export class GlobalTooltip extends Tooltip {
 	async showLayer() {
 		// Can't render `<layer>` in current `el` since it's dynamic and blongs to another component.
 		if (!this.refs.layer) {
-			let {fragment} = renderAndWatch(() => {
+			let fragment = render(() => {
 				return cache(this.opened ? (this.renderLayer()) : '', this.transition)
 			}, this)
 			

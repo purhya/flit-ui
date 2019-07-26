@@ -1,4 +1,4 @@
-import {css, define, Component, html, on, getComponent, renderComplete, off, cache, renderAndWatch, getComponentAsync, show} from 'flit'
+import {css, define, Component, html, on, getComponent, renderComplete, off, cache, render, getComponentAsync, show} from 'flit'
 import {theme} from '../style/theme'
 import {onceMouseLeaveAll, align, getPreviousVisibleElement, getNextVisibleElement} from 'ff'
 import {Layer} from './layer'
@@ -532,7 +532,7 @@ export class SubMenu<Events = any> extends Component<Events> {
 				this.topMenu.onSubMenuOpened(this)
 			}
 			else {
-				let {fragment} = renderAndWatch(() => {
+				let fragment = render(() => {
 					return cache(
 						this.opened ? html`<f-layer class="layer" .trangle=${false} :ref=${this.onRefLayer} />` : '',
 						{enterAtStart: true, transition: 'fade'}
