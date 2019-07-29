@@ -45,7 +45,7 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 	}
 
 	private async showMenuInLayer(e: Event) {
-		let layer = this.ensureLayer()
+		let layer = this.renderLayer()
 
 		layer.applyAppendTo()
 		await renderComplete()
@@ -58,7 +58,7 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 		once(layer.el, 'click', this.hideContextMenu, this)
 	}
 
-	private ensureLayer(): ContextMenuLayer  {
+	private renderLayer(): ContextMenuLayer  {
 		if (!this.layer) {
 			this.layer = renderComponent(html`
 				<f-contextmenu-layer>
@@ -86,6 +86,7 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 			new Transition(this.layer.el, 'fade').leave().then((finish: boolean) => {
 				if (finish) {
 					this.layer!.el.remove()
+					this.layer = null
 				}
 			})
 		}
