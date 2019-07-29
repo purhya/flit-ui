@@ -1,11 +1,13 @@
-import {defineBinding, on, off, renderComplete, define, css, Transition, Binding, once, BindingResult} from 'flit'
+import {defineBinding, Context, on, off, renderComplete, define, css, Transition, Binding, once, BindingResult, TemplateResult, DirectiveResult, renderComponent, html} from 'flit'
 import {Layer} from '../components/layer'
 import {alignToEvent} from 'ff'
 import {theme} from '../style/theme'
 
+export type MenuRenderFn = () => TemplateResult | DirectiveResult
 
-@define('f-contextmenu')
-export class ContextMenu<Item = unknown, Events = any> extends Layer<Events> {
+
+@define('f-contextmenu-layer')
+export class ContextMenuLayer<Events = any> extends Layer<Events> {
 
 	static style() {
 		let {lh} = theme
@@ -22,65 +24,76 @@ export class ContextMenu<Item = unknown, Events = any> extends Layer<Events> {
 	`}
 
 	trangle: boolean = false
-	currentData: Item | null = null
 }
 
 
-class ContextMenuBinding<Item> implements Binding<[ContextMenu<Item>, Item]> {
+class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 
 	private el: HTMLElement
-	private contextMenu!: ContextMenu
-	private data: Item | null = null
+	private context: Context
+	private renderFn!: MenuRenderFn
+	private layer: ContextMenuLayer | null = null
 
-	constructor(el: Element) {
+	constructor(el: Element, context: Context) {
 		this.el = el as HTMLElement
+		this.context = context
 		on(this.el, 'contextmenu.prevent', this.showMenuInLayer, this)
 	}
 
-	async update(contextmenu: ContextMenu<Item>, data: Item) {
-		if (!contextmenu) {
-			throw new Error(`The first argument "contextmenu" of ":contextmenu" binding must be provided`)
-		}
-
-		this.contextMenu = contextmenu
-		this.data = data
+	async update(renderFn: MenuRenderFn) {
+		this.renderFn = renderFn
 	}
 
 	private async showMenuInLayer(e: Event) {
-		this.contextMenu.currentData = this.data
-		this.contextMenu.applyAppendTo()
+		let layer = this.ensureLayer()
+
+		layer.applyAppendTo()
 		await renderComplete()
 
-		alignToEvent(this.contextMenu.el, e as MouseEvent)
-		this.contextMenu.el.focus()
+		alignToEvent(layer.el, e as MouseEvent)
+		layer.el.focus()
 
-		new Transition(this.contextMenu.el, 'fade').enter()
+		new Transition(layer.el, 'fade').enter()
 		on(document, 'mousedown', this.onDocMouseDown, this)
-		once(this.contextMenu.el, 'click', this.hideContextMenu, this)
+		once(layer.el, 'click', this.hideContextMenu, this)
+	}
+
+	private ensureLayer(): ContextMenuLayer  {
+		if (!this.layer) {
+			this.layer = renderComponent(html`
+				<f-contextmenu-layer>
+					${this.renderFn()}
+				</f-contextmenu-layer>
+			`, this.context) as ContextMenuLayer
+		}
+
+		return this.layer!
 	}
 
 	private onDocMouseDown(e: Event) {
 		let target = e.target as Element
 
-		if (this.contextMenu && !this.contextMenu.el.contains(target)) {
+		if (this.layer && !this.layer.el.contains(target)) {
 			this.hideContextMenu()
 		}
 	}
 
 	private hideContextMenu() {
-		off(document, 'mousedown', this.onDocMouseDown, this)
-		off(this.contextMenu.el, 'click', this.hideContextMenu, this)
+		if (this.layer) {
+			off(document, 'mousedown', this.onDocMouseDown, this)
+			off(this.layer.el, 'click', this.hideContextMenu, this)
 
-		new Transition(this.contextMenu!.el, 'fade').leave().then((finish: boolean) => {
-			if (finish) {
-				this.contextMenu.el.remove()
-			}
-		})
+			new Transition(this.layer.el, 'fade').leave().then((finish: boolean) => {
+				if (finish) {
+					this.layer!.el.remove()
+				}
+			})
+		}
 	}
 
 	remove() {
-		off(this.el, 'contextmenu.prevent', this.showMenuInLayer, this)
+		off(this.el, 'contextmenu', this.showMenuInLayer, this)
 	}
 }
 
-export const contextmenu = defineBinding('contextmenu', ContextMenuBinding) as <Item>(contextMenu: ContextMenu<Item>, data: Item) => BindingResult
+export const contextmenu = defineBinding('contextmenu', ContextMenuBinding) as (renderFn: MenuRenderFn) => BindingResult
