@@ -5,6 +5,7 @@ import {Color} from './color'
 export interface ThemeOptions {
 	mainColor?: string
 	textColor?: string
+	borderColor?: string
 	successColor?: string
 	errorColor?: string
 	warningColor?: string
@@ -17,13 +18,14 @@ export interface ThemeOptions {
 	lineHeight?: number
 }
 
-type ColorOptions = {[key in 'mainColor' | 'textColor' | 'successColor' | 'errorColor' | 'warningColor' | 'infoColor']: Color}
+type ColorOptions = {[key in 'mainColor' | 'textColor' | 'borderColor' | 'successColor' | 'errorColor' | 'warningColor' | 'infoColor']: Color}
 type NotColorOptions = {[key in Exclude<keyof ThemeOptions, keyof ColorOptions>]: ThemeOptions[key]}
 
 
 export const defaultThemeOptions: Required<ThemeOptions> = {
 	mainColor: '#0077cf',
 	textColor: '#333',
+	borderColor: '#808080',
 	successColor: '#00af41',
 	errorColor: '#ff0000',
 	warningColor: '#f48862',
@@ -110,6 +112,10 @@ export class Theme implements ColorOptions, NotColorOptions {
 
 	get textColor(): Color {
 		return new Color(this.getOption('textColor'))
+	}
+
+	get borderColor(): Color {
+		return new Color(this.getOption('borderColor'))
 	}
 
 	get successColor(): Color {

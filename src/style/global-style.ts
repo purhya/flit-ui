@@ -3,7 +3,7 @@ import {theme} from './theme'
 
 
 addGlobalStyle(() => {
-	let {mainColor, textColor, successColor, errorColor, fontSize, borderRadius, focusBlurRadius, lh} = theme
+	let {mainColor, textColor, borderColor, successColor, errorColor, fontSize, borderRadius, focusBlurRadius, lh} = theme
 
 	return css`
 	html{
@@ -17,8 +17,8 @@ addGlobalStyle(() => {
 		justify-content: center;
 		height: ${lh(30)}px;
 		line-height: ${lh(30) - 2}px;
-		border: 1px solid ${textColor.lighten(30)};
-		color: ${textColor.lighten(20)};
+		border: 1px solid ${borderColor};
+		color: ${borderColor.darken(10)};
 		border-radius: ${borderRadius}px;
 		padding: 0 ${lh(15) + Math.max(0, (borderRadius - 5) / 2)}px;
 		background: #fff;
@@ -105,7 +105,7 @@ addGlobalStyle(() => {
 	
 	[type=text], [type=number], [type=email], textarea{
 		border: none;
-		box-shadow: inset 0 -1px 0 0 ${textColor.lighten(30)};
+		box-shadow: inset 0 -1px 0 0 ${borderColor};
 		background: #e5e5e5;
 		
 		&:focus{
