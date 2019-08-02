@@ -1,4 +1,4 @@
-import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult} from 'flit'
+import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, TransitionOptions} from 'flit'
 import {theme} from '../style/theme'
 import {Store} from '../store/store'
 import {getScrollbarWidth, watch, Order, getNumeric, sum, repeatTimes} from 'ff'
@@ -181,6 +181,16 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 	columns!: Column<Item>[]
 	store!: Store<Item> | AsyncStore<Item>
 	minColumnWidth: number = 64
+	transition: TransitionOptions | undefined
+
+	renderRow: RowRenderer<Item> = function(this: Grid<Item>, item: Item | null, index: number) {
+		let tds = this.columns.map((column) => {
+			let result = item && column.render ? column.render(item, index) : ''
+			return html`<td>${result}</td>`
+		})
+
+		return html`<tr>${tds}</tr>`
+	}
 
 	protected orderedColumnIndex: number = -1
 	protected orderDirection: 'asc' | 'desc' | '' = ''
@@ -240,7 +250,8 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 					ref: (dir) => this.setRepeatDirective(dir as any),
 					onrendered: this.onRendered.bind(this) as any
 				},
-				this.renderRow.bind(this as any) as any
+				this.renderRow.bind(this as any) as any,
+				this.transition
 			)
 		}
 		else if (this.live) {
@@ -252,24 +263,17 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 					ref: (dir) => this.setRepeatDirective(dir),
 					onrendered: this.onRendered.bind(this)
 				},
-				this.renderRow.bind(this as any)
+				this.renderRow.bind(this as any),
+				this.transition
 			)
 		}
 		else {
 			return repeat(
 				this.store.currentData,
-				this.renderRow.bind(this as any)
+				this.renderRow.bind(this as any),
+				this.transition
 			)
 		}
-	}
-
-	renderRow: RowRenderer<Item> = function(this: Grid<Item>, item: Item | null, index: number) {
-		let tds = this.columns.map((column) => {
-			let result = item && column.render ? column.render(item, index) : ''
-			return html`<td>${result}</td>`
-		})
-
-		return html`<tr>${tds}</tr>`
 	}
 
 	protected setRepeatDirective(dir: LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item>) {
