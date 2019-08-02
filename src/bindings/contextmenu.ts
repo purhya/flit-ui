@@ -16,9 +16,11 @@ export class ContextMenuLayer<Events = any> extends Layer<Events> {
 		${super.style()}
 		:host{
 			position: fixed;
+			border-radius: 0;
 			
 			f-menuitem{
 				padding: 0 ${lh(2)}px;
+				cursor: default;
 			}
 		}
 	`}

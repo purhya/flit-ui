@@ -93,7 +93,7 @@ addGlobalStyle(() => {
 		}
 	}
 
-	[type=text], [type=number], [type=email]{
+	[type=text], [type=password], [type=number], [type=email]{
 		height: ${lh(30)}px;
 		padding: 0 0 0 ${lh(8)}px;
 	}
@@ -103,7 +103,7 @@ addGlobalStyle(() => {
 		line-height: ${lh(22)}px;
 	}
 	
-	[type=text], [type=number], [type=email], textarea{
+	[type=text], [type=password], [type=number], [type=email], textarea{
 		border: none;
 		box-shadow: inset 0 -1px 0 0 ${borderColor};
 		background: #e5e5e5;
