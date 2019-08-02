@@ -12,7 +12,6 @@ export interface RouteMatch {
 
 export interface RouteOptions {
 	title?: string
-	redirect?: string
 }
 
 export interface RouterEvents {
@@ -55,7 +54,7 @@ export class Router extends Component<RouterEvents> {
 
 	private onStateChange(e: PopStateEvent) {
 		if (e.state) {
-			this.redirectTo(e.state.url)
+			this.redirectTo(e.state.path)
 		}
 	}
 
@@ -65,20 +64,14 @@ export class Router extends Component<RouterEvents> {
 				document.title = options.title
 			}
 
-			if (options.redirect) {
-				this.redirectTo(options.redirect)
-				return ''
-			}
-			else {
-				let params = this.matchPath(routePath)
+			let params = this.match(routePath)
 
-				let match: RouteMatch = {
-					params: params ? params.params : {},
-					captures: params ? params.captures : []
-				}
-
-				return renderFn(match)
+			let match: RouteMatch = {
+				params: params ? params.params : {},
+				captures: params ? params.captures : []
 			}
+
+			return renderFn(match)
 		}
 		else {
 			return ''
@@ -89,20 +82,20 @@ export class Router extends Component<RouterEvents> {
 		return PathParser.isMatch(this.path, routePath)
 	}
 
-	matchPath(routePath: string | RegExp) {
+	match(routePath: string | RegExp) {
 		return PathParser.matchPath(this.path, routePath)
 	}
 
 	goto(path: string) {
 		this.path = path
 		let uri = this.getURIFromPath(path)
-		history.replaceState({uri}, '', uri)
+		history.pushState({path}, '', uri)
 	}
 
 	redirectTo(path: string) {
 		this.path = path
 		let uri = this.getURIFromPath(path)
-		history.replaceState({uri}, '', uri)
+		history.replaceState({path}, '', uri)
 	}
 
 	private getURIFromPath(path: string): string {
@@ -155,11 +148,10 @@ namespace PathParser {
 				return null
 			}
 
-			let params: {[key: string]: string} = {}
 			if (keys) {
 				for (let i = 0; i < keys.length; i++) {
 					let key = keys[i]
-					params[key] = m[i]
+					params[key] = m[i + 1]
 				}
 			}
 		}
