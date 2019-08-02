@@ -99,6 +99,7 @@ export class Popup<Events = any> extends Component<Events> {
 
 	protected initFocus() {
 		this.focusEl = this.el.querySelector('button, a, input, [tabindex="0"]') || this.el
+
 		if (this.focusEl === this.el) {
 			this.el.setAttribute('tabindex', '0')
 		}
@@ -265,7 +266,7 @@ export class Popup<Events = any> extends Component<Events> {
 		this.clearTimeoutAndUnwatch()
 		this.unbindEventsBeforeHide()
 		
-		if (this.opened) {
+		if (this.opened && this.focusEl) {
 			this.restoreFocusFromLayer()
 		}
 

@@ -159,6 +159,10 @@ export let defaultTooltipOptions: Required<TooltipOptions> = {
 }
 
 
+/**
+ * `:tooltip="..."`
+ * `tooltip(title: string, {alignPosition: ..., ...})`
+ */
 class TooltipBinding implements Binding<[string, TooltipOptions | undefined]> {
 
 	private el: HTMLElement

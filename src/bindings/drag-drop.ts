@@ -1,6 +1,6 @@
 import {defineBinding, Binding, on, once, off} from "flit"
 import {getNumeric, animateTo, getRect, stopAnimation, Rect} from "ff"
-import {theme} from "../style/theme";
+import {theme} from "../style/theme"
 
 
 export interface DraggableOptions {
