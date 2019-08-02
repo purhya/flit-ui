@@ -237,7 +237,14 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 
 		if (toRemoveSet.size > 0) {
 			this.data = this.data.filter(item => !toRemoveSet.has(item))
-			this.currentData = this.currentData.filter(item => !toRemoveSet.has(item))
+
+			if (this.map) {
+				this.currentData = this.currentData.filter(item => this.map!.has(item))
+			}
+			else {
+				this.currentData = this.currentData.filter(item => !toRemoveSet.has(item))
+			}
+			
 			this.deselect(...toRemoveSet)
 			this.emit('change')
 		}
@@ -269,7 +276,6 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 	}
 
 	select(...items: Item[]) {
-
 		if (this.selectedMap) {
 			for (let item of items) {
 				if (!this.selectedMap.has(item)) {
