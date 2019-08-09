@@ -1,6 +1,6 @@
 {
 	"name": "fui",
-	"version": "1.0.0",
+	"version": "0.0.0",
 	"description": "A small web UI library",
 	"main": "out/index.js",
 	"scripts": {
