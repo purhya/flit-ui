@@ -11,6 +11,11 @@ export class Dropdown<Events = any> extends Popup<Events> {
 
 		return css`
 		${super.style()}
+
+		:host{
+			display: inline-flex;
+		}
+
 		.layer{
 			padding: 5px 0;
 			font-size: ${fs(12)}px;
