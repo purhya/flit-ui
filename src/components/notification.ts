@@ -1,6 +1,6 @@
 import {css, define, html, Component, repeat, renderComponent} from 'flit'
 import {theme} from '../style/theme'
-import {remove, Timeout, timeout} from 'ff'
+import {remove, Timeout, timeout, unique} from 'ff'
 import {Color} from '../style/color'
 
 
@@ -20,6 +20,10 @@ export interface NotificationItem extends NotificationOptions {
 	id: number
 	entered: boolean
 	timeout: Timeout | null
+}
+
+export interface NotificationOptions {
+	unique?: boolean
 }
 
 
@@ -126,7 +130,12 @@ export class NotificationTips<Events = any> extends Component<Events> {
 		}
 
 		${
-			([['alert', errorColor], ['info', infoColor], ['success', successColor]] as [string, Color][]).map(([type, color]) => css`
+			([
+				['alert', errorColor],
+				['info', infoColor],
+				['success', successColor]
+			] as [string, Color][]
+			).map(([type, color]) => css`
 			.type-${type}{
 				&:hover{
 					background: ${color.mix('#fff', 95)};
@@ -269,6 +278,10 @@ export class Notification {
 
 	protected tips: NotificationTips | null = null
 
+	unique() {
+		return new UniqueNotification(this)
+	}
+
 	showNotification(options: NotificationOptions): number {
 		if (!this.tips) {
 			this.tips = renderComponent(html`<f-notification-tips />`) as NotificationTips
@@ -296,6 +309,43 @@ export class Notification {
 		options.content = content
 
 		return this.showNotification(options)
+	}
+}
+
+
+export class UniqueNotification {
+
+	raw: Notification
+	id: number | null = null
+
+	constructor(raw: Notification) {
+		this.raw = raw
+	}
+
+	private overwriteOptions(options: NotificationOptions) {
+		if (this.id) {
+			options.id = this.id
+		}
+	}
+
+	showNotification(options: NotificationOptions): number {
+		this.overwriteOptions(options)
+		return this.id = this.raw.showNotification(options)
+	}
+
+	info(content: string, options: NotificationOptions = {}): number {
+		this.overwriteOptions(options)
+		return this.raw.info(content, options)
+	}
+
+	alert(content: string, options: NotificationOptions = {}): number {
+		this.overwriteOptions(options)
+		return this.raw.alert(content, options)
+	}
+
+	success(content: string, options: NotificationOptions = {}): number {
+		this.overwriteOptions(options)
+		return this.raw.success(content, options)
 	}
 }
 
