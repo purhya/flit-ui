@@ -1,6 +1,6 @@
 import {css, define, html, Component, repeat, renderComponent} from 'flit'
 import {theme} from '../style/theme'
-import {remove, Timeout, timeout, unique} from 'ff'
+import {remove, Timeout, timeout} from 'ff'
 import {Color} from '../style/color'
 
 
