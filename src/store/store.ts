@@ -95,7 +95,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		}
 	}
 
-	private addItems(items: Item[], atHead: boolean = false) {
+	private addItems(items: Item[], atStart: boolean = false) {
 		if (items.length > 0) {
 			if (this.map) {
 				for (let item of items) {
@@ -103,7 +103,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 				}
 			}
 
-			if (atHead) {
+			if (atStart) {
 				this.data.unshift(...items)
 			}
 			else {
@@ -111,18 +111,18 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 			}
 
 			let filteredItems = this.filter ? items.filter(this.filter) : items
-			this.addItemsToCurrentData(filteredItems, atHead)
+			this.addItemsToCurrentData(filteredItems, atStart)
 		}
 	}
 
-	private addItemsToCurrentData(items: Item[], atHead: boolean = false) {
+	private addItemsToCurrentData(items: Item[], atStart: boolean = false) {
 		if (this.order) {
 			for (let item of items) {
 				this.order.binaryInsert(this.currentData, item)
 			}
 		}
 		else {
-			if (atHead) {
+			if (atStart) {
 				this.currentData.unshift(...items)
 			}
 			else {
@@ -164,6 +164,12 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 	add(...items: Item[]) {
 		this.remove(...items)
 		this.addItems(items)
+		this.emit('change')
+	}
+
+	addToStart(...items: Item[]) {
+		this.remove(...items)
+		this.addItems(items, true)
 		this.emit('change')
 	}
 
