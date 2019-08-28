@@ -60,7 +60,7 @@ export class Layer<Events = any> extends Component<Events> {
 	}
 	
 	// Call `update` every time after restored from `cache(...)`.
-	protected onReady() {
+	protected onConnected() {
 		// Why render `<layer>` to body?
 		// It's very common that the `el` is covered or clipped,
 		// which will cause the `<layer>` is not fully visible.
@@ -86,7 +86,7 @@ export class Layer<Events = any> extends Component<Events> {
 
 		this.applyAppendTo()
 	}
-
+	
 	applyAppendTo() {
 		if (this.appendTo) {
 			appendTo(this.el, this.appendTo)
