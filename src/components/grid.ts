@@ -316,11 +316,9 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 			this.refs.head.style.paddingRight = getScrollbarWidth() + 'px'
 			this.updatColumnWidths()
 		})
-
-		this.onReconnected()
 	}
 
-	onReconnected () {
+	onConnected () {
 		this.unwatchSize = watch(this.el, 'size', () => this.updatColumnWidths())
 	}
 
