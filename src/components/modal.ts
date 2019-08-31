@@ -131,7 +131,7 @@ export class Modal<Events = any> extends Component<Events> {
 
 	mask: boolean = true
 	title: string = ''
-	opened: boolean = false
+	opened: boolean = true
 	transition: string = 'fade'
 	appendTo: string | HTMLElement | null = 'body'
 
@@ -172,7 +172,23 @@ export class Modal<Events = any> extends Component<Events> {
 		}
 	}
 
-	protected onReady() {
+	protected async onConnected() {
+		if (this.appendTo) {
+			appendTo(this.el, this.appendTo)
+		}
+
+		await renderComplete()
+		
+		if (this.mask && this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
+			this.el.before(this.refs.mask)
+		}
+
+		this.toCenter()
+
+		if (this.el.tabIndex === 0) {
+			this.el.focus()
+		}
+
 		on(window, 'resize', debounce(this.onWindowResize, 200).wrapped, this)
 	}
 
@@ -186,23 +202,13 @@ export class Modal<Events = any> extends Component<Events> {
 		}
 	}
 
-	async show() {
+	// To show the modal, you may `renderCoponent` and then call `show()` or append to `body`.
+	// Otherwise you can also just render it as a child element into document.
+	show() {
 		this.opened = true
 
 		if (this.appendTo) {
 			appendTo(this.el, this.appendTo)
-		}
-		
-		await renderComplete()
-		
-		if (this.mask && this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
-			this.el.before(this.refs.mask)
-		}
-
-		this.toCenter()
-
-		if (this.el.tabIndex === 0) {
-			this.el.focus()
 		}
 	}
 
