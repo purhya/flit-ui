@@ -4,10 +4,10 @@ import {MenuItem, SubMenu, Menu} from './menu'
 
 
 interface TreeDataItem {
-	icon: string
+	icon?: string
 	text: string
 	path: string
-	children: Promise<TreeDataItem[]> | TreeDataItem[]
+	children?: Promise<TreeDataItem[]> | TreeDataItem[]
 }
 
 interface TreeEvents {
@@ -93,7 +93,14 @@ export class Tree<Events = any> extends Menu<Events & TreeEvents> {
 
 	protected async onCreated() {
 		super.onCreated()
+		await this.loadChildren()
 
+		if (this.data) {
+			this.currentPath = this.data.path
+		}
+	}
+
+	async loadChildren() {
 		if (this.data) {
 			if (this.data.children instanceof Promise) {
 				this.loading = true
@@ -101,10 +108,8 @@ export class Tree<Events = any> extends Menu<Events & TreeEvents> {
 				this.loading = false
 			}
 			else {
-				this.children = this.data.children
+				this.children = this.data.children || null
 			}
-
-			this.currentPath = this.data.path
 		}
 	}
 
@@ -171,18 +176,10 @@ export class TreeMenu<Events = any> extends SubMenu<Events>{
 
 	protected async onCreated() {
 		super.onCreated()
-
-		if (this.data) {
-			if (this.data.children instanceof Promise) {
-				this.loading = true
-				this.children = await this.data.children
-				this.loading = false
-			}
-			else {
-				this.children = this.data.children
-			}
-		}
+		await this.loadChildren()
 	}
+
+	loadChildren = Tree.prototype.loadChildren
 }
 
 
