@@ -30,8 +30,8 @@ export class Router extends Component<RouterEvents> {
 		on(window, 'popstate', this.onStateChange as (e: Event) => void, this)
 	}
 
-	private getPathFromUri(uri: string): string {
-		let path = this.removeProtocolAndHost(uri)
+	getPathFromUri(uri: string): string {
+		let path = new URL(uri).pathname
 
 		if (this.prefix && path.startsWith(this.prefix)) {
 			path = path.slice(this.prefix.length)
@@ -42,10 +42,6 @@ export class Router extends Component<RouterEvents> {
 		}
 
 		return path
-	}
-
-	private removeProtocolAndHost(uri: string) {
-		return uri.replace(/^(\w+:)?\/\/[^\/]+/, '')
 	}
 
 	protected onDisconnected() {
