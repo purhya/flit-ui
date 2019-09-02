@@ -108,7 +108,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		}
 	`}
 
-	static properties = [...Popup.properties, 'icon', 'value', 'multiple', 'searchable', 'ordered']
+	static properties = [...Popup.properties, 'icon', 'value', 'multiple', 'searchable', 'ordered', 'placeholder']
 
 	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'click'
 	alignPosition: string = 'b'
@@ -121,6 +121,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 	multiple: boolean = false
 	searchable: boolean = false
 	ordered: boolean = false
+	placeholder: string = ''
 
 	protected inputed: string = ''
 	protected editing: boolean = false
@@ -136,6 +137,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 				class="input"
 				:ref="input"
 				.value=${this.editing ? this.inputed : this.renderCurrentDisplay()}
+				.placeholder=${this.placeholder}
 				?readonly=${!this.editing}
 				@click=${this.onClick}
 				@input=${this.onInput}
@@ -180,6 +182,11 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		</li>
 	`}
 
+	// Used to render like color select
+	protected renderOptionStyle(_key: T) {
+		return ''
+	}
+
 	protected renderCurrentDisplay(): string | number {
 		if (this.multiple) {
 			let displays: (string | number)[] = []
@@ -201,11 +208,6 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 
 			return ''
 		}
-	}
-
-	// Used to render like color select
-	protected renderOptionStyle(_key: T) {
-		return ''
 	}
 
 	protected renderOptionDisplay(_key: T, display: string | number): string | number {
