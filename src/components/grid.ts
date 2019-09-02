@@ -183,15 +183,6 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 	minColumnWidth: number = 64
 	transition: TransitionOptions | undefined
 
-	renderRow: RowRenderer<Item> = function(this: Grid<Item>, item: Item | null, index: number) {
-		let tds = this.columns.map((column) => {
-			let result = item && column.render ? column.render(item, index) : ''
-			return html`<td>${result}</td>`
-		})
-
-		return html`<tr>${tds}</tr>`
-	}
-
 	protected orderedColumnIndex: number = -1
 	protected orderDirection: 'asc' | 'desc' | '' = ''
 	protected unwatchSize: (() => void) | null = null
@@ -274,6 +265,15 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 				this.transition
 			)
 		}
+	}
+
+	protected renderRow(this: Grid<Item>, item: Item | null, index: number) {
+		let tds = this.columns.map((column) => {
+			let result = item && column.render ? column.render(item, index) : ''
+			return html`<td>${result}</td>`
+		})
+
+		return html`<tr>${tds}</tr>`
 	}
 
 	protected setRepeatDirective(dir: LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item>) {
