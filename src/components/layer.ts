@@ -55,7 +55,7 @@ export class Layer<Events = any> extends Component<Events> {
 		return html`
 		<template tabindex="0">
 			${this.trangle ? html`<div class="trangle" :ref="trangle" :class.trangle-herizontal=${this.herizontal}></div>` : ''}
-			<slot></slot>
+			<slot />
 		</template>`
 	}
 	

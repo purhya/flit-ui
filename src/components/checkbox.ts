@@ -90,7 +90,7 @@ export class Checkbox<Events = any> extends Component<Events & CheckboxEvents> {
 				</svg>
 
 				<div class="label">
-					<slot></slot>
+					<slot />
 				</div>
 			</template>
 		`

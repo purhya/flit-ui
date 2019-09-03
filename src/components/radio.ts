@@ -73,7 +73,7 @@ export class Radio<Events = any> extends Component<Events & RadioEvents> {
 					${this.checked? svg`<circle style="fill:currentColor;stroke:none;" cx="7" cy="7" r="4" />` : ''}
 				</svg>
 				<div class="label">
-					<slot></slot>
+					<slot />
 				</div>
 			</template>
 		`

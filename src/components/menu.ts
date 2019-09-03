@@ -321,7 +321,7 @@ export class SubMenu<Events = any> extends CommonMenu<Events> {
 			)}
 			:class.has-icon="${this.itemsHasIcon}"
 		>
-			<slot></slot>
+			<slot />
 		</template>
 	`}
 
@@ -506,7 +506,7 @@ export class MenuItem<Events = any> extends Component<Events> {
 			>
 				${icon}
 				<span class="text">
-					<slot></slot>
+					<slot />
 				</span>
 				${rightIcon}
 			</template>

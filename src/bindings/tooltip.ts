@@ -23,6 +23,7 @@ export class TooltipLayer extends Layer {
 			color: #fff;
 			border-radius: ${layerBorderRadius / 2}px;
 			opacity: 0.9;
+			pointer-events: none;
 		}
 
 		.trangle{
