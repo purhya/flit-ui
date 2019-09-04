@@ -1,6 +1,6 @@
 import {defineBinding, Context, on, off, renderComplete, define, css, Transition, Binding, once, BindingResult, TemplateResult, DirectiveResult, renderComponent, html} from 'flit'
 import {Layer} from '../components/layer'
-import {alignToEvent} from 'ff'
+import {alignToEvent, watch} from 'ff'
 import {theme} from '../style/theme'
 
 export type MenuRenderFn = () => TemplateResult | DirectiveResult
@@ -20,7 +20,6 @@ export class ContextMenuLayer<Events = any> extends Layer<Events> {
 			
 			f-menuitem{
 				padding: 0 ${lh(2)}px;
-				cursor: default;
 			}
 		}
 	`}
@@ -35,6 +34,7 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 	private context: Context
 	private renderFn!: MenuRenderFn
 	private layer: ContextMenuLayer | null = null
+	private unwatchRect: (() => void) | null = null
 
 	constructor(el: Element, context: Context) {
 		this.el = el as HTMLElement
@@ -58,6 +58,8 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 		new Transition(layer.el, 'fade').enter()
 		on(document, 'mousedown', this.onDocMouseDown, this)
 		once(layer.el, 'click', this.hideContextMenu, this)
+
+		this.unwatchRect = watch(this.el, 'rect', this.onLayerRectChanged.bind(this))
 	}
 
 	private renderLayer(): ContextMenuLayer  {
@@ -92,6 +94,15 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 				}
 			})
 		}
+
+		if (this.unwatchRect) {
+			this.unwatchRect()
+			this.unwatchRect = null
+		}
+	}
+
+	private onLayerRectChanged() {
+		this.hideContextMenu()
 	}
 
 	remove() {
