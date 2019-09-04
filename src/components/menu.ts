@@ -404,7 +404,7 @@ export class SubMenu<Events = any> extends CommonMenu<Events> {
 export class MenuItem<Events = any> extends Component<Events> {
 
 	static style() {
-		let {lh, mainColor} = theme
+		let {lh, mainColor, backgroundColor} = theme
 
 		return css`
 		:host{
@@ -415,7 +415,7 @@ export class MenuItem<Events = any> extends Component<Events> {
 			padding: 0 ${lh(10)}px;
 
 			&.hover{
-				background: #eee;
+				background: ${theme.darkenInLightMode(backgroundColor, 5)};
 			}
 
 			&.submenu-opened{

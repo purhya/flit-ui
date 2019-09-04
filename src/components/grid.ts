@@ -32,7 +32,7 @@ export interface Column<Item = any> {
 export class Grid<Item extends object, Events = any> extends Component<GridEvents<Item> & Events> {
 
 	static style() {
-		let {fs, lh, mainColor} = theme
+		let {fs, lh, mainColor, textColor, backgroundColor} = theme
 
 		return css`
 		:host{
@@ -43,8 +43,8 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 
 		.head{
 			padding-right: 10px;	// Same with defined scrollbar width.
-			border-bottom: 1px solid #ddd;
-			color: #888;
+			border-bottom: 1px solid ${theme.darkenInLightMode(backgroundColor, 15)};
+			color: ${theme.lightenInLightMode(textColor, 30)};
 			font-size: ${fs(12)}px;
 			user-select: none;
 		}
@@ -111,7 +111,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 				top: 6px;
 				bottom: 6px;
 				width: 1px;
-				background: #ddd;
+				background: ${theme.darkenInLightMode(backgroundColor, 15)};
 			}
 		}
 
@@ -146,7 +146,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 		td{
 			vertical-align: middle;
 			padding: 0 ${lh(8)}px;
-			border-bottom: 1px solid #eee;
+			border-bottom: 1px solid ${theme.darkenInLightMode(backgroundColor, 7.5)};
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;

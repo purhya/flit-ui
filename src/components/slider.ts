@@ -12,7 +12,7 @@ export interface SliderEvents {
 export class Slider<Events = any> extends Component<Events & SliderEvents> {
 
 	static style() {
-		let {mainColor, textColor, lh, focusBlurRadius} = theme
+		let {mainColor, textColor, lh, focusBlurRadius, backgroundColor} = theme
 		let grooveSize = 1
 		let ballSize = Math.ceil(lh(9)) * 2 + grooveSize
 
@@ -57,7 +57,7 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 		.ball{
 			border-radius: 50%;
 			border: 1px solid ${textColor.lighten(10)};
-			background: #fff;
+			background: ${backgroundColor};
 			float: right;
 			width: ${ballSize}px;
 			height: ${ballSize}px;

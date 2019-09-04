@@ -8,7 +8,7 @@ import {Layer} from '../components/layer'
 export class TooltipLayer extends Layer {
 
 	static style() {
-		let {lh, layerBorderRadius} = theme
+		let {lh, layerBorderRadius, textColor, backgroundColor} = theme
 		
 		return css`
 		:host{
@@ -19,8 +19,8 @@ export class TooltipLayer extends Layer {
 			max-width: ${lh(220)}px;
 			padding: ${lh(4)}px ${lh(8)}px;
 			line-height: ${lh(22)}px;
-			background: #333;
-			color: #fff;
+			background: ${textColor};
+			color: ${backgroundColor};
 			border-radius: ${layerBorderRadius / 2}px;
 			opacity: 0.9;
 			pointer-events: none;
@@ -30,13 +30,13 @@ export class TooltipLayer extends Layer {
 			position: absolute;
 			border-left: 6px solid transparent;
 			border-right: 6px solid transparent;
-			border-bottom: 7px solid #333;
+			border-bottom: 7px solid ${textColor};
 			top: -7px;
 
 			&-herizontal{
 				border-top: 6px solid transparent;
 				border-bottom: 6px solid transparent;
-				border-right: 7px solid #333;
+				border-right: 7px solid ${textColor};
 				border-left: 0;
 				top: auto;
 				left: -7px;

@@ -14,16 +14,16 @@ export interface SelectEvents<T> {
 export class Select<T extends unknown = unknown, Events = any> extends Popup<Events & SelectEvents<T>> {
 	
 	static style() {
-		let {mainColor, lh, textColor, shadowBlurRadius} = theme
+		let {mainColor, lh, borderColor, shadowBlurRadius, backgroundColor, layerBackgroundColor} = theme
 
 		return css`
 		:host{
 			display: inline-flex;
 			vertical-align: top;
-			border-bottom: 1px solid ${textColor.lighten(30)};
+			border-bottom: 1px solid ${borderColor};
 			width: 150px;
 			height: ${lh(30)}px;
-			background: #e5e5e5;
+			background: ${theme.darkenInLightMode(backgroundColor, 10)};
 			line-height: ${lh(30)}px;
 			justify-content: space-between;
 			align-items: center;
@@ -81,11 +81,11 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			cursor: pointer;
 
 			&:not(:last-child){
-				box-shadow: inset 0 -1px 0 0 #fff;	// Add a white line as spliter for adjacent selected items.
+				box-shadow: inset 0 -1px 0 0 ${layerBackgroundColor};	// Add a white line as spliter for adjacent selected items.
 			}
 
 			&.hover{
-				background: #eee;
+				background: ${theme.darkenInLightMode(layerBackgroundColor, 5)};
 
 				&.selected{
 					background: ${mainColor.alpha(0.15)};

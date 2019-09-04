@@ -13,7 +13,7 @@ export class Color {
 		return this.value
 	}
 
-	/** Get [r, g, b, a] from current color. */
+	/** Get [r, g, b, a], all betweens 0 ~ 1 from current color. */
 	getRGBA(): [number, number, number, number] {
 		if (/^#[0-9a-fA-F]{3,6}$/.test(this.value)) {
 			return [...this.parseNormalColor(this.value), 1] as [number, number, number, number]

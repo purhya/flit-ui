@@ -36,7 +36,8 @@ img, iframe {
   border: none; }
 
 input, select, button, textarea, table, optgroup, pre {
-  font: inherit; }
+  font: inherit;
+  color: inherit; }
 
 input, select, button, textarea, label, img, svg {
   vertical-align: top; }
@@ -60,15 +61,3 @@ table {
 
 [hidden] {
   display: none !important; }
-
-::-webkit-scrollbar {
-  height: 10px;
-  width: 10px;
-  background: #f3f3f3; }
-
-::-webkit-scrollbar-thumb {
-  background: #bbb; }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #999; }
-  ::-webkit-scrollbar-thumb:active {
-    background: #777; }

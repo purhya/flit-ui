@@ -8,7 +8,7 @@ import {Popup} from './popup'
 export class Layer<Events = any> extends Component<Events> {
 
 	static style() {
-		let {layerBorderRadius} = theme
+		let {layerBorderRadius, layerBackgroundColor} = theme
 
 		return css`
 		:host{
@@ -16,7 +16,7 @@ export class Layer<Events = any> extends Component<Events> {
 			left: 0;
 			top: 0;
 			z-index: 1000;	// Same with window, so if in window, we must move it behind the window
-			background: #fff;
+			background: ${layerBackgroundColor};
 			filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.33));	// 3px nearly equals 6px in box-shadow.
 			border-radius: ${layerBorderRadius}px;
 		}
@@ -25,13 +25,13 @@ export class Layer<Events = any> extends Component<Events> {
 			position: absolute;
 			border-left: 8px solid transparent;
 			border-right: 8px solid transparent;
-			border-bottom: 11px solid #fff;
+			border-bottom: 11px solid ${layerBackgroundColor};
 			top: -11px;
 
 			&-herizontal{
 				border-top: 8px solid transparent;
 				border-bottom: 8px solid transparent;
-				border-right: 11px solid #fff;
+				border-right: 11px solid ${layerBackgroundColor};
 				border-left: 0;
 				top: auto;
 				left: -11px;

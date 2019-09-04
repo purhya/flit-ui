@@ -10,7 +10,7 @@ export interface SwitchEvents {
 export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 
 	static style() {
-		let {mainColor, lh, textColor, focusBlurRadius} = theme
+		let {mainColor, lh, textColor, focusBlurRadius, backgroundColor} = theme
 		let h = Math.round(lh(10)) * 2
 		let w = h * 2 - 6
 
@@ -40,7 +40,7 @@ export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 		.ball{
 			width: ${h - 4}px;
 			height: ${h - 4}px;
-			background: #fff;
+			background: ${backgroundColor};
 			border: 1px solid ${textColor.lighten(10)};;
 			border-radius: 50%;
 			transition: margin 0.2s ${getEasing('ease-out-cubic')};
@@ -51,7 +51,7 @@ export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 			color: ${mainColor};
 
 			.ball{
-				border-color: #fff;
+				border-color: ${backgroundColor};
 				margin-left: calc(100% - ${h - 4}px);
 			}
 

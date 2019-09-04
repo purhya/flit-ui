@@ -3,13 +3,14 @@ import {theme} from './theme'
 
 
 addGlobalStyle(() => {
-	let {mainColor, textColor, borderColor, successColor, errorColor, fontSize, borderRadius, focusBlurRadius, lh} = theme
+	let {mainColor, textColor, borderColor, successColor, errorColor, fontSize, borderRadius, focusBlurRadius, lh, backgroundColor} = theme
 
 	return css`
 	html{
 		color: ${textColor};
 		font-size: ${fontSize}px;
 		line-height: ${lh(30)}px;
+		background-color: ${backgroundColor};
 	}
 
 	button{
@@ -18,10 +19,10 @@ addGlobalStyle(() => {
 		height: ${lh(30)}px;
 		line-height: ${lh(30) - 2}px;
 		border: 1px solid ${borderColor};
-		color: ${borderColor.darken(10)};
+		color: ${theme.darkenInLightMode(borderColor, 10)};
 		border-radius: ${borderRadius}px;
 		padding: 0 ${lh(15) + Math.max(0, (borderRadius - 5) / 2)}px;
-		background: #fff;
+		background: ${backgroundColor};
 		text-align: center;
 		cursor: pointer;
 		vertical-align: top;
@@ -106,7 +107,7 @@ addGlobalStyle(() => {
 	[type=text], [type=password], [type=number], [type=email], textarea{
 		border: none;
 		box-shadow: inset 0 -1px 0 0 ${borderColor};
-		background: #e5e5e5;
+		background: ${theme.darkenInLightMode(backgroundColor, 10)};
 		
 		&:focus{
 			box-shadow: inset 0 -1px 0 0 ${mainColor};
@@ -133,5 +134,24 @@ addGlobalStyle(() => {
 	
 	.fade-enter-to, .fade-leave-from{
 		opacity: 1;
+	}
+
+
+	::-webkit-scrollbar{
+		height: 10px;
+		width: 10px;
+		background: ${theme.darkenInLightMode(backgroundColor, 5)};
+	}
+
+	::-webkit-scrollbar-thumb{
+		background: ${theme.darkenInLightMode(backgroundColor, 15)};
+
+		&:hover{
+			background: ${theme.darkenInLightMode(backgroundColor, 25)};
+		}
+
+		&:active{
+			background: ${theme.darkenInLightMode(backgroundColor, 35)};
+		}
 	}
 `})
