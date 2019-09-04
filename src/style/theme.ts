@@ -53,7 +53,7 @@ const defaultDrakThemeOptions: ThemeOptions = {
 	warningColor: '#f48862',
 	infoColor: '#3988e5',
 	borderRadius: 15,
-	layerBackgroundColor: new Color('#303030').lighten(10).toString(),
+	layerBackgroundColor: new Color('#303030').lighten(5).toString(),
 	layerBorderRadius: 8,
 	shadowBlurRadius: 6,
 	focusBlurRadius: 3,
