@@ -137,6 +137,12 @@ export class Menu<Events = any> extends CommonMenu<Events & MenuEvents> {
 		}
 	}
 
+	mayClearHoverItem(item: MenuItem) {
+		if (item === this.hoverItem) {
+			this.setHoverItem(null)
+		}
+	}
+
 	onSubMenuOpened(subMenu: SubMenu) {
 		let oldOpenedSubMenus = this.openedSubMenus
 		let newOpenedSubMenus = this.openedSubMenus = [subMenu]
@@ -404,7 +410,7 @@ export class SubMenu<Events = any> extends CommonMenu<Events> {
 export class MenuItem<Events = any> extends Component<Events> {
 
 	static style() {
-		let {lh, mainColor, backgroundColor} = theme
+		let {lh, mainColor, layerBackgroundColor} = theme
 
 		return css`
 		:host{
@@ -415,7 +421,7 @@ export class MenuItem<Events = any> extends Component<Events> {
 			padding: 0 ${lh(10)}px;
 
 			&.hover{
-				background: ${theme.darkenInLightMode(backgroundColor, 5)};
+				background: ${theme.darkenInLightMode(layerBackgroundColor, 5)};
 			}
 
 			&.submenu-opened{
@@ -503,6 +509,7 @@ export class MenuItem<Events = any> extends Component<Events> {
 				:style.padding-left.px=${topMenu.layer ? '' : parentMenu.itemsHasIcon ? parentMenu.deep * iconSize + 5 : parentMenu.deep * iconSize}
 				@@click=${this.onClick}
 				@@mouseenter=${this.onMouseEnter}
+				@@mouseleave=${this.onMouseLeave}
 			>
 				${icon}
 				<span class="text">
@@ -566,6 +573,10 @@ export class MenuItem<Events = any> extends Component<Events> {
 
 	protected onMouseEnter() {
 		this.root.setHoverItem(this)
+	}
+
+	protected onMouseLeave() {
+		this.root.mayClearHoverItem(this)
 	}
 }
 

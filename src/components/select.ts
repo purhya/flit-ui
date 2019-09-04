@@ -175,6 +175,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			:class.hover=${this.hoverAt !== null && this.hoverAt === key}
 			@click.prevent=${() => this.select(key)}
 			@mouseenter=${() => this.onMouseEnter(key)}
+			@mouseleave=${() => this.onMouseLeave(key)}
 			style=${this.renderOptionStyle(key)}
 		>
 			<span class="text">${this.renderOptionDisplay(key, display)}</span>
@@ -416,6 +417,12 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 
 		if (document.activeElement !== this.refs.input) {
 			this.refs.input.focus()
+		}
+	}
+
+	protected onMouseLeave(key: T) {
+		if (this.hoverAt === key) {
+			this.hoverAt = null
 		}
 	}
 }
