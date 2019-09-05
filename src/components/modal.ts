@@ -7,7 +7,7 @@ import {debounce, align} from 'ff'
 export class Modal<Events = any> extends Component<Events> {
 
 	static style() {
-		let {mainColor, textColor, layerBorderRadius, shadowBlurRadius, lh} = theme
+		let {mainColor, textColor, layerBorderRadius, layerShadowBlurRadius, layerBackgroundColor, layerShadowColor, lh} = theme
 
 		return css`
 		:host{
@@ -16,8 +16,8 @@ export class Modal<Events = any> extends Component<Events> {
 			flex-direction: column;
 			z-index: 1000;	// Same with layer
 			border-radius: ${layerBorderRadius}px;
-			box-shadow: 0 0 ${shadowBlurRadius}px rgba(0, 0, 0, 0.2);
-			background: #fff;
+			box-shadow: 0 0 ${layerShadowBlurRadius}px ${layerShadowColor};
+			background: ${layerBackgroundColor};
 			max-width: 100%;
 			max-height: 100%;
 			padding: 0 ${lh(15)}px;

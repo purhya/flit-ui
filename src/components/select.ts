@@ -1,7 +1,6 @@
 import {css, html, renderComplete, cache, repeat, define} from 'flit'
 import {theme} from '../style/theme'
 import {Popup} from './popup'
-import {Color} from '../style/color'
 import {remove, scrollToView, scrollToTop} from 'ff'
 
 
@@ -14,7 +13,7 @@ export interface SelectEvents<T> {
 export class Select<T extends unknown = unknown, Events = any> extends Popup<Events & SelectEvents<T>> {
 	
 	static style() {
-		let {mainColor, lh, borderColor, shadowBlurRadius, backgroundColor, layerBackgroundColor} = theme
+		let {mainColor, lh, borderColor, layerShadowBlurRadius, backgroundColor, layerBackgroundColor, layerShadowColor} = theme
 
 		return css`
 		:host{
@@ -67,7 +66,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		.layer{
 			border-radius: 0;
 			filter: none;
-			box-shadow: 0 0 ${shadowBlurRadius}px ${new Color('#000').alpha(0.2)};
+			box-shadow: 0 1px ${layerShadowBlurRadius}px ${layerShadowColor};
 		}
 	
 		.list{

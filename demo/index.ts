@@ -357,7 +357,7 @@ let {fragment} = renderAndWatch(() => {
 		<button @click="${() => message.success('This is a success message.')}">Open Success Message</button>
 		<button @click="${() => message.alert('This is an alert message.')}">Open Alert Message</button>
 		<button @click="${() => message.confirm('This is a confirm message.')}">Open Confirm Message</button>
-		<button @click="${() => message.prompt('This is a confirm message.')}">Open Prompt Message</button>
+		<button @click="${() => message.prompt('This is a prompt message.')}">Open Prompt Message</button>
 		<button @click="${() => message.success('This is a success message.', {title: 'Message title'})}">Open Message with title</button>
 	</section>
 

@@ -7,21 +7,42 @@ export interface ThemeOptions {
 	mainColor: string
 	backgroundColor: string
 	textColor: string
-	borderColor: string
+	
 	successColor: string
 	errorColor: string
 	warningColor: string
 	infoColor:string
+
+	borderColor: string
 	borderRadius: number
+
 	layerBackgroundColor: string
 	layerBorderRadius: number
-	shadowBlurRadius: number
+	layerShadowColor: string
+	layerShadowBlurRadius: number
+
 	focusBlurRadius: number
+
 	fontSize: number
 	lineHeight: number
 }
 
-type ColorOptions = {[key in 'mainColor' | 'backgroundColor' | 'layerBackgroundColor' | 'textColor' | 'borderColor' | 'successColor' | 'errorColor' | 'warningColor' | 'infoColor']: Color}
+type ColorOptions = {[key in
+	'mainColor' |
+	'backgroundColor' |
+	'textColor' |
+
+	'borderColor' |
+	'successColor' |
+	'errorColor' |
+	'warningColor' |
+	'infoColor' |
+
+	'layerBackgroundColor' |
+	'layerShadowColor'
+
+]: Color}
+
 type NotColorOptions = {[key in Exclude<keyof ThemeOptions, keyof ColorOptions>]: ThemeOptions[key]}
 
 
@@ -29,15 +50,20 @@ const defaultLightThemeOptions: ThemeOptions = {
 	mainColor: '#0077cf',
 	backgroundColor: '#fff',
 	textColor: '#333',
-	borderColor: '#777',
+
 	successColor: '#00af41',
 	errorColor: '#ff0000',
 	warningColor: '#f48862',
 	infoColor: '#3988e5',
+
+	borderColor: '#777',
 	borderRadius: 15,
+
 	layerBackgroundColor: '#fff',
 	layerBorderRadius: 8,
-	shadowBlurRadius: 6,
+	layerShadowColor: 'rgba(0, 0, 0, 0.33)',
+	layerShadowBlurRadius: 6,
+
 	focusBlurRadius: 3,
 	fontSize: 14,	// Should set `font-size` and `line-height` on html or body early before js loaded to avoid flushing.
 	lineHeight: 30,
@@ -47,15 +73,20 @@ const defaultDrakThemeOptions: ThemeOptions = {
 	mainColor: '#2288cc',
 	backgroundColor: '#303030',
 	textColor: new Color('#fff').darken(10).toString(),
-	borderColor: '#aaa',
+
 	successColor: '#00af41',
 	errorColor: '#ff0000',
 	warningColor: '#f48862',
 	infoColor: '#3988e5',
+
+	borderColor: '#aaa',
 	borderRadius: 15,
+
 	layerBackgroundColor: new Color('#303030').lighten(5).toString(),
 	layerBorderRadius: 8,
-	shadowBlurRadius: 6,
+	layerShadowColor: 'rgba(0, 0, 0, 1)',
+	layerShadowBlurRadius: 6,
+
 	focusBlurRadius: 3,
 	fontSize: 14,	// Should set `font-size` and `line-height` on html or body early before js loaded to avoid flushing.
 	lineHeight: 30,
@@ -169,10 +200,7 @@ export class Theme implements ColorOptions, NotColorOptions {
 		return new Color(this.getOption('textColor'))
 	}
 
-	get borderColor(): Color {
-		return new Color(this.getOption('borderColor'))
-	}
-
+	
 	get successColor(): Color {
 		return new Color(this.getOption('successColor'))
 	}
@@ -189,9 +217,15 @@ export class Theme implements ColorOptions, NotColorOptions {
 		return new Color(this.getOption('infoColor'))
 	}
 
+
+	get borderColor(): Color {
+		return new Color(this.getOption('borderColor'))
+	}
+
 	get borderRadius() {
 		return this.getOption('borderRadius')
 	}
+
 
 	get layerBackgroundColor(): Color {
 		return new Color(this.getOption('layerBackgroundColor'))
@@ -201,12 +235,17 @@ export class Theme implements ColorOptions, NotColorOptions {
 		return this.getOption('layerBorderRadius')
 	}
 
-	get focusBlurRadius() {
-		return this.getOption('focusBlurRadius')
+	get layerShadowBlurRadius() {
+		return this.getOption('layerShadowBlurRadius')
 	}
 
-	get shadowBlurRadius() {
-		return this.getOption('shadowBlurRadius')
+	get layerShadowColor() {
+		return new Color(this.getOption('layerShadowColor'))
+	}
+
+
+	get focusBlurRadius() {
+		return this.getOption('focusBlurRadius')
 	}
 
 	get fontSize() {
