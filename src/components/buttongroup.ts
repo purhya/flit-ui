@@ -46,5 +46,6 @@ export class ButtonGroup<Events = any> extends Component<Events> {
 				}
 			}
 		}
-	`}
+		`
+	}
 }

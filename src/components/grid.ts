@@ -171,9 +171,10 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 			bottom: 0;
 			cursor: ew-resize;
 		}
-	`}
+		`
+	}
 
-	static properties = ['resizable', 'live', 'pageSize', 'minColumnWidth']
+	static properties = ['resizable', 'live']
 
 	resizable: boolean = false
 	live: boolean = false
@@ -207,7 +208,8 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 				${this.renderRows()}
 			</table>
 		</div>
-	`}
+		`
+	}
 
 	protected renderColumns() {
 		return this.columns.map((column, index) => {

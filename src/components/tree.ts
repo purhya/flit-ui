@@ -43,7 +43,8 @@ export class Tree<Events = any> extends Menu<Events & TreeEvents> {
 				min-width: 100%;
 			}
 		}
-	`}
+		`
+	}
 
 	static properties = [...Menu.properties, 'scrollable']
 	
@@ -67,7 +68,8 @@ export class Tree<Events = any> extends Menu<Events & TreeEvents> {
 				${this.renderInner()}
 			</div>
 		</template>
-	`}
+		`
+	}
 
 	renderInner() {
 		let innerPart = this.data ? repeat(this.children, (item) => html`
@@ -170,7 +172,8 @@ export class TreeMenu<Events = any> extends SubMenu<Events>{
 		>
 			${this.renderInner()}
 		</template>
-	`}
+		`
+	}
 
 	renderInner = Tree.prototype.renderInner
 

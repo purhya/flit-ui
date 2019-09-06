@@ -95,7 +95,8 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 				margin: -${Math.round(ballSize / 2)}px -${(ballSize - grooveSize) / 2}px;
 			}
 		}
-	`}
+		`
+	}
 
 	static properties = ['vertical', 'min', 'max', 'step', 'value']
 
@@ -119,7 +120,8 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 				</div>
 			</div>
 		</template>
-	`}
+		`
+	}
 
 	vertical: boolean = false
 	min: number = 0

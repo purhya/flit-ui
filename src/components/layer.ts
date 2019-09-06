@@ -37,7 +37,8 @@ export class Layer<Events = any> extends Component<Events> {
 				left: -11px;
 			}
 		}
-	`}
+		`
+	}
 
 	herizontal: boolean = false
 	trangle: boolean = true

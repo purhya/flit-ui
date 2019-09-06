@@ -161,7 +161,8 @@ export class Modal<Events = any> extends Component<Events> {
 			<div class="body"><slot name="body" /></div>
 			<div class="foot"><slot name="foot" /></div>
 		</template>
-	`}
+		`
+	}
 
 	protected onTransitionEnd(type: string, finish: boolean) {
 		if (type === 'leave' && finish) {

@@ -108,7 +108,8 @@ export class MessageModal<Events = any> extends Modal<Events> {
 		.icon-confirm{
 			color: ${warningColor};
 		}
-	`}
+		`
+	}
 	
 	movable: boolean =false
 
@@ -179,7 +180,8 @@ export class MessageModal<Events = any> extends Modal<Events> {
 			}
 			</div>
 		</template>
-	`}
+		`
+	}
 
 	protected onMouseEnter() {
 		this.onClickButton('ok')

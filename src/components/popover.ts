@@ -42,7 +42,8 @@ export class Popover<Events = any> extends Popup<Events> {
 		.content{
 			padding: ${lh(8)}px 0;
 		}
-	`}
+		`
+	}
 
 	static properties = [...Popup.properties, 'title']
 

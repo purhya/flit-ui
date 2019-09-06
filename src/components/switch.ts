@@ -59,7 +59,8 @@ export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 				background: ${mainColor.darken(10)};
 			}
 		}
-	`}
+		`
+	}
 
 	static properties = ['checked']
 
@@ -76,7 +77,8 @@ export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 		>
 			<div class="ball"></div>
 		</template>
-	`}
+		`
+	}
 
 	protected onClick () {
 		this.checked = !this.checked

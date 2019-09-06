@@ -146,7 +146,8 @@ export class NotificationTips<Events = any> extends Component<Events> {
 				}
 			}`.toString()).join('')
 		}
-	`}
+		`
+	}
 	
 	hideDelay: number = 5000
 	appendTo: string | HTMLElement | null = 'body'

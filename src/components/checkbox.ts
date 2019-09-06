@@ -55,7 +55,8 @@ export class Checkbox<Events = any> extends Component<Events & CheckboxEvents> {
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
-	`}
+		`
+	}
 
 	static properties = ['checked', 'indeterminate', 'value']
 

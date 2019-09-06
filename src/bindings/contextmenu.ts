@@ -22,7 +22,8 @@ export class ContextMenuLayer<Events = any> extends Layer<Events> {
 				padding: 0 ${lh(2)}px;
 			}
 		}
-	`}
+		`
+	}
 
 	trangle: boolean = false
 }

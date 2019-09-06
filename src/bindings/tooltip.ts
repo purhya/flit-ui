@@ -42,7 +42,8 @@ export class TooltipLayer extends Layer {
 				left: -7px;
 			}
 		}
-	`}
+		`
+	}
 }
 
 
@@ -61,7 +62,8 @@ export class Tooltip<Events = any> extends Popup<Events> {
 		>
 			${this.title}
 		</f-layer>
-	`}
+		`
+	}
 }
 
 

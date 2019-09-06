@@ -27,7 +27,8 @@ export class Popup<Events = any> extends Component<Events> {
 		}
 
 		.layer{}
-	`}
+		`
+	}
 
 	static properties = ['trigger', 'opened', 'trangle', 'alignPosition', 'alignMargin']
 
@@ -72,7 +73,8 @@ export class Popup<Events = any> extends Component<Events> {
 		>
 			<slot name="content" />
 		</f-layer>
-	`}
+		`
+	}
 
 	protected isHerizontal() {
 		let direction = getAlignDirection(this.alignPosition)

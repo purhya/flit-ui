@@ -47,7 +47,8 @@ export class Menu<Events = any> extends CommonMenu<Events & MenuEvents> {
 		:host{
 			display: block;
 		}
-	`}
+		`
+	}
 
 	static properties = ['selectable', 'dirSelectable']
 
@@ -75,7 +76,8 @@ export class Menu<Events = any> extends CommonMenu<Events & MenuEvents> {
 		>
 			<slot />
 		</template>
-	`}
+		`
+	}
 	
 	protected onCreated() {
 		this.root = this
@@ -309,7 +311,8 @@ export class SubMenu<Events = any> extends CommonMenu<Events> {
 				padding: 0 ${lh(7)}px;
 			}
 		}
-	`}
+		`
+	}
 
 	opened: boolean = false
 	parent!: CommonMenu
@@ -329,7 +332,8 @@ export class SubMenu<Events = any> extends CommonMenu<Events> {
 		>
 			<slot />
 		</template>
-	`}
+		`
+	}
 
 	protected onCreated() {
 		this.parent = getClosestComponent(this.el.parentElement!, SubMenu) || getClosestComponent(this.el.parentElement!, Menu)!
@@ -467,7 +471,8 @@ export class MenuItem<Events = any> extends Component<Events> {
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
-	`}
+		`
+	}
 
 	static properties = ['icon', 'selected']
 

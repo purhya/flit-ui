@@ -48,7 +48,8 @@ export class Radio<Events = any> extends Component<Events & RadioEvents> {
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
-	`}
+		`
+	}
 
 	static properties = ['checked', 'value']
 

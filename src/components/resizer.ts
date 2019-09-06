@@ -67,7 +67,8 @@ export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
 				cursor: ns-resize;
 			}
 		}
-	`}
+		`
+	}
 
 	static properties = ['position', 'rate', 'min', 'max']
 
@@ -84,7 +85,8 @@ export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
 			:class=${this.position}
 			@@mousedown=${this.onStartResize}
 		/>
-	`}
+		`
+	}
 
 	protected onReady() {
 		if (getStyle(this.el.parentElement!, 'position') === 'static') {

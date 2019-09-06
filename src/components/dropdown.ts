@@ -24,7 +24,8 @@ export class Dropdown<Events = any> extends Popup<Events> {
 				padding: 0 ${lh(7)}px;
 			}
 		}
-	`}
+		`
+	}
 
 	static properties = ['icon', ...Popup.properties]
 
@@ -41,5 +42,6 @@ export class Dropdown<Events = any> extends Popup<Events> {
 			${this.icon ? html`<f-icon .type="${this.icon}" />` : ''}
 			${layerPart}
 		</template>
-	`}
+		`
+	}
 }

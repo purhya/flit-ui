@@ -19,7 +19,8 @@ export class LoadingCover extends Component {
 			align-items: center;
 			text-align: center;
 		}
-	`}
+		`
+	}
 }
 
 

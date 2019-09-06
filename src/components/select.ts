@@ -105,7 +105,8 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		.selected-icon{
 			margin-right: -4px;
 		}
-	`}
+		`
+	}
 
 	static properties = [...Popup.properties, 'icon', 'value', 'multiple', 'searchable', 'ordered', 'placeholder']
 
@@ -144,7 +145,8 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			${this.icon && !this.editing ? html`<f-icon class="icon" .type="${this.icon}" />` : ''}
 			${cache(this.opened ? this.renderLayer() : '', {transition: this.transition, enterAtStart: true})}
 		</template>
-	`}
+		`
+	}
 
 	protected renderLayer() {
 		let data = this.getMaySuggestedData()
@@ -162,7 +164,8 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			${listPart}
 			</ul>
 		</f-layer>
-	`}
+		`
+	}
 
 	protected renderOption(key: T, display: string | number) {
 		let selected = this.isSelected(key)
@@ -180,7 +183,8 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			<span class="text">${this.renderOptionDisplay(key, display)}</span>
 			${selected ? html`<f-icon class="selected-icon" type="selected" />` : ''}
 		</li>
-	`}
+		`
+	}
 
 	// Used to render like color select
 	protected renderOptionStyle(_key: T) {
