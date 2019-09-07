@@ -19,7 +19,7 @@ addGlobalStyle(() => {
 		height: ${lh(30)}px;
 		line-height: ${lh(30) - 2}px;
 		border: 1px solid ${borderColor};
-		color: ${theme.darkenInLightMode(borderColor, 10)};
+		color: ${theme.highlight(borderColor, 10)};
 		border-radius: ${borderRadius}px;
 		padding: 0 ${lh(15) + Math.max(0, (borderRadius - 5) / 2)}px;
 		background: ${backgroundColor};
@@ -107,7 +107,7 @@ addGlobalStyle(() => {
 	[type=text], [type=password], [type=number], [type=email], textarea{
 		border: none;
 		box-shadow: inset 0 -1px 0 0 ${borderColor};
-		background: ${theme.darkenInLightMode(backgroundColor, 10)};
+		background: ${theme.highlight(backgroundColor, 10)};
 		
 		&:focus{
 			box-shadow: inset 0 -1px 0 0 ${mainColor};
@@ -140,18 +140,18 @@ addGlobalStyle(() => {
 	::-webkit-scrollbar{
 		height: 10px;
 		width: 10px;
-		background: ${theme.darkenInLightMode(backgroundColor, 5)};
+		background: ${theme.highlight(backgroundColor, 5)};
 	}
 
 	::-webkit-scrollbar-thumb{
-		background: ${theme.darkenInLightMode(backgroundColor, 15)};
+		background: ${theme.highlight(backgroundColor, 15)};
 
 		&:hover{
-			background: ${theme.darkenInLightMode(backgroundColor, 25)};
+			background: ${theme.highlight(backgroundColor, 25)};
 		}
 
 		&:active{
-			background: ${theme.darkenInLightMode(backgroundColor, 35)};
+			background: ${theme.highlight(backgroundColor, 35)};
 		}
 	}
 `})

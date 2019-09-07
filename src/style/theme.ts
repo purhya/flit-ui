@@ -152,21 +152,12 @@ export class Theme implements ColorOptions, NotColorOptions {
 		}
 	}
 
-	darkenInLightMode(color: Color, percentage: number) {
+	highlight(color: Color, percentage: number) {
 		if (this.mode === 'light') {
 			return color.darken(percentage)
 		}
 		else {
 			return color.lighten(percentage)
-		}
-	}
-
-	lightenInLightMode(color: Color, percentage: number) {
-		if (this.mode === 'light') {
-			return color.lighten(percentage)
-		}
-		else {
-			return color.darken(percentage)
 		}
 	}
 

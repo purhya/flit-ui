@@ -90,7 +90,7 @@ define('f-main-color-select', class MainColorSelect extends Select {
 		['#f67d51', 'orange'  ],
 		['#15af78', 'green'   ],
 		['#888888', 'grey'    ],
-	]	
+	]
 
 	renderOptionStyle(color: string) {
 		return 'color: ' + color
@@ -98,6 +98,10 @@ define('f-main-color-select', class MainColorSelect extends Select {
 
 	renderOptionDisplay(_color: string, name: string) {
 		return ff.capitalize(name)
+	}
+
+	render() {
+		return html`<f-select style="color: ${this.value}" />`.inherit(super.render())
 	}
 
 	onReady() {
@@ -432,7 +436,7 @@ let {fragment} = renderAndWatch(() => {
 	</section>
 
 	<section>
-		<div style="display: inline-flex; height: 120px; padding: 10px 0 10px 10px; background: ${theme.darkenInLightMode(theme.backgroundColor, 5)}; line-height: 100px; font-size: 60px; text-align: center;"
+		<div style="display: inline-flex; height: 120px; padding: 10px 0 10px 10px; background: ${theme.highlight(theme.backgroundColor, 5)}; line-height: 100px; font-size: 60px; text-align: center;"
 			${droppable((value: number, index: number) => {
 				remove(leftData, value)
 				remove(rightData, value)
@@ -446,11 +450,11 @@ let {fragment} = renderAndWatch(() => {
 			})}
 		>
 			${repeat(leftData, (data: number, index: number) => html`
-				<div style="width: 100px; margin-right: 10px;" :style.background=${theme.darkenInLightMode(theme.backgroundColor, 15)} ${draggable(data, index)}>${data}</div>
+				<div style="width: 100px; margin-right: 10px;" :style.background=${theme.highlight(theme.backgroundColor, 15)} ${draggable(data, index)}>${data}</div>
 			`)}
 		</div>
 		<br>
-		<div style="display: inline-flex; height: 120px; padding: 10px 0 10px 10px; background: ${theme.darkenInLightMode(theme.backgroundColor, 5)}; line-height: 100px; font-size: 60px; text-align: center;"
+		<div style="display: inline-flex; height: 120px; padding: 10px 0 10px 10px; background: ${theme.highlight(theme.backgroundColor, 5)}; line-height: 100px; font-size: 60px; text-align: center;"
 			${droppable((value: number, index: number) => {
 				remove(leftData, value)
 				remove(rightData, value)
@@ -464,13 +468,13 @@ let {fragment} = renderAndWatch(() => {
 			})}
 		>
 			${repeat(rightData, (data: number, index: number) => html`
-				<div style="width: 100px; margin-right: 10px;" :style.background=${theme.darkenInLightMode(theme.backgroundColor, 15)} ${draggable(data, index)}>${data}</div>
+				<div style="width: 100px; margin-right: 10px;" :style.background=${theme.highlight(theme.backgroundColor, 15)} ${draggable(data, index)}>${data}</div>
 			`)}
 		</div>
 	</section>
 	
 	<section style="display: flex;">
-		<div style="width: 120px; padding: 10px 10px 0; background: ${theme.darkenInLightMode(theme.backgroundColor, 5)}; line-height: 100px; font-size: 60px; text-align: center;"
+		<div style="width: 120px; padding: 10px 10px 0; background: ${theme.highlight(theme.backgroundColor, 5)}; line-height: 100px; font-size: 60px; text-align: center;"
 			${droppable((value: number, index: number) => {
 				remove(leftData, value)
 				remove(rightData, value)
@@ -484,11 +488,11 @@ let {fragment} = renderAndWatch(() => {
 			})}
 		>
 			${repeat(leftData, (data: number, index: number) => html`
-				<div style="margin-bottom: 10px;" :style.background=${theme.darkenInLightMode(theme.backgroundColor, 15)} ${draggable(data, index)}>${data}</div>
+				<div style="margin-bottom: 10px;" :style.background=${theme.highlight(theme.backgroundColor, 15)} ${draggable(data, index)}>${data}</div>
 			`)}
 		</div>
 
-		<div style="width: 120px; padding: 10px 10px 0; background: ${theme.darkenInLightMode(theme.backgroundColor, 5)}; line-height: 100px; font-size: 60px; text-align: center;"
+		<div style="width: 120px; padding: 10px 10px 0; background: ${theme.highlight(theme.backgroundColor, 5)}; line-height: 100px; font-size: 60px; text-align: center;"
 			${droppable((value: number, index: number) => {
 				remove(leftData, value)
 				remove(rightData, value)
@@ -502,7 +506,7 @@ let {fragment} = renderAndWatch(() => {
 			})}
 		>
 			${repeat(rightData, (data: number, index: number) => html`
-				<div style="margin-bottom: 10px;" :style.background=${theme.darkenInLightMode(theme.backgroundColor, 15)} ${draggable(data, index)}>${data}</div>
+				<div style="margin-bottom: 10px;" :style.background=${theme.highlight(theme.backgroundColor, 15)} ${draggable(data, index)}>${data}</div>
 			`)}
 		</div>
 	</section>
