@@ -1,4 +1,4 @@
-import {toPower} from 'ff'
+import {toPower, avg} from 'ff'
 
 
 export class Color {
@@ -104,6 +104,32 @@ export class Color {
 		b += p
 
 		return this.formatRGBA(r, g, b, a)
+	}
+
+	/** Darken if is a light color, otherwise lighten. */
+	highlight(percentage: number) {
+		if (this.getLightness() < 0.5) {
+			return this.lighten(percentage)
+		}
+		else {
+			return this.darken(percentage)
+		}
+	}
+
+	/** Lighten if is a light color, otherwise darken. */
+	highlightAsText(percentage: number) {
+		if (this.getLightness() > 0.5) {
+			return this.lighten(percentage)
+		}
+		else {
+			return this.darken(percentage)
+		}
+	}
+
+	/** Returns lightless value of current color, betweens 0 ~ 1. */
+	getLightness() {
+		let [r, g, b] = this.getRGBA()
+		return avg([r, g, b])
 	}
 
 	/** Change alpha channel of current color to value betweens 0-1. */

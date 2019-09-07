@@ -425,7 +425,7 @@ export class MenuItem<Events = any> extends Component<Events> {
 			padding: 0 ${lh(10)}px;
 
 			&.hover{
-				background: ${theme.highlight(layerBackgroundColor, 5)};
+				background: ${layerBackgroundColor.highlight(5)};
 			}
 
 			&.submenu-opened{

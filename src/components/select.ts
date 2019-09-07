@@ -22,7 +22,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			border-bottom: 1px solid ${borderColor};
 			width: 150px;
 			height: ${lh(30)}px;
-			background: ${theme.highlight(backgroundColor, 10)};
+			background: ${backgroundColor.highlight(10)};
 			line-height: ${lh(30)}px;
 			justify-content: space-between;
 			align-items: center;
@@ -84,7 +84,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			}
 
 			&.hover{
-				background: ${theme.highlight(layerBackgroundColor, 5)};
+				background: ${layerBackgroundColor.highlight(5)};
 
 				&.selected{
 					background: ${mainColor.alpha(0.15)};

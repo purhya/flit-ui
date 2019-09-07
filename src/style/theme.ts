@@ -152,15 +152,6 @@ export class Theme implements ColorOptions, NotColorOptions {
 		}
 	}
 
-	highlight(color: Color, percentage: number) {
-		if (this.mode === 'light') {
-			return color.darken(percentage)
-		}
-		else {
-			return color.lighten(percentage)
-		}
-	}
-
 	protected getOption<P extends keyof ThemeOptions>(property: P): ThemeOptions[P] {
 		return this.options[property] as ThemeOptions[P]
 	}

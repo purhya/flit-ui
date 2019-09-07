@@ -43,8 +43,8 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 
 		.head{
 			padding-right: 10px;	// Same with defined scrollbar width.
-			border-bottom: 1px solid ${theme.highlight(backgroundColor, 15)};
-			color: ${theme.mode === 'light' ? textColor.darken(30) : textColor.lighten(30)};
+			border-bottom: 1px solid ${backgroundColor.highlight(15)};
+			color: ${textColor.highlight(20)};
 			font-size: ${fs(12)}px;
 			user-select: none;
 		}
@@ -111,7 +111,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 				top: 6px;
 				bottom: 6px;
 				width: 1px;
-				background: ${theme.highlight(backgroundColor, 15)};
+				background: ${backgroundColor.highlight(15)};
 			}
 		}
 
@@ -146,7 +146,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 		td{
 			vertical-align: middle;
 			padding: 0 ${lh(8)}px;
-			border-bottom: 1px solid ${theme.highlight(backgroundColor, 7.5)};
+			border-bottom: 1px solid ${backgroundColor.highlight(7.5)};
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
