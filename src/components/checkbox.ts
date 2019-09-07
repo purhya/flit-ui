@@ -38,7 +38,7 @@ export class Checkbox<Events = any> extends Component<Events & CheckboxEvents> {
 			height: ${lh(15)}px;
 			border: 1px solid currentColor;
 			border-radius: 2px;
-			margin-right: ${lh(5)}px;
+			margin-right: ${lh(6)}px;
 		}
 
 		.indeterminate, .checked{

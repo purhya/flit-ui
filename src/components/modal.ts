@@ -38,7 +38,7 @@ export class Modal<Events = any> extends Component<Events> {
 			display: flex;
 			height: ${lh(40) + 2}px;
 			line-height: ${lh(40)}px;
-			border-bottom: 2px solid ${textColor};
+			border-bottom: 2px solid ${textColor.darken(10)};
 		}
 
 		.head{
@@ -63,7 +63,7 @@ export class Modal<Events = any> extends Component<Events> {
 				width: ${lh(30)}px;
 				height: ${lh(30)}px;
 				cursor: pointer;
-				color: #333;
+				color: ${textColor};
 				transition: color 0.2s ease-out;
 
 				f-icon{
