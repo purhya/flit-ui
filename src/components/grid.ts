@@ -1,7 +1,7 @@
-import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, TransitionOptions} from 'flit'
+import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, TransitionOptions, observeGetter} from 'flit'
 import {theme} from '../style/theme'
 import {Store} from '../store/store'
-import {getScrollbarWidth, watch, Order, getNumeric, sum, repeatTimes} from 'ff'
+import {getScrollbarWidth, watchLayout, Order, getNumeric, sum, repeatTimes} from 'ff'
 import {AsyncStore} from '../store/async-store'
 
 
@@ -174,7 +174,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 		`
 	}
 
-	static properties = ['resizable', 'live']
+	static properties = ['resizable', 'live', 'pageSize', 'minColumnWidth']
 
 	resizable: boolean = false
 	live: boolean = false
@@ -186,10 +186,10 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 
 	protected orderedColumnIndex: number = -1
 	protected orderDirection: 'asc' | 'desc' | '' = ''
-	protected unwatchSize: (() => void) | null = null
 	protected columnWidths: number[] | null = null
 	protected resizingColumnWidths: number[] | null = null
 	protected columnResized: boolean = false
+	protected cachedTotalWidth: number = 0
 	protected repeatDir: LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item> | null = null
 
 	render(): TemplateResult {
@@ -321,16 +321,11 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 	}
 
 	onConnected () {
-		this.unwatchSize = watch(this.el, 'size', () => this.updatColumnWidths())
-	}
+		this.watch(() => observeGetter(this, 'columns'), this.updatColumnWidthsRoughly)
 
-	onDisconnected() {
-		if (this.unwatchSize) {
-			this.unwatchSize()
-			this.unwatchSize = null
-		}
+		let unwatchSize = watchLayout(this.el, 'size', () => this.updatColumnWidths())
+		this.once('disconnected', unwatchSize)
 	}
-
 
 	// Order part
 	protected doOrdering(e: MouseEvent, index: number) {
@@ -378,8 +373,19 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 
 	// Resizing part
 	protected updatColumnWidths() {
-		let clientWidth = this.refs.head.clientWidth - getNumeric(this.refs.head, 'paddingLeft') - getNumeric(this.refs.head, 'paddingRight')
+		let totalWidth = this.refs.head.clientWidth - getNumeric(this.refs.head, 'paddingLeft') - getNumeric(this.refs.head, 'paddingRight')
+		this.cachedTotalWidth = totalWidth
+		this.updatColumnWidthsWithTotalWidth(totalWidth)
+	}
 
+	// Used to adjust column widths after columns changed.
+	// Many elements will be relayout after columns changed, 
+	// And `updatColumnWidths` will cause force relayout.
+	protected updatColumnWidthsRoughly() {
+		this.updatColumnWidthsWithTotalWidth(this.cachedTotalWidth)
+	}
+
+	protected updatColumnWidthsWithTotalWidth(totalWidth: number) {
 		let widthAndFlexArray = this.columns.map(({flex, width}, index) => {
 			let baseWidthInColumnConfig = Math.max(width || 0, this.minColumnWidth)
 
@@ -400,7 +406,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 			return [baseWidth, extendFlex, shrinkFlex]
 		}) as [number, number, number][]
 		
-		let widths = columnWidthCalculator(widthAndFlexArray, clientWidth, this.minColumnWidth)
+		let widths = columnWidthCalculator(widthAndFlexArray, totalWidth, this.minColumnWidth)
 		this.columnWidths = widths
 		this.setColumnWidths(widths)
 	}

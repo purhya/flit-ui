@@ -1,6 +1,6 @@
 import {defineBinding, Context, on, off, renderComplete, define, css, Transition, Binding, once, BindingResult, TemplateResult, DirectiveResult, renderComponent, html} from 'flit'
 import {Layer} from '../components/layer'
-import {alignToEvent, watch} from 'ff'
+import {alignToEvent, watchLayout} from 'ff'
 import {theme} from '../style/theme'
 
 export type MenuRenderFn = () => TemplateResult | DirectiveResult
@@ -60,7 +60,7 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 		on(document, 'mousedown', this.onDocMouseDown, this)
 		once(layer.el, 'click', this.hideContextMenu, this)
 
-		this.unwatchRect = watch(this.el, 'rect', this.onLayerRectChanged.bind(this))
+		this.unwatchRect = watchLayout(this.el, 'rect', this.onLayerRectChanged.bind(this))
 	}
 
 	private renderLayer(): ContextMenuLayer  {

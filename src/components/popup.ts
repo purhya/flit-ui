@@ -1,5 +1,5 @@
 import {css, define, Component, html, on, off, cache, once, renderComplete, getComponent} from 'flit'
-import {getAlignDirection, onceMouseLeaveAll, align, timeout, Timeout, watch, Rect} from 'ff'
+import {getAlignDirection, onceMouseLeaveAll, align, timeout, Timeout, watchLayout, Rect} from 'ff'
 import {Layer} from './layer'
 import {theme} from '../style/theme'
 
@@ -211,7 +211,7 @@ export class Popup<Events = any> extends Component<Events> {
 			on(document, 'mousedown', this.onDocMouseDown, this)
 		}
 		
-		this.unwatchRect = watch(this.el, 'rect', this.onLayerRectChanged.bind(this))
+		this.unwatchRect = watchLayout(this.el, 'rect', this.onLayerRectChanged.bind(this))
 	}
 
 	protected mayFocusLayer() {
