@@ -6,7 +6,7 @@ import {AsyncStore} from '../store/async-store'
 
 
 interface GridEvents<Item> {
-	rendered: (data: Item[], index: number) => void
+	livedataupdated: (data: Item[], index: number) => void
 }
 
 export type RowRenderer<Item extends object> = (this: Grid<Item>, item: Item | null, index: number) => TemplateResult
@@ -242,7 +242,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 					pageSize: this.pageSize,
 					averageItemHeight: theme.lineHeight + 1,
 					ref: (dir) => this.setRepeatDirective(dir as any),
-					onrendered: this.onRendered.bind(this) as any
+					onUpdated: this.onRepeatDataUpdated.bind(this) as any
 				},
 				this.renderRow.bind(this as any) as any,
 				this.transition
@@ -255,7 +255,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 					pageSize: this.pageSize,
 					averageItemHeight: theme.lineHeight + 1,
 					ref: (dir) => this.setRepeatDirective(dir),
-					onrendered: this.onRendered.bind(this)
+					onUpdated: this.onRepeatDataUpdated.bind(this)
 				},
 				this.renderRow.bind(this as any),
 				this.transition
@@ -287,8 +287,8 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 		}
 	}
 
-	protected onRendered(data: Item[], index: number) {
-		this.emit('rendered', data, index)
+	protected onRepeatDataUpdated(data: Item[], index: number) {
+		this.emit('livedataupdated', data, index)
 	}
 
 	protected getOrderIcon(index: number): string {
