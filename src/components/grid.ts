@@ -184,6 +184,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 	minColumnWidth: number = 64
 	transition: TransitionOptions | undefined
 
+	protected orderedColumnTitle: string = ''
 	protected orderedColumnIndex: number = -1
 	protected orderDirection: 'asc' | 'desc' | '' = ''
 	protected columnWidths: number[] | null = null
@@ -321,7 +322,10 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 	}
 
 	onConnected () {
-		this.watch(() => observeGetter(this, 'columns'), this.updatColumnWidthsRoughly)
+		this.watch(() => observeGetter(this, 'columns'), () => {
+			this.findOrderedColumn()
+			this.updatColumnWidthsRoughly()
+		})
 
 		let unwatchSize = watchLayout(this.el, 'size', () => this.updatColumnWidths())
 		this.once('disconnected', unwatchSize)
@@ -366,10 +370,23 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 			this.store.setOrder(order)
 		}
 
+		this.orderedColumnTitle = this.columns[index].title
 		this.orderedColumnIndex = index
 		this.orderDirection = direction
 	}
 
+	private findOrderedColumn() {
+		if (this.orderedColumnTitle) {
+			let columnIndex = this.columns.findIndex(column => column.title === this.orderedColumnTitle)
+			if (columnIndex > -1) {
+				this.orderedColumnIndex = columnIndex
+				return
+			}
+		}
+		
+		this.orderedColumnIndex = -1
+		this.orderDirection = ''
+	}
 
 	// Resizing part
 	protected updatColumnWidths() {
