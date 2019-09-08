@@ -7,12 +7,20 @@ import {AsyncStore} from '../store/async-store'
 
 interface GridEvents<Item> {
 	livedataupdated: (data: Item[], index: number) => void
+	orderchanged: (name: string, direction: 'asc' | 'desc' | '') => void
 }
 
 export type RowRenderer<Item extends object> = (this: Grid<Item>, item: Item | null, index: number) => TemplateResult
 
 
 export interface Column<Item = any> {
+	/** 
+	 * If you want to remember last ordered columns after columns changed,
+	 * or want to restore last ordered column from storage,
+	 * You should set name.
+	 */
+	name?: string
+
 	title: string
 	width?: number
 	flex?: number | string
@@ -23,7 +31,7 @@ export interface Column<Item = any> {
 	/** If specified as `true`, will using desc ordering firstly, then asc ordering */
 	descFirst?: boolean
 
-	/**Returns cell content or `<td>...</td>`. */
+	/** Returns cell content or `<td>...</td>`. */
 	render?: (item: Item, index: number) => TemplateResult | string | number
 }
 
@@ -183,10 +191,10 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 	store!: Store<Item> | AsyncStore<Item>
 	minColumnWidth: number = 64
 	transition: TransitionOptions | undefined
+	orderedColumnName: string | null = null
+	orderedDirection: 'asc' | 'desc' | '' = ''
 
-	protected orderedColumnTitle: string = ''
 	protected orderedColumnIndex: number = -1
-	protected orderDirection: 'asc' | 'desc' | '' = ''
 	protected columnWidths: number[] | null = null
 	protected resizingColumnWidths: number[] | null = null
 	protected columnResized: boolean = false
@@ -219,7 +227,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 				<div class="column-left">
 					<div class="column-title">${column.title}</div>
 					${column.orderBy ? html`
-						<div class="order" :class.current=${this.orderedColumnIndex === index && this.orderDirection !== ''}>
+						<div class="order" :class.current=${this.orderedColumnIndex === index && this.orderedDirection !== ''}>
 							<f-icon .type=${this.getOrderIcon(index)} />
 						</div>`
 					: ''}
@@ -293,10 +301,10 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 
 	protected getOrderIcon(index: number): string {
 		if (index === this.orderedColumnIndex) {
-			if (this.orderDirection === 'asc') {
+			if (this.orderedDirection === 'asc') {
 				return 'order-asc'
 			}
-			else if (this.orderDirection === 'desc') {
+			else if (this.orderedDirection === 'desc') {
 				return 'order-desc'
 			}
 		}
@@ -315,6 +323,8 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 	}
 
 	onReady() {
+		this.restoreOrderedColumn()
+
 		onRenderComplete(() => {
 			this.refs.head.style.paddingRight = getScrollbarWidth() + 'px'
 			this.updatColumnWidths()
@@ -323,7 +333,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 
 	onConnected () {
 		this.watch(() => observeGetter(this, 'columns'), () => {
-			this.findOrderedColumn()
+			this.restoreOrderedColumn()
 			this.updatColumnWidthsRoughly()
 		})
 
@@ -347,45 +357,59 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 
 		if (index === this.orderedColumnIndex) {
 			if (descFirst) {
-				direction = this.orderDirection === '' ? 'desc' : this.orderDirection === 'desc' ? 'asc' : ''
+				direction = this.orderedDirection === '' ? 'desc' : this.orderedDirection === 'desc' ? 'asc' : 'desc'
 			}
 			else {
-				direction = this.orderDirection === '' ? 'asc' : this.orderDirection === 'asc' ? 'desc' : ''
+				direction = this.orderedDirection === '' ? 'asc' : this.orderedDirection === 'asc' ? 'desc' : 'asc'
 			}
 		}
 		else {
 			direction = descFirst ? 'desc' : 'asc'
 		}
 
-		if (direction === '') {
+
+		this.orderedColumnName = this.columns[index].name || null
+		this.orderedColumnIndex = index
+		this.orderedDirection = direction
+
+		this.orderStore()
+
+		if (this.orderedColumnName) {
+			this.emit('orderchanged', this.orderedColumnName, direction)
+		}
+	}
+
+	private orderStore() {
+		if (this.orderedDirection === '') {
 			this.store.clearOrder()
 		}
 		else if (this.store instanceof AsyncStore) {
-			let column = this.columns[index]
-			this.store.setOrder(column.orderBy as string, direction)
+			let column = this.columns[this.orderedColumnIndex]
+			this.store.setOrder(column.orderBy as string, this.orderedDirection)
 		}
 		else {
-			let column = this.columns[index]
-			let order = new Order([(column.orderBy || column.render) as (item: Item) => string | number, direction])
+			let column = this.columns[this.orderedColumnIndex]
+			let order = new Order([(column.orderBy || column.render) as (item: Item) => string | number, this.orderedDirection])
 			this.store.setOrder(order)
 		}
-
-		this.orderedColumnTitle = this.columns[index].title
-		this.orderedColumnIndex = index
-		this.orderDirection = direction
 	}
 
-	private findOrderedColumn() {
-		if (this.orderedColumnTitle) {
-			let columnIndex = this.columns.findIndex(column => column.title === this.orderedColumnTitle)
+	private restoreOrderedColumn() {
+		let oldOrderedColumnIndex = this.orderedColumnIndex
+
+		if (this.orderedColumnName) {
+			let columnIndex = this.columns.findIndex(column => column.name === this.orderedColumnName)
 			if (columnIndex > -1) {
 				this.orderedColumnIndex = columnIndex
+				if (oldOrderedColumnIndex === -1) {
+					this.orderStore()
+				}
 				return
 			}
 		}
 		
 		this.orderedColumnIndex = -1
-		this.orderDirection = ''
+		this.orderedDirection = ''
 	}
 
 	// Resizing part
