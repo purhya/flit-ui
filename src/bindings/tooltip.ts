@@ -4,6 +4,15 @@ import {Popup} from '../components/popup'
 import {Layer} from '../components/layer'
 
 
+export interface TooltipOptions {
+	alignPosition?: string
+	alignMargin?: number | number[]
+	showDelay?: number
+	hideDelay?: number
+	keepVisible?: boolean
+}
+
+
 @define('f-tooltip-layer')
 export class TooltipLayer extends Layer {
 
@@ -144,14 +153,6 @@ async function getGlobalTooltip(el: HTMLElement): Promise<GlobalTooltip> {
 	return globalTooltip
 }
 
-
-export interface TooltipOptions {
-	alignPosition?: string
-	alignMargin?: number | number[]
-	showDelay?: number
-	hideDelay?: number
-	keepVisible?: boolean
-}
 
 export let defaultTooltipOptions: Required<TooltipOptions> = {
 	alignPosition: 't',

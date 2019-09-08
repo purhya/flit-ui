@@ -239,7 +239,7 @@ export class Popup<Events = any> extends Component<Events> {
 		let dw = document.documentElement.offsetWidth
 		let dh = document.documentElement.offsetHeight
 
-		if (rect.width > 0 && rect.height > 0) {
+		if (rect.width > 0 && rect.height > 0 && this.trigger !== 'hover') {
 			let inViewport = rect.top < dh && rect.bottom > 0 && rect.left < dw && rect.right > 0
 			if (inViewport) {
 				this.alignLayer()
