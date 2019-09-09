@@ -248,7 +248,6 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 					dataCount: this.store.dataCount.bind(this.store),
 					dataGetter: this.store.dataGetter.bind(this.store) as any,
 					pageSize: this.pageSize,
-					averageItemHeight: theme.lineHeight + 1,
 					ref: (dir) => this.setRepeatDirective(dir as any),
 					onUpdated: this.onRepeatDataUpdated.bind(this) as any
 				},
@@ -261,7 +260,6 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 				{
 					data: this.store.currentData,
 					pageSize: this.pageSize,
-					averageItemHeight: theme.lineHeight + 1,
 					ref: (dir) => this.setRepeatDirective(dir),
 					onUpdated: this.onRepeatDataUpdated.bind(this)
 				},

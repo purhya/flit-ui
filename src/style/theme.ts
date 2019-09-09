@@ -84,7 +84,7 @@ const defaultDrakThemeOptions: ThemeOptions = {
 
 	layerBackgroundColor: new Color('#303030').lighten(5).toString(),
 	layerBorderRadius: 8,
-	layerShadowColor: 'rgba(0, 0, 0, 1)',
+	layerShadowColor: 'rgba(0, 0, 0, 0.66)',
 	layerShadowBlurRadius: 6,
 
 	focusBlurRadius: 3,

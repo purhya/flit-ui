@@ -1,4 +1,4 @@
-import {css, html, renderComplete, cache, repeat, define} from 'flit'
+import {css, html, renderComplete, cache, repeat, define, TemplateResult} from 'flit'
 import {theme} from '../style/theme'
 import {Popup} from './popup'
 import {remove, scrollToView, scrollToTop} from 'ff'
@@ -74,7 +74,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			max-height: 100%;
 		}
 
-		.item{
+		.option{
 			display: flex;
 			padding: 0 8px;
 			cursor: pointer;
@@ -97,7 +97,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			}
 		}
 
-		.text{
+		.option-content{
 			flex: 1;
 			min-width: 0;
 		}
@@ -133,18 +133,24 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			:class.opened=${this.opened}
 			:class.not-inputable=${!this.searchable}
 		>
-			<input type="text"
-				class="input"
-				:ref="input"
-				.value=${this.editing ? this.inputed : this.renderCurrentDisplay()}
-				.placeholder=${this.placeholder}
-				?readonly=${!this.editing}
-				@click=${this.onClick}
-				@input=${this.onInput}
-			>
+			${this.renderCurrentContent()}
 			${this.icon && !this.editing ? html`<f-icon class="icon" .type="${this.icon}" />` : ''}
 			${cache(this.opened ? this.renderLayer() : '', {transition: this.transition, enterAtStart: true})}
 		</template>
+		`
+	}
+
+	protected renderCurrentContent(): TemplateResult | string | number {
+		return html`
+		<input type="text"
+			class="input"
+			:ref="input"
+			.value=${this.editing ? this.inputed : this.renderCurrentDisplay()}
+			.placeholder=${this.placeholder}
+			?readonly=${!this.editing}
+			@click=${this.onClick}
+			@input=${this.onInput}
+		>
 		`
 	}
 
@@ -172,7 +178,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 
 		return html`
 		<li
-			class="item"
+			class="option"
 			:class.selected=${selected}
 			:class.hover=${this.hoverAt !== null && this.hoverAt === key}
 			@click.prevent=${() => this.select(key)}
@@ -180,7 +186,9 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			@mouseleave=${() => this.onMouseLeave(key)}
 			style=${this.renderOptionStyle(key)}
 		>
-			<span class="text">${this.renderOptionDisplay(key, display)}</span>
+			<div class="option-content">
+				${this.renderOptionContent(key, display)}
+			</div>
 			${selected ? html`<f-icon class="selected-icon" type="selected" />` : ''}
 		</li>
 		`
@@ -216,6 +224,10 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 
 	protected renderOptionDisplay(_key: T, display: string | number): string | number {
 		return display
+	}
+
+	protected renderOptionContent(key: T, display: string | number): TemplateResult | string | number {
+		return this.renderOptionDisplay(key, display)
 	}
 
 	protected getMaySuggestedData(): Iterable<[T, string | number]> {
