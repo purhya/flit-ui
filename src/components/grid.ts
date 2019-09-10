@@ -1,4 +1,4 @@
-import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, TransitionOptions, observeGetter} from 'flit'
+import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, TransitionOptions, observeGetter, renderComplete} from 'flit'
 import {theme} from '../style/theme'
 import {Store} from '../store/store'
 import {getScrollbarWidth, watchLayout, Order, getNumeric, sum, repeatTimes} from 'ff'
@@ -318,11 +318,11 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 				}
 			}
 		}
+
+		this.restoreOrderedColumn()
 	}
 
 	onReady() {
-		this.restoreOrderedColumn()
-
 		onRenderComplete(() => {
 			this.refs.head.style.paddingRight = getScrollbarWidth() + 'px'
 			this.updatColumnWidths()
@@ -330,8 +330,11 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 	}
 
 	onConnected () {
-		this.watch(() => observeGetter(this, 'columns'), () => {
+		this.watch(() => observeGetter(this, 'columns'), async () => {
 			this.restoreOrderedColumn()
+
+			// Here we need it render new `<col>`s.
+			await renderComplete()
 			this.updatColumnWidthsRoughly()
 		})
 
