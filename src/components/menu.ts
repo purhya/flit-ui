@@ -376,7 +376,7 @@ export class SubMenu<Events = any> extends CommonMenu<Events> {
 				this.root.onSubMenuOpened(this)
 			}
 			else {
-				let fragment = render(() => {
+				let {fragment} = render(() => {
 					return cache(
 						this.opened ? html`<f-layer class="layer" .trangle=${false} :ref=${this.onRefLayer} />` : '',
 						{enterAtStart: true, transition: 'fade'}

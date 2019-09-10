@@ -118,7 +118,7 @@ export class GlobalTooltip extends Tooltip {
 	async showLayer() {
 		// Can't render `<layer>` in current `el` since it's dynamic and blongs to another component.
 		if (!this.refs.layer) {
-			let fragment = render(() => {
+			let {fragment} = render(() => {
 				return cache(this.opened ? (this.renderLayer()) : '', this.transition)
 			}, this)
 			

@@ -117,8 +117,15 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 
 	private addItemsToCurrentData(items: Item[], atStart: boolean = false) {
 		if (this.order) {
-			for (let item of items) {
-				this.order.binaryInsert(this.currentData, item)
+			if (items.length > 1) {
+				let newData = this.currentData.length > 0 ? [...this.currentData, ...items] : items
+				this.order.sortArray(newData)
+				this.currentData = newData
+			}
+			else {
+				for (let item of items) {
+					this.order.binaryInsert(this.currentData, item)
+				}
 			}
 		}
 		else {
