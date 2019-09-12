@@ -75,6 +75,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 		.column-left{
 			flex: 1;
 			display: flex;
+			max-width: 100%;
 
 			&:hover .order{
 				display: flex;
