@@ -9,7 +9,6 @@ export interface TooltipOptions {
 	alignMargin?: number | number[]
 	showDelay?: number
 	hideDelay?: number
-	keepVisible?: boolean
 }
 
 
@@ -59,7 +58,7 @@ export class TooltipLayer extends Layer {
 @define('f-tooltip')
 export class Tooltip<Events = any> extends Popup<Events> {
 
-	title: string = ''
+	protected title: string = ''
 
 	protected renderLayer() {
 		return html`
@@ -78,16 +77,18 @@ export class Tooltip<Events = any> extends Popup<Events> {
 
 export class GlobalTooltip extends Tooltip {
 
-	keepVisible: boolean = false
-
-	// When `keepVisible = true`, keep visible until `keepVisible = false`.
-	protected mouseLeaved: boolean = false
+	protected keepVisible: boolean = false
+	protected locked: boolean = false
 
 	// Can't update `el` since it uses dynamic `el`
 	// Otherwise, `onRendered` and `alignLayer` will not be called.
 	update() {}
 
 	setEl(el: HTMLElement) {
+		if (this.locked) {
+			return
+		}
+		
 		if (this.el !== el) {
 			off(this.el, 'mouseenter', this.showLayerLater, this)
 			this.el = el
@@ -95,24 +96,21 @@ export class GlobalTooltip extends Tooltip {
 	}
 
 	async setTitleAndOptions(title: string, options: TooltipOptions = {}) {
-		this.title = title
-		Object.assign(this, defaultTooltipOptions, options)
-
-		// When no need to keep `layer` visible.
-		if (!this.keepVisible && this.mouseLeaved) {
-			this.mouseLeaved = false
-			this.hideLayerLater()
+		if (this.locked) {
+			return
 		}
 
+		this.setTitle(title)
+		Object.assign(this, defaultTooltipOptions, options)
+
 		// When `title` changed, do aligning.
-		else if (this.opened) {
+		if (this.opened) {
 			await this.showLayer()
 		}
 	}
 
-	showLayerLater() {
-		super.showLayerLater()
-		this.mouseLeaved = false
+	async setTitle(title: string) {
+		this.title = title
 	}
 
 	async showLayer() {
@@ -131,18 +129,43 @@ export class GlobalTooltip extends Tooltip {
 	}
 
 	hideLayerLater() {
-		if (this.keepVisible) {
-			this.mouseLeaved = true
+		if (this.locked) {
+			return
 		}
-		else {
-			super.hideLayerLater()
+
+		super.hideLayerLater()
+	}
+
+	protected onMouseLeave() {
+		if (!this.keepVisible) {
+			super.onMouseLeave()
 		}
+	}
+
+	protected shouldHideWhenElLayerChanged() {
+		return !this.keepVisible && super.shouldHideWhenElLayerChanged()
+	}
+
+	setKeepVisible(keep: boolean) {
+		if (this.locked) {
+			return
+		}
+		
+		this.keepVisible = keep
+	}
+
+	lock() {
+		this.locked = true
+	}
+
+	unlock() {
+		this.locked = false
 	}
 }
 
 
 let globalTooltip: GlobalTooltip | null = null
-async function getGlobalTooltip(el: HTMLElement): Promise<GlobalTooltip> {
+export async function getGlobalTooltip(el: HTMLElement): Promise<GlobalTooltip> {
 	if (!globalTooltip) {
 		globalTooltip = new GlobalTooltip(el)
 	}
@@ -159,7 +182,6 @@ export let defaultTooltipOptions: Required<TooltipOptions> = {
 	alignMargin: 3,
 	showDelay: 0,
 	hideDelay: 200,
-	keepVisible: false
 }
 
 
@@ -196,10 +218,7 @@ class TooltipBinding implements Binding<[string, TooltipOptions | undefined]> {
 		if (this.hasTitle()) {
 			let tooltip = await getGlobalTooltip(this.el)
 			tooltip.setTitleAndOptions(this.title, this.options!)
-
-			if (!tooltip.opened) {
-				tooltip.showLayerLater()
-			}
+			tooltip.showLayerLater()
 		}
 	}
 

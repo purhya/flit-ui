@@ -182,8 +182,8 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			:class.selected=${selected}
 			:class.hover=${this.hoverAt !== null && this.hoverAt === key}
 			@click.prevent=${() => this.select(key)}
-			@mouseenter=${() => this.onMouseEnter(key)}
-			@mouseleave=${() => this.onMouseLeave(key)}
+			@mouseenter=${() => this.onMouseEnterOption(key)}
+			@mouseleave=${() => this.onMouseLeaveOption(key)}
 			style=${this.renderOptionStyle(key)}
 		>
 			<div class="option-content">
@@ -427,7 +427,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		}
 	}
 
-	protected onMouseEnter(key: T) {
+	protected onMouseEnterOption(key: T) {
 		this.hoverAt = key
 
 		if (document.activeElement !== this.refs.input) {
@@ -435,7 +435,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		}
 	}
 
-	protected onMouseLeave(key: T) {
+	protected onMouseLeaveOption(key: T) {
 		if (this.hoverAt === key) {
 			this.hoverAt = null
 		}

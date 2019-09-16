@@ -5,7 +5,7 @@ import * as flit from 'flit'
 import * as fui from '../src'
 (window as any).fui = fui
 
-import {html, renderAndWatch, renderComponent, define, liveAsyncRepeat, repeat, observe} from 'flit'
+import {html, render, renderComponent, define, liveAsyncRepeat, repeat, observe} from 'flit'
 import {Modal, message, notification, Select, theme, ThemeOptions, Store, contextmenu, draggable, droppable} from '../src'
 import {remove} from 'ff'
 
@@ -229,11 +229,11 @@ function hideModal() {
 }
 
 
-let {fragment} = renderAndWatch(() => {
+let {fragment} = render(() => {
 	let {lineHeight} = theme
 
 	return html`
-
+ 
 	<section class="theme">
 		<div><span>Theme:</span><f-theme-select style="width: ${lineHeight * 5}px;" /></div>
 		<div><span>Size:</span><f-size-select style="width: ${lineHeight * 5}px;" /></div>

@@ -155,12 +155,13 @@ export class Popup<Events = any> extends Component<Events> {
 		}
 	}
 
-	protected clearTimeoutAndUnwatch() {
+	protected clearTimeout() {
 		if (this.timeout) {
 			this.timeout.cancel()
-			this.timeout = null
 		}
+	}
 
+	protected unwatch() {
 		if (this.unwatchRect) {
 			this.unwatchRect()
 			this.unwatchRect = null
@@ -173,9 +174,11 @@ export class Popup<Events = any> extends Component<Events> {
 	}
 
 	showLayerLater() {
-		this.clearTimeoutAndUnwatch()
+		this.clearTimeout()
 
 		if (!this.opened) {
+			this.unwatch()
+
 			if (this.trigger === 'hover' || this.trigger === 'focus') {
 				this.timeout = timeout(this.showLayer.bind(this), this.hoverShowDelay)
 
@@ -193,7 +196,8 @@ export class Popup<Events = any> extends Component<Events> {
 	}
 
 	async showLayer() {
-		this.clearTimeoutAndUnwatch()
+		this.clearTimeout()
+		this.unwatch()
 		this.opened = true
 
 		// Wait for `refs.layer` to be referenced.
@@ -205,13 +209,13 @@ export class Popup<Events = any> extends Component<Events> {
 
 		if (this.trigger === 'hover') {
 			off(this.el, 'mouseleave', this.hideLayerLater, this)
-			this.unwatchLeave = onceMouseLeaveAll([this.el, this.refs.layer], this.hideLayerLater.bind(this))
+			this.unwatchLeave = onceMouseLeaveAll([this.el, this.refs.layer], this.onMouseLeave.bind(this))
 		}
 		else if (this.trigger === 'click' || this.trigger === 'contextmenu') {
 			on(document, 'mousedown', this.onDocMouseDown, this)
 		}
 		
-		this.unwatchRect = watchLayout(this.el, 'rect', this.onLayerRectChanged.bind(this))
+		this.unwatchRect = watchLayout(this.el, 'rect', this.onElRectChanged.bind(this))
 	}
 
 	protected mayFocusLayer() {
@@ -227,6 +231,10 @@ export class Popup<Events = any> extends Component<Events> {
 		}
 	}
 
+	protected onMouseLeave() {
+		this.hideLayerLater()
+	}
+
 	protected onDocMouseDown(e: Event) {
 		let target = e.target as Element
 
@@ -235,19 +243,21 @@ export class Popup<Events = any> extends Component<Events> {
 		}
 	}
 
-	protected onLayerRectChanged(rect: Rect) {
+	protected onElRectChanged(rect: Rect) {
 		let dw = document.documentElement.offsetWidth
 		let dh = document.documentElement.offsetHeight
 
-		if (rect.width > 0 && rect.height > 0 && this.trigger !== 'hover') {
-			let inViewport = rect.top < dh && rect.bottom > 0 && rect.left < dw && rect.right > 0
-			if (inViewport) {
-				this.alignLayer()
-			}
+		let inViewport = rect.width > 0 && rect.height > 0 && rect.top < dh && rect.bottom > 0 && rect.left < dw && rect.right > 0
+		if (inViewport && !this.shouldHideWhenElLayerChanged()) {
+			this.alignLayer()
 		}
 		else {
 			this.hideLayerLater()
 		}
+	}
+
+	protected shouldHideWhenElLayerChanged(): boolean {
+		return this.trigger === 'hover'
 	}
 
 	protected alignLayer() {
@@ -256,7 +266,8 @@ export class Popup<Events = any> extends Component<Events> {
 	}
 
 	hideLayerLater() {
-		this.clearTimeoutAndUnwatch()
+		this.clearTimeout()
+		this.unwatch()
 		this.unbindEventsBeforeHide()
 
 		if (this.opened) {
@@ -265,7 +276,8 @@ export class Popup<Events = any> extends Component<Events> {
 	}
 
 	hideLayer() {
-		this.clearTimeoutAndUnwatch()
+		this.clearTimeout()
+		this.unwatch()
 		this.unbindEventsBeforeHide()
 		
 		if (this.opened && this.focusEl) {
@@ -282,7 +294,7 @@ export class Popup<Events = any> extends Component<Events> {
 	}
 
 	protected restoreFocusFromLayer() {
-		if (document.activeElement && this.refs.layer.contains(document.activeElement)) {
+		if (document.activeElement && this.refs.layer && this.refs.layer.contains(document.activeElement)) {
 			this.focusEl.focus()
 		}
 	}

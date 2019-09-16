@@ -1,7 +1,7 @@
 import {define, Component, html, css, on, once, off} from 'flit'
 import {theme} from '../style/theme'
-import {constrain, getRect, Rect} from 'ff'
-import {tooltip} from '../bindings/tooltip';
+import {constrain, getRect, Rect, toDecimal} from 'ff'
+import {getGlobalTooltip, GlobalTooltip} from '../bindings/tooltip'
 
 
 export interface SliderEvents {
@@ -106,17 +106,19 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 			tabindex="0"
 			:class.dragging=${this.draging}
 			@@mousedown=${this.onMouseDown}
+			@@mouseenter=${this.onMouseEnter}
+			@@mouseleave=${this.onMouseLeave}
 			@@wheel.prevent=${this.onWheel}
 			@@focus=${this.onFocus}
 			@@blur=${this.onBlur}
 		>
 			<div class="groove" :ref="groove">
-				<div class="groove-bg"></div>
+				<div class="groove-bg" />
 				<div class="progress"
 					:style.width.percent=${this.vertical ? '' : this.getPercent()}
 					:style.height.percent=${this.vertical ? this.getPercent() : ''}
 				>
-					<div class="ball" ${tooltip(String(this.value), {alignPosition: this.vertical ? 'r' : 't', keepVisible: this.draging})}></div>
+					<div class="ball" :ref="ball" />
 				</div>
 			</div>
 		</template>
@@ -130,6 +132,7 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 	value: number = 0
 
 	protected draging: boolean = false
+	protected tooltip: GlobalTooltip | null = null
 
 	protected getPercent() {
 		if (this.value === this.min) {
@@ -143,6 +146,10 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 	protected onMouseDown(e: MouseEvent) {
 		let rect = getRect(this.refs.groove)
 		this.draging = true
+		
+		if (this.tooltip) {
+			this.tooltip.lock()
+		}
 
 		// If clicked the ball, not move; only move when clicked the groove.
 		if (!(e.target as Element).matches(this.scopeClassName('.ball'))) {
@@ -160,6 +167,10 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 		once(document, 'mouseup', () => {
 			off(document, 'mousemove', onMouseMove as (e: Event) => void)
 			this.draging = false
+
+			if (this.tooltip) {
+				this.tooltip.unlock()
+			}
 		})
 	}
 
@@ -180,10 +191,11 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 		}
 
 		let oldValue = this.value
-		let newValue = this.min + diff
+		let newValue = toDecimal(this.min + diff, 4)
 
 		if (newValue !== oldValue) {
 			this.emit('change', this.value = newValue)
+			this.updateTooltip()
 		}
 	}
 
@@ -193,14 +205,19 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 
 			// deltaY < 0 when wheel up
 			if (e.deltaY < 0 && this.vertical || e.deltaY > 0 && !this.vertical) {
-				newValue = Math.min(this.value + this.step, this.max)
+				newValue = toDecimal(Math.min(this.value + this.step, this.max), 4)
 			}
 			else {
-				newValue = Math.max(this.value - this.step, this.min)
+				newValue = toDecimal(Math.max(this.value - this.step, this.min), 4)
 			}
 
 			if (newValue !== this.value) {
 				this.emit('change', this.value = newValue)
+				this.updateTooltip()
+			}
+
+			if (document.activeElement !== this.el) {
+				this.el.focus()
 			}
 		}
 	}
@@ -240,5 +257,32 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 
 	protected onBlur() {
 		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
+	}
+
+	protected async onMouseEnter() {
+		this.tooltip = await getGlobalTooltip(this.refs.ball)
+		this.tooltip.setTitleAndOptions(String(this.value), {alignPosition: this.vertical ? 'r' : 't'})
+		this.tooltip.showLayerLater()
+		this.tooltip.setKeepVisible(true)
+	}
+
+	protected updateTooltip() {
+		if (this.tooltip) {
+			this.tooltip.setTitle(String(this.value))
+		}
+	}
+
+	protected onMouseLeave() {
+		if (!this.draging) {
+			this.hideTooltip()
+		}
+	}
+
+	protected hideTooltip() {
+		if (this.tooltip) {
+			this.tooltip.setKeepVisible(false)
+			this.tooltip.hideLayerLater()
+			this.tooltip = null
+		}
 	}
 }
