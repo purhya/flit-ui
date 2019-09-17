@@ -116,7 +116,7 @@ export class Menu<Events = any> extends CommonMenu<Events & MenuEvents> {
 
 	mayHideLayer() {
 		if (this.layer && this.layer.popup) {
-			this.layer.popup.hideLayer()
+			this.layer.popup.hideLayerLater()
 		}
 	}
 
@@ -219,7 +219,7 @@ export class Menu<Events = any> extends CommonMenu<Events & MenuEvents> {
 				hoverItem.click()
 				
 				if (this.layer) {
-					this.layer.popup!.hideLayer()
+					this.layer.popup!.hideLayerLater()
 				}
 			}
 		}
@@ -254,7 +254,7 @@ export class Menu<Events = any> extends CommonMenu<Events & MenuEvents> {
 			e.preventDefault()
 
 			if (this.layer) {
-				this.layer.popup!.hideLayer()
+				this.layer.popup!.hideLayerLater()
 			}
 		}
 	}

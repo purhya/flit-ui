@@ -1,5 +1,5 @@
 import {css, define, Component, html, on, off, cache, once, renderComplete, getComponent} from 'flit'
-import {getAlignDirection, onceMouseLeaveAll, align, timeout, Timeout, watchLayout, Rect} from 'ff'
+import {getAlignDirection, align, timeout, Timeout, watchLayout, Rect, onMouseLeaveAll} from 'ff'
 import {Layer} from './layer'
 import {theme} from '../style/theme'
 
@@ -45,7 +45,8 @@ export class Popup<Events = any> extends Component<Events> {
 	// Such that when mouse hover from `el` to `layer` will not cause 
 	hoverHideDelay: number = 100
 
-	protected timeout: Timeout | null = null
+	protected showTimeout: Timeout | null = null
+	protected hideTimeout: Timeout | null = null
 	protected unwatchRect: (() => void) | null = null
 	protected unwatchLeave: (() => void) | null = null
 	protected focusEl!: HTMLElement
@@ -155,32 +156,19 @@ export class Popup<Events = any> extends Component<Events> {
 		}
 	}
 
-	protected clearTimeout() {
-		if (this.timeout) {
-			this.timeout.cancel()
-		}
-	}
-
-	protected unwatch() {
-		if (this.unwatchRect) {
-			this.unwatchRect()
-			this.unwatchRect = null
-		}
-
-		if (this.unwatchLeave) {
-			this.unwatchLeave()
-			this.unwatchLeave = null
-		}
-	}
-
 	showLayerLater() {
-		this.clearTimeout()
+		if (this.showTimeout) {
+			return
+		}
+
+		this.clearHideTimeout()
 
 		if (!this.opened) {
-			this.unwatch()
-
 			if (this.trigger === 'hover' || this.trigger === 'focus') {
-				this.timeout = timeout(this.showLayer.bind(this), this.hoverShowDelay)
+				this.showTimeout = timeout(() => {
+					this.showTimeout = null
+					this.showLayer()
+				}, this.hoverShowDelay)
 
 				if (this.trigger === 'hover') {
 					once(this.el, 'mouseleave', this.hideLayerLater, this)
@@ -195,9 +183,7 @@ export class Popup<Events = any> extends Component<Events> {
 		}
 	}
 
-	async showLayer() {
-		this.clearTimeout()
-		this.unwatch()
+	protected async showLayer() {
 		this.opened = true
 
 		// Wait for `refs.layer` to be referenced.
@@ -209,13 +195,22 @@ export class Popup<Events = any> extends Component<Events> {
 
 		if (this.trigger === 'hover') {
 			off(this.el, 'mouseleave', this.hideLayerLater, this)
-			this.unwatchLeave = onceMouseLeaveAll([this.el, this.refs.layer], this.onMouseLeave.bind(this))
+
+			// Should not use once to watch, or if the hideLater it triggered was canceled, This can't trigger again.
+			this.unwatchLeave = onMouseLeaveAll([this.el, this.refs.layer], this.onMouseLeave.bind(this))
 		}
 		else if (this.trigger === 'click' || this.trigger === 'contextmenu') {
 			on(document, 'mousedown', this.onDocMouseDown, this)
 		}
 		
 		this.unwatchRect = watchLayout(this.el, 'rect', this.onElRectChanged.bind(this))
+	}
+
+	protected clearHideTimeout() {
+		if (this.hideTimeout) {
+			this.hideTimeout.cancel()
+			this.hideTimeout = null
+		}
 	}
 
 	protected mayFocusLayer() {
@@ -266,20 +261,31 @@ export class Popup<Events = any> extends Component<Events> {
 	}
 
 	hideLayerLater() {
-		this.clearTimeout()
-		this.unwatch()
-		this.unbindEventsBeforeHide()
+		if (this.hideTimeout) {
+			return
+		}
+
+		this.clearShowTimeout()
 
 		if (this.opened) {
-			this.timeout = timeout(this.hideLayer.bind(this), this.hoverHideDelay)
+			this.hideTimeout = timeout(() => {
+				this.hideTimeout = null
+				this.hideLayer()
+			}, this.hoverHideDelay)
 		}
 	}
 
-	hideLayer() {
-		this.clearTimeout()
+	protected clearShowTimeout() {
+		if (this.showTimeout) {
+			this.showTimeout.cancel()
+			this.showTimeout = null
+		}
+	}
+
+	protected hideLayer() {
+		// Must unwatch here, not the hideLater, or if it was canceled...
 		this.unwatch()
-		this.unbindEventsBeforeHide()
-		
+
 		if (this.opened && this.focusEl) {
 			this.restoreFocusFromLayer()
 		}
@@ -287,7 +293,17 @@ export class Popup<Events = any> extends Component<Events> {
 		this.opened = false
 	}
 
-	protected unbindEventsBeforeHide() {
+	protected unwatch() {
+		if (this.unwatchRect) {
+			this.unwatchRect()
+			this.unwatchRect = null
+		}
+
+		if (this.unwatchLeave) {
+			this.unwatchLeave()
+			this.unwatchLeave = null
+		}
+
 		if (this.trigger === 'click' || this.trigger === 'contextmenu') {
 			off(document, 'mousedown', this.onDocMouseDown, this)
 		}
