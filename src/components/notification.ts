@@ -30,7 +30,7 @@ export interface NotificationOptions {
 @define('f-notification-tips')
 export class NotificationTips<Events = any> extends Component<Events> {
 	static style() {
-		let {infoColor, lh, successColor, errorColor, layerBorderRadius, layerShadowBlurRadius, fs} = theme
+		let {infoColor, lh, successColor, errorColor, layerBorderRadius, layerShadowBlurRadius, fs, backgroundColor, textColor, layerShadowColor} = theme
 
 		return css`
 		:host{
@@ -46,8 +46,8 @@ export class NotificationTips<Events = any> extends Component<Events> {
 			position: relative;
 			display: flex;
 			margin-top: 10px;
-			background: #fff;
-			box-shadow: 0 0 ${layerShadowBlurRadius}px rgba(0, 0, 0, 0.2);
+			background: ${backgroundColor};
+			box-shadow: 0 0 ${layerShadowBlurRadius}px ${layerShadowColor};
 			cursor: pointer;
 			overflow: hidden;
 			border-radius: ${layerBorderRadius}px;
@@ -60,14 +60,14 @@ export class NotificationTips<Events = any> extends Component<Events> {
 			display: flex;
 			width: 30px;
 			height: 30px;
-			color: #5e5e5e;
+			color: ${textColor};
 
 			f-icon{
 				margin: auto;
 			}
 
 			&:hover{
-				color: #000;
+				color: ${textColor.highlight(10)};
 			}
 
 			&:active{
@@ -138,7 +138,7 @@ export class NotificationTips<Events = any> extends Component<Events> {
 			).map(([type, color]) => css`
 			.type-${type}{
 				&:hover{
-					background: ${color.mix('#fff', 95)};
+					background: ${color.mix(backgroundColor, 95)};
 				}
 
 				.left{
