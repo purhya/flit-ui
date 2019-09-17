@@ -92,6 +92,9 @@ export class GlobalTooltip extends Tooltip {
 		if (this.el !== el) {
 			off(this.el, 'mouseenter', this.showLayerLater, this)
 			this.el = el
+
+			// `el` changed, must unwatch, will watch later by `showLayer`
+			this.unwatchEl()
 		}
 	}
 
@@ -150,7 +153,7 @@ export class GlobalTooltip extends Tooltip {
 		if (this.locked) {
 			return
 		}
-		
+
 		this.keepVisible = keep
 	}
 

@@ -36,6 +36,7 @@ export class Modal<Events = any> extends Component<Events> {
 
 		.top{
 			display: flex;
+			flex: none;
 			height: ${lh(40) + 2}px;
 			line-height: ${lh(40)}px;
 			border-bottom: 2px solid ${textColor.darken(10)};

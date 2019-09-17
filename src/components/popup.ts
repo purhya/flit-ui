@@ -284,7 +284,7 @@ export class Popup<Events = any> extends Component<Events> {
 
 	protected hideLayer() {
 		// Must unwatch here, not the hideLater, or if it was canceled...
-		this.unwatch()
+		this.unwatchEl()
 
 		if (this.opened && this.focusEl) {
 			this.restoreFocusFromLayer()
@@ -293,7 +293,7 @@ export class Popup<Events = any> extends Component<Events> {
 		this.opened = false
 	}
 
-	protected unwatch() {
+	protected unwatchEl() {
 		if (this.unwatchRect) {
 			this.unwatchRect()
 			this.unwatchRect = null
