@@ -106,11 +106,11 @@ export class Modal<Events = any> extends Component<Events> {
 			padding: 16px 0;
 
 			button:nth-child(n+2){
-				margin-left: 4px;
+				margin-left: 8px;
 			}
 
 			button:nth-last-child(n+2){
-				margin-right: 4px;
+				margin-right: 8px;
 			}
 
 			button[align=left]{

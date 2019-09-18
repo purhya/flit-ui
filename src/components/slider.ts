@@ -108,7 +108,6 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 			@@mousedown=${this.onMouseDown}
 			@@mouseenter=${this.onMouseEnter}
 			@@mouseleave=${this.onMouseLeave}
-			@@wheel.prevent=${this.onWheel}
 			@@focus=${this.onFocus}
 			@@blur=${this.onBlur}
 		>
@@ -200,30 +199,29 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 	}
 
 	protected onWheel(e: WheelEvent) {
-		if (this.step) {
-			let newValue
+		if (!this.step || document.activeElement !== this.el) {
+			return
+		}
 
-			// deltaY < 0 when wheel up
-			if (e.deltaY < 0 && this.vertical || e.deltaY > 0 && !this.vertical) {
-				newValue = toDecimal(Math.min(this.value + this.step, this.max), 4)
-			}
-			else {
-				newValue = toDecimal(Math.max(this.value - this.step, this.min), 4)
-			}
+		let newValue
 
-			if (newValue !== this.value) {
-				this.emit('change', this.value = newValue)
-				this.updateTooltip()
-			}
+		// deltaY < 0 when wheel up
+		if (e.deltaY < 0 && this.vertical || e.deltaY > 0 && !this.vertical) {
+			newValue = toDecimal(Math.min(this.value + this.step, this.max), 4)
+		}
+		else {
+			newValue = toDecimal(Math.max(this.value - this.step, this.min), 4)
+		}
 
-			if (document.activeElement !== this.el) {
-				this.el.focus()
-			}
+		if (newValue !== this.value) {
+			this.emit('change', this.value = newValue)
+			this.updateTooltip()
 		}
 	}
 
 	protected onFocus() {
 		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
+		on(document, 'wheel.prevent', this.onWheel as (e: Event) => void, this)
 	}
 
 	protected onKeyDown(e: KeyboardEvent) {
@@ -257,6 +255,7 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 
 	protected onBlur() {
 		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
+		off(document, 'wheel', this.onWheel as (e: Event) => void, this)
 	}
 
 	protected async onMouseEnter() {
