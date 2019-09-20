@@ -92,6 +92,7 @@ export class GlobalTooltip extends Tooltip {
 		if (this.el !== el) {
 			off(this.el, 'mouseenter', this.showLayerLater, this)
 			this.el = el
+			this.unwatchEl()
 		}
 	}
 
@@ -105,7 +106,6 @@ export class GlobalTooltip extends Tooltip {
 
 		// When `title` changed, do aligning.
 		if (this.opened) {
-			this.unwatchEl()
 			await this.showLayer()
 		}
 	}

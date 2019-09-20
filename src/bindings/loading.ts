@@ -61,7 +61,7 @@ class LoadingBinging implements Binding<[boolean, LoadingOptions]> {
 		}
 		else {
 			if (!this.cover) {
-				this.cover = render(html`<f-loading-cover />`).firstElementChild as HTMLElement
+				this.cover = render(html`<f-loading-cover />`).fragment.firstElementChild as HTMLElement
 				this.el.append(this.cover)
 			}
 			

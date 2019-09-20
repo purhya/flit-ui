@@ -69,7 +69,7 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 				<f-contextmenu-layer>
 					${this.renderFn()}
 				</f-contextmenu-layer>
-			`, this.context) as ContextMenuLayer
+			`, this.context).component as ContextMenuLayer
 		}
 
 		return this.layer!

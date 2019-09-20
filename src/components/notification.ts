@@ -285,7 +285,7 @@ export class Notification {
 
 	showNotification(options: NotificationOptions): number {
 		if (!this.tips) {
-			this.tips = renderComponent(html`<f-notification-tips />`) as NotificationTips
+			this.tips = renderComponent(html`<f-notification-tips />`).component as NotificationTips
 		}
 
 		return this.tips!.showNotification(options)

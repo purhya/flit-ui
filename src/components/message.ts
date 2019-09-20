@@ -260,7 +260,7 @@ export class Message {
 
 	protected showMessage(options: MessageOptions) {
 		if (!this.modal) {
-			this.modal = renderComponent(html`<f-message-modal />`) as MessageModal
+			this.modal = renderComponent(html`<f-message-modal />`).component as MessageModal
 		}
 
 		return this.modal.showMessage(options)

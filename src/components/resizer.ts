@@ -113,7 +113,7 @@ export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
 
 		let cursorMask = render(html`
 			<div class="resizing-mask" class="${this.position === 'left' || this.position === 'right' ? 'herizontal' : 'vertical'}"
-		/>`, this).firstElementChild as HTMLElement
+		/>`, this).fragment.firstElementChild as HTMLElement
 
 		document.body.append(cursorMask)
 

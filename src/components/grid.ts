@@ -483,7 +483,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 			this.columnResized = true
 		}
 
-		let cursorMask = render(html`<div class="resizing-mask" />`, this).firstElementChild as HTMLElement
+		let cursorMask = render(html`<div class="resizing-mask" />`, this).fragment.firstElementChild as HTMLElement
 		document.body.append(cursorMask)
 
 		on(document, 'mousemove', onMouseMove as (e: Event) => void)
