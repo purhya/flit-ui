@@ -219,15 +219,23 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 
 	protected getPopupComponent(): Layer {
 		let name = this.getOption('name')!
-		let popup: Layer
+		let popup: Layer | null = null
 		let template: Template
 		let result = this.renderFn()
 
 		if (name && namedPopupCache.has(name)) {
 			({popup, template} = namedPopupCache.get(name)!)
-			template.merge(result)
+
+			if (template.canMergeWith(result)) {
+				template.merge(result)
+			}
+			else {
+				popup.el.remove()
+				popup = null
+			}
 		}
-		else {
+		
+		if (!popup) {
 			let renderResult = renderComponent(result)
 			template = renderResult.template
 			popup = renderResult.component! as Layer
