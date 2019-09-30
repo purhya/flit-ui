@@ -283,7 +283,7 @@ export class Notification {
 		return new UniqueNotification(this)
 	}
 
-	showNotification(options: NotificationOptions): number {
+	protected showNotification(options: NotificationOptions): number {
 		if (!this.tips) {
 			this.tips = renderComponent(html`<f-notification-tips />`).component as NotificationTips
 		}
@@ -329,24 +329,19 @@ export class UniqueNotification {
 		}
 	}
 
-	showNotification(options: NotificationOptions): number {
-		this.overwriteOptions(options)
-		return this.id = this.raw.showNotification(options)
-	}
-
 	info(content: string, options: NotificationOptions = {}): number {
 		this.overwriteOptions(options)
-		return this.raw.info(content, options)
+		return this.id = this.raw.info(content, options)
 	}
 
 	alert(content: string, options: NotificationOptions = {}): number {
 		this.overwriteOptions(options)
-		return this.raw.alert(content, options)
+		return this.id = this.raw.alert(content, options)
 	}
 
 	success(content: string, options: NotificationOptions = {}): number {
 		this.overwriteOptions(options)
-		return this.raw.success(content, options)
+		return this.id = this.raw.success(content, options)
 	}
 }
 
