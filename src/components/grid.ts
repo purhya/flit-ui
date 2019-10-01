@@ -134,11 +134,13 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 			flex: 1;
 			overflow-y: scroll;
 			overflow-x: hidden;
+			position: relative;
 		}
 
 		.rows{
 			display: table;
 			table-layout: fixed;
+			position: absolute;
 			width: 100%;
 		}
 
