@@ -24,6 +24,11 @@ export class Dropdown<Events = any> extends Popup<Events> {
 				padding: 0 ${lh(7)}px;
 			}
 		}
+
+		.list{
+			overflow-y: auto;
+			max-height: 100%;
+		}
 		`
 	}
 
@@ -42,6 +47,22 @@ export class Dropdown<Events = any> extends Popup<Events> {
 			${this.icon ? html`<f-icon .type="${this.icon}" />` : ''}
 			${layerPart}
 		</template>
+		`
+	}
+
+	protected renderLayer() {
+		return html`
+		<f-layer
+			class="layer"
+			:ref="layer"
+			.popup=${this}
+			.herizontal=${this.isHerizontal()}
+			.trangle=${this.trangle}
+		>
+			<div class="list">
+				<slot name="content" />
+			</div>
+		</f-layer>
 		`
 	}
 }
