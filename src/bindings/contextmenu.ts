@@ -1,6 +1,6 @@
 import {defineBinding, Context, on, off, renderComplete, define, css, Transition, Binding, once, BindingResult, TemplateResult, DirectiveResult, renderComponent, html} from 'flit'
 import {Layer} from '../components/layer'
-import {alignToEvent, watchLayout} from 'ff'
+import {alignToEvent, watchLayout, lockOuterMouseLeave} from 'ff'
 import {theme} from '../style/theme'
 
 export type MenuRenderFn = () => TemplateResult | DirectiveResult
@@ -36,6 +36,7 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 	private renderFn!: MenuRenderFn
 	private layer: ContextMenuLayer | null = null
 	private unwatchRect: (() => void) | null = null
+	private unlockOuterMouseLeave: (() => void) | null = null
 
 	constructor(el: Element, context: Context) {
 		this.el = el as HTMLElement
@@ -55,6 +56,7 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 
 		alignToEvent(layer.el, e as MouseEvent)
 		layer.el.focus()
+		this.unlockOuterMouseLeave = lockOuterMouseLeave(this.el)
 
 		new Transition(layer.el, 'fade').enter()
 		on(document, 'mousedown', this.onDocMouseDown, this)
@@ -94,6 +96,10 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 					this.layer = null
 				}
 			})
+		}
+
+		if (this.unlockOuterMouseLeave) {
+			this.unlockOuterMouseLeave()
 		}
 
 		if (this.unwatchRect) {
