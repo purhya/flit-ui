@@ -1,5 +1,5 @@
 import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, renderComplete, Context, Transition, Template, renderComponent, clearTransition} from 'flit'
-import {Timeout, timeout, onMouseLeaveAll, watchLayout, Rect, align} from 'ff'
+import {Timeout, timeout, onMouseLeaveAll, watchLayout, Rect, align, isMouseLeaveLockedAt} from 'ff'
 import {Layer} from '../components/layer'
 
 
@@ -226,7 +226,11 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 		if (name && namedPopupCache.has(name)) {
 			({popup, template} = namedPopupCache.get(name)!)
 
-			if (template.canMergeWith(result)) {
+			// If current popup in using, not reuse it
+			if (isMouseLeaveLockedAt(popup.el)) {
+				popup = null
+			}
+			else if (template.canMergeWith(result)) {
 				template.merge(result)
 			}
 			else {
