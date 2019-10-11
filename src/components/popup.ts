@@ -192,10 +192,10 @@ export class Popup<Events = any> extends Component<Events> {
 
 		// When only one child element exclude trangle and it can get focus, e.g.: `<menu>`, focus it.
 		this.mayFocusLayer()
+		this.unwatchEl()
 
 		if (this.trigger === 'hover') {
 			off(this.el, 'mouseleave', this.hideLayerLater, this)
-
 			// Should not use once to watch, or if the hideLater it triggered was canceled, This can't trigger again.
 			this.unwatchLeave = onMouseLeaveAll([this.el, this.refs.layer], this.onMouseLeave.bind(this))
 		}
