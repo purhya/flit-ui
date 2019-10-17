@@ -1,4 +1,24 @@
 export const svgSymbols = {
+	'checkbox-checked': `
+		<svg viewBox="0 0 17 17">
+			<path style="fill:currentColor; stroke:none;" d="M3.6,0h9.8c2,0,3.6,1.6,3.6,3.6v9.8c0,2-1.6,3.6-3.6,3.6H3.6c-2,0-3.6-1.6-3.6-3.6V3.6C0,1.6,1.6,0,3.6,0z"/>
+			<polyline style="fill:none;stroke:#FFFFFF;stroke-linecap:round;stroke-linejoin:round;" points="4,8.3 7,12 13,5"/>
+		</svg>
+	`,
+
+	'checkbox-indeterminate': `
+		<svg viewBox="0 0 17 17">
+			<path style="fill:currentColor; stroke:none;" d="M3.6,0h9.8c2,0,3.6,1.6,3.6,3.6v9.8c0,2-1.6,3.6-3.6,3.6H3.6c-2,0-3.6-1.6-3.6-3.6V3.6C0,1.6,1.6,0,3.6,0z"/>
+			<path style="fill:none;stroke:#FFFFFF;stroke-linecap:square;" d="M4.5,8.5h8.1"/>
+		</svg>
+	`,
+
+	'checkbox-unchecked': `
+		<svg viewBox="0 0 17 17">
+			<path style="fill:none;stroke:currentColor;" d="M4.1,0.5H13c2,0,3.6,1.6,3.6,3.6V13c0,2-1.6,3.6-3.6,3.6H4.1c-2,0-3.6-1.6-3.6-3.6V4.1C0.5,2.1,2.1,0.5,4.1,0.5z"/>
+		</svg>
+	`,
+
 	'checked': `
 		<svg viewBox="0 0 15 15">
 			<path style="fill:currentColor; stroke:none;" d="M6,12L2.1,7.5C2,7.3,2,7,2.1,6.8c0.2-0.2,0.4-0.2,0.6,0c0,0,0,0,0,0L6,10.6l7.3-8.5c0.2-0.2,0.4-0.2,0.6,0c0,0,0,0,0,0c0.2,0.2,0.2,0.4,0,0.6L6,12z"/>
@@ -44,6 +64,19 @@ export const svgSymbols = {
 			<path style="fill:currentColor;stroke:none;" d="M11.5,0A11.5,11.5,0,1,0,23,11.5,11.5,11.5,0,0,0,11.5,0Zm0,22.08A10.58,10.58,0,1,1,22.08,11.5,10.59,10.59,0,0,1,11.5,22.08Z"/>
 			<path style="fill:currentColor;stroke:none;" d="M13.94,5.93a3.23,3.23,0,0,0-1.16-.79A4.54,4.54,0,0,0,11,4.85a3.7,3.7,0,0,0-1.54.32,3.61,3.61,0,0,0-1.22.9,4.32,4.32,0,0,0-.82,1.39,5.73,5.73,0,0,0-.34,1.79h2A4.88,4.88,0,0,1,9.3,8.12a3.09,3.09,0,0,1,.4-.87,1.84,1.84,0,0,1,.59-.56,1.46,1.46,0,0,1,.75-.2,1.85,1.85,0,0,1,.75.14,1.5,1.5,0,0,1,.54.4,1.63,1.63,0,0,1,.32.58,2.38,2.38,0,0,1,.1.71,1.74,1.74,0,0,1-.22.88,3.79,3.79,0,0,1-.54.73,9.6,9.6,0,0,1-.71.67,6.62,6.62,0,0,0-.71.71,3.82,3.82,0,0,0-.54.84,2.4,2.4,0,0,0-.22,1.05v1.14h2.32V13.28a1.92,1.92,0,0,1,.2-.87,4.1,4.1,0,0,1,.49-.76q.3-.36.64-.72a8,8,0,0,0,.64-.75,4.1,4.1,0,0,0,.49-.84,2.51,2.51,0,0,0,.2-1A4.13,4.13,0,0,0,14.59,7,3,3,0,0,0,13.94,5.93Z"/>
 			<rect style="fill:currentColor;stroke:none;" x="9.81" y="15.65" width="2.32" height="2.14"/>
+		</svg>
+	`,
+
+	'radio-checked': `
+		<svg viewBox="0 0 17 17">
+			<circle style="fill:none;stroke:currentColor;" cx="8.5" cy="8.5" r="8"/>
+			<circle style="fill-rule:evenodd;clip-rule:evenodd;fill:currentColor; stroke:none;" cx="8.5" cy="8.5" r="3.5"/>
+		</svg>
+	`,
+
+	'radio-unchecked': `
+		<svg viewBox="0 0 17 17">
+			<circle style="fill:none;stroke:currentColor;" cx="8.5" cy="8.5" r="8"/>
 		</svg>
 	`,
 

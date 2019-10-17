@@ -57,6 +57,10 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 			&:hover{
 				color: ${mainColor};
 			}
+
+			&:active{
+				transform: translateY(1px);
+			}
 		}
 
 		.close-icon{

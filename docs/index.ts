@@ -157,9 +157,9 @@ define('flit-preview', class extends flit.Component {
 				<f-row style="margin: 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<h3>Checkboxes</h3>
-						<f-checkboxgroup>
+						<f-checkboxgroup .value=${['2']}>
 							<f-checkbox .value="1">Unchecked</f-checkbox><br>
-							<f-checkbox .value="2" .checked>Checked</f-checkbox><br>
+							<f-checkbox .value="2">Checked</f-checkbox><br>
 							<f-checkbox .value="3" .indeterminate>Indeterminate</f-checkbox><br>
 						</f-checkboxgroup>
 					</f-col>
@@ -237,17 +237,17 @@ define('flit-preview', class extends flit.Component {
 				<f-row style="margin: 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header>Single Select</header>
-						<f-select style="width: 100%; margin: 8px 0;" .data=${range(1, 10).map(v => [v, 'Option ' + v])} .value=${1}  />
+						<f-select style="width: 100%; margin: 8px 0;" .data=${range(1, 10).map(value => ({value, text: 'Option ' + value}))} .value=${1}  />
 					</f-col>
 
 					<f-col .span="6">
 						<header>Multiple Select</header>
-						<f-select style="width: 100%; margin: 8px 0;" .multiple .data=${range(1, 10).map(v => [v, 'Option ' + v])} .value=${[1, 2]} />
+						<f-select style="width: 100%; margin: 8px 0;" .multiple .data=${range(1, 10).map(value => ({value, text: 'Option ' + value}))} .value=${[1, 2]} />
 					</f-col>
 
 					<f-col .span="6">
 						<header>Searchable Select</header>
-						<f-select style="width: 100%; margin: 8px 0;" .searchable .data=${range(1, 10).map(v => [v, 'Option ' + v])} .value=${[1, 2]} />
+						<f-select style="width: 100%; margin: 8px 0;" .searchable .data=${range(1, 10).map(value => ({value, text: 'Option ' + value}))} .value=${1} />
 					</f-col>
 				</f-row>
 			</section>
@@ -283,9 +283,61 @@ define('flit-preview', class extends flit.Component {
 				</f-row>
 			</section>
 
-			<f-loader .size="small" />
-			<f-loader />
-			<f-loader .size="large" />
+			<section>
+				<h3>Loader</h3>
+				
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="4">
+						<header style="margin-bottom: 8px;">Small</header>
+						<f-loader .size="small" />
+					</f-col>
+
+					<f-col .span="4">
+						<header style="margin-bottom: 8px;">Medium</header>
+						<f-loader .size="medium" />
+					</f-col>
+
+					<f-col .span="4">
+						<header style="margin-bottom: 8px;">Large</header>
+						<f-loader .size="large" />
+					</f-col>
+				</f-row>
+			</section>
+
+			<section>
+				<h3>List</h3>
+				
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Default</header>
+						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .selectable="false" />
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Single Selection</header>
+						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .selected=${[2]} />
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Multiple Selection</header>
+						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .multipleSelect .selected=${[1, 2]} />
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Navigation</header>
+						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .mode="navigation" .active=${1} />
+					</f-col>
+				</f-row>
+
+				<f-row style="margin: 32px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">With Icon</header>
+						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value, icon: 'love'}))} />
+					</f-col>
+
+				</f-row>
+			</section>
+
 
 			<!-- <section>
 				<f-slider value="50"></f-slider>
@@ -543,59 +595,44 @@ function renderContextMenu(index: number | null) {
 }
 
 
-define('f-main-color-select', class MainColorSelect extends Select {
+// define('f-main-color-select', class MainColorSelect extends Select {
 
-	value = '#0077cf'
+// 	value = '#0077cf'
 
-	data: [string, string][] = [
-		['#48c7c7', 'cyan'    ],
-		['#3988e5', 'blue'    ],
-		['#0077cf', 'darkblue'],
-		['#4eb2ea', 'skyblue' ],
-		['#be66cc', 'purple'  ],
-		['#ff6666', 'red'     ],
-		['#ff8095', 'pink'    ],
-		['#d65c5c', 'brown'   ],
-		['#f67d51', 'orange'  ],
-		['#15af78', 'green'   ],
-		['#888888', 'grey'    ],
-	]
+// 	data: [string, string][] = [
+// 		['#48c7c7', 'cyan'    ],
+// 		['#3988e5', 'blue'    ],
+// 		['#0077cf', 'darkblue'],
+// 		['#4eb2ea', 'skyblue' ],
+// 		['#be66cc', 'purple'  ],
+// 		['#ff6666', 'red'     ],
+// 		['#ff8095', 'pink'    ],
+// 		['#d65c5c', 'brown'   ],
+// 		['#f67d51', 'orange'  ],
+// 		['#15af78', 'green'   ],
+// 		['#888888', 'grey'    ],
+// 	]
 
-	renderOptionStyle(color: string) {
-		return 'color: ' + color
-	}
+// 	renderOptionStyle(color: string) {
+// 		return 'color: ' + color
+// 	}
 
-	renderOptionDisplay(_color: string, name: string) {
-		return ff.capitalize(name)
-	}
+// 	renderOptionDisplay(_color: string, name: string) {
+// 		return ff.capitalize(name)
+// 	}
 
-	render() {
-		return html`<f-select style="color: ${this.value}" />`.extends(super.render())
-	}
+// 	render() {
+// 		return html`<f-select style="color: ${this.value}" />`.extends(super.render())
+// 	}
 
-	onReady() {
-		super.onReady()
+// 	onReady() {
+// 		super.onReady()
 
-		this.on('change', (value: unknown) => {
-			theme.set('mainColor', value as string)
-		})
-	}
-})
-
-
-define('f-border-radius-select', class BorderRadiusSelect extends Select<number> {
-
-	value: number = 15
-	data: [number, string][] = [0, 3, 5, 8, 12, 15, 20].map(v => [v, v + 'px']) as [number, string][]
-
-	onReady() {
-		super.onReady()
-
-		this.on('change', (value: number) => {
-			theme.set('borderRadius', value)
-		})
-	}
-})
+// 		this.on('change', (value: unknown) => {
+// 			theme.set('mainColor', value as string)
+// 		})
+// 	}
+// })
 
 
 function range(start: number, end: number) {

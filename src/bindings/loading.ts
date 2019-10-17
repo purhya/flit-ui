@@ -1,39 +1,25 @@
-import {define, defineBinding, Binding, TransitionOptions, css, Transition, Component, render, html} from "@pucelle/flit"
-
-
-@define('loading-cover')
-export class LoadingCover extends Component {
-	static style() {
-		return css`
-		:host{
-			position: absolute;
-			left: 0;
-			top: 0;
-			right: 0;
-			bottom: 0;
-			z-index: 10;
-			background: rgba(#fff, 0.8);
-			display: flex;
-			flex-direction: column;
-			justify-content: center;
-			align-items: center;
-			text-align: center;
-		}
-		`
-	}
-}
+import {defineBinding, Binding, TransitionOptions, Transition, render, html, Options} from "@pucelle/flit"
+import {LoaderSize} from "../components/loader"
 
 
 export interface LoadingOptions {
+	size?: LoaderSize
 	transition?: TransitionOptions
 }
 
-class LoadingBinging implements Binding<[boolean, LoadingOptions]> {
 
-	private el: Element
-	private value: boolean = false
-	private transition: TransitionOptions = 'fade'
-	private cover: HTMLElement | null = null
+const defaultLoadingOptions: LoadingOptions = {
+	size: 'medium',
+	transition: 'fade',
+}
+
+
+export class LoadingBinging implements Binding<[boolean, LoadingOptions]> {
+
+	protected el: Element
+	protected value: boolean = false
+	protected options: Options<LoadingOptions> = new Options(defaultLoadingOptions)
+	protected cover: HTMLElement | null = null
 
 	constructor(el: Element) {
 		this.el = el
@@ -41,12 +27,14 @@ class LoadingBinging implements Binding<[boolean, LoadingOptions]> {
 
 	update(value: boolean, options?: LoadingOptions) {
 		this.value = value
-		this.transition = options && options.transition ? options.transition : 'fade'
+		this.options.update(options)
+
+		let transition = this.options.get('transition')
 
 		if (this.value) {
 			if (this.cover) {
-				if (this.transition) {
-					new Transition(this.cover, this.transition).leave().then(finish => {
+				if (transition) {
+					new Transition(this.cover, transition).leave().then(finish => {
 						if (finish) {
 							this.cover!.remove()
 							this.cover = null
@@ -61,12 +49,12 @@ class LoadingBinging implements Binding<[boolean, LoadingOptions]> {
 		}
 		else {
 			if (!this.cover) {
-				this.cover = render(html`<f-loading-cover />`).fragment.firstElementChild as HTMLElement
+				this.cover = render(html`<f-loader .size=${this.options.get('size')} .asCover />`).fragment.firstElementChild as HTMLElement
 				this.el.append(this.cover)
 			}
 			
-			if (this.transition) {
-				new Transition(this.cover, this.transition).enter()
+			if (transition) {
+				new Transition(this.cover, transition).enter()
 			}
 		}
 	}

@@ -15,13 +15,12 @@ export * from './components/form'
 export * from './components/input'
 export * from './components/tag'
 export * from './components/search'
-
 export * from './components/progress'
-export * from './components/loader'
 
 export * from './components/popup'
 export * from './components/popover'
 export * from './components/dropdown'
+export * from './components/list'
 export * from './components/select'
 
 //export * from './components/menu'
@@ -30,13 +29,16 @@ export * from './components/message'
 export * from './components/notification'
 //export * from './components/tree'
 export * from './components/grid'
+
 export * from './components/resizer'
-export * from './components/router'
 export * from './components/grid-layout'
+export * from './components/loader'
+export * from './components/router'
 
 export * from './bindings/tooltip'
 export * from './bindings/contextmenu'
-export * from './bindings/drag-drop'
 export * from './bindings/popup'
+export * from './bindings/loading'
+export * from './bindings/drag-drop'
 import './bindings/drag-drop'
 

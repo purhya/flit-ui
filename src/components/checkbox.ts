@@ -1,4 +1,4 @@
-import {define, Component, html, css, svg, on, off, getClosestComponent} from '@pucelle/flit'
+import {define, Component, html, css, on, off, getClosestComponent} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {removeWhere, orderBy} from '@pucelle/ff'
 
@@ -34,19 +34,12 @@ export class Checkbox<E = any> extends Component<E & CheckboxEvents> {
 		}
 
 		.icon{
-			width: ${lh(15)}px;
-			height: ${lh(15)}px;
-			border: 1px solid currentColor;
-			border-radius: 2px;
 			margin-right: ${lh(6)}px;
+			border-radius: 4px;
 		}
 
 		.indeterminate, .checked{
 			color: ${mainColor};
-			
-			.icon{
-				background: ${mainColor};
-			}
 		}
 
 		.label{
@@ -67,13 +60,7 @@ export class Checkbox<E = any> extends Component<E & CheckboxEvents> {
 	protected checkboxGroup: CheckboxGroup | null = null
 
 	protected render() {
-		let svgInner: any = ''
-		if (this.checked) {
-			svgInner = svg`<polyline style="fill:none;stroke:#FFFFFF;stroke-linecap:round;stroke-linejoin:round;" points="1.5,7 5.7,10.5 10.5,1.5"/>`
-		}
-		else if (this.indeterminate) {
-			svgInner = svg`<line style="fill:none;stroke:#FFFFFF;" x1="2" y1="6.5" x2="11" y2="6.5"/>`
-		}
+		let iconType = this.checked ? 'checkbox-checked' : this.indeterminate ? 'checkbox-indeterminate' : 'checkbox-unchecked'
 
 		return html`
 			<template
@@ -84,10 +71,7 @@ export class Checkbox<E = any> extends Component<E & CheckboxEvents> {
 				@@focus=${this.onFocus}
 				@@blur=${this.onBlur}
 			>
-				<svg class="icon" viewBox="0 0 13 13">
-					${svgInner}
-				</svg>
-
+				<f-icon class="icon" .type=${iconType} />
 				<div class="label">
 					<slot />
 				</div>
@@ -99,7 +83,7 @@ export class Checkbox<E = any> extends Component<E & CheckboxEvents> {
 		let group = getClosestComponent(this.el, CheckboxGroup)
 		if (group) {
 			this.checkboxGroup = group
-			this.checked = this.checkboxGroup.value == this.value
+			this.checked = this.checkboxGroup.value === this.value
 			this.checkboxGroup.register(this)
 		}
 	}

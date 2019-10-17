@@ -1,16 +1,17 @@
-import {css, html, renderComplete, repeat, define, TemplateResult} from '@pucelle/flit'
+import {css, html, renderComplete, define, TemplateResult} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {remove, scrollToTop, getScrollDirection} from '@pucelle/ff'
+import {scrollToTop, getScrollDirection} from '@pucelle/ff'
 import {Dropdown} from './dropdown'
+import {ListItem} from './list'
 
 
 export interface SelectEvents<T> {
-	change: (value: T) => void
+	change: (value: T | T[]) => void
 }
 
 
 @define('f-select')
-export class Select<T extends unknown = unknown, E = any> extends Dropdown<E & SelectEvents<T>> {
+export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	
 	static style() {
 		let {mainColor, lineHeight, adjustByLineHeight: lh, borderColor, layerShadowBlurRadius, backgroundColor, layerBackgroundColor, layerShadowColor} = theme
@@ -41,7 +42,7 @@ export class Select<T extends unknown = unknown, E = any> extends Dropdown<E & S
 			}
 		}
 
-		.icon{
+		.down-icon{
 			margin-left: auto;
 			margin-right: 4px;
 		}
@@ -70,32 +71,9 @@ export class Select<T extends unknown = unknown, E = any> extends Dropdown<E & S
 			box-shadow: 0 1px ${layerShadowBlurRadius}px ${layerShadowColor};
 		}
 	
-		.option{
-			display: flex;
-			padding: 0 8px;
-			cursor: pointer;
-
-			&:not(:last-child){
-				box-shadow: inset 0 -1px 0 0 ${layerBackgroundColor};	// Add a white line as spliter for adjacent selected items.
-			}
-
-			&:hover{
-				background: ${layerBackgroundColor.highlight(5)};
-
-				&.selected{
-					background: ${mainColor.alpha(0.15)};
-				}
-			}
-
-			&.selected{
-				color: ${mainColor};
-				background: ${mainColor.alpha(0.1)};
-			}
-		}
-
-		.option-content{
-			flex: 1;
-			min-width: 0;
+		.list .option__f-list{
+			padding-left: ${lh(8)}px;
+			border-bottom: none;
 		}
 
 		.selected-icon{
@@ -107,8 +85,8 @@ export class Select<T extends unknown = unknown, E = any> extends Dropdown<E & S
 	trigger: 'click' | 'contextmenu' = 'click'
 	trangle: boolean = false
 	alignMargin: number | number[] = 0
-	data: Iterable<[T, string | number]> = []
-	value: T | null = null
+	data: Iterable<ListItem<T>> = []
+	value: T | T[] | null = null
 	multiple: boolean = false
 	searchable: boolean = false
 	ordered: boolean = false
@@ -141,7 +119,6 @@ export class Select<T extends unknown = unknown, E = any> extends Dropdown<E & S
 
 	protected renderPopupContent() {
 		let data = this.getOptionData()
-		let list = repeat(data, ([key, display]) => this.renderOption(key, display))
 
 		return html`
 		<f-popup
@@ -149,52 +126,33 @@ export class Select<T extends unknown = unknown, E = any> extends Dropdown<E & S
 			:ref="popup"
 			.trangle="false"
 		>
-			<ul class="list" :ref="list">
-				${list}
-			</ul>
+			<f-list class="list"
+				.mode="selection"
+				.data=${data}
+				.multipleSelect=${this.multiple}
+				.selected=${this.multiple ? this.value : [this.value]}
+				@select=${this.select}
+			/>
 		</f-popup>
 		`
-	}
-
-	protected renderOption(key: T, display: string | number) {
-		let selected = this.isSelected(key)
-
-		return html`
-		<li
-			class="option"
-			:class.selected=${selected}
-			@click.prevent=${() => this.select(key)}
-			style=${this.renderOptionStyle(key)}
-		>
-			<div class="option-content">
-				${this.renderOptionContent(key, display)}
-			</div>
-			${selected ? html`<f-icon class="selected-icon" .type="checked" />` : ''}
-		</li>
-		`
-	}
-
-	// Used to render like color select
-	protected renderOptionStyle(_key: T) {
-		return ''
 	}
 
 	protected renderCurrentDisplay(): string | number {
 		if (this.multiple) {
 			let displays: (string | number)[] = []
 
-			for (let [key, display] of this.data) {
-				if ((this.value as any[]).includes(key)) {
-					displays.push(this.renderOptionDisplay(key, display))
+			for (let {value, text} of this.data) {
+				if ((this.value! as T[]).includes(value)) {
+					displays.push(text)
 				}
 			}
 
 			return displays.join('; ')
 		}
 		else {
-			for (let [key, display] of this.data) {
-				if (this.value == key) {
-					return this.renderOptionDisplay(key, display)
+			for (let {value, text} of this.data) {
+				if (this.value == value) {
+					return text
 				}
 			}
 
@@ -202,21 +160,13 @@ export class Select<T extends unknown = unknown, E = any> extends Dropdown<E & S
 		}
 	}
 
-	protected renderOptionDisplay(_key: T, display: string | number): string | number {
-		return display
-	}
-
-	protected renderOptionContent(key: T, display: string | number): TemplateResult | string | number {
-		return this.renderOptionDisplay(key, display)
-	}
-
-	protected getOptionData(): Iterable<[T, string | number]> {
+	protected getOptionData(): Iterable<ListItem<T>> {
 		if (this.searchable && this.inputed) {
 			let lowerSearchWord = this.inputed.toLowerCase()
-			let filteredData: [T, string | number][] = []
+			let filteredData: ListItem<T>[] = []
 
 			for (let item of this.data) {
-				if (String(item[1]).includes(lowerSearchWord)) {
+				if (String(item.value).includes(lowerSearchWord)) {
 					filteredData.push(item)
 				}
 			}
@@ -227,15 +177,6 @@ export class Select<T extends unknown = unknown, E = any> extends Dropdown<E & S
 			return this.data
 		}
 	}
-
-	protected isSelected(key: T) {
-		if (this.multiple) {
-			return (this.value as T[]).includes(key)
-		}
-		else {
-			return this.value == key
-		}
-	}
 	
 	protected onCreated() {
 		this.initValue()
@@ -244,12 +185,7 @@ export class Select<T extends unknown = unknown, E = any> extends Dropdown<E & S
 
 	protected initValue() {
 		if (this.multiple && !Array.isArray(this.value)) {
-			if (this.value === null || this.value === undefined) {
-				this.value = [] as T
-			}
-			else {
-				this.value = [this.value] as T
-			}
+			this.value = []
 		}
 	}
 
@@ -269,28 +205,16 @@ export class Select<T extends unknown = unknown, E = any> extends Dropdown<E & S
 		}
 	}
 
-	protected select(key: T) {
+	protected select(values: T[]) {
 		if (this.multiple) {
-			if ((this.value as T[]).includes(key)) {
-				remove(this.value as T[], key)
-			}
-			else {
-				(this.value as T[]).push(key)
-				
-				if (this.ordered) {
-					let keys = [...this.data].map(([key]) => key)
-					;(this.value as T[]).sort((key1, key2) => {
-						return keys.indexOf(key1) - keys.indexOf(key2)
-					})
-				}
-			}
+			this.value = values
 		}
 		else {
-			this.value = key
+			this.value = values[0]
 			this.hidePopup()
 		}
 		
-		this.emit('change', this.value as T)
+		this.emit('change', this.value!)
 	}
 
 	protected async startEditing() {

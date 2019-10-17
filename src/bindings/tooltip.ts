@@ -126,7 +126,7 @@ export class TooltipBinding extends PopupBinding<string> {
 	}
 
 	protected isHerizontal() {
-		let direction = getMainAlignDirection(this.getOption('alignPosition')!)
+		let direction = getMainAlignDirection(this.options.get('alignPosition'))
 		return direction === 'l' || direction === 'r'
 	}
 }

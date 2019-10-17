@@ -1,4 +1,4 @@
-import {define, Component, html, css, off, once, svg, getClosestComponent} from '@pucelle/flit'
+import {define, Component, html, css, off, once, getClosestComponent} from '@pucelle/flit'
 import {theme} from '../style/theme'
 
 
@@ -34,7 +34,6 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 
 		.icon{
 			border-radius: 50%;
-			border: 1px solid currentColor;
 			margin-right: ${lh(6)}px;
 		}
 
@@ -58,8 +57,6 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 	value: any = null
 
 	protected render() {
-		let {adjustByLineHeight: lh} = theme
-
 		return html`
 			<template
 				tabindex="0"
@@ -67,9 +64,7 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 				@@click=${this.onClick}
 				@@focus=${this.onFocus}
 			>
-				<svg class="icon" viewBox="0 0 14 14" style="width: ${lh(16)}px; height: ${lh(16)}px;">
-					${this.checked? svg`<circle style="fill:currentColor;stroke:none;" cx="7" cy="7" r="4" />` : ''}
-				</svg>
+				<f-icon class="icon" .type=${this.checked ? 'radio-checked' : 'radio-unchecked'} />
 				<div class="label">
 					<slot />
 				</div>

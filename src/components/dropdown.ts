@@ -8,7 +8,7 @@ import {RenderFn, popup, PopupBinding} from '../bindings/popup'
 export class Dropdown<E = any> extends Component<E> {
 
 	static style() {
-		let {mainColor, adjustByLineHeight: lh, adjustByFontSize: fs} = theme
+		let {mainColor} = theme
 
 		return css`
 		:host{
@@ -19,17 +19,12 @@ export class Dropdown<E = any> extends Component<E> {
 			color: ${mainColor};
 		}
 
-		.icon{
+		.down-icon{
 			margin-right: 6px;
 		}
 
 		.popup{
 			padding: 5px 0;
-			font-size: ${fs(13)}px;
-
-			f-menuitem{
-				padding: 0 ${lh(7)}px;
-			}
 		}
 
 		.list{
@@ -39,7 +34,6 @@ export class Dropdown<E = any> extends Component<E> {
 		`
 	}
 
-	icon: string = 'down'
 	opened: boolean = false
 	renderContent!: RenderFn
 
@@ -65,7 +59,7 @@ export class Dropdown<E = any> extends Component<E> {
 		return html`
 		<template :class.opened=${this.opened} ${toPopup}>
 			<slot />
-			${this.icon ? html`<f-icon class="icon" .type="${this.icon}" />` : ''}
+			<f-icon class="down-icon" .type="down" />
 		</template>
 		`
 	}
