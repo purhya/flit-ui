@@ -1,34 +1,65 @@
-import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, renderComplete, Context, Transition, Template, renderComponent, clearTransition} from 'flit'
-import {Timeout, timeout, onMouseLeaveAll, watchLayout, Rect, align, isMouseLeaveLockedAt} from 'ff'
-import {Layer} from '../components/layer'
+import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, renderComplete, Context, Transition, Template, renderComponent, clearTransition} from '@pucelle/flit'
+import {Timeout, timeout, MouseLeave, watchLayout, Rect, align} from '@pucelle/ff'
+import {Popup} from '../components/popup'
 
 
-type RenderFn = () => TemplateResult
+export type RenderFn = () => TemplateResult
 
 export interface PopupOptions {
 
-	// If name specified, all the `:popup` with same name will share and reuse created popup component.
+	/** If name specified, all the `:popup` with same name will share and reuse popup component each other. */
 	name?: string
 
+	/** How to trigger the popup. */
 	trigger?: 'hover' | 'click' | 'focus' | 'contextmenu'
+
+	/** Element to align to, default value is current element. */
+	alignTo?: () => Element
+
+	/** Where the popup align, reference to `align`. */
 	alignPosition?: string
+
+	/** Popup align margin, reference to `align`. */
 	alignMargin?: number | number[]
 
-	// Such that mouse hover unexpected will not cause layer popup, only for `hover` and `focus` trigger.
+	/** Such that mouse hover unexpected will not cause layer popup, only for `hover` and `focus` trigger. */
 	showDelay?: number
 
-	// Such that when mouse hover from `el` to `layer` will not cause it flush.
+	/** Such that when mouse hover from `el` to `layer` will not cause it flush. */
 	hideDelay?: number
 
+	/** Should show trangle. */
 	trangle?: boolean
+
+	/** Transition options for popup hiding and showing. */
 	transition?: TransitionOptions
+
+	/** To notify when `opened` changed. */
+	onOpenedChanged?: (opened: boolean) => void
 }
 
-const namedPopupCache: Map<string, {template: Template, popup: Layer}> = new Map()
-const usingNamedPopups: Map<Layer, PopupBinding> = new Map()
 
-let defaultPopupOptions: Required<PopupOptions> = {
-	name: '',
+const NamedPopupCache: Map<string, {template: Template, popup: Popup}> = new Map()
+const NamedPopupsInUse: Map<Popup, PopupBinding<any>> = new Map()
+
+function getPopupCacheFromName(name: string) {
+	let cache = NamedPopupCache.get(name)
+	if (cache) {
+		let popup = cache.popup
+
+		// If current popup is in use, not reuse it
+		if (MouseLeave.inUse(popup.el)) {
+			return null
+		}
+
+		return cache
+	}
+
+	return null
+}
+
+
+const defaultPopupOptions: PopupOptions = {
 	trigger: 'hover',
 	alignPosition: 't',
 	alignMargin: 3,
@@ -36,6 +67,7 @@ let defaultPopupOptions: Required<PopupOptions> = {
 	hideDelay: 200,
 	trangle: true,
 	transition: 'fade',
+	onOpenedChanged: () => undefined
 }
 
 
@@ -43,7 +75,7 @@ let defaultPopupOptions: Required<PopupOptions> = {
  * `:popup="..."`
  * `popup(title: string, {alignPosition: ..., ...})`
  */
-class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
+export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | undefined]> {
 
 	protected el: HTMLElement
 	protected context: Context
@@ -54,19 +86,43 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 	protected hideTimeout: Timeout | null = null
 	protected unwatchRect: (() => void) | null = null
 	protected unwatchLeave: (() => void) | null = null
-	protected focusEl!: HTMLElement
-	protected popup: Layer | null = null
+	protected unwatchResult: (() => void) | null = null
+	protected firstlyUpdate: boolean = true
+	protected popupTemplate: Template | null = null
+	
+	popup: Popup | null = null
 
 	constructor(el: Element, context: Context) {
 		this.el = el as HTMLElement
 		this.context = context
-		on(this.el, 'mouseenter', this.showPopupLater, this)
-		this.initFocus()
 	}
 
-	async update(renderFn: RenderFn, options?: PopupOptions) {
-		this.renderFn = renderFn
+	/** `renderFn` should never change. */
+	update(renderFn: R, options?: PopupOptions) {
 		this.options = options || {}
+
+		if (this.firstlyUpdate) {
+			this.renderFn = renderFn as unknown as RenderFn
+			this.bindTrigger()
+			this.firstlyUpdate = false
+		}
+		else {
+			this.updatePopup()
+		}
+	}
+
+	protected bindTrigger() {
+		let trigger = this.getOption('trigger')!
+
+		if (trigger === 'hover') {
+			on(this.el, 'mouseenter', this.showPopupLater, this)
+		}
+		else if (trigger === 'click') {
+			on(this.el, 'click', this.toggleOpened, this)
+		}
+		else {
+			on(this.el, trigger, this.showPopupLater, this)
+		}
 	}
 
 	remove() {
@@ -77,43 +133,6 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 		}
 	}
 	
-	protected initFocus() {
-		this.focusEl = this.el.querySelector('button, a, input, [tabindex="0"]') || this.el
-
-		if (this.focusEl === this.el) {
-			this.el.setAttribute('tabindex', '0')
-		}
-
-		on(this.focusEl, 'focus', this.onFocus, this)
-	}
-
-	protected onFocus() {
-		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
-		once(this.focusEl, 'blur', this.onBlur, this)
-	}
-
-	protected onKeyDown(e: KeyboardEvent) {
-		if (e.key === 'Enter') {
-			// May cause button tiggering additional click event if not prevent here.
-			e.preventDefault()
-			this.toggleOpened()
-		}
-		else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-			if (!this.opened) {
-				this.showPopup()
-			}
-		}
-		else if (e.key === 'Escape') {
-			if (this.opened) {
-				this.hidePopup()
-			}
-		}
-	}
-
-	protected onBlur() {
-		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
-	}
-
 	protected toggleOpened() {
 		if (this.opened) {
 			this.hidePopup()
@@ -123,8 +142,8 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 		}
 	}
 
-	protected getOption<K extends keyof PopupOptions>(key: K): Required<PopupOptions>[K] {
-		let value = this.options[key] as Required<PopupOptions>[K] | undefined
+	protected getOption<K extends keyof PopupOptions>(key: K): PopupOptions[K] {
+		let value = this.options[key] as PopupOptions[K] | undefined
 		if (value !== undefined) {
 			return value
 		}
@@ -132,7 +151,7 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 		return defaultPopupOptions[key]
 	}
 
-	showPopupLater() {
+	async showPopupLater() {
 		if (this.showTimeout) {
 			return
 		}
@@ -160,7 +179,7 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 			}
 		}
 		else {
-			this.showPopup()
+			await this.showPopup()
 		}
 	}
 
@@ -169,45 +188,64 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 			return
 		}
 
-		this.opened = true
-		this.popup = this.getPopupComponent()
-		this.popup.applyAppendTo()
-
-		let name = this.getOption('name')
-		this.popup!.el.style.visibility = 'hidden'
+		let {popup, inUse} = this.getPopup()
+		popup.applyAppendTo()
+		popup.el.style.visibility = 'hidden'
+		
+		this.setOpened(true)
 
 		await renderComplete()
-		if (!this.popup) {
+		if (!this.isPopupInControl()) {
 			return
 		}
 
-		let popupEl = this.popup!.el
 		this.alignPopup()
-		popupEl.style.visibility = ''
+		popup.el.style.visibility = ''
 
-		let shouldPlayTransition = !name || !usingNamedPopups.has(this.popup!)
-		if (shouldPlayTransition) {
-			new Transition(popupEl, this.getOption('transition')).enter()
+		if (inUse) {
+			clearTransition(popup.el)
 		}
 		else {
-			clearTransition(popupEl)
+			new Transition(popup.el, this.getOption('transition')!).enter()
 		}
-
-		// When only one child element exclude trangle and it can get focus, e.g.: `<menu>`, focus it.
-		this.mayFocusLayer()
 
 		let trigger = this.getOption('trigger')
 		if (trigger === 'hover') {
 			off(this.el, 'mouseleave', this.hidePopupLater, this)
 
 			// Should not use once to watch, or if the hideLater it triggered was canceled, This can't trigger again.
-			this.unwatchLeave = onMouseLeaveAll([this.el, this.popup.el], this.hidePopupLater.bind(this), this.getOption('hideDelay'))
+			this.unwatchLeave = MouseLeave.on([this.el, popup.el], this.hidePopupLater.bind(this), {
+				delay: this.getOption('hideDelay'),
+				mouseIn: true,
+			})
 		}
 		else if (trigger === 'click' || trigger === 'contextmenu') {
 			on(document, 'mousedown', this.onDocMouseDown, this)
 		}
 		
 		this.unwatchRect = watchLayout(this.el, 'rect', this.onElRectChanged.bind(this))
+	}
+
+	protected setOpened(opened: boolean) {
+		this.opened = opened
+
+		if (this.options.onOpenedChanged) {
+			this.options.onOpenedChanged(opened)
+		}
+	}
+
+	// If popup is not been reused by another.
+	protected isPopupInControl(): boolean {
+		if (!this.popup) {
+			return false
+		}
+
+		let name = this.getOption('name')
+		if (!name) {
+			return true
+		}
+
+		return NamedPopupsInUse.get(this.popup!) === this
 	}
 
 	protected clearHideTimeout() {
@@ -217,48 +255,73 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 		}
 	}
 
-	protected getPopupComponent(): Layer {
-		let name = this.getOption('name')!
-		let popup: Layer | null = null
-		let template: Template
+	protected getPopup() {
 		let result = this.renderFn()
+		let name = this.getOption('name')
+		let popup: Popup | null = null
+		let template: Template | null = null
+		let inUse: boolean = false
 
-		if (name && namedPopupCache.has(name)) {
-			({popup, template} = namedPopupCache.get(name)!)
+		if (name) {
+			let cache = getPopupCacheFromName(name)
+			if (cache) {
+				({popup, template} = cache)
+				inUse = NamedPopupsInUse.has(popup)
 
-			// If current popup in using, not reuse it
-			if (isMouseLeaveLockedAt(popup.el)) {
-				popup = null
-			}
-			else if (template.canMergeWith(result)) {
-				template.merge(result)
-			}
-			else {
-				popup.el.remove()
-				popup = null
+				if (template.canMergeWith(result)) {
+					template.merge(result)
+				}
+				else {
+					popup.el.remove()
+					popup = null
+				}
 			}
 		}
 		
 		if (!popup) {
-			let renderResult = renderComponent(result)
+			let renderResult = renderComponent(result, this.context)
 			template = renderResult.template
-			popup = renderResult.component! as Layer
-			namedPopupCache.set(name, {popup, template})
+			popup = renderResult.component! as Popup
+
+			if (name) {
+				NamedPopupCache.set(name, {popup, template})
+			}
 		}
 
 		if (name) {
-			usingNamedPopups.set(popup, this)
+			NamedPopupsInUse.set(popup, this)
 		}
 
-		return popup
+		this.popup = popup
+		this.popupTemplate = template
+
+		return {popup, inUse}
 	}
 
-	protected mayFocusLayer() {
-		let popupEl = this.popup!.el
-		let childCanGetFocus = popupEl.querySelector('a, button, input, [tabindex="0"]') as HTMLElement | null
+	protected async updatePopup() {
+		if (this.isPopupInControl()) {
+			let result = this.renderFn()
+			let name = this.getOption('name')
+			let popup = this.popup!
+			let template = this.popupTemplate!
 
-		if (childCanGetFocus) {
-			childCanGetFocus.focus()
+			if (template.canMergeWith(result)) {
+				template.merge(result)
+			}
+			else {
+				popup.el.remove()
+				
+				let renderResult = renderComponent(result, this.context)
+				template = this.popupTemplate = renderResult.template
+				popup = renderResult.component! as Popup
+
+				if (name) {
+					NamedPopupCache.set(name, {popup, template})
+				}
+			}
+
+			await renderComplete()
+			this.alignPopup()
 		}
 	}
 
@@ -292,10 +355,12 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 	}
 
 	protected alignPopup() {
-		let populEl = this.popup!.el
+		let toAlign = this.popup!.el
+		let alignToFn = this.getOption('alignTo')
+		let alignTo = alignToFn ? alignToFn() : this.el
 		let trangle = this.popup!.refs.trangle
 
-		align(populEl, this.el, this.getOption('alignPosition'), {
+		align(toAlign, alignTo, this.getOption('alignPosition')!, {
 			margin: this.getOption('alignMargin'),
 			canShrinkInY: true,
 			trangle,
@@ -314,12 +379,17 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 		}
 
 		let trigger = this.getOption('trigger')
-		let hideDelay = trigger === 'hover' ? 0 : this.getOption('hideDelay')
+		let hideDelay = trigger === 'hover' ? 0 : this.getOption('hideDelay')!
 
-		this.hideTimeout = timeout(() => {
-			this.hideTimeout = null
+		if (hideDelay > 0) {
+			this.hideTimeout = timeout(() => {
+				this.hideTimeout = null
+				this.hidePopup()
+			}, hideDelay)
+		}
+		else {
 			this.hidePopup()
-		}, hideDelay)
+		}
 	}
 
 	protected clearShowTimeout() {
@@ -334,31 +404,27 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 			return
 		}
 
-		// Must unwatch here, not the hideLater, or if it was canceled...
+		// Must unwatch here, not in `hideLater`, or if it was canceled...
 		this.unwatch()
-
-		if (this.opened && this.focusEl) {
-			this.restoreFocusFromLayer()
-		}
 
 		let name = this.getOption('name')
 		let popupEl = this.popup!.el
-		let shouldHidePopup = !name || usingNamedPopups.get(this.popup!) === this
 
-		this.opened = false
-		this.popup = null
-
-		if (shouldHidePopup) {
+		if (this.isPopupInControl()) {
 			if (name) {
-				usingNamedPopups.delete(this.popup!)
+				NamedPopupsInUse.delete(this.popup!)
 			}
 
-			new Transition(popupEl, this.getOption('transition')).leave().then((finish: boolean) => {
+			new Transition(popupEl, this.getOption('transition')!).leave().then((finish: boolean) => {
 				if (finish) {
 					popupEl.remove()
 				}
 			})
 		}
+
+		this.setOpened(false)
+		this.popup = null
+		this.popupTemplate = null
 	}
 
 	protected unwatch() {
@@ -374,14 +440,13 @@ class PopupBinding implements Binding<[RenderFn, PopupOptions | undefined]> {
 			this.unwatchLeave = null
 		}
 
+		if (this.unwatchResult) {
+			this.unwatchResult()
+			this.unwatchResult = null
+		}
+
 		if (trigger === 'click' || trigger === 'contextmenu') {
 			off(document, 'mousedown', this.onDocMouseDown, this)
-		}
-	}
-
-	protected restoreFocusFromLayer() {
-		if (document.activeElement && this.popup && this.popup.el.contains(document.activeElement)) {
-			this.focusEl.focus()
 		}
 	}
 }

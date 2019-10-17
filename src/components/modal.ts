@@ -1,13 +1,13 @@
-import {css, define, html, on, renderComplete, off, Component, appendTo, show} from 'flit'
+import {css, define, html, on, renderComplete, off, Component, appendTo, show} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {debounce, align} from 'ff'
+import {debounce, align} from '@pucelle/ff'
 
 
 @define('f-modal')
-export class Modal<Events = any> extends Component<Events> {
+export class Modal<E = any> extends Component<E> {
 
 	static style() {
-		let {mainColor, textColor, layerBorderRadius, layerShadowBlurRadius, layerBackgroundColor, layerShadowColor, lh} = theme
+		let {mainColor, textColor, layerBorderRadius, layerShadowBlurRadius, layerBackgroundColor, layerShadowColor, adjustByLineHeight: lh} = theme
 
 		return css`
 		:host{
@@ -127,8 +127,6 @@ export class Modal<Events = any> extends Component<Events> {
 			}
 		}
 	`}
-
-	static properties: ['mask', 'title']
 
 	mask: boolean = true
 	title: string = ''

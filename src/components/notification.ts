@@ -1,6 +1,6 @@
-import {css, define, html, Component, repeat, renderComponent} from 'flit'
+import {css, define, html, Component, repeat, renderComponent} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {remove, Timeout, timeout} from 'ff'
+import {remove, Timeout, timeout} from '@pucelle/ff'
 import {Color} from '../style/color'
 
 
@@ -28,9 +28,9 @@ export interface NotificationOptions {
 
 
 @define('f-notification-tips')
-export class NotificationTips<Events = any> extends Component<Events> {
+export class NotificationTips<E = any> extends Component<E> {
 	static style() {
-		let {infoColor, lh, successColor, errorColor, layerBorderRadius, layerShadowBlurRadius, fs, backgroundColor, textColor, layerShadowColor} = theme
+		let {infoColor, adjustByLineHeight: lh, successColor, errorColor, layerBorderRadius, layerShadowBlurRadius, adjustByFontSize: fs, backgroundColor, textColor, layerShadowColor} = theme
 
 		return css`
 		:host{

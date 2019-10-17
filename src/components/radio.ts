@@ -1,4 +1,4 @@
-import {define, Component, html, css, off, once, svg} from 'flit'
+import {define, Component, html, css, off, once, svg, getClosestComponent} from '@pucelle/flit'
 import {theme} from '../style/theme'
 
 
@@ -7,10 +7,10 @@ export interface RadioEvents {
 }
 
 @define('f-radio')
-export class Radio<Events = any> extends Component<Events & RadioEvents> {
+export class Radio<E = any> extends Component<E & RadioEvents> {
 
 	static style() {
-		let {mainColor, lh, focusBlurRadius} = theme
+		let {mainColor, adjustByLineHeight: lh, focusBlurRadius} = theme
 
 		return css`
 		:host{
@@ -51,16 +51,14 @@ export class Radio<Events = any> extends Component<Events & RadioEvents> {
 		`
 	}
 
-	static properties = ['checked', 'value']
-
 	checked: boolean = false
 	radioGroup: RadioGroup | null = null
 
 	// Used to compare with `RadioGroup.value`
 	value: any = null
 
-	render() {
-		let {lh} = theme
+	protected render() {
+		let {adjustByLineHeight: lh} = theme
 
 		return html`
 			<template
@@ -68,7 +66,6 @@ export class Radio<Events = any> extends Component<Events & RadioEvents> {
 				:class.checked=${this.checked}
 				@@click=${this.onClick}
 				@@focus=${this.onFocus}
-				@@blur=${this.onBlur}
 			>
 				<svg class="icon" viewBox="0 0 14 14" style="width: ${lh(16)}px; height: ${lh(16)}px;">
 					${this.checked? svg`<circle style="fill:currentColor;stroke:none;" cx="7" cy="7" r="4" />` : ''}
@@ -80,8 +77,8 @@ export class Radio<Events = any> extends Component<Events & RadioEvents> {
 		`
 	}
 
-	onCreated() {
-		let group = this.closest(RadioGroup)
+	protected onCreated() {
+		let group = getClosestComponent(this.el, RadioGroup)
 		if (group) {
 			this.radioGroup = group
 			this.checked = this.radioGroup.value == this.value
@@ -89,36 +86,33 @@ export class Radio<Events = any> extends Component<Events & RadioEvents> {
 		}
 	}
 
-	onClick() {
+	protected onClick() {
 		if (!this.checked) {
 			this.checked = true
 			this.emit('change', true)
 		}
 	}
 
-	onFocus() {
+	protected onFocus() {
 		if (!this.checked) {
+			once(this.el, 'blur', this.onBlur, this)
 			once(document, 'keydown.enter', this.onEnter, this)
 		}
 	}
 
-	onEnter() {
-		this.onClick()
+	protected onBlur() {
+		off(document, 'keydown', this.onEnter, this)
 	}
 
-	onBlur() {
-		if (!this.checked) {
-			off(document, 'keydown', this.onEnter, this)
-		}
+	protected onEnter() {
+		this.onClick()
 	}
 }
 
 
-// No `-` to correspond with `radiogroup` in `https://www.w3.org/TR/wai-aria-practices-1.2/`.
+// Not `radio-group` because we want to correspond with `radiogroup` with `https://www.w3.org/TR/wai-aria-practices-1.2/`.
 @define('f-radiogroup')
 export class RadioGroup extends Component<{change: (value: (string | number)[]) => void}> {
-
-	static properties = ['value']
 
 	value: any = null
 	
@@ -129,7 +123,7 @@ export class RadioGroup extends Component<{change: (value: (string | number)[]) 
 		radio.on('change', this.onRadioChange.bind(this, radio))
 	}
 
-	onRadioChange(changedRadio: Radio) {
+	protected onRadioChange(changedRadio: Radio) {
 		for (let radio of this.radios) {
 			if (radio !== changedRadio) {
 				radio.checked = false

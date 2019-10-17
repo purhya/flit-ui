@@ -1,6 +1,6 @@
-import {define, Component, html, css} from 'flit'
+import {define, Component, html, css} from '@pucelle/flit'
 import {svgSymbols} from '../icons/svg-symbol'
-import {subMatches, animateByFunction, toPower} from 'ff'
+import {subMatches, animateByFunction} from '@pucelle/ff'
 import {theme} from '../style/theme'
 
 
@@ -13,15 +13,13 @@ export class Icon<Events = any> extends Component<Events> {
 		stroke: currentColor;
 		fill: none;
 		margin: auto 0;
-		vertical-align: top;
+		vertical-align: middle;
 
 		svg{
 			margin: auto;
 		}
 	}
 	`
-
-	static properties = ['type']
 
 	type: string = ''
 	
@@ -33,9 +31,8 @@ export class Icon<Events = any> extends Component<Events> {
 
 		let [viewBox, inner] = subMatches(svgCode, /<svg viewBox="(.+?)">([\s\S]+?)<\/svg>/)[0]
 		let [,, w, h] = viewBox.split(' ')
-		let width = theme.lh(Number(w))
-		let height = theme.lh(Number(h))
-		let strokeWidth = Math.max(1, toPower(20 / width, -2))
+		let width = theme.adjustByLineHeight(Number(w))
+		let height = theme.adjustByLineHeight(Number(h))
 
 		return html`
 		<template>
@@ -43,7 +40,6 @@ export class Icon<Events = any> extends Component<Events> {
 				viewBox=${viewBox}
 				width=${width}
 				height=${height}
-				stroke-width=${strokeWidth}
 				:html=${inner}
 			/>
 		</template>
@@ -54,8 +50,6 @@ export class Icon<Events = any> extends Component<Events> {
 
 @define('f-icon-loading')
 export class IconLoading extends Icon {
-
-	static properties = ['type']
 
 	static style = css`
 	:host{

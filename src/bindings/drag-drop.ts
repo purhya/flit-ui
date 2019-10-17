@@ -1,5 +1,5 @@
-import {defineBinding, Binding, on, once, off} from "flit"
-import {getNumeric, animateTo, getRect, stopAnimation, Rect} from "ff"
+import {defineBinding, Binding, on, once, off} from "@pucelle/flit"
+import {getStyleAsNumber, animateTo, getRect, stopAnimation, Rect} from "@pucelle/ff"
 import {theme} from "../style/theme"
 
 
@@ -7,18 +7,18 @@ export interface DraggableOptions {
 	name?: string
 }
 
-export interface DroppableOptions<Item> {
+export interface DroppableOptions<T> {
 	name?: string
-	onenter?: DropHandler<Item>
-	onleave?: DropHandler<Item>
+	onenter?: DropHandler<T>
+	onleave?: DropHandler<T>
 }
 
-type DropHandler<Item> = (data: Item, index: number) => void
+type DropHandler<T> = (data: T, index: number) => void
 type Draggable = DraggableBinding<any>
 type Droppable = DroppableBinding<any>
 
 
-class DraggableBinding<Item> implements Binding<[Item, number, DraggableOptions | undefined]> {
+class DraggableBinding<T> implements Binding<[T, number, DraggableOptions | undefined]> {
 
 	el: HTMLElement
 	name: string = ''
@@ -36,7 +36,7 @@ class DraggableBinding<Item> implements Binding<[Item, number, DraggableOptions 
 		on(this.el, 'mouseenter', this.onMouseEnter, this)
 	}
 
-	update(data: Item, index: number, options?: DraggableOptions) {
+	update(data: T, index: number, options?: DraggableOptions) {
 		this.data = data
 		this.index = index
 
@@ -302,8 +302,8 @@ class Mover {
 		this.el = drag.el
 		this.startDropArea = this.dropArea = drop
 
-		this.width = this.el.offsetWidth + Math.max(getNumeric(this.el, 'marginLeft'), getNumeric(this.el, 'marginRight'))
-		this.height = this.el.offsetHeight + Math.max(getNumeric(this.el, 'marginTop'), getNumeric(this.el, 'marginBottom'))
+		this.width = this.el.offsetWidth + Math.max(getStyleAsNumber(this.el, 'marginLeft'), getStyleAsNumber(this.el, 'marginRight'))
+		this.height = this.el.offsetHeight + Math.max(getStyleAsNumber(this.el, 'marginTop'), getStyleAsNumber(this.el, 'marginBottom'))
 
 		this.setStartDraggingStyle()
 		this.giveSpaceForDraggingElement(drop, false)

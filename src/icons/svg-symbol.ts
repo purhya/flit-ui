@@ -1,328 +1,97 @@
 export const svgSymbols = {
-	'add': `
-		<svg viewBox="0 0 20 20">
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" x1="3.5" y1="9.5" x2="17.5" y2="9.5"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" x1="10.5" y1="2.5" x2="10.5" y2="16.5"/>
-		</svg>
-	`,
-
-	'alert': `
-		<svg viewBox="0 0 20 20">
-			<circle style="fill:none;stroke:currentColor;" cx="9.5" cy="9.5" r="8"/>
-			<line style="fill:none;stroke:currentColor;" x1="9.5" y1="11" x2="9.5" y2="4"/>
-			<line style="fill:none;stroke:currentColor;" x1="9.5" y1="15" x2="9.5" y2="13"/>
-		</svg>
-	`,
-
-	'checkbox-checked': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:currentColor;stroke:currentColor;" d="M16,17.5H4c-0.8,0-1.5-0.7-1.5-1.5V4c0-0.8,0.7-1.5,1.5-1.5h12c0.8,0,1.5,0.7,1.5,1.5v12C17.5,16.8,16.8,17.5,16,17.5z"/>
-			<polyline style="fill:none;stroke:#FFFFFF;stroke-linecap:round;stroke-linejoin:round;" points="5.5,11 9.7,14.5 14.5,5.5"/>
-		</svg>
-	`,
-
-	'checkbox-indeterminate': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:currentColor;stroke:currentColor;" d="M16,17.5H4c-0.8,0-1.5-0.7-1.5-1.5V4c0-0.8,0.7-1.5,1.5-1.5h12c0.8,0,1.5,0.7,1.5,1.5v12C17.5,16.8,16.8,17.5,16,17.5z"/>
-			<line style="fill:none;stroke:#FFFFFF;" x1="5" y1="9.5" x2="15" y2="9.5"/>
-		</svg>
-	`,
-
-	'checkbox-partly-checked': `
-		<svg viewBox="0 0 20 20">
-			<circle style="fill:#F9F9F9;stroke:currentColor;" cx="10" cy="10" r="7.5"/>
-			<line style="opacity:0.5;fill:none;stroke:currentColor;stroke-linecap:round;" x1="6" y1="9.5" x2="14" y2="9.5"/>
-		</svg>
-	`,
-
-	'checkbox-unchecked': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:none;stroke:currentColor;" d="M16,17.5H4c-0.8,0-1.5-0.7-1.5-1.5V4c0-0.8,0.7-1.5,1.5-1.5h12c0.8,0,1.5,0.7,1.5,1.5v12C17.5,16.8,16.8,17.5,16,17.5z"/>
-		</svg>
-	`,
-
-	'clock': `
-		<svg viewBox="0 0 20 20">
-			<circle style="fill:none;stroke:currentColor;" cx="9.5" cy="9.5" r="8"/>
-			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="9.5,3.5 9.5,9.5 13.5,9.5"/>
+	'checked': `
+		<svg viewBox="0 0 15 15">
+			<path style="fill:currentColor; stroke:none;" d="M6,12L2.1,7.5C2,7.3,2,7,2.1,6.8c0.2-0.2,0.4-0.2,0.6,0c0,0,0,0,0,0L6,10.6l7.3-8.5c0.2-0.2,0.4-0.2,0.6,0c0,0,0,0,0,0c0.2,0.2,0.2,0.4,0,0.6L6,12z"/>
 		</svg>
 	`,
 
 	'close': `
-		<svg viewBox="0 0 20 20">
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;" x1="4.4" y1="4.4" x2="15.7" y2="15.6"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;" x1="15.7" y1="4.4" x2="4.4" y2="15.6"/>
-		</svg>
-	`,
-
-	'confirm': `
-		<svg viewBox="0 0 20 20">
-			<circle style="fill:none;stroke:currentColor;" cx="9.5" cy="9.5" r="8"/>
-			<path style="fill:none;stroke:currentColor;" d="M9.5,15"/>
-			<path style="fill:none;stroke:currentColor;" d="M9.5,4"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M13.5,13.5"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M5.5,5.5"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M5.5,13.5"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M13.5,5.5"/>
-			<path style="fill:currentColor;" d="M10.6,9.7c-0.3,0.2-0.4,0.4-0.5,0.8c-0.1,0.1-0.1,0.4-0.1,0.7s-0.3,0.5-0.5,0.5l0,0c-0.3,0-0.5-0.2-0.5-0.5c0-0.1,0-0.2,0-0.3c0-0.4,0.1-0.7,0.2-1s0.4-0.6,0.9-0.9c0.4-0.3,0.6-0.6,0.7-0.6c0.4-0.4,0.5-0.8,0.3-1.3C10.9,6.3,10.3,6,9.7,6C9,6.1,8.6,6.4,8.2,7C8.1,7.2,7.8,7.3,7.6,7.2l0,0C7.3,7.1,7.2,6.7,7.4,6.4c0.5-0.9,1.3-1.3,2.4-1.3c0.8,0,1.4,0.3,1.9,0.7c0.4,0.4,0.6,0.9,0.6,1.6c0,0.7-0.3,1.3-1,1.8L10.6,9.7z"/>
-			<ellipse style="fill:currentColor;" cx="9.5" cy="13.5" rx="0.6" ry="0.6"/>
+		<svg viewBox="0 0 15 15">
+			<path style="fill:currentColor; stroke:none;" d="M2.9,12.5c-0.2,0-0.4-0.2-0.4-0.4c0-0.1,0-0.2,0.1-0.3l9.2-9.2c0.2-0.2,0.4-0.2,0.6,0c0.2,0.2,0.2,0.4,0,0.6l-9.2,9.2C3.1,12.5,3,12.5,2.9,12.5z"/>
+			<path style="fill:currentColor; stroke:none;" d="M12.1,12.5c-0.1,0-0.2,0-0.3-0.1L2.6,3.2C2.5,3,2.5,2.8,2.6,2.6c0.2-0.2,0.4-0.2,0.6,0l9.2,9.2c0.2,0.2,0.2,0.4,0,0.6C12.3,12.4,12.2,12.5,12.1,12.5L12.1,12.5z"/>
 		</svg>
 	`,
 
 	'down': `
-		<svg viewBox="0 0 20 20">
-			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="6,6.5 10,12.5 14,6.5"/>
-		</svg>
-	`,
-
-	'edit': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:none;stroke:currentColor;stroke-linejoin:round;" d="M8.1,16.8l-4.6,0.7L4.2,13L13,4.2c1.1-0.9,2.7-0.8,3.7,0.2l0,0c1,1,1,2.6,0.1,3.6L8.1,16.8z"/>
-			<line style="fill:none;stroke:currentColor;" x1="12.6" y1="5.3" x2="16.2" y2="8.9"/>
-			<line style="fill:none;stroke:currentColor;" x1="4.5" y1="13.1" x2="8.4" y2="16.9"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;" x1="11.5" y1="8.5" x2="7.5" y2="12.5"/>
+		<svg viewBox="0 0 15 15">
+			<polygon style="fill:currentColor; stroke:none;" points="7.5,11 3.5,4.4 4.2,4 7.5,9.4 10.8,4 11.5,4.4"/>
 		</svg>
 	`,
 
 	'error': `
-		<svg viewBox="0 0 20 20">
-			<circle style="fill:none;stroke:currentColor;" cx="9.5" cy="9.5" r="8"/>
-			<path style="fill:none;stroke:currentColor;" d="M9.5,15"/>
-			<path style="fill:none;stroke:currentColor;" d="M9.5,4"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" x1="5.5" y1="5.5" x2="13.5" y2="13.5"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" x1="13.5" y1="5.5" x2="5.5" y2="13.5"/>
-		</svg>
-	`,
-
-	'export': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M6,12.8c0.8-4.9,6.6-8,11.5-7.3"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M16.5,11.3v2.2c0,1.1-0.9,2-2,2h-10c-1.1,0-2-0.9-2-2v-2.2"/>
-			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="15.5,2.5 18.5,5.5 15.5,8.5"/>
-		</svg>
-	`,
-
-	'eye': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M18.5,9.5c0,0-4.1,6-9,6s-9-6-9-6s4.1-6,9-6S18.5,9.5,18.5,9.5z"/>
-			<circle style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" cx="9.5" cy="9.5" r="3"/>
-		</svg>
-	`,
-
-	'folder': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M15.2,16.5H4.8c-1,0-1.8-0.7-2-1.6l-1.3-7C1.4,6.8,2.1,5.7,3.2,5.5c0.1,0,0.3,0,0.4,0h12.9c1.1,0,2,0.9,2,2c0,0.1,0,0.3,0,0.4l-1.3,7C16.9,15.8,16.1,16.5,15.2,16.5z"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M3.5,5V3.5c0-1.1,0.9-2,2-2h1.3c0.4,0,0.8,0.2,1.1,0.5l0.5,0.5h6.1c1.5,0,2,1.4,2,2.5"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;" x1="14.5" y1="9.7" x2="13.5" y2="13.7"/>
-		</svg>
-	`,
-
-	'import': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M18.5,3.4c-4.9-1-10,3.2-11,8.1"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M2.5,11.3v2.2c0,1.1,0.9,2,2,2h10c1.1,0,2-0.9,2-2v-2.2"/>
-			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="5.6,8.8 7.3,12.6 11.2,10.9"/>
+		<svg viewBox="0 0 23 23">
+			<path style="fill:currentColor;stroke:none;" d="M16.35,6.65a.5.5,0,0,0-.71,0L11.5,10.79,7.35,6.65a.5.5,0,0,0-.71.71l4.15,4.15L6.65,15.65a.5.5,0,1,0,.71.71l4.15-4.15,4.15,4.15a.5.5,0,0,0,.71-.71L12.21,11.5l4.15-4.15A.5.5,0,0,0,16.35,6.65Z"/>
+			<path style="fill:currentColor;stroke:none;" d="M11.5,0A11.5,11.5,0,1,0,23,11.5,11.5,11.5,0,0,0,11.5,0Zm0,22A10.5,10.5,0,1,1,22,11.5,10.51,10.51,0,0,1,11.5,22Z"/>
 		</svg>
 	`,
 
 	'info': `
-		<svg viewBox="0 0 20 20">
-			<circle style="fill:none;stroke:currentColor;" cx="9.5" cy="9.5" r="8"/>
-			<line style="fill:none;stroke:currentColor;" x1="9.5" y1="8" x2="9.5" y2="15"/>
-			<line style="fill:none;stroke:currentColor;" x1="9.5" y1="4" x2="9.5" y2="6"/>
+		<svg viewBox="0 0 23 23">
+			<path style="fill:currentColor;stroke:none;" d="M11.5,0A11.5,11.5,0,1,0,23,11.5,11.5,11.5,0,0,0,11.5,0Zm0,22A10.5,10.5,0,1,1,22,11.5,10.51,10.51,0,0,1,11.5,22Z"/>
+			<rect style="fill:currentColor;stroke:none;" x="10.5" y="5" width="2" height="2"/>
+			<polygon style="fill:currentColor;stroke:none;" points="12.5 10 12.5 9 10.5 9 9.5 9 9.5 10 10.5 10 10.5 17 9.5 17 9.5 18 10.5 18 12.5 18 13.5 18 13.5 17 12.5 17 12.5 10"/>
 		</svg>
 	`,
 
-	'left': `
-		<svg viewBox="0 0 20 20">
-			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="12.5,13.5 6.5,9.5 12.5,5.5"/>
+	'love': `
+		<svg viewBox="0 0 15 15">
+			<path style="fill:currentColor;stroke:none;" d="M11.5,2.85a1.24,1.24,0,0,1,.76.26A1.92,1.92,0,0,1,13,4.47a2.1,2.1,0,0,1-.48,1.58l-5,5.67-5-5.67A2.1,2.1,0,0,1,2,4.47,1.92,1.92,0,0,1,2.74,3.1a1.23,1.23,0,0,1,.76-.26,1.61,1.61,0,0,1,1.18.58L5.74,4.62a2.32,2.32,0,0,0,3.53,0l1.06-1.19a1.61,1.61,0,0,1,1.18-.58m0-.85a2.45,2.45,0,0,0-1.82.86L8.63,4.06a1.47,1.47,0,0,1-2.26,0L5.32,2.86A2.45,2.45,0,0,0,3.5,2a2.09,2.09,0,0,0-1.27.43,2.94,2.94,0,0,0-.38,4.18L7.5,13l5.65-6.39a2.94,2.94,0,0,0-.38-4.18A2.09,2.09,0,0,0,11.5,2Z"/>
 		</svg>
 	`,
 
-	'link': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M6.8,8.9l-1-1l-2.1,2c-1.7,1.7-1.7,4.6,0,6.3s4.6,1.7,6.2,0l2.1-2.1l-1.2-1.2l-0.2-0.2"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M13,10.9l1.2,1.2l2-2c1.7-1.7,1.7-4.6,0-6.3c-1.7-1.7-4.6-1.7-6.3,0L8,5.8l1,1"/>
-			<line style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:bevel;" x1="13.5" y1="6.3" x2="6.4" y2="13.4"/>
-		</svg>
-	`,
-
-	'loading': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M10,2.5c4.1,0,7.5,3.3,7.5,7.5"/>
-		</svg>
-	`,
-
-	'maximize': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:currentColor;" d="M13,5c1.1,0,2,0.9,2,2v6c0,1.1-0.9,2-2,2H7c-1.1,0-2-0.9-2-2V7c0-1.1,0.9-2,2-2H13 M13,4H7C5.3,4,4,5.3,4,7v6c0,1.7,1.3,3,3,3l0,0h6c1.7,0,3-1.3,3-3V7C16,5.3,14.7,4,13,4z"/>
-		</svg>
-	`,
-
-	'minimize': `
-		<svg viewBox="0 0 20 20">
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;" x1="4" y1="10.5" x2="16" y2="10.5"/>
-		</svg>
-	`,
-
-	'msg-alert': `
-		<svg viewBox="0 0 34 34">
-			<circle style="fill:none;stroke:currentColor;" cx="16.5" cy="16.7" r="16"/>
-			<line style="opacity:0.5;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" x1="17" y1="23.2" x2="17" y2="26.2"/>
-			<line style="opacity:0.5;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" x1="17" y1="7.2" x2="17" y2="19.2"/>
-		</svg>
-	`,
-
-	'msg-confirm': `
-		<svg viewBox="0 0 34 34">
-			<circle style="fill:none;stroke:currentColor;" cx="16.9" cy="16.7" r="16"/>
-			<path style="fill:currentColor;" d="M18.7,16.7c-0.5,0.4-0.8,0.8-0.9,1.4c-0.1,0.2-0.1,0.7-0.2,1.2s-0.5,0.9-1,0.9l0,0c-0.5,0-1-0.4-1-0.9c0-0.2,0-0.4,0-0.6c0-0.7,0.1-1.3,0.4-1.8s0.8-1.1,1.6-1.7s1.2-1,1.4-1.1c0.7-0.7,0.9-1.5,0.6-2.3c-0.4-1.1-1.5-1.6-2.7-1.6c-1.2,0.1-2.1,0.6-2.7,1.7c-0.3,0.4-0.8,0.6-1.2,0.4l0,0c-0.5-0.2-0.7-0.9-0.4-1.4c1-1.6,2.5-2.4,4.5-2.4c1.5,0,2.6,0.5,3.5,1.3c0.8,0.8,1.2,1.7,1.2,2.8c0,1.3-0.6,2.3-1.8,3.3L18.7,16.7z"/>
-			<circle style="fill:currentColor;" cx="16.6" cy="23.6" r="1.1"/>
-		</svg>
-	`,
-
-	'msg-error': `
-		<svg viewBox="0 0 34 34">
-			<circle style="fill:none;stroke:currentColor;" cx="16.7" cy="16.7" r="16"/>
-			<line style="opacity:0.5;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" x1="9.3" y1="9.6" x2="24.2" y2="24.4"/>
-			<line style="opacity:0.5;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" x1="24.2" y1="9.6" x2="9.3" y2="24.4"/>
-		</svg>
-	`,
-
-	'msg-info': `
-		<svg viewBox="0 0 34 34">
-			<circle style="fill:none;stroke:currentColor;" cx="17.2" cy="16.7" r="16"/>
-			<line style="opacity:0.5;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" x1="17.2" y1="10.2" x2="17.2" y2="7.2"/>
-			<line style="opacity:0.5;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" x1="17.2" y1="26.2" x2="17.2" y2="14.2"/>
-		</svg>
-	`,
-
-	'msg-prompt': `
-		<svg viewBox="0 0 34 34">
-			<circle style="fill:none;stroke:currentColor;" cx="16.9" cy="16.7" r="16"/>
-			<path style="fill:currentColor;" d="M18.7,16.7c-0.5,0.4-0.8,0.8-0.9,1.4c-0.1,0.2-0.1,0.7-0.2,1.2s-0.5,0.9-1,0.9l0,0c-0.5,0-1-0.4-1-0.9c0-0.2,0-0.4,0-0.6c0-0.7,0.1-1.3,0.4-1.8s0.8-1.1,1.6-1.7s1.2-1,1.4-1.1c0.7-0.7,0.9-1.5,0.6-2.3c-0.4-1.1-1.5-1.6-2.7-1.6c-1.2,0.1-2.1,0.6-2.7,1.7c-0.3,0.4-0.8,0.6-1.2,0.4l0,0c-0.5-0.2-0.7-0.9-0.4-1.4c1-1.6,2.5-2.4,4.5-2.4c1.5,0,2.6,0.5,3.5,1.3c0.8,0.8,1.2,1.7,1.2,2.8c0,1.3-0.6,2.3-1.8,3.3L18.7,16.7z"/>
-			<circle style="fill:currentColor;" cx="16.6" cy="23.6" r="1.1"/>
-		</svg>
-	`,
-
-	'msg-success': `
-		<svg viewBox="0 0 34 34">
-			<circle style="fill:none;stroke:currentColor;" cx="17.2" cy="16.7" r="16"/>
-			<polyline style="opacity:0.5;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" points="10.6,19.3 17.2,25.6 24.8,9.1"/>
-		</svg>
-	`,
-
-	'order-asc': `
-		<svg viewBox="0 0 20 20">
-			<polygon style="fill:currentColor; stroke:none;" points="10,7 7,12 13,12"/>
-		</svg>
-	`,
-
-	'order-default': `
-		<svg viewBox="0 0 20 20">
-			<polygon style="fill:currentColor; stroke:none;" points="10,16 7,11 13,11"/>
-			<polygon style="fill:currentColor; stroke:none;" points="10,4 7,9 13,9"/>
-		</svg>
-	`,
-
-	'order-desc': `
-		<svg viewBox="0 0 20 20">
-			<polygon style="fill:currentColor; stroke:none;" points="10,13 7,8 13,8"/>
-		</svg>
-	`,
-
-	'play': `
-		<svg viewBox="0 0 20 20">
-			<circle style="fill:none;stroke:currentColor;" cx="9.5" cy="9.5" r="8"/>
-			<polygon style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="13.5,9.5 7.5,6 7.5,13"/>
-		</svg>
-	`,
-
-	'radio-checked': `
-		<svg viewBox="0 0 20 20">
-			<circle style="fill:none;stroke:currentColor;" cx="10" cy="10" r="7.5"/>
-			<circle style="fill:currentColor;stroke:none;" cx="10" cy="10" r="4"/>
-		</svg>
-	`,
-
-	'radio-unchecked': `
-		<svg viewBox="0 0 20 20">
-			<circle style="fill:none;stroke:currentColor;" cx="10" cy="10" r="7.5"/>
-		</svg>
-	`,
-
-	'refresh': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M14.83,15.74c-3.17,2.67-7.9,2.26-10.57-0.91S2,6.93,5.17,4.26S13.07,2,15.74,5.17C16.88,6.52,17.5,8.23,17.5,10l-3-2.5"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" x1="19.5" y1="6.5" x2="17.5" y2="10"/>
-		</svg>
-	`,
-
-	'remove': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:none;stroke:currentColor;" d="M4.5,5.5h10l0,0v9c0,1.1-0.9,2-2,2h-6c-1.1,0-2-0.9-2-2V5.5L4.5,5.5z"/>
-			<path style="fill:none;stroke:currentColor;" d="M8.5,2.5h2c0.6,0,1,0.4,1,1v2l0,0h-4l0,0v-2C7.5,2.9,7.9,2.5,8.5,2.5z"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;" x1="9.5" y1="8" x2="9.5" y2="14"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;" x1="11.5" y1="9" x2="11.5" y2="13"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;" x1="7.5" y1="9" x2="7.5" y2="13"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;" x1="2" y1="5.5" x2="17" y2="5.5"/>
+	'question': `
+		<svg viewBox="0 0 23 23">
+			<path style="fill:currentColor;stroke:none;" d="M11.5,0A11.5,11.5,0,1,0,23,11.5,11.5,11.5,0,0,0,11.5,0Zm0,22.08A10.58,10.58,0,1,1,22.08,11.5,10.59,10.59,0,0,1,11.5,22.08Z"/>
+			<path style="fill:currentColor;stroke:none;" d="M13.94,5.93a3.23,3.23,0,0,0-1.16-.79A4.54,4.54,0,0,0,11,4.85a3.7,3.7,0,0,0-1.54.32,3.61,3.61,0,0,0-1.22.9,4.32,4.32,0,0,0-.82,1.39,5.73,5.73,0,0,0-.34,1.79h2A4.88,4.88,0,0,1,9.3,8.12a3.09,3.09,0,0,1,.4-.87,1.84,1.84,0,0,1,.59-.56,1.46,1.46,0,0,1,.75-.2,1.85,1.85,0,0,1,.75.14,1.5,1.5,0,0,1,.54.4,1.63,1.63,0,0,1,.32.58,2.38,2.38,0,0,1,.1.71,1.74,1.74,0,0,1-.22.88,3.79,3.79,0,0,1-.54.73,9.6,9.6,0,0,1-.71.67,6.62,6.62,0,0,0-.71.71,3.82,3.82,0,0,0-.54.84,2.4,2.4,0,0,0-.22,1.05v1.14h2.32V13.28a1.92,1.92,0,0,1,.2-.87,4.1,4.1,0,0,1,.49-.76q.3-.36.64-.72a8,8,0,0,0,.64-.75,4.1,4.1,0,0,0,.49-.84,2.51,2.51,0,0,0,.2-1A4.13,4.13,0,0,0,14.59,7,3,3,0,0,0,13.94,5.93Z"/>
+			<rect style="fill:currentColor;stroke:none;" x="9.81" y="15.65" width="2.32" height="2.14"/>
 		</svg>
 	`,
 
 	'right': `
-		<svg viewBox="0 0 20 20">
-			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="6.5,13.5 12.5,9.5 6.5,5.5"/>
+		<svg viewBox="0 0 15 15">
+			<polygon style="fill:currentColor; stroke:none;" points="4.4,11.5 4,10.8 9.4,7.5 4,4.2 4.4,3.5 11,7.5"/>
 		</svg>
 	`,
 
 	'search': `
-		<svg viewBox="0 0 20 20">
-			<circle style="fill:none;stroke:currentColor;" cx="9.5" cy="9.5" r="7"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M9.6,5.6c2.2,0,4,1.8,4,4"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;" x1="14.8" y1="14.8" x2="17.6" y2="17.6"/>
-		</svg>
-	`,
-
-	'selected': `
-		<svg viewBox="0 0 20 20">
-			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="4.5,11.2 9.6,15.5 15.5,4.5"/>
+		<svg viewBox="0 0 15 15">
+			<path style="fill:currentColor; stroke:none;" d="M6,1.9C8.2,1.9,10,3.7,10,6C10,7,9.6,8.1,8.8,8.8C7.3,10.5,4.7,10.6,3.1,9S1.4,4.9,2.9,3.3C3,3.2,3,3.2,3.1,3.1C3.9,2.3,4.9,1.9,6,1.9 M6,1C3.2,1,1,3.2,1,6c0,2.7,2.2,5,5,5s5-2.2,5-5c0-1.3-0.5-2.6-1.5-3.5C8.6,1.5,7.3,1,6,1z"/>
+			<line style="fill:none;stroke:currentColor;stroke-linecap:round;" x1="9.2" y1="9.2" x2="13" y2="13"/>
 		</svg>
 	`,
 
 	'success': `
-		<svg viewBox="0 0 20 20">
-			<circle style="fill:none;stroke:currentColor;" cx="9.5" cy="9.5" r="8"/>
-			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="5.5,10.4 9.2,13.5 13.5,5.5"/>
+		<svg viewBox="0 0 23 23">
+			<path style="fill:currentColor;stroke:none;" d="M11.5,0A11.5,11.5,0,1,0,23,11.5,11.5,11.5,0,0,0,11.5,0Zm0,22.08A10.58,10.58,0,1,1,22.08,11.5,10.59,10.59,0,0,1,11.5,22.08Z"/>
+			<path style="fill:currentColor;stroke:none;" d="M17.35,6.65l-7.12,8.54L7.11,11.45a.5.5,0,0,0-.77.64l3.88,4.66L18.11,7.3a.5.5,0,1,0-.77-.64Z"/>
 		</svg>
 	`,
 
-	'sync': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M2.18,7.47c1.33-4.31,5.9-6.72,10.2-5.39c2.9,0.89,5.06,3.32,5.62,6.3l-3.73-2.05"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" x1="18.94" y1="4.57" x2="17.99" y2="8.38"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" d="M17.75,12.16c-1.45,4.27-6.09,6.55-10.36,5.09C4.6,16.3,2.53,13.91,2,11l3.73,2.1"/>
-			<line style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" x1="1.06" y1="14.85" x2="2.01" y2="11.05"/>
+	'tips': `
+		<svg viewBox="0 0 15 15">
+			<path style="fill:currentColor; stroke:none;" d="M7,1c3.3,0,6,2.7,6,6s-2.7,6-6,6s-6-2.7-6-6S3.7,1,7,1 M7,0C3.1,0,0,3.1,0,7s3.1,7,7,7s7-3.1,7-7S10.9,0,7,0z"/>
+			<rect style="fill:currentColor; stroke:none;" x="6" y="3" width="2" height="2"/>
+			<polygon style="fill:currentColor; stroke:none;" points="8,10 8,7 8,6 6,6 5,6 5,7 6,7 6,10 5,10 5,11 6,11 8,11 9,11 9,10"/>
 		</svg>
 	`,
 
-	'unmaximize': `
-		<svg viewBox="0 0 20 20">
-			<path style="fill:currentColor;" d="M11,7c1.1,0,2,0.9,2,2v4c0,1.1-0.9,2-2,2H7c-1.1,0-2-0.9-2-2V9c0-1.1,0.9-2,2-2H11 M11,6H7C5.3,6,4,7.3,4,9v4c0,1.7,1.3,3,3,3h4c1.7,0,3-1.3,3-3V9C14,7.3,12.7,6,11,6z"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M7,4.5h5.5c1.7,0,3,1.3,3,3V13"/>
+	'trangle-down': `
+		<svg viewBox="0 0 15 15">
+			<polygon style="fill:currentColor;stroke:none;" points="7.5,12 12,3 3,3"/>
 		</svg>
 	`,
 
-	'up': `
-		<svg viewBox="0 0 20 20">
-			<polyline style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;" points="14,12.5 10,6.5 6,12.5"/>
+	'trangle-right': `
+		<svg viewBox="0 0 15 15">
+			<polygon style="fill:currentColor;stroke:none;" points="12,7.5 3,3 3,12"/>
 		</svg>
 	`,
 
-	'user': `
-		<svg viewBox="0 0 20 20">
-			<ellipse style="fill:none;stroke:currentColor;stroke-linecap:round;" cx="10.1" cy="6" rx="4.6" ry="4.5"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M10.1,3.7c1.4,0,2.5,1.1,2.5,2.5"/>
-			<path style="fill:none;stroke:currentColor;stroke-linecap:round;" d="M5.5,11.5c-1,1.1-1.7,2.5-2,4.1c-0.1,0.5,0.3,0.9,0.8,0.9h0.1h11.3c0.5,0,0.9-0.3,0.9-0.9c0-0.1,0-0.1,0-0.1c-0.3-1.6-1-2.9-2-4.1"/>
+	'warning': `
+		<svg viewBox="0 0 22.91 20.04">
+			<path style="fill:currentColor;stroke:none;" d="M22.77,18.47,12.36.52a1,1,0,0,0-1.81,0L.14,18.47A1,1,0,0,0,1,20H21.86A1,1,0,0,0,22.77,18.47Zm-.91.57H1L1,19,11.41,1a0,0,0,0,1,0,0l0,0L21.9,19Z"/>
+			<path style="fill:currentColor;stroke:none;" d="M10.45,7.42v5a1,1,0,0,0,2,0v-5a1,1,0,0,0-2,0Z"/>
+			<rect style="fill:currentColor;stroke:none;" x="10.45" y="14.42" width="2" height="2"/>
 		</svg>
 	`,
 }

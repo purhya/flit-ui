@@ -1,7 +1,7 @@
-import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, TransitionOptions, observeGetter, renderComplete} from 'flit'
+import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, TransitionOptions, observeGetter, renderComplete, refDirective, Directive} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Store} from '../store/store'
-import {getScrollbarWidth, watchLayout, Order, getNumeric, sum, repeatTimes} from 'ff'
+import {getScrollbarWidth, watchLayout, Order, getStyleAsNumber, sum, repeatTimes} from '@pucelle/ff'
 import {AsyncStore} from '../store/async-store'
 
 
@@ -40,7 +40,7 @@ export interface Column<Item = any> {
 export class Grid<Item extends object, Events = any> extends Component<GridEvents<Item> & Events> {
 
 	static style() {
-		let {fs, lh, mainColor, textColor, backgroundColor} = theme
+		let {adjustByFontSize: fs, adjustByLineHeight: lh, mainColor, textColor, backgroundColor} = theme
 
 		return css`
 		:host{
@@ -185,8 +185,6 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 		`
 	}
 
-	static properties = ['resizable', 'live', 'pageSize', 'minColumnWidth']
-
 	resizable: boolean = false
 	live: boolean = false
 	pageSize: number = 50
@@ -245,30 +243,28 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 
 	protected renderRows(): DirectiveResult {
 		if (this.store instanceof AsyncStore) {
-			return liveAsyncRepeat(
+			return refDirective(liveAsyncRepeat(
 				{
 					key: this.store.key,
 					dataCount: this.store.dataCount.bind(this.store),
 					dataGetter: this.store.dataGetter.bind(this.store) as any,
 					pageSize: this.pageSize,
-					ref: (dir) => this.setRepeatDirective(dir as any),
 					onUpdated: this.onRepeatDataUpdated.bind(this) as any
 				},
 				this.renderRow.bind(this as any) as any,
 				this.transition
-			)
+			), this.setRepeatDirective)
 		}
 		else if (this.live) {
-			return liveRepeat(
+			return refDirective(liveRepeat(
 				{
 					data: this.store.currentData,
 					pageSize: this.pageSize,
-					ref: (dir) => this.setRepeatDirective(dir),
 					onUpdated: this.onRepeatDataUpdated.bind(this)
 				},
 				this.renderRow.bind(this as any),
 				this.transition
-			)
+			), this.setRepeatDirective)
 		}
 		else {
 			return repeat(
@@ -288,8 +284,8 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 		return html`<tr>${tds}</tr>`
 	}
 
-	protected setRepeatDirective(dir: LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item>) {
-		this.repeatDir = dir
+	protected setRepeatDirective(dir: Directive) {
+		this.repeatDir = dir as LiveRepeatDirective<Item> | LiveAsyncRepeatDirective<Item>
 
 		if (this.store instanceof AsyncStore) {
 			this.store.setRepeatDirective(dir as LiveAsyncRepeatDirective<Item>)
@@ -418,7 +414,7 @@ export class Grid<Item extends object, Events = any> extends Component<GridEvent
 
 	// Resizing part
 	protected updatColumnWidths() {
-		let totalWidth = this.refs.head.clientWidth - getNumeric(this.refs.head, 'paddingLeft') - getNumeric(this.refs.head, 'paddingRight')
+		let totalWidth = this.refs.head.clientWidth - getStyleAsNumber(this.refs.head, 'paddingLeft') - getStyleAsNumber(this.refs.head, 'paddingRight')
 		this.cachedTotalWidth = totalWidth
 		this.updatColumnWidthsWithTotalWidth(totalWidth)
 	}

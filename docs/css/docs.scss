@@ -1,0 +1,85 @@
+.banner{
+	position: relative;
+	height: 600px;
+	overflow: hidden;
+
+	&::before{
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		background: rgba(#295ce6, 0.68);
+	}
+
+	h1{
+		position: relative;
+		color: #fff;
+		text-align: center;
+		line-height: 80px;;
+		margin-top: 237px;
+	}
+}
+
+
+flit-preview{
+	display: block;
+	padding-bottom: 40px;
+
+	.wrapper{
+		width: 1110px;
+		max-width: 95%;
+		margin: 0 auto;
+	}
+
+	section{
+		margin: 32px 0;
+	}
+
+	h2{
+		margin: 48px 0 32px 0;
+		font-weight: 100;
+	}
+
+	h3{
+		margin: 40px 0 16px 0;
+	}
+
+	h4{
+		margin: 16px 0 8px 0;
+	}
+
+	header{
+		opacity: 0.75;
+	}
+}
+
+
+.theme > div{
+	display: flex;
+}
+
+.theme > div > span{
+	width: 150px;
+	text-align: right;
+	padding-right: 10px;
+}
+
+f-radio{
+	margin-right: 10px;
+}
+
+f-checkbox{
+	margin-right: 10px;
+}
+
+.row{
+	display: flex;
+	margin: 10px;
+}
+
+.row > div{
+	flex: 1;
+	padding: 0 10px;
+}

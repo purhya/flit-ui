@@ -1,24 +1,31 @@
-import {css, define, html, cache} from 'flit'
-import {Popup} from './popup'
+import {css, define, html, Component, refBinding} from '@pucelle/flit'
 import {theme} from '../style/theme'
+import {RenderFn, popup, PopupBinding} from '../bindings/popup'
 
 
+/** Normally work with a dropdown menu. */
 @define('f-dropdown')
-export class Dropdown<Events = any> extends Popup<Events> {
+export class Dropdown<E = any> extends Component<E> {
 
 	static style() {
-		let {lh, fs} = theme
+		let {mainColor, adjustByLineHeight: lh, adjustByFontSize: fs} = theme
 
 		return css`
-		${super.style()}
-
 		:host{
 			display: inline-flex;
 		}
 
-		.layer{
+		.opened{
+			color: ${mainColor};
+		}
+
+		.icon{
+			margin-right: 6px;
+		}
+
+		.popup{
 			padding: 5px 0;
-			font-size: ${fs(12)}px;
+			font-size: ${fs(13)}px;
 
 			f-menuitem{
 				padding: 0 ${lh(7)}px;
@@ -32,37 +39,71 @@ export class Dropdown<Events = any> extends Popup<Events> {
 		`
 	}
 
-	static properties = ['icon', ...Popup.properties]
+	icon: string = 'down'
+	opened: boolean = false
+	renderContent!: RenderFn
 
 	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'click'
+	trangle: boolean = true
 	alignPosition: string = 'b'
-	icon: string = 'down'
+	alignMargin: number | number[] = 3
+	transition: string = 'fade'
+	showDelay: number = 100
+	hideDelay: number = 100
+
+	protected popupBinding: PopupBinding | null = null
 
 	protected render() {
-		let layerPart = cache(this.opened ? (this.renderLayer()) : '', this.transition)
+		let {trigger, trangle, alignPosition, alignMargin, transition, showDelay, hideDelay} = this
+		let onOpenedChanged = this.setOpened.bind(this)
+		
+		let toPopup = refBinding(
+			popup(() => this.renderPopupContent(), {trigger, trangle, alignPosition, alignMargin, transition, showDelay, hideDelay, onOpenedChanged}),
+			(v: any) => {this.popupBinding = v}
+		)
 		
 		return html`
-		<template :class.opened="${this.opened}">
+		<template :class.opened=${this.opened} ${toPopup}>
 			<slot />
-			${this.icon ? html`<f-icon .type="${this.icon}" />` : ''}
-			${layerPart}
+			${this.icon ? html`<f-icon class="icon" .type="${this.icon}" />` : ''}
 		</template>
 		`
 	}
 
-	protected renderLayer() {
+	protected renderPopupContent() {
+		let content = this.renderContent()
+
 		return html`
-		<f-layer
-			class="layer"
-			:ref="layer"
-			.popup=${this}
-			.herizontal=${this.isHerizontal()}
+		<f-popup
+			class="popup"
 			.trangle=${this.trangle}
 		>
 			<div class="list">
-				<slot name="content" />
+				${content}
 			</div>
-		</f-layer>
+		</f-popup>
 		`
+	}
+
+	protected setOpened(opened: boolean) {
+		this.opened = opened
+
+		if (opened) {
+			this.onPopupOpened()
+		}
+	}
+
+	protected onPopupOpened() {}
+
+	protected async showPopup() {
+		if (this.popupBinding) {
+			await this.popupBinding.showPopupLater()
+		}
+	}
+
+	protected hidePopup() {
+		if (this.popupBinding) {
+			this.popupBinding.hidePopupLater()
+		}
 	}
 }

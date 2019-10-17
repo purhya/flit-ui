@@ -1,4 +1,4 @@
-import {css, define, html, renderComponent, renderComplete, show} from 'flit'
+import {css, define, html, renderComponent, renderComplete, show} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Modal} from './modal'
 
@@ -19,14 +19,12 @@ export interface MessageOptions {
 
 
 @define('f-message-modal')
-export class MessageModal<Events = any> extends Modal<Events> {
+export class MessageModal<E = any> extends Modal<E> {
 	
 	static style() {
-		let {mainColor, infoColor, lh, successColor, errorColor, warningColor, fs} = theme
+		let {mainColor, infoColor, adjustByLineHeight: lh, successColor, errorColor, warningColor, adjustByFontSize: fs} = theme
 
 		return css`
-		${super.style()}
-
 		:host{
 			z-index: 1200;	// Higher that modal & layer - 1000, and tooltip - 1100
 			width: 350px;
@@ -108,7 +106,7 @@ export class MessageModal<Events = any> extends Modal<Events> {
 		.icon-confirm{
 			color: ${warningColor};
 		}
-		`
+		`.extends(super.style())
 	}
 	
 	movable: boolean =false

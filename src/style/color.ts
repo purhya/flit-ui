@@ -1,12 +1,13 @@
-import {toPower, avg} from 'ff'
+import {toPower, avg} from '@pucelle/ff'
 
 
+/** Class to process colors. */
 export class Color {
 
 	private value: string
 
 	constructor(value: string) {
-		this.value = value
+		this.value = value.trim()
 	}
 
 	toString() {
@@ -117,7 +118,7 @@ export class Color {
 	}
 
 	/** Lighten if is a light color, otherwise darken. */
-	highlightAsText(percentage: number) {
+	dim(percentage: number) {
 		if (this.getLightness() > 0.5) {
 			return this.lighten(percentage)
 		}

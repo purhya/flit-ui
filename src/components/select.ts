@@ -1,7 +1,7 @@
-import {css, html, renderComplete, cache, repeat, define, TemplateResult} from 'flit'
+import {css, html, renderComplete, repeat, define, TemplateResult} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {Popup} from './popup'
-import {remove, scrollToView, scrollToTop} from 'ff'
+import {remove, scrollToTop, getScrollDirection} from '@pucelle/ff'
+import {Dropdown} from './dropdown'
 
 
 export interface SelectEvents<T> {
@@ -10,26 +10,26 @@ export interface SelectEvents<T> {
 
 
 @define('f-select')
-export class Select<T extends unknown = unknown, Events = any> extends Popup<Events & SelectEvents<T>> {
+export class Select<T extends unknown = unknown, E = any> extends Dropdown<E & SelectEvents<T>> {
 	
 	static style() {
-		let {mainColor, lh, borderColor, layerShadowBlurRadius, backgroundColor, layerBackgroundColor, layerShadowColor} = theme
+		let {mainColor, lineHeight, adjustByLineHeight: lh, borderColor, layerShadowBlurRadius, backgroundColor, layerBackgroundColor, layerShadowColor} = theme
 
 		return css`
 		:host{
 			display: inline-flex;
 			vertical-align: top;
-			border-bottom: 1px solid ${borderColor};
 			width: 150px;
-			height: ${lh(30)}px;
-			background: ${backgroundColor.highlight(10)};
-			line-height: ${lh(30)}px;
+			height: ${lineHeight}px;
+			background: ${backgroundColor.highlight(5)};
+			line-height: ${lineHeight}px;
 			justify-content: space-between;
 			align-items: center;
 			cursor: pointer;
+			box-shadow: inset 0 -1px 0 0 ${borderColor};
 
 			&:hover, &.opened{
-				border-color: ${mainColor};
+				box-shadow: inset 0 -1px 0 0 ${mainColor};
 
 				.icon{
 					color: ${mainColor};
@@ -37,7 +37,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			}
 
 			&.not-inputable input{
-				cursor: inherit;
+				cursor: pointer;
 			}
 		}
 
@@ -50,7 +50,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			flex: 1;
 			min-width: 0;
 			padding: 0 0 0 ${lh(8)}px;
-			height: ${lh(30)}px;
+			height: ${lineHeight}px;
 			border: none;
 			background: transparent;
 			white-space: nowrap;
@@ -63,17 +63,13 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 			}
 		}
 	
-		.layer{
+		.popup{
+			padding: 0;
 			border-radius: 0;
 			filter: none;
 			box-shadow: 0 1px ${layerShadowBlurRadius}px ${layerShadowColor};
 		}
 	
-		.list{
-			overflow-y: auto;
-			max-height: 100%;
-		}
-
 		.option{
 			display: flex;
 			padding: 0 8px;
@@ -83,7 +79,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 				box-shadow: inset 0 -1px 0 0 ${layerBackgroundColor};	// Add a white line as spliter for adjacent selected items.
 			}
 
-			&.hover{
+			&:hover{
 				background: ${layerBackgroundColor.highlight(5)};
 
 				&.selected{
@@ -105,17 +101,12 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		.selected-icon{
 			margin-right: -4px;
 		}
-		`
+		`.extends(super.style())
 	}
 
-	static properties = [...Popup.properties, 'icon', 'value', 'multiple', 'searchable', 'ordered', 'placeholder']
-
-	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'click'
-	alignPosition: string = 'b'
-	alignMargin: number | number[] = 0
+	trigger: 'click' | 'contextmenu' = 'click'
 	trangle: boolean = false
-
-	icon: string = 'down'
+	alignMargin: number | number[] = 0
 	data: Iterable<[T, string | number]> = []
 	value: T | null = null
 	multiple: boolean = false
@@ -125,22 +116,16 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 
 	protected inputed: string = ''
 	protected editing: boolean = false
-	protected hoverAt: T | null = null
 
 	protected render() {
 		return html`
-		<template
-			:class.opened=${this.opened}
-			:class.not-inputable=${!this.searchable}
-		>
-			${this.renderCurrentContent()}
-			${this.icon && !this.editing ? html`<f-icon class="icon" .type="${this.icon}" />` : ''}
-			${cache(this.opened ? this.renderLayer() : '', {transition: this.transition, enterAtStart: true})}
+		<template :class.not-inputable=${!this.searchable}>
+			${this.renderInput()}
 		</template>
-		`
+		`.extends(super.render())
 	}
 
-	protected renderCurrentContent(): TemplateResult | string | number {
+	protected renderInput(): TemplateResult | string | number {
 		return html`
 		<input type="text"
 			class="input"
@@ -154,22 +139,20 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		`
 	}
 
-	protected renderLayer() {
-		let data = this.getMaySuggestedData()
-		let listPart = repeat(data, ([key, display]) => this.renderOption(key, display))
+	protected renderPopupContent() {
+		let data = this.getOptionData()
+		let list = repeat(data, ([key, display]) => this.renderOption(key, display))
 
 		return html`
-		<f-layer
-			class="layer"
-			:ref="layer"
-			.popup=${this}
-			.herizontal=${false}
-			.trangle=${false}
+		<f-popup
+			class="popup"
+			:ref="popup"
+			.trangle="false"
 		>
-			<ul class="list">
-			${listPart}
+			<ul class="list" :ref="list">
+				${list}
 			</ul>
-		</f-layer>
+		</f-popup>
 		`
 	}
 
@@ -180,16 +163,13 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		<li
 			class="option"
 			:class.selected=${selected}
-			:class.hover=${this.hoverAt !== null && this.hoverAt === key}
 			@click.prevent=${() => this.select(key)}
-			@mouseenter=${() => this.onMouseEnterOption(key)}
-			@mouseleave=${() => this.onMouseLeaveOption(key)}
 			style=${this.renderOptionStyle(key)}
 		>
 			<div class="option-content">
 				${this.renderOptionContent(key, display)}
 			</div>
-			${selected ? html`<f-icon class="selected-icon" type="selected" />` : ''}
+			${selected ? html`<f-icon class="selected-icon" .type="checked" />` : ''}
 		</li>
 		`
 	}
@@ -230,7 +210,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		return this.renderOptionDisplay(key, display)
 	}
 
-	protected getMaySuggestedData(): Iterable<[T, string | number]> {
+	protected getOptionData(): Iterable<[T, string | number]> {
 		if (this.searchable && this.inputed) {
 			let lowerSearchWord = this.inputed.toLowerCase()
 			let filteredData: [T, string | number][] = []
@@ -307,7 +287,7 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		}
 		else {
 			this.value = key
-			this.hideLayer()
+			this.hidePopup()
 		}
 		
 		this.emit('change', this.value as T)
@@ -325,119 +305,27 @@ export class Select<T extends unknown = unknown, Events = any> extends Popup<Eve
 		this.editing = false
 	}
 
-	async showLayer() {
-		this.hoverAt = null
-		await super.showLayer()
+	async onPopupOpened() {
+		await renderComplete()
 
 		if (this.editing && this.refs.input) {
 			this.refs.input.focus()
 		}
 
-		let el = this.refs.layer.querySelector(this.scopeClassName('.selected')) as HTMLElement | null
-		if (el) {
-			scrollToTop(el)
-		}
-	}
+		// We should not ref popup el by `:ref`, or it will can't be released.
+		if (this.popupBinding && this.popupBinding.popup) {
+			let popupEl = this.popupBinding.popup.el
+			popupEl.style.minWidth = String(this.el.offsetWidth) + 'px'
 
-	protected async alignLayer() {
-		this.refs.layer.style.minWidth = String(this.el.offsetWidth) + 'px'
-		await super.alignLayer()
+			let el = popupEl.querySelector(this.scopeClassName('.selected')) as HTMLElement | null
+			if (el && getScrollDirection(this.refs.list) === 'y') {
+				scrollToTop(el)
+			}
+		}
 	}
 
 	protected onInput() {
 		this.inputed = (this.refs.input as HTMLInputElement).value
-		this.showLayer()
-	}
-
-	protected async onKeyDown(e: KeyboardEvent) {
-		let keys = [...this.getMaySuggestedData()].map(([key]) => key)
-		let moved = false
-
-		if (keys.length === 0 && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-			return
-		}
-
-		if (e.key === 'Enter') {
-			e.preventDefault()
-
-			if (this.opened) {
-				if (this.hoverAt !== null) {
-					this.select(this.hoverAt)
-				}
-				else {
-					this.hideLayer()
-				}
-			}
-			else {
-				this.showLayer()
-			}
-		}
-		else if (e.key === 'ArrowUp') {
-			e.preventDefault()
-
-			if (!this.opened) {
-				this.showLayer()
-			}
-			else if (this.multiple && this.hoverAt === null) {
-				this.hoverAt = keys[keys.length - 1]
-			}
-			else {
-				if (this.hoverAt === null) {
-					this.hoverAt = this.value as T
-				}
-
-				let lastIndex = keys.findIndex(key => key === this.hoverAt)
-				let newIndex = Math.max(0, lastIndex - 1)
-				this.hoverAt = keys[newIndex]
-				moved = true
-			}
-		}
-		else if (e.key === 'ArrowDown') {
-			e.preventDefault()
-
-			if (!this.opened) {
-				this.showLayer()
-			}
-			else if (this.multiple && this.hoverAt === null) {
-				this.hoverAt = keys[0]
-			}
-			else {
-				if (this.hoverAt === null) {
-					this.hoverAt = this.value as T
-				}
-
-				let lastIndex = keys.findIndex(key => key === this.hoverAt)
-				let newIndex = Math.min(keys.length - 1, lastIndex + 1)
-				this.hoverAt = keys[newIndex]
-				moved = true
-			}
-		}
-		else if (e.key === 'Escape') {
-			e.preventDefault()
-			this.inputed = ''
-			this.hideLayer()
-		}
-
-		if (moved) {
-			await renderComplete()
-			let el = this.refs.layer.querySelector(this.scopeClassName('.hover')) as HTMLElement | null
-			if (el) {
-				scrollToView(el, theme.lh(30))
-			}
-		}
-	}
-
-	protected onMouseEnterOption(key: T) {
-		this.hoverAt = key
-
-		if (document.activeElement !== this.refs.input) {
-			this.refs.input.focus()
-		}
-	}
-
-	protected onMouseLeaveOption(key: T) {
-		if (this.hoverAt === key) {
-			this.hoverAt = null
-		}
+		this.showPopup()
 	}
 }

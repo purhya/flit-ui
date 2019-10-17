@@ -1,6 +1,6 @@
-import {define, Component, html, css, svg, on, off} from 'flit'
+import {define, Component, html, css, svg, on, off, getClosestComponent} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {removeWhere, orderBy} from 'ff'
+import {removeWhere, orderBy} from '@pucelle/ff'
 
 
 export interface CheckboxEvents {
@@ -8,10 +8,10 @@ export interface CheckboxEvents {
 }
 
 @define('f-checkbox')
-export class Checkbox<Events = any> extends Component<Events & CheckboxEvents> {
+export class Checkbox<E = any> extends Component<E & CheckboxEvents> {
 
 	static style() {
-		let {mainColor, focusBlurRadius, lh} = theme
+		let {mainColor, focusBlurRadius, adjustByLineHeight: lh} = theme
 
 		return css`
 		:host{
@@ -58,8 +58,6 @@ export class Checkbox<Events = any> extends Component<Events & CheckboxEvents> {
 		`
 	}
 
-	static properties = ['checked', 'indeterminate', 'value']
-
 	checked: boolean = false
 	indeterminate: boolean = false
 
@@ -98,7 +96,7 @@ export class Checkbox<Events = any> extends Component<Events & CheckboxEvents> {
 	}
 
 	protected onCreated() {
-		let group = this.closest(CheckboxGroup)
+		let group = getClosestComponent(this.el, CheckboxGroup)
 		if (group) {
 			this.checkboxGroup = group
 			this.checked = this.checkboxGroup.value == this.value
@@ -133,8 +131,6 @@ interface CheckboxGroupEvents {
 
 @define('f-checkboxgroup')
 export class CheckboxGroup<Events = any> extends Component<Events & CheckboxGroupEvents> {
-
-	static properties = ['value', 'ordered']
 
 	value: unknown[] = []
 	ordered: boolean = false

@@ -1,16 +1,16 @@
-import {css, define, html, on, once, Component, off, render} from 'flit'
-import {getStyle, constrain} from 'ff';
+import {css, define, html, on, once, Component, off, render} from '@pucelle/flit'
+import {getStyle, constrain} from '@pucelle/ff';
 
 
 export interface ResizerEvents {
 	change: (size: number) => void
 }
 
-type ResizerPosition = 'top' | 'right' | 'bottom' | 'left'
+export type ResizerPosition = 'top' | 'right' | 'bottom' | 'left'
 
 
 @define('f-resizer')
-export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
+export class Resizer<E = any> extends Component<E & ResizerEvents> {
 	
 	static style() {
 		return css`
@@ -69,8 +69,6 @@ export class Resizer<Events = any> extends Component<Events & ResizerEvents> {
 		}
 		`
 	}
-
-	static properties = ['position', 'rate', 'min', 'max']
 
 	position: ResizerPosition = 'right'
 	rate: number = 1	// You may set this to `2` for parent that aligns to center .

@@ -1,4 +1,4 @@
-import {define, defineBinding, Binding, TransitionOptions, css, Transition, Component, render, html} from "flit"
+import {define, defineBinding, Binding, TransitionOptions, css, Transition, Component, render, html} from "@pucelle/flit"
 
 
 @define('loading-cover')

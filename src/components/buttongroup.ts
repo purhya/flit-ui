@@ -1,13 +1,9 @@
-import {define, Component, css} from 'flit'
-import {theme} from '../style/theme'
-
+import {define, Component, css} from '@pucelle/flit'
 
 @define('f-buttongroup')
-export class ButtonGroup<Events = any> extends Component<Events> {
+export class ButtonGroup<E = any> extends Component<E> {
 
 	static style() {
-		let {lh} = theme
-
 		return css`
 		:host{
 			display: inline-flex;
@@ -19,31 +15,18 @@ export class ButtonGroup<Events = any> extends Component<Events> {
 				margin-left: -1px;
 				border-top-left-radius: 0;
 				border-bottom-left-radius: 0;
-				padding-left: ${lh(10)}px;
 			}
 	
 			&:nth-last-child(n+2){
 				border-top-right-radius: 0;
 				border-bottom-right-radius: 0;
-				padding-right: ${lh(11)}px;
 			}
 	
-			&[filled]{
+			&[primary]{
 				position: relative;
 				z-index: 1;
-			}
-
-			&[round]{
-				width: auto;
-				padding: 0 ${lh(6)}px;
-
-				&:first-child{
-					padding-left: ${lh(8)}px;
-				}
-		
-				&:last-child{
-					padding-right: ${lh(8)}px;
-				}
+				background: #000;
+				border-color: #000;
 			}
 		}
 		`

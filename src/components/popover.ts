@@ -1,30 +1,22 @@
-import {css, define, html} from 'flit'
+import {css, define, html} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Popup} from './popup'
 
 
 // Compare to `<popup>`, it can set title.
 @define('f-popover')
-export class Popover<Events = any> extends Popup<Events> {
+export class Popover<E = any> extends Popup<E> {
 
 	static style() {
-		let {lh, mainColor} = theme
+		let {adjustByLineHeight: lh} = theme
 
 		return css`
 		:host{
-			display: inline-block;
-		}
-
-		.opened{
-			color: ${mainColor};
-		}
-
-		.layer{
-			padding: 0 ${lh(15)}px;
+			padding: 0 ${lh(14)}px;
 		}
 
 		.header{
-			line-height: ${lh(30)}px;
+			line-height: ${lh(28)}px;
 			padding: 5px 0;
 			border-bottom: 2px solid #333;
 		}
@@ -32,7 +24,7 @@ export class Popover<Events = any> extends Popup<Events> {
 		.title{
 			flex: 1;
 			min-width: 0;
-			padding: 0 ${lh(15)}px 0 0;
+			padding: 0 ${lh(14)}px 0 0;
 			font-weight: bold;
 			overflow: hidden;
 			white-space: nowrap;
@@ -42,15 +34,14 @@ export class Popover<Events = any> extends Popup<Events> {
 		.content{
 			padding: ${lh(8)}px 0;
 		}
-		`
+		`.extends(super.style())
 	}
-
-	static properties = [...Popup.properties, 'title']
 
 	title: string = ''
 
 	protected renderLayer() {
-		let content = html`
+		return html`
+		<f-popup>	
 		${
 			this.title ? html`
 			<div class="header">
@@ -58,18 +49,7 @@ export class Popover<Events = any> extends Popup<Events> {
 			</div>` : ''
 		}
 			<div class="content"><slot name="content" /></div>
-		`
-
-		return html`
-			<f-layer
-				class="layer"
-				:ref="layer"
-				.popup=${this}
-				.herizontal=${this.isHerizontal()}
-				.trangle=${this.trangle}
-			>
-				${content}
-			</f-layer>
-		`
+		</f-popup>
+		`.extends(super.render())
 	}
 }

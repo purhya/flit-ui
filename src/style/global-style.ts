@@ -1,128 +1,158 @@
-import {addGlobalStyle, css} from 'flit'
+import {addGlobalStyle, css} from '@pucelle/flit'
 import {theme} from './theme'
 
 
 addGlobalStyle(() => {
-	let {mainColor, textColor, borderColor, successColor, errorColor, fontSize, borderRadius, focusBlurRadius, lh, backgroundColor} = theme
+	let {mainColor, textColor, borderColor, errorColor, fontSize, lineHeight, borderRadius, focusBlurRadius, adjustByLineHeight: lh, adjustByFontSize: fs, backgroundColor} = theme
 
 	return css`
 	html{
 		color: ${textColor};
 		font-size: ${fontSize}px;
-		line-height: ${lh(30)}px;
+		line-height: ${lineHeight}px;
 		background-color: ${backgroundColor};
+	}
+
+	h1{
+		font-size: ${fs(68)}px;
+		line-height: 1.2;
+		font-weight: 700;
+	}
+
+	h2{
+		font-size: ${fs(36)}px;
+		line-height: 1.2;
+		font-weight: 300;
+	}
+
+	h3{
+		font-size: ${fs(26)}px;
+		line-height: 1.2;
+		font-weight: 400;
+	}
+
+	h4{
+		font-size: ${fs(22)}px;
+		line-height: 1.2;
+		font-weight: 400;
+	}
+
+	h5{
+		font-size: ${fs(18)}px;
+		line-height: 1.2;
+	}
+
+	h6{
+		font-size: ${fs(14)}px;
+		line-height: 1.2;
 	}
 
 	button{
 		display: inline-flex;
 		justify-content: center;
-		height: ${lh(30)}px;
-		line-height: ${lh(30) - 2}px;
+		height: ${lineHeight}px;
+		line-height: ${lineHeight - 2}px;
 		border: 1px solid ${borderColor};
-		color: ${borderColor.highlightAsText(10)};
+		color: ${textColor};
 		border-radius: ${borderRadius}px;
-		padding: 0 ${lh(15) + Math.max(0, (borderRadius - 5) / 2)}px;
+		padding: 0 ${lh(16) + Math.max(0, (borderRadius - 5) / 2)}px;
 		background: ${backgroundColor};
 		text-align: center;
 		cursor: pointer;
 		vertical-align: top;
 		
 		&:hover, &:focus{
-			border-color: ${mainColor};
-			color: ${mainColor};
+			border-color: #666;
+			background-color: #666;
+			color: #fff;
 		}
 
-		&:focus:not([borderless]){
+		&:active{
+			border-color: #000;
+			background-color: #000;
+			color: #fff;
+		}
+
+		&:focus{
 			box-shadow: 0 0 ${focusBlurRadius}px ${mainColor};
 		}
-	
-		&:active{
-			border-color: ${mainColor.darken(10)};
-			color: ${mainColor.darken(10)};
-			background: ${mainColor.alpha(0.05)};
-		}
-	
+
 		f-icon, f-icon-loading{
 			&:first-child{
-				margin-left: ${lh(-3)}px;
-				margin-right: ${lh(4)}px;
+				margin-right: ${lh(8)}px;
 			}
 
 			&:last-child{
-				margin-left: ${lh(2)}px;
-				margin-right: ${lh(-4)}px;
+				margin-left: ${lh(8)}px;
+			}
+
+			&:only-child{
+				margin-left: 0;
+				margin-right: 0;
 			}
 		}
 
-		&[filled]{
+		&[primary]{
 			background: ${mainColor};
 			border-color: ${mainColor};
 			color: #fff;
 
 			&:hover, &:focus{
-				background: ${mainColor.darken(5)};
-				border-color: ${mainColor.darken(5)};
+				background: ${mainColor.darken(15)};
+				border-color: ${mainColor.darken(15)};
 			}
 		
 			&:active{
-				background: ${mainColor.darken(10)};
-				border-color: ${mainColor.darken(10)};
+				background: ${mainColor.darken(30)};
+				border-color: ${mainColor.darken(30)};
 			}
 		}
 
-		&[borderless]{
+		&[flat]{
 			border: none;
-			padding-left: ${lh(10)}px;
-			padding-right: ${lh(10)}px;
-			line-height: ${lh(30)}px;
+			padding-left: 0;
+			padding-right: 0;
+			line-height: ${lineHeight}px;
+
+			&:hover, &:focus{
+				background: none;
+				color: ${textColor};
+			}
 
 			&:active{
 				background: none;
 			}
-		}
 
-		&[round]{
-			width: ${lh(30)}px;
-			border-radius: ${lh(15)}px;
-			padding: 0;
-			font-size: 0;
-
-			f-icon, f-icon-loading{
-				margin-left: auto;
-				margin-right: auto;
+			&:focus{
+				box-shadow: none;
 			}
 		}
 	}
 
-	[type=text], [type=password], [type=number], [type=email]{
-		height: ${lh(30)}px;
-		padding: 0 0 0 ${lh(8)}px;
+	a[primary]{
+		color: ${mainColor};
 	}
-	
-	textarea{
-		padding: ${lh(4)}px ${lh(8)}px;
-		line-height: ${lh(22)}px;
-	}
-	
-	[type=text], [type=password], [type=number], [type=email], textarea{
-		border: none;
-		box-shadow: inset 0 -1px 0 0 ${borderColor};
-		background: ${backgroundColor.highlight(10)};
-		
-		&:focus{
-			box-shadow: inset 0 -1px 0 0 ${mainColor};
-		}
-	}
-	
-	.f-touched{
-		&.f-valid, :valid{
-			box-shadow: inset 0 -2px 0 0 ${successColor};
+
+	label{
+		font-weight: bold;
+		font-size: ${fs(13)}px;
+
+		&[required]{
+			&::after{
+				position: relative;
+				content: '*';
+				color: ${errorColor};
+				margin-left: 2px;
+				top: ${lh(-5)}px;
+			}
 		}
 
-		.f-invalid, :invalid{
-			box-shadow: inset 0 -2px 0 0 ${errorColor};
+		f-icon{
+			margin-left: 4px;
+			color: ${textColor.highlight(20)};
 		}
 	}
+
 
 	.fade-enter, .fade-leave{
 		transition: opacity 0.2s ease-out;

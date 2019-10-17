@@ -1,4 +1,4 @@
-import {define, Component, TemplateResult, on, off, defineBinding, Binding, getClosestComponent} from 'flit'
+import {define, Component, TemplateResult, on, off, defineBinding, Binding, getClosestComponent} from '@pucelle/flit'
 
 
 type RouteParams = {[key: string]: string}
@@ -20,7 +20,7 @@ export interface RouterEvents {
 
 
 @define('f-router')
-export class Router extends Component<RouterEvents> {
+export class Router<E = any> extends Component<RouterEvents & E> {
 
 	prefix: string = ''
 	path: string = ''

@@ -1,10 +1,15 @@
-import {css, define, html, off, defineBinding, on, render, cache, Binding, BindingResult} from 'flit'
+import {css, define, html, defineBinding, BindingResult} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Popup} from '../components/popup'
-import {Layer} from '../components/layer'
+import {PopupBinding, PopupOptions} from './popup'
+import {getMainAlignDirection, assignIf} from '@pucelle/ff'
+import {Color} from '../style/color'
 
 
 export interface TooltipOptions {
+	name?: string
+	backgroundColor?: string
+	alignTo?: () => Element
 	alignPosition?: string
 	alignMargin?: number | number[]
 	showDelay?: number
@@ -12,11 +17,20 @@ export interface TooltipOptions {
 }
 
 
-@define('f-tooltip-layer')
-export class TooltipLayer extends Layer {
+const defaultTooltipOptions: TooltipOptions = {
+	name: 'tooltip',
+	alignPosition: 't',
+	alignMargin: 3,
+	showDelay: 0,
+	hideDelay: 200,
+}
+
+
+@define('f-tooltip')
+export class Tooltip extends Popup {
 
 	static style() {
-		let {lh, layerBorderRadius, textColor, backgroundColor} = theme
+		let {adjustByLineHeight: lh, layerBorderRadius, textColor, backgroundColor, layerShadowBlurRadius, layerShadowColor} = theme
 		
 		return css`
 		:host{
@@ -26,204 +40,94 @@ export class TooltipLayer extends Layer {
 			z-index: 1100;
 			max-width: ${lh(220)}px;
 			padding: ${lh(4)}px ${lh(8)}px;
-			line-height: ${lh(22)}px;
-			background: ${textColor};
-			color: ${backgroundColor};
-			border-radius: ${layerBorderRadius / 2}px;
-			opacity: 0.9;
+			line-height: ${lh(20)}px;
+			background: ${backgroundColor.highlight(5)};
+			color: ${textColor};
+			border-radius: ${layerBorderRadius}px;
+			filter: drop-shadow(0 0 ${layerShadowBlurRadius / 2}px ${layerShadowColor});	// 3px nearly equals 6px in box-shadow.
 			pointer-events: none;
 		}
 
 		.trangle{
 			position: absolute;
-			border-left: 6px solid transparent;
-			border-right: 6px solid transparent;
-			border-bottom: 7px solid ${textColor};
+			border-left: 5px solid transparent;
+			border-right: 5px solid transparent;
+			border-bottom: 7px solid ${backgroundColor.highlight(5)};
 			top: -7px;
 
 			&-herizontal{
-				border-top: 6px solid transparent;
-				border-bottom: 6px solid transparent;
-				border-right: 7px solid ${textColor};
+				border-top: 5px solid transparent;
+				border-bottom: 5px solid transparent;
+				border-right: 7px solid ${backgroundColor.highlight(5)};
 				border-left: 0;
 				top: auto;
 				left: -7px;
 			}
-		}
-		`
+		}`
 	}
-}
 
+	backgroundColor: string = ''
 
-@define('f-tooltip')
-export class Tooltip<Events = any> extends Popup<Events> {
-
-	protected title: string = ''
-
-	protected renderLayer() {
-		return html`
-		<f-tooltip-layer
-			:ref="layer"
-			.popup=${this}
-			.herizontal=${this.isHerizontal()}
-			.trangle=${this.trangle}
-		>
-			${this.title}
-		</f-layer>
-		`
-	}
-}
-
-
-export class GlobalTooltip extends Tooltip {
-
-	protected keepVisible: boolean = false
-	protected locked: boolean = false
-
-	// Can't update `el` since it uses dynamic `el`
-	// Otherwise, `onRendered` and `alignLayer` will not be called.
-	update() {}
-
-	setEl(el: HTMLElement) {
-		if (this.locked) {
-			return
-		}
+	protected render() {
+		let backgroundColor = this.backgroundColor ? new Color(this.backgroundColor) : null
+		let textColor = backgroundColor ? backgroundColor.getLightness() < 0.5 ? '#fff' : '#000' : ''
 		
-		if (this.el !== el) {
-			off(this.el, 'mouseenter', this.showLayerLater, this)
-			this.el = el
-			this.unwatchEl()
-		}
+		return html`
+		<template
+			:style.background-color=${this.backgroundColor}
+			:style.color=${textColor}
+		>
+			${this.trangle ? html`
+				<div class="trangle" :ref="trangle"
+					:class.trangle-herizontal=${this.herizontal}
+					:style.border-color=${this.backgroundColor}
+				/>
+			` : ''}
+		`
 	}
-
-	async setTitleAndOptions(title: string, options: TooltipOptions = {}) {
-		if (this.locked) {
-			return
-		}
-
-		this.setTitle(title)
-		Object.assign(this, defaultTooltipOptions, options)
-
-		// When `title` changed, do aligning.
-		if (this.opened) {
-			await this.showLayer()
-		}
-	}
-
-	async setTitle(title: string) {
-		this.title = title
-	}
-
-	async showLayer() {
-		// Can't render `<layer>` in current `el` since it's dynamic and blongs to another component.
-		if (!this.refs.layer) {
-			let {fragment} = render(() => {
-				return cache(this.opened ? (this.renderLayer()) : '', this.transition)
-			}, this)
-			
-			// Must append to document, or it will not be linked.
-			document.body.append(fragment)
-		}
-
-		await super.showLayer()
-	}
-
-	hideLayerLater() {
-		if (this.locked) {
-			return
-		}
-
-		super.hideLayerLater()
-	}
-
-	protected onMouseLeave() {
-		if (!this.keepVisible) {
-			super.onMouseLeave()
-		}
-	}
-
-	protected shouldHideWhenElLayerChanged() {
-		return !this.keepVisible && super.shouldHideWhenElLayerChanged()
-	}
-
-	setKeepVisible(keep: boolean) {
-		if (this.locked) {
-			return
-		}
-
-		this.keepVisible = keep
-	}
-
-	lock() {
-		this.locked = true
-	}
-
-	unlock() {
-		this.locked = false
-	}
-}
-
-
-let globalTooltip: GlobalTooltip | null = null
-export async function getGlobalTooltip(el: HTMLElement): Promise<GlobalTooltip> {
-	if (!globalTooltip) {
-		globalTooltip = new GlobalTooltip(el)
-	}
-	else {
-		globalTooltip.setEl(el)
-	}
-
-	return globalTooltip
-}
-
-
-export let defaultTooltipOptions: Required<TooltipOptions> = {
-	alignPosition: 't',
-	alignMargin: 3,
-	showDelay: 0,
-	hideDelay: 200,
 }
 
 
 /**
  * `:tooltip="..."`
- * `tooltip(title: string, {alignPosition: ..., ...})`
+ * `tooltip(title, {alignPosition: ..., ...})`
  */
-class TooltipBinding implements Binding<[string, TooltipOptions | undefined]> {
+export class TooltipBinding extends PopupBinding<string> {
 
-	private el: HTMLElement
-	private title: string = ''
-	private options!: TooltipOptions
+	protected title: string = ''
 
-	constructor(el: Element) {
-		this.el = el as HTMLElement
-		on(this.el, 'mouseenter', this.showTooltipLayer, this)
-	}
-
-	async update(title: string, options?: TooltipOptions) {
+	update(title: string, options?: TooltipOptions) {
 		this.title = title
-		this.options = options || {}
+		super.update(this.getRenderFn.bind(this) as any, this.getPopupOptions(options))
+	}
 
-		// Update options when the title are showing at current el.
-		if (globalTooltip && globalTooltip.el === this.el && this.hasTitle()) {
-			globalTooltip.setTitleAndOptions(title, options)
+	protected getRenderFn() {
+		return html`
+			<f-tooltip
+				.herizontal=${this.isHerizontal()}
+				.backgroundColor=${this.getBackgroundColor()}
+			>
+				${this.title}
+			</f-tooltip>
+		`
+	}
+
+	protected getBackgroundColor(options?: TooltipOptions) {
+		if (options && options.backgroundColor) {
+			return options.backgroundColor
 		}
+
+		return ''
 	}
 
-	private hasTitle() {
-		return this.title !== null && this.title !== undefined && this.title
+	protected getPopupOptions(options: PopupOptions = {}) {
+		assignIf(options, defaultTooltipOptions)
+		return options
 	}
 
-	private async showTooltipLayer() {
-		if (this.hasTitle()) {
-			let tooltip = await getGlobalTooltip(this.el)
-			tooltip.setTitleAndOptions(this.title, this.options!)
-			tooltip.showLayerLater()
-		}
-	}
-
-	remove() {
-		off(this.el, 'mouseenter', this.showTooltipLayer, this)
+	protected isHerizontal() {
+		let direction = getMainAlignDirection(this.getOption('alignPosition')!)
+		return direction === 'l' || direction === 'r'
 	}
 }
 

@@ -12,7 +12,7 @@ function task(name) {
 	let browser = browserify({
 		basedir: '.',
 		//debug: true,
-		entries: name.startsWith('test') ? glob.sync(__dirname + '/test/**/*.test.ts') : ['demo/index.ts']
+		entries: name.startsWith('test') ? glob.sync(__dirname + '/test/**/*.test.ts') : ['docs/index.ts']
 	})
 	browser.plugin(tsify)
 	browser.on('log', gutil.log)
@@ -37,7 +37,13 @@ function task(name) {
 	return bundle()
 }
 
-gulp.task('demo', () => task('demo'))
-gulp.task('demo-watch', () => task('demo-watch'))
-gulp.task('test', () => task('test'))
-gulp.task('test-watch', () => task('test-watch'))
+
+function css() {
+	return gulp.src(['css/*.css', 'css/fonts/*'], {base: '.'})
+		.pipe(gulp.dest('docs'))
+}
+
+
+gulp.task('css', css)
+gulp.task('docs', () => task('docs'))
+gulp.task('docs-watch', () => task('docs-watch'))

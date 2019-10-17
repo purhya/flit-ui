@@ -1,16 +1,16 @@
-import {defineBinding, Context, on, off, renderComplete, define, css, Transition, Binding, once, BindingResult, TemplateResult, DirectiveResult, renderComponent, html} from 'flit'
-import {Layer} from '../components/layer'
-import {alignToEvent, watchLayout, lockOuterMouseLeave} from 'ff'
+import {defineBinding, Context, on, off, renderComplete, define, css, Transition, Binding, once, BindingResult, TemplateResult, DirectiveResult, renderComponent, html} from '@pucelle/flit'
+import {alignToEvent, watchLayout, MouseLeave} from '@pucelle/ff'
 import {theme} from '../style/theme'
+import {Popup} from '../components/popup'
 
 export type MenuRenderFn = () => TemplateResult | DirectiveResult
 
 
 @define('f-contextmenu-layer')
-export class ContextMenuLayer<Events = any> extends Layer<Events> {
+class ContextMenuLayer<E = any> extends Popup<E> {
 
 	static style() {
-		let {lh} = theme
+		let {adjustByLineHeight: lh} = theme
 		
 		return css`
 		${super.style()}
@@ -56,7 +56,7 @@ class ContextMenuBinding implements Binding<[MenuRenderFn]> {
 
 		alignToEvent(layer.el, e as MouseEvent)
 		layer.el.focus()
-		this.unlockOuterMouseLeave = lockOuterMouseLeave(this.el)
+		this.unlockOuterMouseLeave = MouseLeave.keep(this.el)
 
 		new Transition(layer.el, 'fade').enter()
 		on(document, 'mousedown', this.onDocMouseDown, this)

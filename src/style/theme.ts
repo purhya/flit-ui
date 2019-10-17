@@ -1,6 +1,6 @@
-import {updateStyles, update} from 'flit'
+import {updateComponents, updateStyles} from '@pucelle/flit'
+import {avg} from '@pucelle/ff'
 import {Color} from './color'
-import {avg} from 'ff';
 
 
 export interface ThemeOptions {
@@ -40,72 +40,25 @@ type ColorOptions = {[key in
 
 	'layerBackgroundColor' |
 	'layerShadowColor'
-
 ]: Color}
 
 type NotColorOptions = {[key in Exclude<keyof ThemeOptions, keyof ColorOptions>]: ThemeOptions[key]}
 
 
-const defaultLightThemeOptions: ThemeOptions = {
-	mainColor: '#0077cf',
-	backgroundColor: '#fff',
-	textColor: '#333',
-
-	successColor: '#00af41',
-	errorColor: '#ff0000',
-	warningColor: '#f48862',
-	infoColor: '#3988e5',
-
-	borderColor: '#777',
-	borderRadius: 15,
-
-	layerBackgroundColor: '#fff',
-	layerBorderRadius: 8,
-	layerShadowColor: 'rgba(0, 0, 0, 0.33)',
-	layerShadowBlurRadius: 6,
-
-	focusBlurRadius: 3,
-	fontSize: 14,	// Should set `font-size` and `line-height` on html or body early before js loaded to avoid flushing.
-	lineHeight: 30,
-}
-
-const defaultDrakThemeOptions: ThemeOptions = {
-	mainColor: '#2288cc',
-	backgroundColor: '#303030',
-	textColor: new Color('#fff').darken(10).toString(),
-
-	successColor: '#00af41',
-	errorColor: '#ff0000',
-	warningColor: '#f48862',
-	infoColor: '#3988e5',
-
-	borderColor: '#aaa',
-	borderRadius: 15,
-
-	layerBackgroundColor: new Color('#303030').lighten(5).toString(),
-	layerBorderRadius: 8,
-	layerShadowColor: 'rgba(0, 0, 0, 0.66)',
-	layerShadowBlurRadius: 6,
-
-	focusBlurRadius: 3,
-	fontSize: 14,	// Should set `font-size` and `line-height` on html or body early before js loaded to avoid flushing.
-	lineHeight: 30,
-}
-
 export class Theme implements ColorOptions, NotColorOptions {
 	
-	protected themeMap: Map<string, ThemeOptions> = new Map()
+	protected themeMap: Map<string, Partial<ThemeOptions>> = new Map()
 	protected options: ThemeOptions
 	protected willUpdate: boolean = false
+	
 	mode: 'dark' | 'light' = 'light'
 
 	constructor() {
-		this.options = Object.assign({}, defaultLightThemeOptions)
+		this.options = Object.assign({}, defaultLightThemeOptions, defaultMediumThemeOptions) as ThemeOptions
 	}
 
 	defineTheme(name: string, options: Partial<ThemeOptions>) {
-		let defaultTheme = this.getThemeDrakOrLightMode(options) === 'dark' ? defaultDrakThemeOptions : defaultLightThemeOptions
-		this.themeMap.set(name, Object.assign({}, defaultTheme, options))
+		this.themeMap.set(name, options)
 	}
 
 	private getThemeDrakOrLightMode(options: Partial<ThemeOptions>): 'dark' | 'light' {
@@ -125,30 +78,33 @@ export class Theme implements ColorOptions, NotColorOptions {
 		return 'light'
 	}
 
-	changeTheme(name: string) {
-		if (!this.themeMap.has(name)) {
-			throw new Error(`"${name}" is not a defined theme`)
+	/** Assigns theme options to current options, so it may keep options of last theme. */
+	changeTheme(...names: string[]) {
+		for (let name of names) {
+			if (!this.themeMap.has(name)) {
+				throw new Error(`"${name}" is not a defined theme`)
+			}
+
+			Object.assign(this.options, this.themeMap.get(name)!)
 		}
 
-		this.options = this.themeMap.get(name)!
 		this.mode = this.getThemeDrakOrLightMode(this.options)
-		this.updateStylesAndComponents()
+		this.update()
 	}
 
 	set<K extends keyof ThemeOptions>(key: K, value: ThemeOptions[K]) {
 		this.options[key] = value
-		this.updateStylesAndComponents()
+		this.update()
 	}
 
-	updateStylesAndComponents() {
+	protected async update() {
 		if (!this.willUpdate) {
 			this.willUpdate = true
 
-			Promise.resolve().then(() => {
-				updateStyles()
-				update()
-				this.willUpdate = false
-			})
+			await Promise.resolve()
+			updateComponents()
+			updateStyles()
+			this.willUpdate = false
 		}
 	}
 
@@ -156,17 +112,20 @@ export class Theme implements ColorOptions, NotColorOptions {
 		return this.options[property] as ThemeOptions[P]
 	}
 
-	/** Pass the px value for `font-size` on default theme settings, returns the size in current theme settings. */
-	get fs() {
+	/** 
+	 * Pass the px value for `font-size` on default theme settings, returns the size in current theme settings.
+	 * Returns value will be at least 11.
+	 */
+	get adjustByFontSize() {
 		return (size: number): number =>  {
-			return Math.max(Math.ceil(size * this.fontSize / defaultLightThemeOptions.fontSize), 11)
+			return Math.max(Math.round(size * this.fontSize / defaultMediumThemeOptions.fontSize!), 11)
 		}
 	}
 
 	/** Pass the px value for `line-height` on default theme settings, returns the line height in current theme settings. */
-	get lh() {
+	get adjustByLineHeight() {
 		return (size: number): number => {
-			return Math.round(size * this.lineHeight / defaultLightThemeOptions.lineHeight)
+			return Math.round(size * this.lineHeight / defaultMediumThemeOptions.lineHeight!)
 		}
 	}
 
@@ -239,7 +198,59 @@ export class Theme implements ColorOptions, NotColorOptions {
 	}
 }
 
+
+const defaultLightThemeOptions: Partial<ThemeOptions> = {
+	mainColor: '#3a6cf6',
+	backgroundColor: '#fff',
+	textColor: '#000',
+
+	successColor: '#29bc04',
+	errorColor: '#e10000',
+	warningColor: '#f3b907',
+	infoColor: '#3988e5',
+
+	borderColor: '#9b9b9b',
+
+	layerBackgroundColor: '#fff',
+	layerShadowColor: 'rgba(0, 0, 0, 0.4)',
+}
+
+const defaultMediumThemeOptions: Partial<ThemeOptions> = {
+	borderRadius: 4,
+	layerBorderRadius: 4,
+	layerShadowBlurRadius: 6,
+	focusBlurRadius: 6,
+	fontSize: 14,	// Should set `font-size` and `line-height` on html or body early before js loaded to avoid flushing.
+	lineHeight: 28,
+}
+
+
 export const theme = new Theme()
 
 theme.defineTheme('light', defaultLightThemeOptions)
-theme.defineTheme('dark', defaultDrakThemeOptions)
+
+theme.defineTheme('dark', {
+	mainColor: '#3a6cf6',
+	backgroundColor: '#333',
+	textColor: '#eee',
+	borderColor: '#888',
+	layerBackgroundColor: new Color('#333').lighten(5).toString(),
+	layerShadowColor: 'rgba(0, 0, 0, 0.6)',
+})
+
+theme.defineTheme('small', {
+	fontSize: 13,
+	lineHeight: 24,
+})
+
+theme.defineTheme('medium', defaultMediumThemeOptions)
+
+theme.defineTheme('large', {
+	fontSize: 18,
+	lineHeight: 36,
+})
+
+theme.defineTheme('touch', {
+	fontSize: 18,
+	lineHeight: 46,
+})

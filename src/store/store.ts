@@ -1,23 +1,23 @@
-import {Emitter, Order} from 'ff'
+import {Emitter, Order} from '@pucelle/ff'
 
 
 export interface StoreEvents {
 	change: () => void
 }
 
-export interface StoreOptions<Item> {
-	data?: Item[] | null
+export interface StoreOptions<T> {
+	data?: T[] | null
 	key?: string | number
-	filter?: ((item: Item) => boolean)
-	order?: Order<Item>
+	filter?: ((item: T) => boolean)
+	order?: Order<T>
 }
 
 
 /** Used to replace same key items in `Store`. */
-class KeyMap<Item extends object> {
+class KeyMap<T extends object> {
 
 	private key: string | number
-	private map: Map<string | number, Item>
+	private map: Map<string | number, T>
 
 	constructor(key: string | number) {
 		if (!key) {
@@ -28,19 +28,19 @@ class KeyMap<Item extends object> {
 		this.map = new Map()
 	}
 
-	has(item: Item): boolean {
+	has(item: T): boolean {
 		return this.map.has((item as any)[this.key])
 	}
 
-	get(item: Item): Item | undefined{
+	get(item: T): T | undefined{
 		return this.map.get((item as any)[this.key])
 	}
 
-	add (item: Item) {
+	add (item: T) {
 		this.map.set((item as any)[this.key], item)
 	}
 
-	delete(item: Item) {
+	delete(item: T) {
 		this.map.delete((item as any)[this.key])
 	}
 
@@ -51,31 +51,31 @@ class KeyMap<Item extends object> {
 
 
 /* Used to cache object type data and support selection, ordering and filtering. */
-export class Store<Item extends object = object> extends Emitter<StoreEvents> {
+export class Store<T extends object = object> extends Emitter<StoreEvents> {
 
 	/** The whole data. */
-	data: Item[] = []
+	data: T[] = []
 
 	/** Current data after been sorted and filtered. */
-	currentData: Item[] = []
+	currentData: T[] = []
 
 	/** If `key` specified, when different but same key items added, it covers the old one. */
 	key: string | number | null = null
 
-	/** Used to filter data items. */
-	filter: ((item: Item) => boolean) | null = null
+	/** Used to search data items. */
+	filter: ((item: T) => boolean) | null = null
 
 	/** used to sort items, see `ff.orderBy` */
-	order: Order<Item> | null = null
+	order: Order<T> | null = null
 
 	/** Used to select range items by `shift + click`. */
-	private lastTouchedItem: Item | null = null
+	private lastTouchedItem: T | null = null
 
-	private selected: Item[] = []
-	private map: KeyMap<Item> | null = null
-	private selectedMap: KeyMap<Item> | null = null
+	private selected: T[] = []
+	private map: KeyMap<T> | null = null
+	private selectedMap: KeyMap<T> | null = null
 
-	constructor(options: StoreOptions<Item> = {}) {
+	constructor(options: StoreOptions<T> = {}) {
 		super()
 
 		if (options.key) {
@@ -89,13 +89,13 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		this.initData(data)
 	}
 
-	private initData(data: Item[] | null | undefined) {
+	private initData(data: T[] | null | undefined) {
 		if (data) {
 			this.addItems(data)
 		}
 	}
 
-	private addItems(items: Item[], atStart: boolean = false) {
+	private addItems(items: T[], atStart: boolean = false) {
 		if (items.length > 0) {
 			if (this.map) {
 				for (let item of items) {
@@ -115,7 +115,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		}
 	}
 
-	private addItemsToCurrentData(items: Item[], atStart: boolean = false) {
+	private addItemsToCurrentData(items: T[], atStart: boolean = false) {
 		if (this.order) {
 			if (items.length > 1) {
 				let newData = this.currentData.length > 0 ? [...this.currentData, ...items] : items
@@ -138,7 +138,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		}
 	}
 
-	setOrder(order: Order<Item> | null) {
+	setOrder(order: Order<T> | null) {
 		this.order = order
 		this.updateCurrentData()
 		this.emit('change')
@@ -148,7 +148,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		this.setOrder(null)
 	}
 
-	setFilter(filter: ((item: Item) => boolean) | null) {
+	setFilter(filter: ((item: T) => boolean) | null) {
 		this.filter = filter
 		this.updateCurrentData()
 		this.deselectAll()
@@ -168,29 +168,29 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		this.currentData = []
 	}
 
-	add(...items: Item[]) {
+	add(...items: T[]) {
 		this.remove(...items)
 		this.addItems(items)
 		this.emit('change')
 	}
 
-	addToStart(...items: Item[]) {
+	addToStart(...items: T[]) {
 		this.remove(...items)
 		this.addItems(items, true)
 		this.emit('change')
 	}
 
-	push(...items: Item[]) {
+	push(...items: T[]) {
 		this.addItems(items)
 		this.emit('change')
 	}
 
-	unshift(...items: Item[]) {
+	unshift(...items: T[]) {
 		this.addItems(items, true)
 		this.emit('change')
 	}
 
-	insert(index: number, ...items: Item[]) {
+	insert(index: number, ...items: T[]) {
 		if (items.length > 0) {
 			this.data.splice(index, 0, ...items)
 
@@ -211,7 +211,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		this.emit('change')
 	}
 
-	has(item: Item): boolean {
+	has(item: T): boolean {
 		if (this.map) {
 			return this.map.has(item)
 		}
@@ -220,7 +220,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		}
 	}
 
-	get(item: Item): Item | undefined {
+	get(item: T): T | undefined {
 		if (this.map) {
 			return this.map.get(item)
 		}
@@ -229,8 +229,8 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		}
 	}
 
-	remove(...items: Item[]): Item[] {
-		let toRemoveSet: Set<Item> = new Set()
+	remove(...items: T[]): T[] {
+		let toRemoveSet: Set<T> = new Set()
 
 		if (this.map) {
 			for (let item of items) {
@@ -265,7 +265,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		return [...toRemoveSet]
 	}
 
-	isSelected(item: Item): boolean {
+	isSelected(item: T): boolean {
 		if (this.selectedMap) {
 			return this.selectedMap.has(item)
 		}
@@ -288,7 +288,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		return this.selected.length
 	}
 
-	select(...items: Item[]) {
+	select(...items: T[]) {
 		if (this.selectedMap) {
 			for (let item of items) {
 				if (!this.selectedMap.has(item)) {
@@ -308,7 +308,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		this.lastTouchedItem = items[0]
 	}
 
-	deselect(...items: Item[]) {
+	deselect(...items: T[]) {
 		if (items === this.selected) {
 			this.deselectAll()
 		}
@@ -339,7 +339,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		this.lastTouchedItem = items[0]
 	}
 
-	toggleSelect(item: Item) {
+	toggleSelect(item: T) {
 		if (this.isSelected(item)) {
 			this.deselect(item)
 		}
@@ -350,7 +350,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		this.lastTouchedItem = item
 	}
 
-	selectByKeyboardEvent(item: Item, event: KeyboardEvent) {
+	selectByKeyboardEvent(item: T, event: KeyboardEvent) {
 		if (event.shiftKey) {
 			this.shiftSelect(item)
 		}
@@ -359,7 +359,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		}
 	}
 
-	shiftSelect(item: Item) {
+	shiftSelect(item: T) {
 		let startIndex = Math.max(this.lastTouchedItem ? this.getIndex(this.lastTouchedItem) : 0, 0)
 		let endIndex = this.getIndex(item)
 
@@ -379,7 +379,7 @@ export class Store<Item extends object = object> extends Emitter<StoreEvents> {
 		}
 	}
 
-	getIndex(item: Item): number {
+	getIndex(item: T): number {
 		if (this.map && !this.map.has(item)) {
 			return -1
 		}

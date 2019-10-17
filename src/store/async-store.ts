@@ -1,17 +1,17 @@
-import {Emitter} from 'ff'
-import {LiveAsyncRepeatDirective} from 'flit'
+import {Emitter} from '@pucelle/ff'
+import {LiveAsyncRepeatDirective} from '@pucelle/flit'
 
 
-interface AsyncStoreEvents {
+export interface AsyncStoreEvents {
 	change: () => void
 }
 
 
 /**
- * Compare to `Store`, it loads data for one page each time.
+ * Compare to `Store`, `AsyncStore` loads data for one page each time.
  * And every time after data changed, it refreshs to reload all datas.
  * It's an extension for `liveRepeat` directive, to cache data,
- * you should extends this class to supports like column ordering and searching.
+ * you should extends this class and overwrite abstract methods, and may support like column ordering and searching.
  */
 export abstract class AsyncStore<Item extends object = object> extends Emitter<AsyncStoreEvents> {
 

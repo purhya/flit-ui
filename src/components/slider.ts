@@ -1,7 +1,7 @@
-import {define, Component, html, css, on, once, off} from 'flit'
+import {define, Component, html, css, on, once, off} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {constrain, getRect, Rect, toDecimal} from 'ff'
-import {getGlobalTooltip, GlobalTooltip} from '../bindings/tooltip'
+import {constrain, getRect, Rect, toDecimal, MouseLeave} from '@pucelle/ff'
+import {tooltip} from '../bindings/tooltip'
 
 
 export interface SliderEvents {
@@ -9,12 +9,12 @@ export interface SliderEvents {
 }
 
 @define('f-slider')
-export class Slider<Events = any> extends Component<Events & SliderEvents> {
+export class Slider<E = any> extends Component<E & SliderEvents> {
 
 	static style() {
-		let {mainColor, textColor, lh, focusBlurRadius, backgroundColor} = theme
+		let {mainColor, borderColor, adjustByLineHeight: lh, adjustByFontSize: fs, focusBlurRadius, backgroundColor} = theme
 		let grooveSize = 1
-		let ballSize = Math.ceil(lh(9)) * 2 + grooveSize
+		let ballSize = Math.ceil(lh(7)) * 2 + grooveSize
 
 		return css`
 		:host{
@@ -25,6 +25,7 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 			position: relative;
 			width: ${lh(150)}px;
 			height: ${lh(30)}px;
+			font-size: ${fs(13)}px;
 			cursor: pointer;
 
 			&:focus .ball{
@@ -44,8 +45,7 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 			top: 0;
 			width: 100%;
 			height: 100%;
-			background: ${textColor};
-			opacity: 0.3;
+			background: ${borderColor};
 		}
 	
 		.progress{
@@ -56,7 +56,7 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 	
 		.ball{
 			border-radius: 50%;
-			border: 1px solid ${textColor.lighten(10)};
+			border: 1px solid ${borderColor};
 			background: ${backgroundColor};
 			float: right;
 			width: ${ballSize}px;
@@ -70,7 +70,8 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 
 		.dragging{
 			.ball{
-				border-color: currentColor;
+				border-color: ${mainColor.darken(10)};
+				background: ${mainColor.darken(10)};
 			}
 		}
 
@@ -98,16 +99,18 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 		`
 	}
 
-	static properties = ['vertical', 'min', 'max', 'step', 'value']
-
 	protected render() {
+		let tip = tooltip(String(this.value), {
+			alignTo: () => this.refs.ball,
+			alignPosition: this.vertical ? 'r' : 't'
+		})
+
 		return html`
 		<template
 			tabindex="0"
 			:class.dragging=${this.draging}
+			${tip}
 			@@mousedown=${this.onMouseDown}
-			@@mouseenter=${this.onMouseEnter}
-			@@mouseleave=${this.onMouseLeave}
 			@@focus=${this.onFocus}
 			@@blur=${this.onBlur}
 		>
@@ -131,7 +134,6 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 	value: number = 0
 
 	protected draging: boolean = false
-	protected tooltip: GlobalTooltip | null = null
 
 	protected getPercent() {
 		if (this.value === this.min) {
@@ -144,11 +146,8 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 
 	protected onMouseDown(e: MouseEvent) {
 		let rect = getRect(this.refs.groove)
+		let unkeep = MouseLeave.keep(this.el)
 		this.draging = true
-		
-		if (this.tooltip) {
-			this.tooltip.lock()
-		}
 
 		// If clicked the ball, not move; only move when clicked the groove.
 		if (!(e.target as Element).matches(this.scopeClassName('.ball'))) {
@@ -165,11 +164,8 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 
 		once(document, 'mouseup', () => {
 			off(document, 'mousemove', onMouseMove as (e: Event) => void)
+			unkeep()
 			this.draging = false
-
-			if (this.tooltip) {
-				this.tooltip.unlock()
-			}
 		})
 	}
 
@@ -194,7 +190,6 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 
 		if (newValue !== oldValue) {
 			this.emit('change', this.value = newValue)
-			this.updateTooltip()
 		}
 	}
 
@@ -215,7 +210,6 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 
 		if (newValue !== this.value) {
 			this.emit('change', this.value = newValue)
-			this.updateTooltip()
 		}
 	}
 
@@ -256,32 +250,5 @@ export class Slider<Events = any> extends Component<Events & SliderEvents> {
 	protected onBlur() {
 		off(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 		off(document, 'wheel', this.onWheel as (e: Event) => void, this)
-	}
-
-	protected async onMouseEnter() {
-		this.tooltip = await getGlobalTooltip(this.refs.ball)
-		this.tooltip.setTitleAndOptions(String(this.value), {alignPosition: this.vertical ? 'r' : 't'})
-		this.tooltip.showLayerLater()
-		this.tooltip.setKeepVisible(true)
-	}
-
-	protected updateTooltip() {
-		if (this.tooltip) {
-			this.tooltip.setTitle(String(this.value))
-		}
-	}
-
-	protected onMouseLeave() {
-		if (!this.draging) {
-			this.hideTooltip()
-		}
-	}
-
-	protected hideTooltip() {
-		if (this.tooltip) {
-			this.tooltip.setKeepVisible(false)
-			this.tooltip.hideLayerLater()
-			this.tooltip = null
-		}
 	}
 }

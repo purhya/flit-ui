@@ -1,4 +1,4 @@
-import {define, Component, html, css, getEasing, on, off} from 'flit'
+import {define, Component, html, css, getEasing, on, off} from '@pucelle/flit'
 import {theme} from '../style/theme'
 
 
@@ -7,12 +7,12 @@ export interface SwitchEvents {
 }
 
 @define('f-switch')
-export class Switch<Events = any> extends Component<Events & SwitchEvents> {
+export class Switch<E = any> extends Component<E & SwitchEvents> {
 
 	static style() {
-		let {mainColor, lh, textColor, focusBlurRadius, backgroundColor} = theme
-		let h = Math.round(lh(10)) * 2
-		let w = h * 2 - 6
+		let {mainColor, lineHeight, adjustByLineHeight: lh, focusBlurRadius, backgroundColor} = theme
+		let h = lh(18)
+		let w = h * 2 - 8
 
 		return css`
 		:host{
@@ -20,16 +20,15 @@ export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 			vertical-align: top;
 			width: ${w}px;
 			height: ${h}px;
-			color: ${textColor.lighten(20)};
-			border: 1px solid currentColor;
+			background: ${backgroundColor.highlight(23.3)};
 			border-radius: ${h / 2}px;
 			padding: 1px;
-			margin: ${(lh(30) - h ) / 2}px 0;
+			margin: ${(lineHeight - h ) / 2}px 0;
 			transition: background-color 0.2s ${getEasing('ease-out-cubic')};
 			cursor: pointer;
 
 			&:hover{
-				color: ${mainColor};
+				background: ${backgroundColor.highlight(33)};
 			}
 			
 			&:focus{
@@ -38,21 +37,19 @@ export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 		}
 	
 		.ball{
-			width: ${h - 4}px;
-			height: ${h - 4}px;
+			width: ${h - 2}px;
+			height: ${h - 2}px;
 			background: ${backgroundColor};
-			border: 1px solid ${textColor.lighten(10)};;
 			border-radius: 50%;
 			transition: margin 0.2s ${getEasing('ease-out-cubic')};
 		}
 	
 		.on{		
 			background: ${mainColor};
-			color: ${mainColor};
 
 			.ball{
 				border-color: ${backgroundColor};
-				margin-left: calc(100% - ${h - 4}px);
+				margin-left: calc(100% - ${h - 2}px);
 			}
 
 			&:hover{
@@ -61,8 +58,6 @@ export class Switch<Events = any> extends Component<Events & SwitchEvents> {
 		}
 		`
 	}
-
-	static properties = ['checked']
 
 	checked: boolean = false
 
