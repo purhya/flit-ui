@@ -12,7 +12,7 @@ export interface PopupOptions {
 
 	/** 
 	 * How to trigger the popup.
-	 * Should not change it.
+	 * You should not change it after set.
 	 */
 	trigger?: 'hover' | 'click' | 'focus' | 'contextmenu'
 
@@ -33,6 +33,12 @@ export interface PopupOptions {
 
 	/** Should show trangle. */
 	trangle?: boolean
+
+	/** 
+	 * Should align trangle in a fixed position.
+	 * Default value is `false`, means trangle will be adjusted to be in the center of the edge of el or target.
+	 */
+	fixTrangle?: boolean
 
 	/** Transition options for popup hiding and showing. */
 	transition?: TransitionOptions
@@ -64,11 +70,12 @@ function getPopupCacheFromName(name: string) {
 
 const defaultPopupOptions: PopupOptions = {
 	trigger: 'hover',
-	alignPosition: 't',
+	alignPosition: 'b',
 	alignMargin: 3,
 	showDelay: 0,
 	hideDelay: 200,
 	trangle: true,
+	fixTrangle: false,
 	transition: 'fade',
 	onOpenedChanged: () => undefined
 }
@@ -114,8 +121,22 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 		}
 	}
 
+	protected getOption<K extends keyof PopupOptions>(key: K): Required<PopupOptions>[K] {
+		let value: PopupOptions[K]
+
+		if (this.popup && this.popup.defaultPopupOptions) {
+			value = this.popup.defaultPopupOptions[key]
+		}
+
+		if (value === undefined) {
+			value = this.options.get(key)
+		}
+
+		return value as Required<PopupOptions>[K]
+	}
+
 	protected bindTrigger() {
-		let trigger = this.options.get('trigger')
+		let trigger = this.getOption('trigger')
 
 		if (trigger === 'hover') {
 			on(this.el, 'mouseenter', this.showPopupLater, this)
@@ -156,8 +177,8 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 			return
 		}
 
-		let trigger = this.options.get('trigger')
-		let showDelay = this.options.get('showDelay')
+		let trigger = this.getOption('trigger')
+		let showDelay = this.getOption('showDelay')
 
 		if (trigger === 'hover' || trigger === 'focus') {
 			this.showTimeout = timeout(() => {
@@ -200,30 +221,36 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 			clearTransition(popup.el)
 		}
 		else {
-			new Transition(popup.el, this.options.get('transition')).enter()
+			new Transition(popup.el, this.getOption('transition')).enter()
 		}
 
-		let trigger = this.options.get('trigger')
+		let trigger = this.getOption('trigger')
 		if (trigger === 'hover') {
 			off(this.el, 'mouseleave', this.hidePopupLater, this)
+		}
 
+		this.bindLeave()
+		this.unwatchRect = watchLayout(this.el, 'rect', this.onElRectChanged.bind(this))
+	}
+
+	protected bindLeave() {
+		let trigger = this.getOption('trigger')
+		if (trigger === 'hover') {
 			// Should not use once to watch, or if the hideLater it triggered was canceled, This can't trigger again.
-			this.unwatchLeave = MouseLeave.on([this.el, popup.el], this.hidePopupLater.bind(this), {
-				delay: this.options.get('hideDelay'),
+			this.unwatchLeave = MouseLeave.on([this.el, this.popup!.el], this.hidePopupLater.bind(this), {
+				delay: this.getOption('hideDelay'),
 				mouseIn: true,
 			})
 		}
 		else if (trigger === 'click' || trigger === 'contextmenu') {
 			on(document, 'mousedown', this.onDocMouseDown, this)
 		}
-		
-		this.unwatchRect = watchLayout(this.el, 'rect', this.onElRectChanged.bind(this))
 	}
 
 	protected setOpened(opened: boolean) {
 		this.opened = opened
 
-		let onOpenedChanged = this.options.get('onOpenedChanged')
+		let onOpenedChanged = this.getOption('onOpenedChanged')
 		if (onOpenedChanged) {
 			onOpenedChanged(opened)
 		}
@@ -235,7 +262,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 			return false
 		}
 
-		let name = this.options.get('name')
+		let name = this.getOption('name')
 		if (!name) {
 			return true
 		}
@@ -252,7 +279,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 
 	protected getPopup() {
 		let result = this.renderFn()
-		let name = this.options.get('name')
+		let name = this.getOption('name')
 		let popup: Popup | null = null
 		let template: Template | null = null
 		let inUse: boolean = false
@@ -290,13 +317,15 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 		this.popup = popup
 		this.popupTemplate = template
 
+		popup.setPopupBinding(this as PopupBinding<any>)
+
 		return {popup, inUse}
 	}
 
 	protected async updatePopup() {
 		if (this.isPopupInControl()) {
 			let result = this.renderFn()
-			let name = this.options.get('name')
+			let name = this.getOption('name')
 			let popup = this.popup!
 			let template = this.popupTemplate!
 
@@ -341,24 +370,29 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 			this.alignPopup()
 		}
 		else {
-			this.hidePopupLater()
+			this.onNotInViewport()
 		}
 	}
 
 	protected shouldHideWhenElLayerChanged(): boolean {
-		return this.options.get('trigger') === 'hover'
+		return this.getOption('trigger') === 'hover'
+	}
+
+	protected onNotInViewport() {
+		this.hidePopupLater()
 	}
 
 	protected alignPopup() {
-		let toAlign = this.popup!.el
-		let alignToFn = this.options.get('alignTo')
+		let popup = this.popup!
+		let alignToFn = this.getOption('alignTo')
 		let alignTo = alignToFn ? alignToFn() : this.el
 		let trangle = this.popup!.refs.trangle
 
-		align(toAlign, alignTo, this.options.get('alignPosition'), {
-			margin: this.options.get('alignMargin'),
+		align(popup.el, alignTo, this.getOption('alignPosition'), {
+			margin: this.getOption('alignMargin'),
 			canShrinkInY: true,
 			trangle,
+			fixTrangle: this.getOption('fixTrangle'), 
 		})
 	}
 
@@ -373,10 +407,10 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 			return
 		}
 
-		let trigger = this.options.get('trigger')
-		let hideDelay = trigger === 'hover' ? 0 : this.options.get('hideDelay')
+		let trigger = this.getOption('trigger')
+		let hideDelay = trigger === 'hover' ? 0 : this.getOption('hideDelay')
 
-		if (hideDelay > 0) {
+		if ((trigger === 'hover' || trigger === 'focus') && hideDelay > 0) {
 			this.hideTimeout = timeout(() => {
 				this.hideTimeout = null
 				this.hidePopup()
@@ -402,7 +436,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 		// Must unwatch here, not in `hideLater`, or if it was canceled...
 		this.unwatch()
 
-		let name = this.options.get('name')
+		let name = this.getOption('name')
 		let popupEl = this.popup!.el
 
 		if (this.isPopupInControl()) {
@@ -410,7 +444,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 				NamedPopupsInUse.delete(this.popup!)
 			}
 
-			new Transition(popupEl, this.options.get('transition')).leave().then((finish: boolean) => {
+			new Transition(popupEl, this.getOption('transition')).leave().then((finish: boolean) => {
 				if (finish) {
 					popupEl.remove()
 				}
@@ -423,7 +457,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 	}
 
 	protected unwatch() {
-		let trigger = this.options.get('trigger')
+		let trigger = this.getOption('trigger')
 
 		if (this.unwatchRect) {
 			this.unwatchRect()

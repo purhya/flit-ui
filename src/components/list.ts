@@ -37,8 +37,8 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		.option{
 			position: relative;
 			display: flex;
-			padding-left: ${lh(3)}px;
-			padding-right: ${lh(3)}px;
+			padding-top: ${lh(2)}px;
+			padding-bottom: ${lh(2)}px;
 			cursor: pointer;
 			border-bottom: 1px solid ${borderColor.alpha(0.4)};
 
@@ -68,6 +68,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		.toggle{
 			display: flex;
 			width: ${lh(23)}px;
+			opacity: 0.6;
 		}
 
 		.icon{
@@ -94,8 +95,8 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		`
 	}
 
-	mode: 'selection' | 'navigation' = 'selection'
-	selectable: boolean = true
+	type: 'selection' | 'navigation' = 'selection'
+	selectable: boolean = false
 	multipleSelect: boolean = false
 	data: ListItem<T>[] = []
 	selected: T[] = []
@@ -150,7 +151,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 	protected renderClassName(item: ListItem<T>) {
 		let classNames: string[] = []
-		if (this.mode === 'navigation') {
+		if (this.type === 'navigation') {
 			if (this.active === item.value) {
 				classNames.push('active')
 			}
@@ -173,7 +174,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 	}
 
 	protected onClickOption(item: ListItem<T>) {
-		if (this.mode === 'navigation') {
+		if (this.type === 'navigation') {
 			this.active = item.value
 			this.emit('navigate', item.value)
 		}

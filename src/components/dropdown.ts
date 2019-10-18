@@ -3,7 +3,7 @@ import {theme} from '../style/theme'
 import {RenderFn, popup, PopupBinding} from '../bindings/popup'
 
 
-/** Normally work with a dropdown menu. */
+/** Normally work with a menu. */
 @define('f-dropdown')
 export class Dropdown<E = any> extends Component<E> {
 

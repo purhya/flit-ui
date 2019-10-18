@@ -38,7 +38,7 @@ export class NotificationTips<E = any> extends Component<E> {
 			right: 10px;
 			bottom: 10px;
 			max-width: 300px;
-			z-index: 1300;	// Higher than content
+			z-index: 1200;	// Higher than message
 			font-size: ${fs(12)}px;
 		}
 

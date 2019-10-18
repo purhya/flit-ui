@@ -107,19 +107,13 @@ export class Color {
 		return this.formatRGBA(r, g, b, a)
 	}
 
-	/** Darken if is a light color, otherwise lighten. */
+	/** 
+	 * Darken if is a light color, otherwise lighten.
+	 * Which also means: For background color and text color,
+	 * if close to one, move to another one.
+	 */
 	highlight(percentage: number) {
 		if (this.getLightness() < 0.5) {
-			return this.lighten(percentage)
-		}
-		else {
-			return this.darken(percentage)
-		}
-	}
-
-	/** Lighten if is a light color, otherwise darken. */
-	dim(percentage: number) {
-		if (this.getLightness() > 0.5) {
 			return this.lighten(percentage)
 		}
 		else {

@@ -26,7 +26,7 @@ export class MessageModal<E = any> extends Modal<E> {
 
 		return css`
 		:host{
-			z-index: 1200;	// Higher that modal & layer - 1000, and tooltip - 1100
+			z-index: 1100;	// Higher that modal, popup, tooltip
 			width: 350px;
 	
 			&.wide, &.has-title{

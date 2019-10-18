@@ -71,7 +71,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			box-shadow: 0 1px ${layerShadowBlurRadius}px ${layerShadowColor};
 		}
 	
-		.list > *{
+		.list .option__f-list{
 			padding-left: ${lh(8)}px;
 			border-bottom: none;
 		}

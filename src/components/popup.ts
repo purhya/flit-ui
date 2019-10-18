@@ -1,5 +1,6 @@
 import {css, define, Component, html, appendTo} from '@pucelle/flit'
 import {theme} from '../style/theme'
+import {PopupBinding, PopupOptions} from '../bindings/popup'
 
 
 /**It's the base class for all the layer which will align with another element. */
@@ -7,7 +8,10 @@ import {theme} from '../style/theme'
 export class Popup<E = any> extends Component<E> {
 
 	static style() {
-		let {layerBorderRadius, layerBackgroundColor, layerShadowBlurRadius, layerShadowColor} = theme
+		let {layerBorderRadius, layerBackgroundColor, layerShadowBlurRadius, layerShadowColor, adjustByLineHeight: lh} = theme
+		let w = lh(10)
+		let h = lh(7)
+		let x = lh(11)
 
 		return css`
 		:host{
@@ -17,23 +21,25 @@ export class Popup<E = any> extends Component<E> {
 			z-index: 1000;	// Same with window, so if in window, we must move it behind the window
 			background: ${layerBackgroundColor};
 			border-radius: ${layerBorderRadius}px;
-			filter: drop-shadow(0 1px ${layerShadowBlurRadius / 2}px ${layerShadowColor});	// 3px nearly equals 6px in box-shadow.
+			filter: drop-shadow(0 0 ${layerShadowBlurRadius / 2}px ${layerShadowColor});	// 3px nearly equals 6px in box-shadow.
 		}
 
 		.trangle{
+			// Must be the styles in top position
 			position: absolute;
-			border-left: 8px solid transparent;
-			border-right: 8px solid transparent;
-			border-bottom: 11px solid ${layerBackgroundColor};
-			top: -11px;
+			border-left: ${w / 2}px solid transparent;
+			border-right: ${w / 2}px solid transparent;
+			border-bottom: ${h}px solid ${layerBackgroundColor};
+			top: -${h}px;
+			left: ${x}px;	// 11 + 5 = 16
 
 			&-herizontal{
-				border-top: 8px solid transparent;
-				border-bottom: 8px solid transparent;
-				border-right: 11px solid ${layerBackgroundColor};
+				border-top: ${w / 2}px solid transparent;
+				border-bottom: ${w / 2}px solid transparent;
+				border-right: ${h}px solid ${layerBackgroundColor};
 				border-left: 0;
-				top: auto;
-				left: -11px;
+				top: ${x}px;
+				left: -${h}px;
 			}
 		}
 		`
@@ -47,6 +53,15 @@ export class Popup<E = any> extends Component<E> {
 	 * Note that don't specify this value to `document.body`, it may not prepared when class initialize. 
 	 */
 	appendTo: Element | string | null = 'body'
+
+	/** 
+	 * Used for sub classes to specify default popup options,
+	 * Such that no need to specify them each time in the `popup()`.
+	 * Will be overwrite by options in `popup()`.
+	 */
+	defaultPopupOptions: PopupOptions | null = null
+
+	protected binding: PopupBinding | null = null
 
 	protected render() {
 		return html`
@@ -88,6 +103,19 @@ export class Popup<E = any> extends Component<E> {
 	applyAppendTo() {
 		if (this.appendTo) {
 			appendTo(this.el, this.appendTo)
+		}
+	}
+
+	setPopupBinding(binding: PopupBinding) {
+		this.binding = binding
+	}
+
+	close() {
+		if (this.binding) {
+			this.binding.hidePopupLater()
+		}
+		else {
+			this.el.remove()
 		}
 	}
 }

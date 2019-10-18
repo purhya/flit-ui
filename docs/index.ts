@@ -7,11 +7,11 @@ import * as fui from '../src'
 ;(window as any).fui = fui
 
 
-import {html, renderComponent, define, liveAsyncRepeat, repeat, observe} from '@pucelle/flit'
-import {Modal, message, notification, Select, theme, Store, contextmenu, draggable, droppable} from '../src'
+import {html, Component, renderComponent, define, liveAsyncRepeat, repeat, observe} from '@pucelle/flit'
+import {Modal, message, notification, theme, Store, contextmenu, draggable, droppable, popup, tooltip} from '../src'
 
 
-define('flit-preview', class extends flit.Component {
+define('flit-preview', class extends Component {
 	render() {
 		let {lineHeight} = theme
 
@@ -310,22 +310,22 @@ define('flit-preview', class extends flit.Component {
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Default</header>
-						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .selectable="false" />
+						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} />
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Single Selection</header>
-						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .selected=${[2]} />
+						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .selectable .selected=${[2]} />
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Multiple Selection</header>
-						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .multipleSelect .selected=${[1, 2]} />
+						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .selectable .multipleSelect .selected=${[1, 2]} />
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Navigation</header>
-						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .mode="navigation" .active=${1} />
+						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .type="navigation" .active=${1} />
 					</f-col>
 				</f-row>
 
@@ -337,7 +337,7 @@ define('flit-preview', class extends flit.Component {
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">With Subsection</header>
-						<f-list .data=${[
+						<f-list .type="navigation" .data=${[
 							{value: 1, text: 'User A', children:
 								[
 									{value: 11, text: 'Folder 1', children: [
@@ -367,32 +367,143 @@ define('flit-preview', class extends flit.Component {
 				</f-row>
 			</section>
 
+			<section>
+				<h3>Popover</h3>
+				
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Default</header>
+						<button ${
+							popup(
+								() => html`
+								<f-popover .title="Popover title">
+									Here is the Popover content.
+								</f-popover>
+								`,
+								{trigger: 'click'}
+							)
+						}>Open Popover</button>
+					</f-col>
 
-			<!-- <section>
-				<f-slider value="50"></f-slider>
-				<f-slider vertical value="50"></f-slider>
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">With Close Button</header>
+						<button ${
+							popup(
+								() => html`
+								<f-popover .title="Popover title" .closable>
+									Here is the Popover content.
+								</f-popover>
+								`,
+								{trigger: 'click'}
+							)
+						}>Open Popover</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">No Title</header>
+						<button ${
+							popup(
+								() => html`
+								<f-popover>
+									Here is the Popover content.
+								</f-popover>
+								`,
+								{trigger: 'click'}
+							)
+						}>Open Popover</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">With actions</header>
+						<button ${
+							popup(
+								() => html`
+								<f-popover
+									.title="Popover title" 
+									.actions=${[
+										{value: 'cancel', text: 'Cancel'},
+										{value: 'Save', text: 'Save', primary: true}
+									]}
+								>
+									Here is the Popover content.
+								</f-popover>
+								`,
+								{trigger: 'click'}
+							)
+						}>Open Popover</button>
+					</f-col>
+				</f-row>
 			</section>
 
 			<section>
-				<f-popover .title="Here is the popover title">
-					<button>Popover</button>
-					<div slot="content">Here is the popover content</div>
-				</f-popover>
+				<h3>Tooltip</h3>
+
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Default</header>
+						<button ${
+							tooltip('Tooltip text', {type: 'default'})
+						}>Hover for Tooltip</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Prompt</header>
+						<button ${
+							tooltip('Add some items to your list by clicking this.', {type: 'prompt'})
+						}>Add</button>
+					</f-col>
+				</f-row>
+
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Error</header>
+						<button primary disabled ${
+							tooltip('You can\'t submit, try resolve all mistakes then this tooltip will disappear.', {type: 'error'})
+						}>Submit</button>
+					</f-col>
+				</f-row>
 			</section>
 
 			<section>
-				<f-menu selectable style="width: 200px;">
-					<f-menuitem icon="user">User A</f-menuitem>
-					<f-menuitem icon="user">User B</f-menuitem>
-					<f-submenu>
-						<f-menuitem icon="folder">Folder A</f-menuitem>
-						<f-menuitem icon="folder">Folder B</f-menuitem>
-						<f-submenu>
-							<f-menuitem>Item A</f-menuitem>
-							<f-menuitem>Item B</f-menuitem>
-						</f-submenu>
-					</f-submenu>
-				</f-menu>
+				<h3>Menu</h3>
+				
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<button ${
+							popup(
+								() => html`
+								<f-menu>
+									<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} />
+								</f-menu>
+								`,
+								{
+									trigger: 'click'
+								}
+							)
+						}>
+							<span>Open Menu</span>
+							<f-icon .type="down" />
+						</button>
+					</f-col>
+
+					<f-col .span="6">
+						<button ${
+							popup(
+								() => html`
+								<f-menu .title="Menu title">
+									<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .selectable .selected=${[1]} />
+								</f-menu>
+								`,
+								{
+									trigger: 'click'
+								}
+							)
+						}>
+							<span>Menu with Title</span>
+							<f-icon .type="down" />
+						</button>
+					</f-col>
+				</f-row>
 			</section>
 
 			<section>
