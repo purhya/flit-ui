@@ -14,7 +14,7 @@ export interface SelectEvents<T> {
 export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	
 	static style() {
-		let {mainColor, lineHeight, adjustByLineHeight: lh, borderColor, layerShadowBlurRadius, backgroundColor, layerBackgroundColor, layerShadowColor} = theme
+		let {mainColor, lineHeight, adjustByLineHeight: lh, borderColor, layerShadowBlurRadius, backgroundColor, layerShadowColor} = theme
 
 		return css`
 		:host{
@@ -71,7 +71,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			box-shadow: 0 1px ${layerShadowBlurRadius}px ${layerShadowColor};
 		}
 	
-		.list .option__f-list{
+		.list > *{
 			padding-left: ${lh(8)}px;
 			border-bottom: none;
 		}

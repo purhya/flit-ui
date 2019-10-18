@@ -27,7 +27,6 @@ export * from './components/select'
 export * from './components/modal'
 export * from './components/message'
 export * from './components/notification'
-//export * from './components/tree'
 export * from './components/grid'
 
 export * from './components/resizer'

@@ -335,6 +335,35 @@ define('flit-preview', class extends flit.Component {
 						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value, icon: 'love'}))} />
 					</f-col>
 
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">With Subsection</header>
+						<f-list .data=${[
+							{value: 1, text: 'User A', children:
+								[
+									{value: 11, text: 'Folder 1', children: [
+										{value: 111, text: 'Item 1'},
+										{value: 112, text: 'Item 2'},
+									]},
+									{value: 12, text: 'Folder 2', children: [
+										{value: 121, text: 'Item 1'},
+										{value: 122, text: 'Item 2'},
+									]}
+								]
+							},
+							{value: 2, text: 'User B', opened: true, children:
+								[
+									{value: 21, text: 'Folder 1', children: [
+										{value: 211, text: 'Item 1'},
+										{value: 212, text: 'Item 2'},
+									]},
+									{value: 22, text: 'Folder 2', children: [
+										{value: 221, text: 'Item 1'},
+										{value: 222, text: 'Item 2'},
+									]}
+								]
+							},
+						]} />
+					</f-col>
 				</f-row>
 			</section>
 
