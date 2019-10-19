@@ -1,18 +1,22 @@
 {
-	"name": "fui",
-	"version": "0.0.0",
-	"description": "A small web UI library",
+	"name": "@pucelle/flit-ui",
+	"version": "1.1.0",
+	"description": "A light weight Web UI base on Flit & FF",
+	"author": "pucelle",
+	"license": "MIT",
+	"homepage": "https://github.com/pucelle/flit-ui",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/pucelle/flit-ui.git"
+	},
 	"main": "out/index.js",
 	"scripts": {
 		"compile": "tsc -b",
-		"watch": "tsc -b -w",
-		"test": "gulp test && start test/index.html"
+		"watch": "tsc -b -w"
 	},
-	"author": "pucelle",
-	"license": "MIT",
 	"dependencies": {
-		"@pucelle/ff": "^1.0.2",
-		"@pucelle/flit": "^1.0.0"
+		"@pucelle/ff": "^1.1.0",
+		"@pucelle/flit": "^1.1.0"
 	},
 	"devDependencies": {
 		"browserify": "^16.2.3",

@@ -3,6 +3,7 @@ node_modules
 docs
 src
 test
+css/**/*.scss
 gulpfile.js
 tsconfig.json
 typedoc.json
