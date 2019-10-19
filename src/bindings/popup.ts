@@ -1,9 +1,10 @@
-import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, renderComplete, Context, Transition, Template, renderComponent, clearTransition, Options} from '@pucelle/flit'
+import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, renderComplete, Context, Transition, Template, renderComponent, clearTransition, Options, DirectiveResult, html} from '@pucelle/flit'
 import {Timeout, timeout, MouseLeave, watchLayout, Rect, align} from '@pucelle/ff'
 import {Popup} from '../components/popup'
 
 
-export type RenderFn = () => TemplateResult
+export type RenderFn = () => TemplateResult | DirectiveResult
+
 
 export interface PopupOptions {
 
@@ -284,6 +285,10 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 		let template: Template | null = null
 		let inUse: boolean = false
 
+		if (!(result instanceof TemplateResult)) {
+			result = html`${result}`
+		}
+
 		if (name) {
 			let cache = getPopupCacheFromName(name)
 			if (cache) {
@@ -328,6 +333,10 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 			let name = this.getOption('name')
 			let popup = this.popup!
 			let template = this.popupTemplate!
+
+			if (!(result instanceof TemplateResult)) {
+				result = html`${result}`
+			}
 
 			if (template.canMergeWith(result)) {
 				template.merge(result)

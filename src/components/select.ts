@@ -117,7 +117,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 		`
 	}
 
-	protected renderPopupContent() {
+	protected renderPopup() {
 		let data = this.getOptionData()
 
 		return html`

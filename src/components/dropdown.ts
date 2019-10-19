@@ -1,10 +1,12 @@
-import {css, define, html, Component, refBinding} from '@pucelle/flit'
+import {css, html, Component, refBinding} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {RenderFn, popup, PopupBinding} from '../bindings/popup'
+import {popup, PopupBinding} from '../bindings/popup'
 
 
-/** Normally work with a menu. */
-@define('f-dropdown')
+/** 
+ * Contains trigger element and popup content.
+ * You should extend it to implement some dropdown type components, like `Select`.
+  */
 export class Dropdown<E = any> extends Component<E> {
 
 	static style() {
@@ -35,7 +37,6 @@ export class Dropdown<E = any> extends Component<E> {
 	}
 
 	opened: boolean = false
-	renderContent!: RenderFn
 
 	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'click'
 	trangle: boolean = true
@@ -52,7 +53,7 @@ export class Dropdown<E = any> extends Component<E> {
 		let onOpenedChanged = this.setOpened.bind(this)
 		
 		let toPopup = refBinding(
-			popup(() => this.renderPopupContent(), {trigger, trangle, alignPosition, alignMargin, transition, showDelay, hideDelay, onOpenedChanged}),
+			popup(() => this.renderPopup(), {trigger, trangle, alignPosition, alignMargin, transition, showDelay, hideDelay, onOpenedChanged}),
 			(v: any) => {this.popupBinding = v}
 		)
 		
@@ -64,18 +65,12 @@ export class Dropdown<E = any> extends Component<E> {
 		`
 	}
 
-	protected renderPopupContent() {
-		let content = this.renderContent()
-
+	protected renderPopup() {
 		return html`
 		<f-popup
 			class="popup"
 			.trangle=${this.trangle}
-		>
-			<div class="list">
-				${content}
-			</div>
-		</f-popup>
+		/>
 		`
 	}
 

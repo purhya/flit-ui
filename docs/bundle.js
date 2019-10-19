@@ -4529,7 +4529,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 						<header>With Info</header>
 						<label>
 							Last Name
-							<f-icon .type="tips" tooltip="Tips about this field" />
+							<f-icon .type="tips" :tooltip="Tips about this field" />
 						</label>
 					</f-col>
 				</f-row>
@@ -5065,7 +5065,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 						<button @click="${() => {
             let modal = flit_1.renderComponent(flit_1.html `
-								<f-modal style="width: 360px;" .title="Modal Title">
+								<f-modal style="width: ${src_1.theme.adjust(360)}px;" .title="Modal Title">
 									Here is the modal content
 								</f-modal>
 							`).component;
@@ -5080,7 +5080,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 						<button @click="${() => {
             let modal = flit_1.renderComponent(flit_1.html `
-								<f-modal style="width: 360px;" .title="Modal Title" .actions=${[
+								<f-modal style="width: ${src_1.theme.adjust(360)}px;" .title="Modal Title" .actions=${[
                 { text: 'Cancel' },
                 { text: 'Save', primary: true }
             ]}>
@@ -5224,7 +5224,7 @@ const flit_1 = require("@pucelle/flit");
 const ff_1 = require("@pucelle/ff");
 const theme_1 = require("../style/theme");
 const popup_1 = require("../components/popup");
-let ContextMenuLayer = class ContextMenuLayer extends popup_1.Popup {
+let ContextMenu = class ContextMenu extends popup_1.Popup {
     constructor() {
         super(...arguments);
         this.trangle = false;
@@ -5237,80 +5237,81 @@ let ContextMenuLayer = class ContextMenuLayer extends popup_1.Popup {
 			position: fixed;
 			border-radius: 0;
 			
-			f-menuitem{
+			.option__f-list{
 				padding: 0 ${adjust(2)}px;
 			}
 		}
-		`;
+		`.extends(super.style());
     }
 };
-ContextMenuLayer = __decorate([
-    flit_1.define('f-contextmenu-layer')
-], ContextMenuLayer);
+ContextMenu = __decorate([
+    flit_1.define('f-contextmenu')
+], ContextMenu);
 class ContextMenuBinding {
     constructor(el, context) {
-        this.layer = null;
+        this.popup = null;
         this.unwatchRect = null;
-        this.unlockOuterMouseLeave = null;
+        this.unkeepEl = null;
         this.el = el;
         this.context = context;
-        flit_1.on(this.el, 'contextmenu.prevent', this.showMenuInLayer, this);
+        flit_1.on(this.el, 'contextmenu.prevent', this.showMenu, this);
     }
     async update(renderFn) {
         this.renderFn = renderFn;
     }
-    async showMenuInLayer(e) {
-        let layer = this.renderLayer();
-        layer.applyAppendTo();
+    async showMenu(e) {
+        let popup = this.renderPopup();
+        popup.applyAppendTo();
         await flit_1.renderComplete();
-        ff_1.alignToEvent(layer.el, e);
-        layer.el.focus();
-        this.unlockOuterMouseLeave = ff_1.MouseLeave.keep(this.el);
-        new flit_1.Transition(layer.el, 'fade').enter();
+        ff_1.alignToEvent(popup.el, e);
+        popup.el.focus();
+        this.unkeepEl = ff_1.MouseLeave.keep(this.el);
+        new flit_1.Transition(popup.el, 'fade').enter();
         flit_1.on(document, 'mousedown', this.onDocMouseDown, this);
-        flit_1.once(layer.el, 'click', this.hideContextMenu, this);
-        this.unwatchRect = ff_1.watchLayout(this.el, 'rect', this.onLayerRectChanged.bind(this));
+        flit_1.once(popup.el, 'click', this.hideContextMenu, this);
+        this.unwatchRect = ff_1.watchLayout(this.el, 'rect', this.onElRectChanged.bind(this));
     }
-    renderLayer() {
-        if (!this.layer) {
-            this.layer = flit_1.renderComponent(flit_1.html `
-				<f-contextmenu-layer>
+    renderPopup() {
+        if (!this.popup) {
+            this.popup = flit_1.renderComponent(flit_1.html `
+				<f-contextmenu>
 					${this.renderFn()}
-				</f-contextmenu-layer>
+				</f-contextmenu>
 			`, this.context).component;
         }
-        return this.layer;
+        return this.popup;
     }
     onDocMouseDown(e) {
         let target = e.target;
-        if (this.layer && !this.layer.el.contains(target)) {
+        if (this.popup && !this.popup.el.contains(target)) {
             this.hideContextMenu();
         }
     }
     hideContextMenu() {
-        if (this.layer) {
+        if (this.popup) {
             flit_1.off(document, 'mousedown', this.onDocMouseDown, this);
-            flit_1.off(this.layer.el, 'click', this.hideContextMenu, this);
-            new flit_1.Transition(this.layer.el, 'fade').leave().then((finish) => {
+            flit_1.off(this.popup.el, 'click', this.hideContextMenu, this);
+            new flit_1.Transition(this.popup.el, 'fade').leave().then((finish) => {
                 if (finish) {
-                    this.layer.el.remove();
-                    this.layer = null;
+                    this.popup.el.remove();
+                    this.popup = null;
                 }
             });
         }
-        if (this.unlockOuterMouseLeave) {
-            this.unlockOuterMouseLeave();
+        if (this.unkeepEl) {
+            this.unkeepEl();
+            this.unkeepEl = null;
         }
         if (this.unwatchRect) {
             this.unwatchRect();
             this.unwatchRect = null;
         }
     }
-    onLayerRectChanged() {
+    onElRectChanged() {
         this.hideContextMenu();
     }
     remove() {
-        flit_1.off(this.el, 'contextmenu', this.showMenuInLayer, this);
+        flit_1.off(this.el, 'contextmenu', this.showMenu, this);
     }
 }
 exports.contextmenu = flit_1.defineBinding('contextmenu', ContextMenuBinding);
@@ -5994,6 +5995,9 @@ class PopupBinding {
         let popup = null;
         let template = null;
         let inUse = false;
+        if (!(result instanceof flit_1.TemplateResult)) {
+            result = flit_1.html `${result}`;
+        }
         if (name) {
             let cache = getPopupCacheFromName(name);
             if (cache) {
@@ -6030,6 +6034,9 @@ class PopupBinding {
             let name = this.getOption('name');
             let popup = this.popup;
             let template = this.popupTemplate;
+            if (!(result instanceof flit_1.TemplateResult)) {
+                result = flit_1.html `${result}`;
+            }
             if (template.canMergeWith(result)) {
                 template.merge(result);
             }
@@ -6699,18 +6706,15 @@ exports.dialog = new QuickDialog();
 
 },{"../style/theme":67,"./action":34,"@pucelle/ff":27,"@pucelle/flit":94}],38:[function(require,module,exports){
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
 const theme_1 = require("../style/theme");
 const popup_1 = require("../bindings/popup");
-/** Normally work with a menu. */
-let Dropdown = class Dropdown extends flit_1.Component {
+/**
+ * Contains trigger element and popup content.
+ * You should extend it to implement some dropdown type components, like `Select`.
+  */
+class Dropdown extends flit_1.Component {
     constructor() {
         super(...arguments);
         this.opened = false;
@@ -6751,7 +6755,7 @@ let Dropdown = class Dropdown extends flit_1.Component {
     render() {
         let { trigger, trangle, alignPosition, alignMargin, transition, showDelay, hideDelay } = this;
         let onOpenedChanged = this.setOpened.bind(this);
-        let toPopup = flit_1.refBinding(popup_1.popup(() => this.renderPopupContent(), { trigger, trangle, alignPosition, alignMargin, transition, showDelay, hideDelay, onOpenedChanged }), (v) => { this.popupBinding = v; });
+        let toPopup = flit_1.refBinding(popup_1.popup(() => this.renderPopup(), { trigger, trangle, alignPosition, alignMargin, transition, showDelay, hideDelay, onOpenedChanged }), (v) => { this.popupBinding = v; });
         return flit_1.html `
 		<template :class.opened=${this.opened} ${toPopup}>
 			<slot />
@@ -6759,17 +6763,12 @@ let Dropdown = class Dropdown extends flit_1.Component {
 		</template>
 		`;
     }
-    renderPopupContent() {
-        let content = this.renderContent();
+    renderPopup() {
         return flit_1.html `
 		<f-popup
 			class="popup"
 			.trangle=${this.trangle}
-		>
-			<div class="list">
-				${content}
-			</div>
-		</f-popup>
+		/>
 		`;
     }
     setOpened(opened) {
@@ -6789,10 +6788,7 @@ let Dropdown = class Dropdown extends flit_1.Component {
             this.popupBinding.hidePopupLater();
         }
     }
-};
-Dropdown = __decorate([
-    flit_1.define('f-dropdown')
-], Dropdown);
+}
 exports.Dropdown = Dropdown;
 
 },{"../bindings/popup":32,"../style/theme":67,"@pucelle/flit":94}],39:[function(require,module,exports){
@@ -9044,7 +9040,7 @@ let Select = class Select extends dropdown_1.Dropdown {
 		>
 		`;
     }
-    renderPopupContent() {
+    renderPopup() {
         let data = this.getOptionData();
         return flit_1.html `
 		<f-popup

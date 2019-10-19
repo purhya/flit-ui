@@ -107,7 +107,7 @@ define('flit-preview', class extends Component {
 						<header>With Info</header>
 						<label>
 							Last Name
-							<f-icon .type="tips" tooltip="Tips about this field" />
+							<f-icon .type="tips" :tooltip="Tips about this field" />
 						</label>
 					</f-col>
 				</f-row>
@@ -709,7 +709,7 @@ define('flit-preview', class extends Component {
 
 						<button @click="${() => {
 							let modal = renderComponent(html`
-								<f-modal style="width: 360px;" .title="Modal Title">
+								<f-modal style="width: ${theme.adjust(360)}px;" .title="Modal Title">
 									Here is the modal content
 								</f-modal>
 							`).component as Modal
@@ -725,7 +725,7 @@ define('flit-preview', class extends Component {
 
 						<button @click="${() => {
 							let modal = renderComponent(html`
-								<f-modal style="width: 360px;" .title="Modal Title" .actions=${[
+								<f-modal style="width: ${theme.adjust(360)}px;" .title="Modal Title" .actions=${[
 									{text: 'Cancel'},
 									{text: 'Save', primary: true}
 								]}>
