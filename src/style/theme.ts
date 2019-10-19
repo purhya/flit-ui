@@ -16,14 +16,16 @@ export interface ThemeOptions {
 	borderColor: string
 	borderRadius: number
 
-	layerBackgroundColor: string
-	layerBorderRadius: number
-	layerShadowColor: string
-	layerShadowBlurRadius: number
+	popupBackgroundColor: string
+	popupBorderRadius: number
+	popupShadowColor: string
+	popupShadowBlurRadius: number
 
 	focusBlurRadius: number
 
 	fontSize: number
+
+	/** Note that the `lineHeight` is the height of normal one line components, not the `lineHeight` of multiple lines. */
 	lineHeight: number
 }
 
@@ -38,8 +40,8 @@ type ColorOptions = {[key in
 	'warningColor' |
 	'infoColor' |
 
-	'layerBackgroundColor' |
-	'layerShadowColor'
+	'popupBackgroundColor' |
+	'popupShadowColor'
 ]: Color}
 
 type NotColorOptions = {[key in Exclude<keyof ThemeOptions, keyof ColorOptions>]: ThemeOptions[key]}
@@ -116,14 +118,14 @@ export class Theme implements ColorOptions, NotColorOptions {
 	 * Pass the px value for `font-size` on default theme settings, returns the size in current theme settings.
 	 * Returns value will be at least 11.
 	 */
-	get adjustByFontSize() {
+	get adjustFontSize() {
 		return (size: number): number =>  {
 			return Math.max(Math.round(size * this.fontSize / defaultMediumThemeOptions.fontSize!), 11)
 		}
 	}
 
 	/** Pass the px value for `line-height` on default theme settings, returns the line height in current theme settings. */
-	get adjustByLineHeight() {
+	get adjust() {
 		return (size: number): number => {
 			return Math.round(size * this.lineHeight / defaultMediumThemeOptions.lineHeight!)
 		}
@@ -168,20 +170,20 @@ export class Theme implements ColorOptions, NotColorOptions {
 	}
 
 
-	get layerBackgroundColor(): Color {
-		return new Color(this.getOption('layerBackgroundColor'))
+	get popupBackgroundColor(): Color {
+		return new Color(this.getOption('popupBackgroundColor'))
 	}
 
-	get layerBorderRadius() {
-		return this.getOption('layerBorderRadius')
+	get popupBorderRadius() {
+		return this.getOption('popupBorderRadius')
 	}
 
-	get layerShadowBlurRadius() {
-		return this.getOption('layerShadowBlurRadius')
+	get popupShadowBlurRadius() {
+		return this.getOption('popupShadowBlurRadius')
 	}
 
-	get layerShadowColor() {
-		return new Color(this.getOption('layerShadowColor'))
+	get popupShadowColor() {
+		return new Color(this.getOption('popupShadowColor'))
 	}
 
 
@@ -204,21 +206,21 @@ const defaultLightThemeOptions: Partial<ThemeOptions> = {
 	backgroundColor: '#fff',
 	textColor: '#000',
 
+	infoColor: '#3369fa',
 	successColor: '#29bc04',
 	errorColor: '#e10000',
 	warningColor: '#f3b907',
-	infoColor: '#3988e5',
 
 	borderColor: '#9b9b9b',
 
-	layerBackgroundColor: '#fff',
-	layerShadowColor: 'rgba(0, 0, 0, 0.4)',
+	popupBackgroundColor: '#fff',
+	popupShadowColor: 'rgba(0, 0, 0, 0.4)',
 }
 
 const defaultMediumThemeOptions: Partial<ThemeOptions> = {
 	borderRadius: 4,
-	layerBorderRadius: 4,
-	layerShadowBlurRadius: 6,
+	popupBorderRadius: 4,
+	popupShadowBlurRadius: 6,
 	focusBlurRadius: 6,
 	fontSize: 14,	// Should set `font-size` and `line-height` on html or body early before js loaded to avoid flushing.
 	lineHeight: 28,
@@ -234,8 +236,8 @@ theme.defineTheme('dark', {
 	backgroundColor: '#333',
 	textColor: '#eee',
 	borderColor: '#888',
-	layerBackgroundColor: new Color('#333').lighten(5).toString(),
-	layerShadowColor: 'rgba(0, 0, 0, 0.6)',
+	popupBackgroundColor: '#333',
+	popupShadowColor: 'rgba(0, 0, 0, 0.6)',
 })
 
 theme.defineTheme('small', {

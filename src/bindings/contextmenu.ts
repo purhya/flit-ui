@@ -10,7 +10,7 @@ export type MenuRenderFn = () => TemplateResult | DirectiveResult
 class ContextMenuLayer<E = any> extends Popup<E> {
 
 	static style() {
-		let {adjustByLineHeight: lh} = theme
+		let {adjust} = theme
 		
 		return css`
 		${super.style()}
@@ -19,7 +19,7 @@ class ContextMenuLayer<E = any> extends Popup<E> {
 			border-radius: 0;
 			
 			f-menuitem{
-				padding: 0 ${lh(2)}px;
+				padding: 0 ${adjust(2)}px;
 			}
 		}
 		`

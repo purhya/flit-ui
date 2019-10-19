@@ -9,32 +9,32 @@ import {PopupOptions} from '../bindings/popup'
 export class Menu<E = any> extends Popup<E> {
 
 	static style() {
-		let {adjustByLineHeight: lh, adjustByFontSize: fs, textColor} = theme
+		let {adjust, adjustFontSize, textColor} = theme
 
 		return css`
 		:host{
-			padding: ${lh(8)}px ${lh(16)}px;
-			min-width: ${lh(160)}px;
-			max-width: ${lh(400)}px;
+			padding: ${adjust(8)}px ${adjust(16)}px;
+			min-width: ${adjust(180)}px;
+			max-width: ${adjust(320)}px;
 		}
 
 		.trangle{
-			left: ${lh(15)}px;
+			left: ${adjust(15)}px;
 		}
 
 		.header{
 			display: flex;
-			line-height: ${lh(22)}px;
-			height: ${lh(28)}px;
-			font-size: ${fs(13)}px;
-			padding-bottom: ${lh(6)}px;
+			line-height: ${adjust(22)}px;
+			height: ${adjust(28) + 1}px;
+			font-size: ${adjustFontSize(13)}px;
+			padding-bottom: ${adjust(6)}px;
 			border-bottom: 1px solid ${textColor.alpha(0.8)};
 		}
 
 		.title{
 			flex: 1;
 			min-width: 0;
-			padding: 0 ${lh(16)}px 0 0;
+			padding: 0 ${adjust(16)}px 0 0;
 			font-weight: bold;
 			overflow: hidden;
 			white-space: nowrap;

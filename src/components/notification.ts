@@ -1,65 +1,92 @@
-import {css, define, html, Component, repeat, renderComponent} from '@pucelle/flit'
+import {css, define, html, Component, repeat, renderComponent, TemplateResult} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {remove, Timeout, timeout} from '@pucelle/ff'
 import {Color} from '../style/color'
+import {ContextHasActions, Action, renderActions} from './action'
 
 
-export type NotificationType = 'info' | 'success' | 'alert'
+export type NotificationType = 'info' | 'warning' | 'error' | 'success'
 
 export interface NotificationOptions {
 	id?: number
 	type?: NotificationType
 	title?: string
-	content?: string
-	buttons?: {[key: string]: string}
+	message?: string | TemplateResult
+	list?: string[]
+	actions?: Action[]
 	hideDelay?: number
-	callback?: (btn: string) => void
 }
 
-export interface NotificationItem extends NotificationOptions {
+interface NotificationItem extends NotificationOptions {
 	id: number
 	entered: boolean
 	timeout: Timeout | null
 }
 
-export interface NotificationOptions {
-	unique?: boolean
-}
 
-
-@define('f-notification-tips')
-export class NotificationTips<E = any> extends Component<E> {
+@define('f-notification')
+export class Notification<E = any> extends Component<E> implements ContextHasActions {
 	static style() {
-		let {infoColor, adjustByLineHeight: lh, successColor, errorColor, layerBorderRadius, layerShadowBlurRadius, adjustByFontSize: fs, backgroundColor, textColor, layerShadowColor} = theme
+		let {infoColor, adjust, successColor, errorColor, warningColor, popupBorderRadius, popupShadowBlurRadius, adjustFontSize, backgroundColor, textColor, popupShadowColor} = theme
+		
+		let types = [
+			['info', infoColor],
+			['warning', warningColor],
+			['error', errorColor],
+			['success', successColor]
+		] as [NotificationType, Color][]
 
 		return css`
 		:host{
 			position: fixed;
-			right: 10px;
-			bottom: 10px;
-			max-width: 300px;
+			right: ${adjust(12)}px;
+			bottom: ${adjust(12)}px;
+			min-width: ${adjust(280)}px;
+			max-width: ${adjust(480)}px;
 			z-index: 1200;	// Higher than message
-			font-size: ${fs(12)}px;
+			font-size: ${adjustFontSize(13)}px;
 		}
 
 		.item{
 			position: relative;
 			display: flex;
-			margin-top: 10px;
+			margin-top: ${adjust(12)}px;
 			background: ${backgroundColor};
-			box-shadow: 0 0 ${layerShadowBlurRadius}px ${layerShadowColor};
+			box-shadow: 0 0 ${popupShadowBlurRadius}px ${popupShadowColor};
 			cursor: pointer;
 			overflow: hidden;
-			border-radius: ${layerBorderRadius}px;
+			border-radius: ${popupBorderRadius}px;
+		}
+
+		.stripe{
+			width: 4px;
+		}
+
+		.left{
+			padding: ${adjust(16)}px ${adjust(16)}px ${adjust(16)}px ${adjust(14)}px;
+		}
+
+		.type-icon{
+			display: block;
+			width: ${adjust(20)}px;
+			height: ${adjust(20)}px;
+
+			svg{
+				width: ${adjust(20)}px;
+				height: ${adjust(20)}px;
+			}
+		}
+
+		.content{
+			flex: 1;
+			min-width: 0;
+			padding: ${adjust(16)}px ${adjust(16)}px ${adjust(8)}px 0;
 		}
 
 		.close{
-			position: absolute;
-			right: 5px;
-			top: 5px;
 			display: flex;
-			width: 30px;
-			height: 30px;
+			width: ${adjust(28)}px;
+			height: ${adjust(28)}px;
 			color: ${textColor};
 
 			f-icon{
@@ -67,7 +94,7 @@ export class NotificationTips<E = any> extends Component<E> {
 			}
 
 			&:hover{
-				color: ${textColor.highlight(10)};
+				color: ${textColor.toMiddle(10)};
 			}
 
 			&:active{
@@ -75,39 +102,17 @@ export class NotificationTips<E = any> extends Component<E> {
 			}
 		}
 
-		.left{
-			padding: ${lh(10)}px;
-		}
-
-		.icon{
-			display: block;
-			width: ${lh(20)}px;
-			height: ${lh(20)}px;
-			color: #fff;
-
-			svg{
-				width: ${lh(20)}px;
-				height: ${lh(20)}px;
-			}
-		}
-
-		.right{
-			flex: 1;
-			min-width: 0;
-			padding: ${lh(10)}px;
-			padding-right: ${lh(40)}px;
-		}
-
-		.head{
+		.title{
 			font-weight: bold;
-			line-height: ${lh(20)}px;
-			margin-bottom: ${lh(4)}px;
+			line-height: ${adjust(20)}px;
+			margin-bottom: ${adjust(4)}px;
 		}
 
-		.body{
+		.message{
 			flex: 1;
 			min-width: 0;
-			line-height: ${lh(20)}px;
+			line-height: ${adjust(20)}px;
+			margin-bottom: ${adjust(4)}px;
 			text-align: left;
 			word-wrap: break-word;
 
@@ -116,40 +121,40 @@ export class NotificationTips<E = any> extends Component<E> {
 			}
 		}
 
-		.buttons{
-			display: flex;
-			margin-top: ${lh(8)}px;
+		.list{
+			margin: ${adjust(8)}px 0;
+			line-height: ${adjust(20)}px;
+			list-style-type: square;
+			padding-left: ${adjust(28)}px;
 		}
 
-		
-		button{
-			height: ${lh(24)}px;
-			line-height: ${lh(24) - 2}px;
-			margin-right: ${lh(8)}px;
-			padding: 0 ${lh(12)}px;
+		.actions{
+			margin-top: ${adjust(8)}px;
 		}
 
-		${
-			([
-				['alert', errorColor],
-				['info', infoColor],
-				['success', successColor]
-			] as [string, Color][]
-			).map(([type, color]) => css`
+		.action{
+			margin-right: ${adjust(6)}px;
+			height: ${adjust(22)}px;
+			line-height: ${20}px;
+			padding: 0 ${adjust(8)}px;
+		}
+
+		${types.map(([type, color]) => css`
 			.type-${type}{
 				&:hover{
 					background: ${color.mix(backgroundColor, 95)};
 				}
 
-				.left{
+				.stripe{
 					background: ${color};
 				}
-			}`.toString()).join('')
-		}
+			}
+		`)}
+		
 		`
 	}
 	
-	hideDelay: number = 5000
+	hideDelay: number = 10000
 	appendTo: string | HTMLElement | null = 'body'
 
 	protected seed: number = 1
@@ -162,24 +167,28 @@ export class NotificationTips<E = any> extends Component<E> {
 				@mouseenter=${() => this.onMouseEnter(item)}
 				@mouseleave=${() => this.onMouseLeave(item)}
 			>
-				<div class="close" @click=${() => this.onClickClose(item)}>
-					<f-icon type="close" />
-				</div>
+				<div class="stripe" />
+
 				<div class="left">
-					<f-icon class="icon" .type=${item.type} />
+					<f-icon class="type-icon" .type=${item.type} />
 				</div>
-				<div class="right">
-					${item.title ? html`<div class="head">${item.title}</div>` : ''}
-					<div class="body" :html=${item.content}></div>
+
+				<div class="content">
+					${item.title ? html`<div class="title">${item.title}</div>` : ''}
+
+					<div class="message">${item.message}</div>
 					
-					${item.buttons ? html`
-					<div class="buttons">
-						${Object.entries(item.buttons).map(([btn, text]) => html`
-							<button @click=${() => this.onClickBtn(item, btn)}>
-								${text}
-							</button>`
-						)}
-					</div>` : ''}
+					${item.list && item.list.length > 0 ? html`
+						<ul class="list">
+							${item.list.map(text => html`<li>${text}</li>`)}
+						</ul>
+					`: ''}
+
+					${renderActions(this, item.actions, item)}
+				</div>
+
+				<div class="close" @click=${() => this.onClickClose(item)}>
+					<f-icon .type="close" />
 				</div>
 			</div>`
 		, {transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd})
@@ -198,13 +207,11 @@ export class NotificationTips<E = any> extends Component<E> {
 	}
 
 	protected onClickClose(item: NotificationItem) {
-		remove(this.items, item)
+		this.hide(item.id)
 	}
 
-	protected onClickBtn(item: NotificationItem, btn: string) {
-		if (item.callback) {
-			item.callback(btn)
-		}
+	onActionHandled(_action: Action, _success: boolean, item: NotificationItem) {
+		this.hide(item.id)
 	}
 
 	protected onTransitionEnd(type: string) {
@@ -213,7 +220,7 @@ export class NotificationTips<E = any> extends Component<E> {
 		}
 	}
 
-	showNotification(options: NotificationOptions): number {
+	show(options: NotificationOptions): number {
 		if (options.id) {
 			let item = this.items.find(v => v.id === options.id)
 			if (item) {
@@ -275,9 +282,9 @@ export class NotificationTips<E = any> extends Component<E> {
 }
 
 
-export class Notification {
+export class QuickNotification {
 
-	protected tips: NotificationTips | null = null
+	protected tips: Notification | null = null
 
 	unique() {
 		return new UniqueNotification(this)
@@ -285,29 +292,36 @@ export class Notification {
 
 	protected showNotification(options: NotificationOptions): number {
 		if (!this.tips) {
-			this.tips = renderComponent(html`<f-notification-tips />`).component as NotificationTips
+			this.tips = renderComponent(html`<f-notification />`).component as Notification
 		}
 
-		return this.tips!.showNotification(options)
+		return this.tips!.show(options)
 	}
 
-	info(content: string, options: NotificationOptions = {}): number {
+	info(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		options.type = 'info'
-		options.content = content
+		options.message = message
 
 		return this.showNotification(options)
 	}
 
-	alert(content: string, options: NotificationOptions = {}): number {
-		options.type = 'alert'
-		options.content = content
+	warn(message: string | TemplateResult, options: NotificationOptions = {}): number {
+		options.type = 'warning'
+		options.message = message
 
 		return this.showNotification(options)
 	}
 
-	success(content: string, options: NotificationOptions = {}): number {
+	error(message: string | TemplateResult, options: NotificationOptions = {}): number {
+		options.type = 'error'
+		options.message = message
+
+		return this.showNotification(options)
+	}
+
+	success(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		options.type = 'success'
-		options.content = content
+		options.message = message
 
 		return this.showNotification(options)
 	}
@@ -316,33 +330,33 @@ export class Notification {
 
 export class UniqueNotification {
 
-	raw: Notification
+	raw: QuickNotification
 	id: number | null = null
 
-	constructor(raw: Notification) {
+	constructor(raw: QuickNotification) {
 		this.raw = raw
 	}
 
-	private overwriteOptions(options: NotificationOptions) {
+	protected overwriteNotificationId(options: NotificationOptions) {
 		if (this.id) {
 			options.id = this.id
 		}
 	}
 
-	info(content: string, options: NotificationOptions = {}): number {
-		this.overwriteOptions(options)
-		return this.id = this.raw.info(content, options)
+	info(message: string | TemplateResult, options: NotificationOptions = {}): number {
+		this.overwriteNotificationId(options)
+		return this.id = this.raw.info(message, options)
 	}
 
-	alert(content: string, options: NotificationOptions = {}): number {
-		this.overwriteOptions(options)
-		return this.id = this.raw.alert(content, options)
+	error(message: string | TemplateResult, options: NotificationOptions = {}): number {
+		this.overwriteNotificationId(options)
+		return this.id = this.raw.error(message, options)
 	}
 
-	success(content: string, options: NotificationOptions = {}): number {
-		this.overwriteOptions(options)
-		return this.id = this.raw.success(content, options)
+	success(message: string | TemplateResult, options: NotificationOptions = {}): number {
+		this.overwriteNotificationId(options)
+		return this.id = this.raw.success(message, options)
 	}
 }
 
-export const notification = new Notification()
+export const notification = new QuickNotification()

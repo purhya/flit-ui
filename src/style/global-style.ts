@@ -3,63 +3,66 @@ import {theme} from './theme'
 
 
 addGlobalStyle(() => {
-	let {mainColor, textColor, borderColor, errorColor, fontSize, lineHeight, borderRadius, focusBlurRadius, adjustByLineHeight: lh, adjustByFontSize: fs, backgroundColor} = theme
+	let {mainColor, textColor, borderColor, errorColor, fontSize, borderRadius, focusBlurRadius, adjust, adjustFontSize, backgroundColor} = theme
 
 	return css`
 	html{
 		color: ${textColor};
 		font-size: ${fontSize}px;
-		line-height: ${lineHeight}px;
+		line-height: ${adjust(28)}px;
 		background-color: ${backgroundColor};
 	}
 
 	h1{
-		font-size: ${fs(68)}px;
+		font-size: ${adjustFontSize(68)}px;
 		line-height: 1.2;
 		font-weight: 700;
 	}
 
 	h2{
-		font-size: ${fs(36)}px;
+		font-size: ${adjustFontSize(36)}px;
 		line-height: 1.2;
 		font-weight: 300;
 	}
 
 	h3{
-		font-size: ${fs(26)}px;
+		font-size: ${adjustFontSize(26)}px;
 		line-height: 1.2;
 		font-weight: 400;
 	}
 
 	h4{
-		font-size: ${fs(22)}px;
+		font-size: ${adjustFontSize(22)}px;
 		line-height: 1.2;
 		font-weight: 400;
 	}
 
 	h5{
-		font-size: ${fs(18)}px;
+		font-size: ${adjustFontSize(18)}px;
 		line-height: 1.2;
 	}
 
 	h6{
-		font-size: ${fs(14)}px;
+		font-size: ${adjustFontSize(14)}px;
 		line-height: 1.2;
 	}
 
 	button{
 		display: inline-flex;
 		justify-content: center;
-		height: ${lineHeight}px;
-		line-height: ${lineHeight - 2}px;
+		height: ${adjust(28)}px;
+		line-height: ${adjust(28) - 2}px;
 		border: 1px solid ${borderColor};
 		color: ${textColor};
 		border-radius: ${borderRadius}px;
-		padding: 0 ${lh(16) + Math.max(0, (borderRadius - 5) / 2)}px;
+		padding: 0 ${adjust(12)}px;
 		background: ${backgroundColor};
 		text-align: center;
 		cursor: pointer;
 		vertical-align: top;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 		
 		&:hover, &:focus{
 			border-color: #666;
@@ -68,9 +71,9 @@ addGlobalStyle(() => {
 		}
 
 		&:active{
-			border-color: #000;
-			background-color: #000;
-			color: #fff;
+			background: ${textColor};
+			border-color: ${textColor};
+			color: ${backgroundColor};
 		}
 
 		&:focus{
@@ -79,11 +82,11 @@ addGlobalStyle(() => {
 
 		f-icon, f-icon-loading{
 			&:first-child{
-				margin-right: ${lh(8)}px;
+				margin-right: ${adjust(8)}px;
 			}
 
 			&:last-child{
-				margin-left: ${lh(8)}px;
+				margin-left: ${adjust(8)}px;
 			}
 
 			&:only-child{
@@ -112,7 +115,7 @@ addGlobalStyle(() => {
 			border: none;
 			padding-left: 0;
 			padding-right: 0;
-			line-height: ${lineHeight}px;
+			line-height: ${adjust(28)}px;
 
 			&:hover, &:focus{
 				background: none;
@@ -135,7 +138,7 @@ addGlobalStyle(() => {
 
 	label{
 		font-weight: bold;
-		font-size: ${fs(13)}px;
+		font-size: ${adjustFontSize(13)}px;
 
 		&[required]{
 			&::after{
@@ -143,13 +146,13 @@ addGlobalStyle(() => {
 				content: '*';
 				color: ${errorColor};
 				margin-left: 2px;
-				top: ${lh(-5)}px;
+				top: ${adjust(-5)}px;
 			}
 		}
 
 		f-icon{
 			margin-left: 4px;
-			color: ${textColor.highlight(20)};
+			color: ${textColor.toMiddle(20)};
 		}
 	}
 
@@ -170,18 +173,18 @@ addGlobalStyle(() => {
 	::-webkit-scrollbar{
 		height: 10px;
 		width: 10px;
-		background: ${backgroundColor.highlight(5)};
+		background: ${backgroundColor.toMiddle(5)};
 	}
 
 	::-webkit-scrollbar-thumb{
-		background: ${backgroundColor.highlight(15)};
+		background: ${backgroundColor.toMiddle(15)};
 
 		&:hover{
-			background: ${backgroundColor.highlight(25)};
+			background: ${backgroundColor.toMiddle(25)};
 		}
 
 		&:active{
-			background: ${backgroundColor.highlight(35)};
+			background: ${backgroundColor.toMiddle(35)};
 		}
 	}
 `})

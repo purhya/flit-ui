@@ -29,7 +29,24 @@ export class Form<E = any> extends Component<FormEvents & E> {
 
 	protected onInputChange(_value: string, valid: boolean) {
 		if (valid !== this.valid) {
-			this.valid = this.inputs.every(input => input.valid)
+			if (valid) {
+				this.valid = this.inputs.every(input => input.valid)
+			}
+			else {
+				this.valid = false
+			}
+		}
+	}
+
+	validate() {
+		for (let input of this.inputs) {
+			input.setTouched(true)
+		}
+	}
+
+	reset() {
+		for (let input of this.inputs) {
+			input.setTouched(false)
 		}
 	}
 }

@@ -27,7 +27,7 @@ export interface ListEvents<T> {
 export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 	static style() {
-		let {mainColor, adjustByLineHeight: lh, borderColor} = theme
+		let {mainColor, adjust, borderColor} = theme
 
 		return css`
 		:host{
@@ -37,8 +37,8 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		.option{
 			position: relative;
 			display: flex;
-			padding-top: ${lh(2)}px;
-			padding-bottom: ${lh(2)}px;
+			padding-top: ${adjust(2)}px;
+			padding-bottom: ${adjust(2)}px;
 			cursor: pointer;
 			border-bottom: 1px solid ${borderColor.alpha(0.4)};
 
@@ -56,8 +56,8 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 				&::after{
 					content: '';
 					position: absolute;
-					top: ${lh(3)}px;
-					bottom: ${lh(3)}px;
+					top: ${adjust(3)}px;
+					bottom: ${adjust(3)}px;
 					right: 0;
 					width: 1px;
 					background: ${mainColor.alpha(0.5)};
@@ -67,13 +67,13 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 		.toggle{
 			display: flex;
-			width: ${lh(23)}px;
+			width: ${adjust(23)}px;
 			opacity: 0.6;
 		}
 
 		.icon{
 			display: flex;
-			width: ${lh(23)}px;
+			width: ${adjust(23)}px;
 		}
 
 		.text{
@@ -85,11 +85,11 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		}
 
 		.selected-icon{
-			margin: 0 ${lh(6)}px;
+			margin: 0 ${adjust(6)}px;
 		}
 
 		.subsection{
-			padding-left: ${lh(23)}px;
+			padding-left: ${adjust(23)}px;
 			overflow: hidden;
 		}
 		`

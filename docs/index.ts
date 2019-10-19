@@ -7,8 +7,8 @@ import * as fui from '../src'
 ;(window as any).fui = fui
 
 
-import {html, Component, renderComponent, define, liveAsyncRepeat, repeat, observe} from '@pucelle/flit'
-import {Modal, message, notification, theme, Store, contextmenu, draggable, droppable, popup, tooltip} from '../src'
+import {html, Component, renderComponent, define, repeat, observe} from '@pucelle/flit'
+import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, Column, Select, ListItem} from '../src'
 
 
 define('flit-preview', class extends Component {
@@ -76,6 +76,7 @@ define('flit-preview', class extends Component {
 				</f-row>
 			</section>
 
+
 			<section>
 				<h3>Links</h3>
 				<f-row style="margin: 8px 0;">
@@ -89,6 +90,7 @@ define('flit-preview', class extends Component {
 					</f-col>
 				</f-row>
 			</section>
+
 
 			<section>
 				<h3>Labels</h3>
@@ -130,6 +132,7 @@ define('flit-preview', class extends Component {
 				</f-buttongroup><br>
 			</section>
 
+
 			<section>
 				<h3>Inputs</h3>
 
@@ -152,6 +155,7 @@ define('flit-preview', class extends Component {
 					</f-col>
 				</f-row>
 			</section>
+
 
 			<section>
 				<f-row style="margin: 8px 0;" .gutter="24">
@@ -185,6 +189,7 @@ define('flit-preview', class extends Component {
 					</f-col>
 				</f-row>
 			</section>
+
 
 			<section>
 				<h3>Form</h3>
@@ -231,8 +236,9 @@ define('flit-preview', class extends Component {
 				</f-form>
 			</section>
 
+
 			<section>
-				<h3>Select</h3>
+				<h3>Selects</h3>
 				
 				<f-row style="margin: 8px 0;" .gutter="24">
 					<f-col .span="6">
@@ -252,6 +258,7 @@ define('flit-preview', class extends Component {
 				</f-row>
 			</section>
 
+
 			<section>
 				<h3>Search Field</h3>
 				
@@ -262,8 +269,9 @@ define('flit-preview', class extends Component {
 				</f-row>
 			</section>
 
+
 			<section>
-				<h3>Progress Bar</h3>
+				<h3>Progress Bars</h3>
 				
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
@@ -274,7 +282,7 @@ define('flit-preview', class extends Component {
 			</section>
 
 			<section>
-				<h3>Slider</h3>
+				<h3>Sliders</h3>
 				
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
@@ -283,8 +291,9 @@ define('flit-preview', class extends Component {
 				</f-row>
 			</section>
 
+
 			<section>
-				<h3>Loader</h3>
+				<h3>Loaders</h3>
 				
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="4">
@@ -304,8 +313,9 @@ define('flit-preview', class extends Component {
 				</f-row>
 			</section>
 
+
 			<section>
-				<h3>List</h3>
+				<h3>Lists</h3>
 				
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
@@ -367,8 +377,9 @@ define('flit-preview', class extends Component {
 				</f-row>
 			</section>
 
+
 			<section>
-				<h3>Popover</h3>
+				<h3>Popovers</h3>
 				
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
@@ -382,7 +393,7 @@ define('flit-preview', class extends Component {
 								`,
 								{trigger: 'click'}
 							)
-						}>Open Popover</button>
+						}>Click to Open Popover</button>
 					</f-col>
 
 					<f-col .span="6">
@@ -396,7 +407,7 @@ define('flit-preview', class extends Component {
 								`,
 								{trigger: 'click'}
 							)
-						}>Open Popover</button>
+						}>Click to Open Popover</button>
 					</f-col>
 
 					<f-col .span="6">
@@ -410,7 +421,7 @@ define('flit-preview', class extends Component {
 								`,
 								{trigger: 'click'}
 							)
-						}>Open Popover</button>
+						}>Click to Open Popover</button>
 					</f-col>
 
 					<f-col .span="6">
@@ -421,8 +432,8 @@ define('flit-preview', class extends Component {
 								<f-popover
 									.title="Popover title" 
 									.actions=${[
-										{value: 'cancel', text: 'Cancel'},
-										{value: 'Save', text: 'Save', primary: true}
+										{text: 'Cancel'},
+										{text: 'Save', primary: true}
 									]}
 								>
 									Here is the Popover content.
@@ -430,42 +441,14 @@ define('flit-preview', class extends Component {
 								`,
 								{trigger: 'click'}
 							)
-						}>Open Popover</button>
+						}>Click to Open Popover</button>
 					</f-col>
 				</f-row>
 			</section>
 
-			<section>
-				<h3>Tooltip</h3>
-
-				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
-					<f-col .span="6">
-						<header style="margin-bottom: 8px;">Default</header>
-						<button ${
-							tooltip('Tooltip text', {type: 'default'})
-						}>Hover for Tooltip</button>
-					</f-col>
-
-					<f-col .span="6">
-						<header style="margin-bottom: 8px;">Prompt</header>
-						<button ${
-							tooltip('Add some items to your list by clicking this.', {type: 'prompt'})
-						}>Add</button>
-					</f-col>
-				</f-row>
-
-				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
-					<f-col .span="6">
-						<header style="margin-bottom: 8px;">Error</header>
-						<button primary disabled ${
-							tooltip('You can\'t submit, try resolve all mistakes then this tooltip will disappear.', {type: 'error'})
-						}>Submit</button>
-					</f-col>
-				</f-row>
-			</section>
 
 			<section>
-				<h3>Menu</h3>
+				<h3>Menus</h3>
 				
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
@@ -506,7 +489,191 @@ define('flit-preview', class extends Component {
 				</f-row>
 			</section>
 
+
 			<section>
+				<h3>Tooltips</h3>
+
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Default</header>
+						<button ${
+							tooltip('Tooltip text', {type: 'default'})
+						}>Hover for Tooltip</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Prompt</header>
+						<button ${
+							tooltip('Add some items to your list by clicking this button.', {type: 'prompt'})
+						}>Add Items</button>
+					</f-col>
+				</f-row>
+
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Error</header>
+						<button primary disabled ${
+							tooltip('You can\'t submit, try resolve all mistakes then this tooltip will disappear.', {type: 'error'})
+						}>Submit</button>
+					</f-col>
+				</f-row>
+			</section>
+
+
+			<section>
+				<h3>Notifications</h3>
+
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Info</header>
+						<button @click=${
+							() => notification.info('Info notification content', {title: 'Info Notification'})
+						}>
+							Click to Trigger Notification
+						</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Warn</header>
+						<button @click=${
+							() => notification.warn('Warning notification content', {title: 'Warning Notification'})
+						}>
+							Click to Trigger Notification
+						</button>
+					</f-col>
+					
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Error</header>
+						<button @click=${
+							() => notification.error('Error notification content', {title: 'Error Notification'})
+						}>
+							Click to Trigger Notification
+						</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Success</header>
+						<button @click=${
+							() => notification.success('Success notification content', {title: 'Success Notification'})
+						}>
+							Click to Trigger Notification
+						</button>
+					</f-col>
+				</f-row>
+
+				<f-row style="margin: 32px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Without Title</header>
+						<button @click=${
+							() => notification.success('Success notification content')
+						}>
+							Click to Trigger Notification
+						</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">With List</header>
+						<button @click=${
+							() => notification.warn('Warning notification content', {
+								title: 'Warning Notification',
+								list: ['List Item 1', 'List Item 2']
+							})
+						}>
+							Click to Trigger Notification
+						</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">With Actions</header>
+						<button @click=${
+							() => notification.error('Error notification content', {
+								title: 'Error Notification',
+								actions: [{text: 'Try Again'}]
+							})
+						}>
+							Click to Trigger Notification
+						</button>
+					</f-col>
+
+				</f-row>
+			</section>
+
+
+			<section>
+				<h3>Dialog</h3>
+
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Default</header>
+						<button @click=${
+							() => dialog.show('This is dialog message.')
+						}>
+							Click to Open Dialog
+						</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">With Title</header>
+						<button @click=${
+							() => dialog.show('This is dialog message.', {title: 'Dialog Title'})
+						}>
+							Click to Open Dialog
+						</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Confirm</header>
+						<button @click=${
+							() => dialog.confirm('Are you sure you want to delete these items?', {title: 'Dialog Title'})
+						}>
+							Click to Open Dialog
+						</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">With Third actions</header>
+						<button @click=${
+							() => dialog.confirm('You have unsaved data, are you sure you want to save your changes?', {
+								title: 'Dialog Title',
+								actions: [
+									{text: 'Don\'t Save', third: true},
+									{text: 'Cancel'},
+									{text: 'Save', primary: true},
+								]
+							})
+						}>
+							Click to Open Dialog
+						</button>
+					</f-col>
+				</f-row>
+				
+				<f-row style="margin: 32px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Customize</header>
+						<button @click=${
+							() => {
+
+								dialog.show(
+									html`
+										Please input the name of your account:
+										<f-input style="margin-top: 8px; width: 100%;" .placeholder="Name of your account"
+											.validator=${(v: string) => v ? '' : 'Name is required'}
+										/>
+										<f-checkbox .checked style="margin-top: 16px;">Remember Me</f-checkbox>
+									`,
+									{title: 'Dialog Title'}
+								)
+							}
+						}>
+							Click to Open Dialog
+						</button>
+					</f-col>
+				</f-row>
+
+			</section>
+
+
+			<!-- <section>
 				<f-dropdown icon="">
 					<button><span>Dropdown</span><f-icon .type="down" /></button>
 					<f-menu slot="content">
@@ -530,61 +697,61 @@ define('flit-preview', class extends Component {
 						</f-submenu>	
 					</f-menu>
 				</f-dropdown>
-			</section>
+			</section> -->
+
 
 			<section>
-				<button @click="${openModal}">Open Modal</button>
+				<h3>Modals</h3>
+
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Default</header>
+
+						<button @click="${() => {
+							let modal = renderComponent(html`
+								<f-modal style="width: 360px;" .title="Modal Title">
+									Here is the modal content
+								</f-modal>
+							`).component as Modal
+
+							modal.show()
+						}}">
+							Click to Open Modal
+						</button>
+					</f-col>
+
+					<f-col .span="6">
+						<header style="margin-bottom: 8px;">With Actions</header>
+
+						<button @click="${() => {
+							let modal = renderComponent(html`
+								<f-modal style="width: 360px;" .title="Modal Title" .actions=${[
+									{text: 'Cancel'},
+									{text: 'Save', primary: true}
+								]}>
+									Here is the modal content
+								</f-modal>
+							`).component as Modal
+
+							modal.show()
+						}}">
+							Click to Open Modal
+						</button>
+					</f-col>
+				</f-row>
+
 			</section>
+
 
 			<section>
-				<button @click="${() => message.info('This is a info message.')}">Open Info Message</button>
-				<button @click="${() => message.success('This is a success message.')}">Open Success Message</button>
-				<button @click="${() => message.alert('This is an alert message.')}">Open Alert Message</button>
-				<button @click="${() => message.confirm('This is a confirm message.')}">Open Confirm Message</button>
-				<button @click="${() => message.prompt('This is a prompt message.')}">Open Prompt Message</button>
-				<button @click="${() => message.success('This is a success message.', {title: 'Message title'})}">Open Message with title</button>
-			</section>
+				<h3>Table</h3>
 
-			<section>
-				<button @click=${() => notification.success('This is a success notify')}>Show Success Notification</button>
-				<button @click=${() => notification.alert('This is an alert notify')}>Show Alert Notification</button>
-				<button @click=${() => notification.info('This is an info notify')}>Show Info Notification</button>
-				<button @click=${() => notification.success('This is notify with title specified', {title: 'The notification title'})}>Show Notification with title</button>
-			</section>
-
-			<section>
-				<f-tree style="width: 200px;" selectable .data=${treeData} />
-			</section>
-
-			<section style="height: 200px; overflow: auto; position: relative; background: ${theme.backgroundColor.darken(3)};">
-				<div style="overflow: hidden; position: absolute; ">
-				${liveAsyncRepeat(
-					{
-						//data: range(1, 1000),
-						dataCount: 1000,
-						dataGetter: async (start: number, count: number) => {
-							await ff.sleep(500)
-							return range(start, start + count - 1)
-						},
-						pageSize: 10,
-					},
-					(item: number | null, index: number) => html`
-						<div class="row" style="height: 31px;" :style.background=${theme.backgroundColor}  ${contextmenu(() => renderContextMenu(item))}>
-							<div>Index: ${index}</div>
-							<div>Value: ${item === null ? '--' : item}</div>
-						</div>`
-					)
-				}
-				</div>
-			</section>
-
-			<section>
-				<f-grid
-					resizable
-					live
-					group-size="10"
+				<f-table
+					.resizable
+					.live
+					.pageSize="10"
 					.store=${new Store({
-						data: range(1, 50).map(n => ({id: n, value: n})),
+						data: range(1, 1000).map(n => ({id: n, value: Math.round(Math.random() * 100)})),
 						key: 'id',
 					})}
 					.columns=${[
@@ -592,28 +759,31 @@ define('flit-preview', class extends Component {
 							title: 'Index',
 							render: (_item: {id: number, value: number}, index: number) => {
 								return index
-							}
+							},
+						},
+						{
+							title: 'Date',
+							render: () => '2019/10/19',
 						},
 						{
 							title: 'ID',
-							orderable: true,
-							render: (item: {id: number, value: number}) => {
-								return item.id
-							}
+							orderBy: 'id',
+							render: (item) => item.id,
 						},
 						{
 							title: 'Value',
-							orderable: true,
-							render: (item: {id: number, value: number}) => {
-								return item.value
-							}
+							orderBy: 'value',
+							render: (item) => item.value,
+							align: 'right',
 						}
-					]}
+					] as Column[]}
 				/>
 			</section>
 
-			<section>
-				<div style="display: inline-flex; height: 120px; padding: 8px 0 10px 10px; background: ${theme.backgroundColor.highlight(5)}; line-height: 100px; font-size: 60px; text-align: center;"
+			<section style="padding: 0 0 0 8px">
+				<h3>Drag & Drop</h3>
+
+				<div style="display: inline-flex; padding: 4px; background: ${theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center;"
 					${droppable((value: number, index: number) => {
 						ff.remove(leftData, value)
 						ff.remove(rightData, value)
@@ -627,11 +797,11 @@ define('flit-preview', class extends Component {
 					})}
 				>
 					${repeat(leftData, (data: number, index: number) => html`
-						<div style="width: 100px; margin-right: 10px;" :style.background=${theme.backgroundColor.highlight(15)} ${draggable(data, index)}>${data}</div>
+						<div style="width: 100px; margin: 4px;" :style.background=${theme.backgroundColor.toMiddle(10)} ${draggable(data, index)}>${data}</div>
 					`)}
 				</div>
 				<br>
-				<div style="display: inline-flex; height: 120px; padding: 8px 0 10px 10px; background: ${theme.backgroundColor.highlight(5)}; line-height: 100px; font-size: 60px; text-align: center;"
+				<div style="display: inline-flex; padding: 4px; margin-top: -8px; background: ${theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center;"
 					${droppable((value: number, index: number) => {
 						ff.remove(leftData, value)
 						ff.remove(rightData, value)
@@ -645,134 +815,46 @@ define('flit-preview', class extends Component {
 					})}
 				>
 					${repeat(rightData, (data: number, index: number) => html`
-						<div style="width: 100px; margin-right: 10px;" :style.background=${theme.backgroundColor.highlight(15)} ${draggable(data, index)}>${data}</div>
+						<div style="width: 100px; margin: 4px;" :style.background=${theme.backgroundColor.toMiddle(10)} ${draggable(data, index)}>${data}</div>
 					`)}
 				</div>
 			</section>
-			
-			<section style="display: flex;">
-				<div style="width: 120px; padding: 10px 8px 0; background: ${theme.backgroundColor.highlight(5)}; line-height: 100px; font-size: 60px; text-align: center;"
-					${droppable((value: number, index: number) => {
-						ff.remove(leftData, value)
-						ff.remove(rightData, value)
 
-						if (index === -1) {
-							leftData.push(value)
-						}
-						else {
-							leftData.splice(index, 0, value)
-						}
-					})}
-				>
-					${repeat(leftData, (data: number, index: number) => html`
-						<div style="margin-bottom: 10px;" :style.background=${theme.backgroundColor.highlight(15)} ${draggable(data, index)}>${data}</div>
-					`)}
-				</div>
-
-				<div style="width: 120px; padding: 10px 8px 0; background: ${theme.backgroundColor.highlight(5)}; line-height: 100px; font-size: 60px; text-align: center;"
-					${droppable((value: number, index: number) => {
-						ff.remove(leftData, value)
-						ff.remove(rightData, value)
-
-						if (index === -1) {
-							rightData.push(value)
-						}
-						else {
-							rightData.splice(index, 0, value)
-						}
-					})}
-				>
-					${repeat(rightData, (data: number, index: number) => html`
-						<div style="margin-bottom: 10px;" :style.background=${theme.backgroundColor.highlight(15)} ${draggable(data, index)}>${data}</div>
-					`)}
-				</div>
-			</section> -->
 		</div>
 	`}
 })
-
-
-
-
-let treeData = {
-	children: [
-		{
-			icon: 'user',
-			text: 'User A',
-			path: '/'
-		},
-		{
-			icon: 'user',
-			text: 'User B',
-			path: '/',
-			children: [
-				{
-					icon: 'folder',
-					text: 'Folder A',
-					path: '/'
-				},
-				{
-					icon: 'folder',
-					text: 'Folder B',
-					path: '/',
-				},
-			]
-		},
-	]
-}
 
 
 let leftData = observe([1, 2, 3])
 let rightData = observe([4, 5, 6])
 
 
-function renderContextMenu(index: number | null) {
-	return html`
-		<f-menu>
-			<f-menuitem>Line: ${index}</f-menuitem>
-		</f-menu>
-	`
-}
+define('f-main-color-select', class MainColorSelect extends Select<string> {
 
+	value = '#3a6cf6'
 
-// define('f-main-color-select', class MainColorSelect extends Select {
+	data: ListItem<string>[] = [
+		{value: '#3a6cf6', style: 'color: #3a6cf6;', text: 'Blue'    },
+		{value: '#48c7c7', style: 'color: #48c7c7;', text: 'Cyan'    },
+		{value: '#0077cf', style: 'color: #0077cf;', text: 'Darkblue'},
+		{value: '#4eb2ea', style: 'color: #4eb2ea;', text: 'Skyblue' },
+		{value: '#be66cc', style: 'color: #be66cc;', text: 'Purple'  },
+		{value: '#ff6666', style: 'color: #ff6666;', text: 'Red'     },
+		{value: '#ff8095', style: 'color: #ff8095;', text: 'Pink'    },
+		{value: '#d65c5c', style: 'color: #d65c5c;', text: 'Brown'   },
+		{value: '#f67d51', style: 'color: #f67d51;', text: 'Orange'  },
+		{value: '#15af78', style: 'color: #15af78;', text: 'Green'   },
+		{value: '#888888', style: 'color: #888888;', text: 'Grey'    },
+	]
 
-// 	value = '#0077cf'
+	onReady() {
+		super.onReady()
 
-// 	data: [string, string][] = [
-// 		['#48c7c7', 'cyan'    ],
-// 		['#3988e5', 'blue'    ],
-// 		['#0077cf', 'darkblue'],
-// 		['#4eb2ea', 'skyblue' ],
-// 		['#be66cc', 'purple'  ],
-// 		['#ff6666', 'red'     ],
-// 		['#ff8095', 'pink'    ],
-// 		['#d65c5c', 'brown'   ],
-// 		['#f67d51', 'orange'  ],
-// 		['#15af78', 'green'   ],
-// 		['#888888', 'grey'    ],
-// 	]
-
-// 	renderOptionStyle(color: string) {
-// 		return 'color: ' + color
-// 	}
-
-// 	renderOptionDisplay(_color: string, name: string) {
-// 		return ff.capitalize(name)
-// 	}
-
-// 	render() {
-// 		return html`<f-select style="color: ${this.value}" />`.extends(super.render())
-// 	}
-
-// 	onReady() {
-// 		super.onReady()
-
-// 		this.on('change', (value: unknown) => {
-// 			theme.set('mainColor', value as string)
-// 		})
-// 	}
-// })
+		this.on('change', (value: string) => {
+			theme.set('mainColor', value)
+		})
+	}
+})
 
 
 function range(start: number, end: number) {
@@ -781,24 +863,4 @@ function range(start: number, end: number) {
 		data.push(i)
 	}
 	return data
-}
-
-
-let modal: Modal
-
-async function openModal() {
-	if (!modal) {
-		modal = renderComponent(html`
-			<f-modal .title="Modal Title">
-				<div slot="body">Win Body</div>
-				<button slot="foot" @click="${hideModal}">OK</button>
-			</f-modal>
-		`).component as Modal
-	}
-
-	modal.show()
-}
-
-function hideModal() {
-	modal.hide()
 }

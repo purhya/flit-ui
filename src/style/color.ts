@@ -109,10 +109,9 @@ export class Color {
 
 	/** 
 	 * Darken if is a light color, otherwise lighten.
-	 * Which also means: For background color and text color,
-	 * if close to one, move to another one.
+	 * Which also means move color to middle.
 	 */
-	highlight(percentage: number) {
+	toMiddle(percentage: number) {
 		if (this.getLightness() < 0.5) {
 			return this.lighten(percentage)
 		}

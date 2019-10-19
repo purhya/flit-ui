@@ -1,7 +1,5 @@
-import {define, Component, TemplateResult, on, off, defineBinding, Binding, getClosestComponent} from '@pucelle/flit'
+import {define, Component, TemplateResult, on, off} from '@pucelle/flit'
 
-
-type RouteParams = {[key: string]: string}
 
 export type RouteRenderResult = (match: RouteMatch) => (string | TemplateResult)
 
@@ -9,6 +7,8 @@ export interface RouteMatch {
 	params: RouteParams
 	captures: string[]
 }
+
+export type RouteParams = {[key: string]: string}
 
 export interface RouteOptions {
 	title?: string
@@ -189,37 +189,3 @@ namespace PathParser {
 		return parsed
 	}
 }
-
-
-defineBinding('goto', class GotoBinding implements Binding<[string]>{
-	
-	el: HTMLElement
-	value: string = ''
-	router: Router | null = null
-
-	constructor(el: Element) {
-		this.el = el as HTMLElement
-		on(this.el, 'click', this.onClick, this)
-	}
-
-	update(value: string) {
-		this.value = value
-	}
-
-	private onClick() {
-		this.ensureRouter()
-		this.router!.goto(this.value)
-	}
-
-	private ensureRouter() {
-		if (!this.router) {
-			this.router = getClosestComponent(this.el.parentElement!, Router)
-			
-			if (!this.router) {
-				throw new Error(`":goto" must be contained in a extended component of "<f-router>"`)
-			}
-		}
-	}
-
-	remove() {}
-})

@@ -23,12 +23,13 @@ export * from './components/popover'
 export * from './components/dropdown'
 export * from './components/list'
 export * from './components/select'
-
 export * from './components/menu'
-export * from './components/modal'
-export * from './components/message'
+
 export * from './components/notification'
-// export * from './components/grid'
+export * from './components/dialog'
+export * from './components/modal'
+
+export * from './components/table'
 
 export * from './components/resizer'
 export * from './components/grid-layout'

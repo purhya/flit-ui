@@ -10,8 +10,8 @@ export interface SwitchEvents {
 export class Switch<E = any> extends Component<E & SwitchEvents> {
 
 	static style() {
-		let {mainColor, lineHeight, adjustByLineHeight: lh, focusBlurRadius, backgroundColor} = theme
-		let h = lh(18)
+		let {mainColor, adjust, focusBlurRadius, backgroundColor} = theme
+		let h = adjust(18)
 		let w = h * 2 - 8
 
 		return css`
@@ -20,15 +20,15 @@ export class Switch<E = any> extends Component<E & SwitchEvents> {
 			vertical-align: top;
 			width: ${w}px;
 			height: ${h}px;
-			background: ${backgroundColor.highlight(23.3)};
+			background: ${backgroundColor.toMiddle(23.3)};
 			border-radius: ${h / 2}px;
 			padding: 1px;
-			margin: ${(lineHeight - h ) / 2}px 0;
+			margin: ${(adjust(28) - h ) / 2}px 0;
 			transition: background-color 0.2s ${getEasing('ease-out-cubic')};
 			cursor: pointer;
 
 			&:hover{
-				background: ${backgroundColor.highlight(33)};
+				background: ${backgroundColor.toMiddle(33)};
 			}
 			
 			&:focus{

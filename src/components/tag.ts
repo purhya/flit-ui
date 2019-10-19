@@ -11,17 +11,17 @@ export interface TagEvents {
 export class Tag<E = any> extends Component<E & TagEvents> {
 
 	static style() {
-		let {borderColor, borderRadius, adjustByLineHeight: lh, adjustByFontSize: fs} = theme
+		let {borderColor, borderRadius, adjust, adjustFontSize} = theme
 
 		return css`
 		:host{
 			display: inline-flex;
 			border: 1px solid ${borderColor};
 			border-radius: ${borderRadius}px;
-			font-size: ${fs(13)}px;
-			line-height: ${lh(18)}px;
-			height: ${lh(20)}px;
-			padding: 0 ${lh(6)}px 0 ${lh(6)}px;
+			font-size: ${adjustFontSize(13)}px;
+			line-height: ${adjust(18)}px;
+			height: ${adjust(20)}px;
+			padding: 0 ${adjust(6)}px 0 ${adjust(6)}px;
 			cursor: pointer;
 
 			&:hover{
@@ -34,7 +34,7 @@ export class Tag<E = any> extends Component<E & TagEvents> {
 		}
 	
 		.icon{
-			margin-left: ${lh(4)}px;
+			margin-left: ${adjust(4)}px;
 			display: inline-flex;
 
 			f-icon{

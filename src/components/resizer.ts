@@ -9,6 +9,7 @@ export interface ResizerEvents {
 export type ResizerPosition = 'top' | 'right' | 'bottom' | 'left'
 
 
+/** Resizer can only adjust in one direction, will extend if needed. */
 @define('f-resizer')
 export class Resizer<E = any> extends Component<E & ResizerEvents> {
 	
@@ -71,7 +72,7 @@ export class Resizer<E = any> extends Component<E & ResizerEvents> {
 	}
 
 	position: ResizerPosition = 'right'
-	rate: number = 1	// You may set this to `2` for parent that aligns to center .
+	rate: number = 1	// You may set this to `2` if element aligns to center .
 	max: number = Infinity
 	min: number = 0
 

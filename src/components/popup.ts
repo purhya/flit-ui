@@ -3,15 +3,15 @@ import {theme} from '../style/theme'
 import {PopupBinding, PopupOptions} from '../bindings/popup'
 
 
-/**It's the base class for all the layer which will align with another element. */
+/**It's the base class for all the popup which will align with another element. */
 @define('f-popup')
 export class Popup<E = any> extends Component<E> {
 
 	static style() {
-		let {layerBorderRadius, layerBackgroundColor, layerShadowBlurRadius, layerShadowColor, adjustByLineHeight: lh} = theme
-		let w = lh(10)
-		let h = lh(7)
-		let x = lh(11)
+		let {popupBorderRadius, popupBackgroundColor, popupShadowBlurRadius, popupShadowColor, adjust} = theme
+		let w = adjust(10)
+		let h = adjust(7)
+		let x = adjust(11)
 
 		return css`
 		:host{
@@ -19,9 +19,9 @@ export class Popup<E = any> extends Component<E> {
 			left: 0;
 			top: 0;
 			z-index: 1000;	// Same with window, so if in window, we must move it behind the window
-			background: ${layerBackgroundColor};
-			border-radius: ${layerBorderRadius}px;
-			filter: drop-shadow(0 0 ${layerShadowBlurRadius / 2}px ${layerShadowColor});	// 3px nearly equals 6px in box-shadow.
+			background: ${popupBackgroundColor};
+			border-radius: ${popupBorderRadius}px;
+			filter: drop-shadow(0 0 ${popupShadowBlurRadius / 2}px ${popupShadowColor});	// 3px nearly equals 6px in box-shadow.
 		}
 
 		.trangle{
@@ -29,14 +29,14 @@ export class Popup<E = any> extends Component<E> {
 			position: absolute;
 			border-left: ${w / 2}px solid transparent;
 			border-right: ${w / 2}px solid transparent;
-			border-bottom: ${h}px solid ${layerBackgroundColor};
+			border-bottom: ${h}px solid ${popupBackgroundColor};
 			top: -${h}px;
 			left: ${x}px;	// 11 + 5 = 16
 
 			&-herizontal{
 				border-top: ${w / 2}px solid transparent;
 				border-bottom: ${w / 2}px solid transparent;
-				border-right: ${h}px solid ${layerBackgroundColor};
+				border-right: ${h}px solid ${popupBackgroundColor};
 				border-left: 0;
 				top: ${x}px;
 				left: -${h}px;
@@ -74,19 +74,19 @@ export class Popup<E = any> extends Component<E> {
 	
 	// Call `update` every time after restored from `cache(...)`.
 	protected onConnected() {
-		// Why render `<layer>` to body?
+		// Why render `<popup>` to body?
 		// It's very common that the `el` is covered or clipped,
-		// which will cause the `<layer>` is not fully visible.
-		// You can still render the `<layer>` in the same scroller with `<popup>`.
+		// which will cause the `<popup>` is not fully visible.
+		// You can still render the `<popup>` in the same scroller with `<popup>`.
 
 		// Why inserted into body every time?
-		// Most layers share same `z-index`, append newly opened `<layer>` will makesure it covers others.
+		// Most popups share same `z-index`, append newly opened `<popup>` will makesure it covers others.
 
 		// Note that:
-		// The template `content` can't pass into `<layer>` as an argument,
-		// it will cause the template was parsed in `<layer>` context.
+		// The template `content` can't pass into `<popup>` as an argument,
+		// it will cause the template was parsed in `<popup>` context.
 
-		// The `<layer>` will be cached in `<popup>`, and element will be removed when not in use.
+		// The `<popup>` will be cached in `<popup>`, and element will be removed when not in use.
 		// After restored from `cache`, it will be inserted back into `<popup>`.
 		// So here we need to move it to `body` after every time rendered.
 

@@ -322,7 +322,7 @@ class Mover {
 		this.el.style.height = rect.height + 'px'
 		this.el.style.left = rect.left + 'px'
 		this.el.style.top = rect.top + 'px'
-		this.el.style.boxShadow = `1px 1px ${theme.layerShadowBlurRadius}px #888`
+		this.el.style.boxShadow = `1px 1px ${theme.popupShadowBlurRadius}px #888`
 		this.el.style.pointerEvents = 'none'
 		;(this.el.style as any).willChange = 'transform'
 	}

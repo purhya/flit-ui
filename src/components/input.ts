@@ -12,20 +12,21 @@ interface InputEvents {
 export class Input<E = any> extends Component<InputEvents & E> {
 
 	static style() {
-		let {adjustByLineHeight: lh, adjustByFontSize: fs, errorColor, lineHeight, borderColor, backgroundColor, mainColor, successColor, focusBlurRadius} = theme
+		let {adjust, adjustFontSize, errorColor, borderColor, backgroundColor, mainColor, successColor, focusBlurRadius} = theme
 
 		return css`
 		:host{
 			display: inline-block;
 			vertical-align: top;
 			position: relative;
-			background: ${backgroundColor.highlight(5)};
+			width: ${adjust(200)}px;
+			background: ${backgroundColor.toMiddle(5)};
 			box-shadow: inset 0 -1px 0 0 ${borderColor};
 		}
 
 		input, textarea{
 			width: 100%;
-			font-size: ${fs(13)}px;
+			font-size: ${adjustFontSize(13)}px;
 			border: none;
 			background: none;
 			
@@ -35,20 +36,20 @@ export class Input<E = any> extends Component<InputEvents & E> {
 		}
 
 		input{
-			height: ${lineHeight}px;
-			padding: 0 0 0 ${lh(8)}px;
+			height: ${adjust(28)}px;
+			padding: 0 0 0 ${adjust(8)}px;
 		}
 
 		textarea{
-			line-height: ${lh(20)}px;
-			padding: ${lh(4)}px ${lh(8)}px;
+			line-height: ${adjust(20)}px;
+			padding: ${adjust(4)}px ${adjust(8)}px;
 		}
 
 		.valid{
 			box-shadow: inset 0 -1px 0 0 ${successColor};
 
 			input, textarea{
-				padding-right: ${lineHeight}px;
+				padding-right: ${adjust(28)}px;
 
 				&:focus{
 					box-shadow: 0 0 ${focusBlurRadius}px ${successColor.alpha(0.5)};
@@ -60,7 +61,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 			box-shadow: inset 0 -1px 0 0 ${errorColor};
 
 			input, textarea{
-				padding-right: ${lineHeight}px;
+				padding-right: ${adjust(28)}px;
 
 				&:focus{
 					box-shadow: 0 0 ${focusBlurRadius}px ${errorColor.alpha(0.5)};
@@ -80,8 +81,8 @@ export class Input<E = any> extends Component<InputEvents & E> {
 			position: absolute;
 			left: 0;
 			top: 100%;
-			margin-bottom: -${lineHeight}px;
-			font-size: ${fs(13)}px;
+			margin-bottom: -${adjust(28)}px;
+			font-size: ${adjustFontSize(13)}px;
 			color: ${errorColor};
 		}
 		`
@@ -96,6 +97,11 @@ export class Input<E = any> extends Component<InputEvents & E> {
 	error: string = ''
 
 	protected onCreated() {
+		if (this.validator) {
+			this.error = this.validator(this.value)
+			this.valid = !this.error
+		}
+
 		let form = getClosestComponent(this.el, Form)
 		if (form) {
 			form.register(this)
@@ -112,16 +118,16 @@ export class Input<E = any> extends Component<InputEvents & E> {
 				placeholder=${this.placeholder}
 				.value=${this.value}
 				:ref="input"
-				@focus=${this.onFocus}
+				@blur=${this.onBlur}
 				@change=${(e: InputEvent) => this.onChange(e)}
 			/>
 			${this.touched && this.valid === true ? html`<f-icon class="valid-icon" .type="checked" />` : ''}
-			${this.error ? html`<div class="error">${this.error}</div>` : ''}
+			${this.touched && this.error ? html`<div class="error">${this.error}</div>` : ''}
 		</template>
 		`
 	}
 
-	protected onFocus() {
+	protected onBlur() {
 		this.touched = true
 	}
 
@@ -131,9 +137,14 @@ export class Input<E = any> extends Component<InputEvents & E> {
 
 		if (this.validator) {
 			this.error = this.validator(value)
+			this.valid = !this.error
 		}
 
 		this.emit('change', value, this.valid)
+	}
+
+	setTouched(touched: boolean) {
+		this.touched = touched
 	}
 }
 
@@ -150,7 +161,7 @@ export class Textarea extends Input {
 			:ref="input"
 			:class.valid=${this.touched && this.valid === true}
 			:class.invalid=${this.touched && this.valid === false}
-			@focus=${this.onFocus}
+			@focus=${this.onBlur}
 			@change=${(e: InputEvent) => this.onChange(e)}
 		/>
 		`

@@ -12,7 +12,7 @@ interface SearchEvents {
 export class Search<E = any> extends Component<SearchEvents & E> {
 
 	static style() {
-		let {adjustByLineHeight: lh, lineHeight, borderColor, borderRadius, mainColor, focusBlurRadius} = theme
+		let {adjust, borderColor, borderRadius, mainColor, focusBlurRadius} = theme
 
 		return css`
 		:host{
@@ -25,8 +25,8 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 			width: 100%;
 			border: none;
 			background: none;
-			height: ${lineHeight}px;
-			padding: 0 ${lh(26)}px 0 ${lh(26)}px;
+			height: ${adjust(28)}px;
+			padding: 0 ${adjust(26)}px 0 ${adjust(26)}px;
 			border: 1px solid ${borderColor};
 			border-radius: ${borderRadius}px;
 			
@@ -41,17 +41,17 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 			top: 0;
 			bottom: 0;
 			left: 8px;
-			color: ${borderColor.highlight(10)};
+			color: ${borderColor.toMiddle(10)};
 		}
 
 		.clear{
 			display: flex;
 			position: absolute;
-			width: ${lh(28)}px;
+			width: ${adjust(28)}px;
 			top: 0;
 			bottom: 0;
 			right: 0px;
-			color: ${borderColor.highlight(10)};
+			color: ${borderColor.toMiddle(10)};
 			cursor: pointer;
 
 			&:hover{

@@ -10,7 +10,7 @@ export interface RadioEvents {
 export class Radio<E = any> extends Component<E & RadioEvents> {
 
 	static style() {
-		let {mainColor, adjustByLineHeight: lh, focusBlurRadius} = theme
+		let {mainColor, adjust, focusBlurRadius} = theme
 
 		return css`
 		:host{
@@ -34,7 +34,7 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 
 		.icon{
 			border-radius: 50%;
-			margin-right: ${lh(6)}px;
+			margin-right: ${adjust(6)}px;
 		}
 
 		.checked{

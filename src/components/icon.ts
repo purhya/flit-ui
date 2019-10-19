@@ -31,8 +31,8 @@ export class Icon<Events = any> extends Component<Events> {
 
 		let [viewBox, inner] = subMatches(svgCode, /<svg viewBox="(.+?)">([\s\S]+?)<\/svg>/)[0]
 		let [,, w, h] = viewBox.split(' ')
-		let width = theme.adjustByLineHeight(Number(w))
-		let height = theme.adjustByLineHeight(Number(h))
+		let width = theme.adjust(Number(w))
+		let height = theme.adjust(Number(h))
 
 		return html`
 		<template>

@@ -14,16 +14,16 @@ export interface SelectEvents<T> {
 export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	
 	static style() {
-		let {mainColor, lineHeight, adjustByLineHeight: lh, borderColor, layerShadowBlurRadius, backgroundColor, layerShadowColor} = theme
+		let {mainColor, adjust, borderColor, popupShadowBlurRadius, backgroundColor, popupShadowColor} = theme
 
 		return css`
 		:host{
 			display: inline-flex;
 			vertical-align: top;
-			width: 150px;
-			height: ${lineHeight}px;
-			background: ${backgroundColor.highlight(5)};
-			line-height: ${lineHeight}px;
+			width: ${adjust(200)}px;
+			height: ${adjust(28)}px;
+			background: ${backgroundColor.toMiddle(5)};
+			line-height: ${adjust(28)}px;
 			justify-content: space-between;
 			align-items: center;
 			cursor: pointer;
@@ -50,8 +50,8 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 		.input{
 			flex: 1;
 			min-width: 0;
-			padding: 0 0 0 ${lh(8)}px;
-			height: ${lineHeight}px;
+			padding: 0 0 0 ${adjust(8)}px;
+			height: ${adjust(28)}px;
 			border: none;
 			background: transparent;
 			white-space: nowrap;
@@ -68,11 +68,11 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			padding: 0;
 			border-radius: 0;
 			filter: none;
-			box-shadow: 0 1px ${layerShadowBlurRadius}px ${layerShadowColor};
+			box-shadow: 0 1px ${popupShadowBlurRadius}px ${popupShadowColor};
 		}
 	
 		.list .option__f-list{
-			padding-left: ${lh(8)}px;
+			padding-left: ${adjust(8)}px;
 			border-bottom: none;
 		}
 
@@ -127,7 +127,8 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			.trangle="false"
 		>
 			<f-list class="list"
-				.mode="selection"
+				.type="selection"
+				.selectable
 				.data=${data}
 				.multipleSelect=${this.multiple}
 				.selected=${this.multiple ? this.value : [this.value]}

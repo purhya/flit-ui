@@ -9,14 +9,15 @@ import {tooltip} from '../bindings/tooltip'
 export class Progress<E = any> extends Component<E> {
 
 	static style() {
-		let {mainColor, lineHeight} = theme
+		let {mainColor, adjust} = theme
 
 		return css`
 		:host{
 			display: inline-block;
 			vertical-align: top;
 			position: relative;
-			height: ${lineHeight}px;
+			width: ${adjust(200)}px;
+			height: ${adjust(28)}px;
 		}
 
 		.groove{
