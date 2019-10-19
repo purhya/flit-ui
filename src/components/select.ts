@@ -14,7 +14,7 @@ export interface SelectEvents<T> {
 export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	
 	static style() {
-		let {mainColor, adjust, borderColor, popupShadowBlurRadius, backgroundColor, popupShadowColor} = theme
+		let {mainColor, adjust, adjustFontSize, borderColor, popupShadowBlurRadius, backgroundColor, popupShadowColor} = theme
 
 		return css`
 		:host{
@@ -53,6 +53,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			padding: 0 0 0 ${adjust(8)}px;
 			height: ${adjust(28)}px;
 			border: none;
+			font-size: ${adjustFontSize(13)}px;
 			background: transparent;
 			white-space: nowrap;
 			overflow: hidden;
@@ -143,7 +144,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			let displays: (string | number)[] = []
 
 			for (let {value, text} of this.data) {
-				if ((this.value! as T[]).includes(value)) {
+				if ((this.value! as T[]).includes(value!)) {
 					displays.push(text)
 				}
 			}

@@ -20,6 +20,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 			vertical-align: top;
 			position: relative;
 			width: ${adjust(200)}px;
+			height: ${adjust(28)}px;
 			background: ${backgroundColor.toMiddle(5)};
 			box-shadow: inset 0 -1px 0 0 ${borderColor};
 		}
@@ -36,7 +37,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 		}
 
 		input{
-			height: ${adjust(28)}px;
+			height: 100%;
 			padding: 0 0 0 ${adjust(8)}px;
 		}
 
@@ -90,23 +91,11 @@ export class Input<E = any> extends Component<InputEvents & E> {
 
 	type: string = 'text'
 	touched: boolean = false
-	valid: boolean = true
+	valid: boolean | null = null
 	placeholder: string = ''
 	value: string = ''
 	validator: ((value: string | number) => string) | null = null
 	error: string = ''
-
-	protected onCreated() {
-		if (this.validator) {
-			this.error = this.validator(this.value)
-			this.valid = !this.error
-		}
-
-		let form = getClosestComponent(this.el, Form)
-		if (form) {
-			form.register(this)
-		}
-	}
 
 	protected render() {
 		return html`
@@ -135,12 +124,24 @@ export class Input<E = any> extends Component<InputEvents & E> {
 		let input = e.target as HTMLInputElement
 		let value = this.value = input.value
 
+		this.validate()
+		this.emit('change', value, this.valid)
+	}
+
+	protected onCreated() {
+		this.validate()
+
+		let form = getClosestComponent(this.el, Form)
+		if (form) {
+			form.register(this)
+		}
+	}
+
+	protected validate() {
 		if (this.validator) {
-			this.error = this.validator(value)
+			this.error = this.validator(this.value)
 			this.valid = !this.error
 		}
-
-		this.emit('change', value, this.valid)
 	}
 
 	setTouched(touched: boolean) {

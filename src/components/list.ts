@@ -4,7 +4,7 @@ import {add, remove} from '@pucelle/ff'
 
 
 export interface ListItem<T> {
-	value: T
+	value?: T
 	text: string | number
 	class?: string
 	style?: string
@@ -13,6 +13,7 @@ export interface ListItem<T> {
 
 	/** Note that the List component will change this property just in this object. */
 	opened?: boolean
+	onclick?: () => void
 }
 
 export interface ListEvents<T> {
@@ -170,17 +171,17 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 	}
 
 	protected isSelected(item: ListItem<T>) {
-		return this.selected.includes(item.value)
+		return this.selected.includes(item.value!)
 	}
 
 	protected onClickOption(item: ListItem<T>) {
 		if (this.type === 'navigation') {
-			this.active = item.value
+			this.active = item.value!
 			this.emit('navigate', item.value)
 		}
 		else if (this.selectable) {
 			if (this.multipleSelect) {
-				if (this.selected.includes(item.value)) {
+				if (this.selected.includes(item.value!)) {
 					remove(this.selected, item.value)
 				}
 				else {
@@ -188,12 +189,16 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 				}
 			}
 			else {
-				this.selected = [item.value]
+				this.selected = [item.value!]
 			}
 
 			this.emit('select', this.selected)
 		}
 		else {
+			if (item.onclick) {
+				item.onclick()
+			}
+			
 			this.emit('click', item.value)
 		}
 	}
