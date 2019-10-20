@@ -22,7 +22,7 @@ addGlobalStyle(() => {
 	h2{
 		font-size: ${adjustFontSize(36)}px;
 		line-height: 1.2;
-		font-weight: 300;
+		font-weight: 100;
 	}
 
 	h3{
