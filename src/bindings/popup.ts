@@ -72,7 +72,7 @@ function getPopupCacheFromName(name: string) {
 const defaultPopupOptions: PopupOptions = {
 	trigger: 'hover',
 	alignPosition: 'b',
-	alignMargin: 3,
+	alignMargin: 4,
 	showDelay: 0,
 	hideDelay: 200,
 	trangle: true,

@@ -63,7 +63,7 @@ export class Notification<E = any> extends Component<E> implements ContextHasAct
 		}
 
 		.left{
-			padding: ${adjust(16)}px ${adjust(16)}px ${adjust(16)}px ${adjust(14)}px;
+			padding: ${adjust(16)}px ${adjust(14)}px ${adjust(16)}px ${adjust(16)}px;
 		}
 
 		.type-icon{

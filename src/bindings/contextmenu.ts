@@ -18,7 +18,11 @@ class ContextMenu<E = any> extends Popup<E> {
 			border-radius: 0;
 			
 			.option__f-list{
-				padding: 0 ${adjust(2)}px;
+				padding: ${adjust(2)}px ${adjust(8)}px;
+
+				&:last-child{
+					border-bottom: none;
+				}
 			}
 		}
 		`.extends(super.style())
