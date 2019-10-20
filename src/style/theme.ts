@@ -248,8 +248,8 @@ theme.defineTheme('small', {
 theme.defineTheme('medium', defaultMediumThemeOptions)
 
 theme.defineTheme('large', {
-	fontSize: 18,
-	lineHeight: 36,
+	fontSize: 16,
+	lineHeight: 32,
 })
 
 theme.defineTheme('touch', {
