@@ -1,7 +1,7 @@
 .banner {
   position: relative;
   height: 400px;
-  background: url("../img/banner.jpg") center top/cover;
+  background: #6e90ee url("../img/banner.jpg") center top/cover;
   overflow: hidden; }
   .banner h1 {
     position: relative;
