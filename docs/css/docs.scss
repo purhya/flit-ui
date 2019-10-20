@@ -1,24 +1,35 @@
 .banner{
 	position: relative;
-	height: 600px;
+	height: 400px;
+	background: url('../img/banner.jpg') center top / cover;
 	overflow: hidden;
-
-	&::before{
-		content: '';
-		position: absolute;
-		left: 0;
-		right: 0;
-		top: 0;
-		bottom: 0;
-		background: rgba(#295ce6, 0.68);
-	}
 
 	h1{
 		position: relative;
 		color: #fff;
 		text-align: center;
-		line-height: 80px;;
-		margin-top: 237px;
+		line-height: 58px;
+		font-size: 28px;
+		margin-top: 102px;
+		
+		&::before{
+			content: '';
+			display: inline-block;
+			vertical-align: top;
+			margin-top: -5px;
+			margin-right: 10px;
+			width: 63px;
+			height: 58px;
+			background: url('../img/logo.svg');
+		}
+	}
+
+	h2{
+		text-align: center;
+		color: #fff;
+		font-size: 60px;
+		line-height: 60px;
+		margin-top: 43px;
 	}
 }
 
@@ -39,7 +50,6 @@ flit-preview{
 
 	h2{
 		margin: 48px 0 32px 0;
-		font-weight: 100;
 	}
 
 	h3{

@@ -1,7 +1,7 @@
 {
 	"name": "@pucelle/flit-ui",
 	"version": "1.1.0",
-	"description": "A light weight Web UI base on Flit & FF",
+	"description": "A foundational Web UI base on Flit & FF, which can be easily customized.",
 	"author": "pucelle",
 	"license": "MIT",
 	"homepage": "https://github.com/pucelle/flit-ui",

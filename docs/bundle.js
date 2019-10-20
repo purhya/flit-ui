@@ -6816,7 +6816,7 @@ let Form = class Form extends flit_1.Component {
     }
     register(input) {
         this.inputs.push(input);
-        this.valid = this.valid && input.valid;
+        this.valid = this.valid && input.valid !== false;
         input.on('change', this.onInputChange, this);
     }
     onInputChange(_value, valid) {
@@ -7062,7 +7062,7 @@ let Input = class Input extends flit_1.Component {
         super(...arguments);
         this.type = 'text';
         this.touched = false;
-        this.valid = true;
+        this.valid = null;
         this.placeholder = '';
         this.value = '';
         this.validator = null;
@@ -7076,6 +7076,7 @@ let Input = class Input extends flit_1.Component {
 			vertical-align: top;
 			position: relative;
 			width: ${adjust(200)}px;
+			height: ${adjust(28)}px;
 			background: ${backgroundColor.toMiddle(5)};
 			box-shadow: inset 0 -1px 0 0 ${borderColor};
 		}
@@ -7092,7 +7093,7 @@ let Input = class Input extends flit_1.Component {
 		}
 
 		input{
-			height: ${adjust(28)}px;
+			height: 100%;
 			padding: 0 0 0 ${adjust(8)}px;
 		}
 
@@ -7143,16 +7144,6 @@ let Input = class Input extends flit_1.Component {
 		}
 		`;
     }
-    onCreated() {
-        if (this.validator) {
-            this.error = this.validator(this.value);
-            this.valid = !this.error;
-        }
-        let form = flit_1.getClosestComponent(this.el, form_1.Form);
-        if (form) {
-            form.register(this);
-        }
-    }
     render() {
         return flit_1.html `
 		<template
@@ -7177,11 +7168,21 @@ let Input = class Input extends flit_1.Component {
     onChange(e) {
         let input = e.target;
         let value = this.value = input.value;
+        this.validate();
+        this.emit('change', value, this.valid);
+    }
+    onCreated() {
+        this.validate();
+        let form = flit_1.getClosestComponent(this.el, form_1.Form);
+        if (form) {
+            form.register(this);
+        }
+    }
+    validate() {
         if (this.validator) {
-            this.error = this.validator(value);
+            this.error = this.validator(this.value);
             this.valid = !this.error;
         }
-        this.emit('change', value, this.valid);
     }
     setTouched(touched) {
         this.touched = touched;
@@ -7192,6 +7193,13 @@ Input = __decorate([
 ], Input);
 exports.Input = Input;
 let Textarea = class Textarea extends Input {
+    static style() {
+        return flit_1.css `
+		:host{
+			height: auto;
+		}
+		`.extends(super.style());
+    }
     render() {
         return flit_1.html `
 		<textarea
@@ -7383,6 +7391,9 @@ let List = class List extends flit_1.Component {
             this.emit('select', this.selected);
         }
         else {
+            if (item.onclick) {
+                item.onclick();
+            }
             this.emit('click', item.value);
         }
     }
@@ -8954,7 +8965,7 @@ let Select = class Select extends dropdown_1.Dropdown {
         this.editing = false;
     }
     static style() {
-        let { mainColor, adjust, borderColor, popupShadowBlurRadius, backgroundColor, popupShadowColor } = theme_1.theme;
+        let { mainColor, adjust, adjustFontSize, borderColor, popupShadowBlurRadius, backgroundColor, popupShadowColor } = theme_1.theme;
         return flit_1.css `
 		:host{
 			display: inline-flex;
@@ -8992,6 +9003,7 @@ let Select = class Select extends dropdown_1.Dropdown {
 			padding: 0 0 0 ${adjust(8)}px;
 			height: ${adjust(28)}px;
 			border: none;
+			font-size: ${adjustFontSize(13)}px;
 			background: transparent;
 			white-space: nowrap;
 			overflow: hidden;
@@ -10924,7 +10936,7 @@ flit_1.addGlobalStyle(() => {
 	h2{
 		font-size: ${adjustFontSize(36)}px;
 		line-height: 1.2;
-		font-weight: 300;
+		font-weight: 100;
 	}
 
 	h3{
@@ -11251,8 +11263,8 @@ exports.theme.defineTheme('small', {
 });
 exports.theme.defineTheme('medium', defaultMediumThemeOptions);
 exports.theme.defineTheme('large', {
-    fontSize: 18,
-    lineHeight: 36,
+    fontSize: 16,
+    lineHeight: 32,
 });
 exports.theme.defineTheme('touch', {
     fontSize: 18,
@@ -16326,17 +16338,20 @@ class NodePart {
             this.clearContent();
             this.contentType = contentType;
         }
-        if (contentType === ChildContentType.Directive) {
-            this.updateDirective(value);
-        }
-        else if (Array.isArray(value)) {
-            this.updateTemplates(value);
-        }
-        else if (contentType === ChildContentType.Templates) {
-            this.updateTemplates([value]);
-        }
-        else {
-            this.updateText(value);
+        switch (contentType) {
+            case ChildContentType.Directive:
+                this.updateDirective(value);
+                break;
+            case ChildContentType.Templates:
+                if (Array.isArray(value)) {
+                    this.updateTemplates(value.filter(v => v));
+                }
+                else {
+                    this.updateTemplates([value]);
+                }
+                break;
+            default:
+                this.updateText(value);
         }
     }
     getContentType(value) {
@@ -16385,13 +16400,15 @@ class NodePart {
         this.directive = directives_1.createDirectiveFromResult(this.anchor, this.context, directiveResult);
     }
     // One issue when reusing old template, image will keep old appearance until the new image loaded.
+    // We fix this by implementing `:src`.
     updateTemplates(results) {
         let templates = this.templates;
         if (!templates) {
             templates = this.templates = [];
         }
-        if (templates.length > 0 && results.length > 0) {
-            for (let i = 0; i < templates.length && i < results.length; i++) {
+        let sharedLength = Math.min(templates.length, results.length);
+        if (sharedLength > 0) {
+            for (let i = 0; i < sharedLength; i++) {
                 let oldTemplate = templates[i];
                 let result = results[i];
                 if (oldTemplate.canMergeWith(result)) {
