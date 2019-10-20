@@ -154,6 +154,14 @@ export class Input<E = any> extends Component<InputEvents & E> {
 @define('f-textarea')
 export class Textarea extends Input {
 
+	static style() {
+		return css`
+		:host{
+			height: auto;
+		}
+		`.extends(super.style())
+	}
+
 	protected render() {
 		return html`
 		<textarea

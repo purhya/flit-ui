@@ -23,7 +23,7 @@ export class Form<E = any> extends Component<FormEvents & E> {
 
 	register(input: Input | Textarea) {
 		this.inputs.push(input)
-		this.valid = this.valid && !!input.valid
+		this.valid = this.valid && input.valid !== false
 		input.on('change', this.onInputChange, this)
 	}
 
