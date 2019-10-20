@@ -1,4 +1,4 @@
-import {html, defineBinding, BindingResult} from '@pucelle/flit'
+import {html, defineBinding, BindingResult, TemplateResult} from '@pucelle/flit'
 import {PopupBinding, PopupOptions} from './popup'
 import {getMainAlignDirection, assignIf} from '@pucelle/ff'
 import {TooltipType} from '../components/tooltip'
@@ -29,11 +29,11 @@ const defaultTooltipOptions: TooltipOptions = {
  * `:tooltip="..."`
  * `tooltip(title, {alignPosition: ..., ...})`
  */
-export class TooltipBinding extends PopupBinding<string> {
+export class TooltipBinding extends PopupBinding<string | TemplateResult> {
 
-	protected title: string = ''
+	protected title: string | TemplateResult = ''
 
-	update(title: string, options: TooltipOptions = {}) {
+	update(title: string | TemplateResult, options: TooltipOptions = {}) {
 		this.title = title
 
 		if (options.type && ['prompt', 'error'].includes(options.type) && options.name === undefined) {
@@ -44,12 +44,16 @@ export class TooltipBinding extends PopupBinding<string> {
 	}
 
 	protected bindTrigger() {
-		if (['prompt', 'error'].includes(this.getOption<any>('type'))) {
+		if (this.shouldAlwaysKeepVisible()) {
 			this.showPopupLater()
 		}
 		else {
 			super.bindTrigger()
 		}
+	}
+
+	protected shouldAlwaysKeepVisible() {
+		return ['prompt', 'error'].includes(this.getOption<any>('type'))
 	}
 
 	protected bindLeave() {
@@ -59,14 +63,18 @@ export class TooltipBinding extends PopupBinding<string> {
 	}
 
 	protected shouldHideWhenElLayerChanged(): boolean {
-		if (['prompt', 'error'].includes(this.getOption<any>('type'))) {
+		if (this.shouldAlwaysKeepVisible()) {
 			return false
 		}
 
 		return super.shouldHideWhenElLayerChanged()
 	}
 
-	protected onNotInViewport() {}
+	protected onNotInViewport() {
+		if (!this.shouldAlwaysKeepVisible()) {
+			super.onNotInViewport()
+		}
+	}
 
 	protected getRenderFn() {
 		return html`
@@ -89,4 +97,4 @@ export class TooltipBinding extends PopupBinding<string> {
 	}
 }
 
-export const tooltip = defineBinding('tooltip', TooltipBinding) as (title: string, options?: TooltipOptions) => BindingResult
+export const tooltip = defineBinding('tooltip', TooltipBinding) as (title: string | TemplateResult, options?: TooltipOptions) => BindingResult
