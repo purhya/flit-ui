@@ -224,16 +224,6 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 	orderedColumnName: string | null = null
 	orderDirection: 'asc' | 'desc' | '' = ''
 
-	/** We would suggest to specify the `renderRow`, so you can bind events for each row. */
-	renderRow = function(this: Table<T>, item: T | null, index: number) {
-		let tds = this.columns.map((column) => {
-			let result = item && column.render ? column.render(item, index) : ''
-			return html`<td :style.text-align=${column.align || ''}>${result}</td>`
-		})
-
-		return html`<tr>${tds}</tr>`
-	}
-
 	protected orderedColumnIndex: number = -1
 	protected columnWidths: number[] | null = null
 	protected resizingColumnWidths: number[] | null = null
@@ -320,6 +310,19 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 				this.transition
 			)
 		}
+	}
+
+	/** 
+	 * Although you can specify this method,
+	 * I would suggest to define a sub class and overwrite `renderRow`.
+	 */
+	renderRow(item: T | null, index: number) {
+		let tds = this.columns.map((column) => {
+			let result = item && column.render ? column.render(item, index) : ''
+			return html`<td :style.text-align=${column.align || ''}>${result}</td>`
+		})
+
+		return html`<tr>${tds}</tr>`
 	}
 
 	protected setRepeatDirective(dir: Directive) {

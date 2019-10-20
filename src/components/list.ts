@@ -3,7 +3,7 @@ import {theme} from '../style/theme'
 import {add, remove} from '@pucelle/ff'
 
 
-export interface ListItem<T> {
+export interface ListItem<T = any> {
 	value?: T
 	text: string | number
 	class?: string
@@ -198,7 +198,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 			if (item.onclick) {
 				item.onclick()
 			}
-			
+
 			this.emit('click', item.value)
 		}
 	}

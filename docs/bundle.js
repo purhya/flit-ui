@@ -5238,7 +5238,11 @@ let ContextMenu = class ContextMenu extends popup_1.Popup {
 			border-radius: 0;
 			
 			.option__f-list{
-				padding: 0 ${adjust(2)}px;
+				padding: ${adjust(2)}px ${adjust(8)}px;
+
+				&:last-child{
+					border-bottom: none;
+				}
 			}
 		}
 		`.extends(super.style());
@@ -5825,7 +5829,7 @@ function getPopupCacheFromName(name) {
 const defaultPopupOptions = {
     trigger: 'hover',
     alignPosition: 'b',
-    alignMargin: 3,
+    alignMargin: 4,
     showDelay: 0,
     hideDelay: 200,
     trangle: true,
@@ -6192,12 +6196,15 @@ class TooltipBinding extends popup_1.PopupBinding {
         super.update(this.getRenderFn.bind(this), this.getPopupOptions(options));
     }
     bindTrigger() {
-        if (['prompt', 'error'].includes(this.getOption('type'))) {
+        if (this.shouldAlwaysKeepVisible()) {
             this.showPopupLater();
         }
         else {
             super.bindTrigger();
         }
+    }
+    shouldAlwaysKeepVisible() {
+        return ['prompt', 'error'].includes(this.getOption('type'));
     }
     bindLeave() {
         if (this.getOption('type') !== 'prompt') {
@@ -6205,12 +6212,16 @@ class TooltipBinding extends popup_1.PopupBinding {
         }
     }
     shouldHideWhenElLayerChanged() {
-        if (['prompt', 'error'].includes(this.getOption('type'))) {
+        if (this.shouldAlwaysKeepVisible()) {
             return false;
         }
         return super.shouldHideWhenElLayerChanged();
     }
-    onNotInViewport() { }
+    onNotInViewport() {
+        if (!this.shouldAlwaysKeepVisible()) {
+            super.onNotInViewport();
+        }
+    }
     getRenderFn() {
         return flit_1.html `
 			<f-tooltip
@@ -7838,7 +7849,7 @@ let Notification = class Notification extends flit_1.Component {
 		}
 
 		.left{
-			padding: ${adjust(16)}px ${adjust(16)}px ${adjust(16)}px ${adjust(14)}px;
+			padding: ${adjust(16)}px ${adjust(14)}px ${adjust(16)}px ${adjust(16)}px;
 		}
 
 		.type-icon{
@@ -9546,14 +9557,6 @@ let Table = class Table extends flit_1.Component {
         this.minColumnWidth = 64;
         this.orderedColumnName = null;
         this.orderDirection = '';
-        /** We would suggest to specify the `renderRow`, so you can bind events for each row. */
-        this.renderRow = function (item, index) {
-            let tds = this.columns.map((column) => {
-                let result = item && column.render ? column.render(item, index) : '';
-                return flit_1.html `<td :style.text-align=${column.align || ''}>${result}</td>`;
-            });
-            return flit_1.html `<tr>${tds}</tr>`;
-        };
         this.orderedColumnIndex = -1;
         this.columnWidths = null;
         this.resizingColumnWidths = null;
@@ -9787,6 +9790,17 @@ let Table = class Table extends flit_1.Component {
         else {
             return flit_1.repeat(this.store.currentData, this.renderRow.bind(this), this.transition);
         }
+    }
+    /**
+     * Although you can specify this method,
+     * I would suggest to define a sub class and overwrite `renderRow`.
+     */
+    renderRow(item, index) {
+        let tds = this.columns.map((column) => {
+            let result = item && column.render ? column.render(item, index) : '';
+            return flit_1.html `<td :style.text-align=${column.align || ''}>${result}</td>`;
+        });
+        return flit_1.html `<tr>${tds}</tr>`;
     }
     setRepeatDirective(dir) {
         this.repeatDir = dir;
@@ -13197,6 +13211,14 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         this.toCompleteRendering = this.updateData(data);
         await this.toCompleteRendering;
         this.toCompleteRendering = null;
+        // let scrollerRect = new ScrollerClientRect(this.scroller)
+        // let sliderRect = this.slider.getBoundingClientRect()
+        // if (scrollerRect.rect.top < sliderRect.top) {
+        // 	debugger
+        // }
+        // else if (scrollerRect.rect.bottom > sliderRect.bottom) {
+        // 	debugger
+        // }
     }
     async updateData(data) {
         super.updateData(data);
@@ -13204,18 +13226,17 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         if (onUpdated) {
             onUpdated(this.data, this.startIndex);
         }
-        queue_1.onRenderComplete(() => {
-            if (this.data.length > 0) {
-                if (!this.averageItemHeight) {
-                    this.measureAverageItemHeight();
-                    this.updateSliderPosition();
-                }
-                if (this.needToApplyStartIndex && this.averageItemHeight) {
-                    this.scroller.scrollTop = this.averageItemHeight * this.startIndex || 0;
-                    this.needToApplyStartIndex = false;
-                }
+        await queue_1.renderComplete();
+        if (this.data.length > 0) {
+            if (!this.averageItemHeight) {
+                this.measureAverageItemHeight();
+                this.updateSliderPosition();
             }
-        });
+            if (this.needToApplyStartIndex && this.averageItemHeight) {
+                this.scroller.scrollTop = this.averageItemHeight * this.startIndex || 0;
+                this.needToApplyStartIndex = false;
+            }
+        }
     }
     limitEndIndex(index) {
         let maxCount = this.getTotalDataCount();
@@ -13385,17 +13406,16 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
     }
     validateContinuousScrolling(scrollDirection, startIndex, endIndex) {
         let indexToKeepPosition = scrollDirection === 'down' ? startIndex : endIndex;
-        let isSameScrollDirection = this.continuousScrollDirection === scrollDirection;
         let el = this.getElementOfIndex(indexToKeepPosition);
         if (el !== null) {
             this.continuousScrollDirection = scrollDirection;
             if (scrollDirection === 'down') {
-                let position = isSameScrollDirection ? this.continuousSliderPosition : this.getSliderTopPosition();
+                let position = this.getSliderTopPosition();
                 position += el.getBoundingClientRect().top - this.slider.getBoundingClientRect().top;
                 this.continuousSliderPosition = position;
             }
             else {
-                let position = isSameScrollDirection ? this.continuousSliderPosition : this.getSliderBottomPosition();
+                let position = this.getSliderBottomPosition();
                 position += el.getBoundingClientRect().bottom - this.slider.getBoundingClientRect().bottom;
                 this.continuousSliderPosition = position;
             }
@@ -13435,6 +13455,9 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         // It doesn't update immediately because `rawData` may changed and will update soon.
         // Need to wait reset `needToApplyStartIndex` in `updateData`.
         await queue_1.renderComplete();
+        if (this.toCompleteRendering) {
+            await this.toCompleteRendering;
+        }
         if (this.needToApplyStartIndex) {
             await this.update();
         }
