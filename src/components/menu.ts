@@ -13,9 +13,14 @@ export class Menu<E = any> extends Popup<E> {
 
 		return css`
 		:host{
-			padding: ${adjust(8)}px ${adjust(16)}px;
 			min-width: ${adjust(180)}px;
 			max-width: ${adjust(320)}px;
+
+			f-list{
+				padding: ${adjust(8)}px ${adjust(16)}px;
+				max-height: 100%;
+				overflow-y: auto;
+			}
 		}
 
 		.trangle{
@@ -53,7 +58,6 @@ export class Menu<E = any> extends Popup<E> {
 
 	defaultPopupOptions: PopupOptions = {
 		// `trigger` not work here because when handle it, current component is not created.
-		trigger: 'click',
 		alignPosition: 'bc',
 		fixTrangle: true,
 	}

@@ -5326,11 +5326,7 @@ class ContextMenuBinding {
     }
     renderPopup() {
         if (!this.popup) {
-            this.popup = flit_1.renderComponent(flit_1.html `
-				<f-contextmenu>
-					${this.renderFn()}
-				</f-contextmenu>
-			`, this.context).component;
+            this.popup = flit_1.renderComponent(this.renderFn, this.context).component;
         }
         return this.popup;
     }
@@ -5367,6 +5363,10 @@ class ContextMenuBinding {
         flit_1.off(this.el, 'contextmenu', this.showMenu, this);
     }
 }
+/**
+ * Popup a contextmenu when right click binded element.
+ * @param renderFn Should returns a `<f-contextmenu>` result.
+ */
 exports.contextmenu = flit_1.defineBinding('contextmenu', ContextMenuBinding);
 
 },{"@pucelle/ff":28,"@pucelle/flit":96}],31:[function(require,module,exports){
@@ -6003,6 +6003,9 @@ class PopupBinding {
         if (trigger === 'hover') {
             flit_1.off(this.el, 'mouseleave', this.hidePopupLater, this);
         }
+        else if (trigger === 'focus') {
+            flit_1.off(this.el, 'blur', this.hidePopupLater, this);
+        }
         this.bindLeave();
         this.unwatchRect = ff_1.watchLayout(this.el, 'rect', this.onElRectChanged.bind(this));
     }
@@ -6126,15 +6129,18 @@ class PopupBinding {
         let dw = document.documentElement.offsetWidth;
         let dh = document.documentElement.offsetHeight;
         let inViewport = rect.width > 0 && rect.height > 0 && rect.top < dh && rect.bottom > 0 && rect.left < dw && rect.right > 0;
-        if (inViewport && !this.shouldHideWhenElLayerChanged()) {
-            this.alignPopup();
+        if (inViewport) {
+            let isNotBeenCovered = this.el.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
+            if (isNotBeenCovered) {
+                this.alignPopup();
+            }
+            else {
+                this.onNotInViewport();
+            }
         }
         else {
             this.onNotInViewport();
         }
-    }
-    shouldHideWhenElLayerChanged() {
-        return this.getOption('trigger') === 'hover';
     }
     onNotInViewport() {
         this.hidePopupLater();
@@ -6270,12 +6276,6 @@ class TooltipBinding extends popup_1.PopupBinding {
         if (this.getOption('type') !== 'prompt') {
             super.bindLeave();
         }
-    }
-    shouldHideWhenElLayerChanged() {
-        if (this.shouldAlwaysKeepVisible()) {
-            return false;
-        }
-        return super.shouldHideWhenElLayerChanged();
     }
     onNotInViewport() {
         if (!this.shouldAlwaysKeepVisible()) {
@@ -7643,7 +7643,6 @@ let Menu = class Menu extends popup_1.Popup {
         this.title = '';
         this.defaultPopupOptions = {
             // `trigger` not work here because when handle it, current component is not created.
-            trigger: 'click',
             alignPosition: 'bc',
             fixTrangle: true,
         };
@@ -7652,9 +7651,14 @@ let Menu = class Menu extends popup_1.Popup {
         let { adjust, adjustFontSize, textColor } = theme_1.theme;
         return flit_1.css `
 		:host{
-			padding: ${adjust(8)}px ${adjust(16)}px;
 			min-width: ${adjust(180)}px;
 			max-width: ${adjust(320)}px;
+
+			f-list{
+				padding: ${adjust(8)}px ${adjust(16)}px;
+				max-height: 100%;
+				overflow-y: auto;
+			}
 		}
 
 		.trangle{
@@ -8221,7 +8225,6 @@ let Popover = class Popover extends popup_1.Popup {
         this.actions = null;
         this.defaultPopupOptions = {
             // `trigger` not work here because when handle it, current component is not created.
-            trigger: 'click',
             alignPosition: 'bc',
             fixTrangle: true,
         };
