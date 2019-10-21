@@ -1,4 +1,4 @@
-import {defineBinding, Context, on, off, renderComplete, Transition, Binding, once, BindingResult, renderComponent, html} from '@pucelle/flit'
+import {defineBinding, Context, on, off, renderComplete, Transition, Binding, once, BindingResult, renderComponent} from '@pucelle/flit'
 import {alignToEvent, watchLayout, MouseLeave} from '@pucelle/ff'
 import {RenderFn} from './popup'
 import {ContextMenu} from '../components/contextmenu'
@@ -41,11 +41,7 @@ class ContextMenuBinding implements Binding<[RenderFn]> {
 
 	private renderPopup(): ContextMenu  {
 		if (!this.popup) {
-			this.popup = renderComponent(html`
-				<f-contextmenu>
-					${this.renderFn()}
-				</f-contextmenu>
-			`, this.context).component as ContextMenu
+			this.popup = renderComponent(this.renderFn, this.context).component as ContextMenu
 		}
 
 		return this.popup!
@@ -92,4 +88,9 @@ class ContextMenuBinding implements Binding<[RenderFn]> {
 	}
 }
 
+
+/** 
+ * Popup a contextmenu when right click binded element.
+ * @param renderFn Should returns a `<f-contextmenu>` result.
+ */
 export const contextmenu = defineBinding('contextmenu', ContextMenuBinding) as (renderFn: RenderFn) => BindingResult
