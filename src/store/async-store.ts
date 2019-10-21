@@ -13,7 +13,7 @@ export interface AsyncStoreEvents {
  * It's an extension for `liveRepeat` directive, to cache data,
  * you should extends this class and overwrite abstract methods, and may support like column ordering and searching.
  */
-export abstract class AsyncStore<Item extends object = object> extends Emitter<AsyncStoreEvents> {
+export abstract class AsyncStore<Item = any> extends Emitter<AsyncStoreEvents> {
 
 	private repeatDir!: LiveAsyncRepeatDirective<Item>
 

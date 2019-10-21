@@ -1,7 +1,7 @@
 import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, observeGetter, renderComplete, refDirective, Directive} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Store} from '../store/store'
-import {getScrollbarWidth, watchLayout, Order, getStyleAsNumber, sum, repeatTimes} from '@pucelle/ff'
+import {getScrollbarWidth, watchLayout, Order, getStyleAsNumber, sum, repeatTimes, scrollToTop, scrollToView} from '@pucelle/ff'
 import {AsyncStore} from '../store/async-store'
 import {DirectiveTransitionOptions} from '@pucelle/flit/out/libs/directive-transition'
 
@@ -216,6 +216,9 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 	 */
 	pageSize: number = 50
 
+	/** The index of the first item to be visible, to reflect last scrolling position. */
+	startIndex: number = 0
+
 	resizable: boolean = false
 	columns!: Column<T>[]
 	minColumnWidth: number = 64
@@ -240,7 +243,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		</div>
 
 		<div class="body">
-			<table class="rows">
+			<table class="rows" :ref="table">
 				<colgroup :ref="colgroup">
 					${this.columns.map(column => html`
 						<col :style.text-align=${column.align || ''} />
@@ -283,9 +286,10 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 			return refDirective(liveAsyncRepeat(
 				{
 					key: this.store.key,
+					pageSize: this.pageSize,
+					startIndex: this.startIndex,
 					dataCount: this.store.dataCount.bind(this.store),
 					dataGetter: this.store.dataGetter.bind(this.store) as any,
-					pageSize: this.pageSize,
 					onUpdated: this.onRepeatDataUpdated.bind(this) as any
 				},
 				this.renderRow.bind(this as any) as any,
@@ -295,8 +299,9 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		else if (this.live) {
 			return refDirective(liveRepeat(
 				{
-					data: this.store.currentData,
 					pageSize: this.pageSize,
+					startIndex: this.startIndex,
+					data: this.store.currentData,
 					onUpdated: this.onRepeatDataUpdated.bind(this)
 				},
 				this.renderRow.bind(this as any),
@@ -318,7 +323,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 	 */
 	renderRow(item: T | null, index: number) {
 		let tds = this.columns.map((column) => {
-			let result = item && column.render ? column.render(item, index) : ''
+			let result = item && column.render ? column.render(item, index) : '\xa0'
 			return html`<td :style.text-align=${column.align || ''}>${result}</td>`
 		})
 
@@ -368,7 +373,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		})
 	}
 
-	onConnected () {
+	onConnected() {
 		this.watch(() => observeGetter(this, 'columns'), async () => {
 			this.restoreOrderedColumn()
 
@@ -377,8 +382,10 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 			this.updatColumnWidthsRoughly()
 		})
 
-		let unwatchSize = watchLayout(this.el, 'size', () => this.updatColumnWidths())
-		this.once('disconnected', unwatchSize)
+		onRenderComplete(() => {
+			let unwatchSize = watchLayout(this.el, 'size', () => this.updatColumnWidths())
+			this.once('disconnected', unwatchSize)
+		})
 	}
 
 	// Order part
@@ -565,14 +572,32 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 	}
 
 	setStartIndex(index: number) {
+		let isLive = this.live || this.store instanceof AsyncStore
+
 		if (this.repeatDir) {
 			this.repeatDir.setStartIndex(index)
+		}
+		else if (!isLive) {
+			index = Math.min(index, (this.store as Store<T>).data.length - 1)
+			let row = (this.refs.table as HTMLTableElement).rows[index]
+			if (row) {
+				scrollToTop(row)
+			}
 		}
 	}
 
 	scrollToViewIndex(index: number) {
+		let isLive = this.live || this.store instanceof AsyncStore
+
 		if (this.repeatDir) {
 			this.repeatDir.scrollToViewIndex(index)
+		}
+		else if (!isLive) {
+			index = Math.min(index, (this.store as Store<T>).data.length - 1)
+			let row = (this.refs.table as HTMLTableElement).rows[index]
+			if (row) {
+				scrollToView(row)
+			}
 		}
 	}
 }
