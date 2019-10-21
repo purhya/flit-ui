@@ -66,14 +66,6 @@ export class TooltipBinding extends PopupBinding<string | TemplateResult> {
 		}
 	}
 
-	protected shouldHideWhenElLayerChanged(): boolean {
-		if (this.shouldAlwaysKeepVisible()) {
-			return false
-		}
-
-		return super.shouldHideWhenElLayerChanged()
-	}
-
 	protected onNotInViewport() {
 		if (!this.shouldAlwaysKeepVisible()) {
 			super.onNotInViewport()

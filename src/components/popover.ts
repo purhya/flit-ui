@@ -81,7 +81,6 @@ export class Popover<E = any> extends Popup<E> implements ContextHasActions {
 
 	defaultPopupOptions: PopupOptions = {
 		// `trigger` not work here because when handle it, current component is not created.
-		trigger: 'click',
 		alignPosition: 'bc',
 		fixTrangle: true,
 	}

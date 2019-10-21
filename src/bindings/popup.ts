@@ -1,5 +1,5 @@
 import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, renderComplete, Context, Transition, Template, renderComponent, clearTransition, Options, DirectiveResult, html} from '@pucelle/flit'
-import {Timeout, timeout, MouseLeave, watchLayout, Rect, align} from '@pucelle/ff'
+import {Timeout, timeout, MouseLeave, watchLayout, align, isInViewport, } from '@pucelle/ff'
 import {Popup} from '../components/popup'
 
 
@@ -230,6 +230,9 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 		if (trigger === 'hover') {
 			off(this.el, 'mouseleave', this.hidePopupLater, this)
 		}
+		else if (trigger === 'focus') {
+			off(this.el, 'blur', this.hidePopupLater, this)
+		}
 
 		this.bindLeave()
 		this.unwatchRect = watchLayout(this.el, 'rect', this.onElRectChanged.bind(this))
@@ -378,21 +381,13 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 		}
 	}
 
-	protected onElRectChanged(rect: Rect) {
-		let dw = document.documentElement.offsetWidth
-		let dh = document.documentElement.offsetHeight
-
-		let inViewport = rect.width > 0 && rect.height > 0 && rect.top < dh && rect.bottom > 0 && rect.left < dw && rect.right > 0
-		if (inViewport && !this.shouldHideWhenElLayerChanged()) {
+	protected onElRectChanged() {
+		if (isInViewport(this.el)) {
 			this.alignPopup()
 		}
 		else {
 			this.onNotInViewport()
 		}
-	}
-
-	protected shouldHideWhenElLayerChanged(): boolean {
-		return this.getOption('trigger') === 'hover'
 	}
 
 	protected onNotInViewport() {
@@ -496,5 +491,6 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 		}
 	}
 }
+
 
 export const popup = defineBinding('popup', PopupBinding) as (renderFn: RenderFn, options?: PopupOptions) => BindingResult
