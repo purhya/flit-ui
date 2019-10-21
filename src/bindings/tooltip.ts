@@ -1,6 +1,6 @@
 import {html, defineBinding, BindingResult, TemplateResult} from '@pucelle/flit'
 import {PopupBinding, PopupOptions} from './popup'
-import {getMainAlignDirection, assignIf} from '@pucelle/ff'
+import {getMainAlignDirection, assignIf, ensureWindowLoaded} from '@pucelle/ff'
 import {TooltipType} from '../components/tooltip'
 
 
@@ -45,7 +45,11 @@ export class TooltipBinding extends PopupBinding<string | TemplateResult> {
 
 	protected bindTrigger() {
 		if (this.shouldAlwaysKeepVisible()) {
-			this.showPopupLater()
+			// If not, page scrolling position may be not determinated yet.
+			// So element may be aligned to a wrong position.
+			ensureWindowLoaded().then(() => {
+				this.showPopupLater()
+			})
 		}
 		else {
 			super.bindTrigger()
