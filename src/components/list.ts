@@ -1,19 +1,21 @@
-import {css, define, Component, html, repeat, DirectiveResult, play} from '@pucelle/flit'
+import {css, define, Component, html, repeat, DirectiveResult, play, TemplateResult} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {add, remove} from '@pucelle/ff'
 
 
 export interface ListItem<T = any> {
 	value?: T
-	text: string | number
-	class?: string
-	style?: string
+
+	/** Should not set background-color if is a TemplateResult. */
+	text: string | number | TemplateResult
+
 	icon?: string
+
+	/** To render subsection. */
 	children?: ListItem<T>[]
 
 	/** Note that the List component will change this property just in this object. */
 	opened?: boolean
-	onclick?: () => void
 }
 
 export interface ListEvents<T> {
@@ -123,8 +125,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		return html`
 		<div
 			class="option"
-			style="${item.style || ''}"
-			class=${this.renderClassName(item)}
+			:class=${this.renderClassName(item)}
 			@click.prevent=${() => this.onClickOption(item)}
 		>
 			${hasChildren ? html`
@@ -151,23 +152,18 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 	}
 
 	protected renderClassName(item: ListItem<T>) {
-		let classNames: string[] = []
 		if (this.type === 'navigation') {
 			if (this.active === item.value) {
-				classNames.push('active')
+				return 'active'
 			}
 		}
 		else {
 			if (this.isSelected(item)) {
-				classNames.push('selected')
+				return 'selected'
 			}
 		}
 		
-		if (item.class) {
-			classNames.push(item.class)
-		}
-
-		return classNames.join(' ')
+		return ''
 	}
 
 	protected isSelected(item: ListItem<T>) {
@@ -195,10 +191,6 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 			this.emit('select', this.selected)
 		}
 		else {
-			if (item.onclick) {
-				item.onclick()
-			}
-
 			this.emit('click', item.value)
 		}
 	}
