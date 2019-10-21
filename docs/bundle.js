@@ -1053,7 +1053,8 @@ function interval(fn, ms) {
 exports.interval = interval;
 class Throttle extends WrappedTimingFunction {
     /**
-     * Throttle function calls, call returned function twice in `ms` millisecons will only call `fn` for once. Returns a new function.
+     * Throttle function calls, call returned function twice in `ms` millisecons will only call `fn` for once.
+     * It doesn't ensure the last calling.
      * @param fn The function to throttle.
      * @param ms The time period in which only at most one call allowed. If omitted, using `requestAnimationFrame` to throttle.
      */
@@ -1117,7 +1118,7 @@ class Throttle extends WrappedTimingFunction {
 exports.Throttle = Throttle;
 /**
  * Throttle function calls, call returned function for twice in `ms` milliseconds will only call `fn` for once.
- * Returns a new function.
+ * It doesn't ensure the last calling.
  * @param fn The function to throttle.
  * @param ms The time period in which only at most one call allowed.
  */
@@ -1127,7 +1128,8 @@ function throttle(fn, ms = 0) {
 exports.throttle = throttle;
 class SmoothThrottle extends WrappedTimingFunction {
     /**
-     * Throttle function calls like `throttle`, but will calls `fn` lazily and smooth. Returns a new function.
+     * Throttle function calls like `throttle`, but will calls `fn` lazily and smooth.
+     * It ensures the last calling.
      * @param fn The function to throttle.
      * @param ms The time period in which only at most one call allowed.
      */
@@ -1212,7 +1214,7 @@ class SmoothThrottle extends WrappedTimingFunction {
 exports.SmoothThrottle = SmoothThrottle;
 /**
  * Throttle function calls like `throttle`, but will call `fn` lazily and smooth.
- * Returns a new function.
+ * It ensures the last calling.
  * @param fn The function to throttle.
  * @param ms The time period in which only at most one call allowed.
  */
@@ -1224,7 +1226,6 @@ class Debounce extends WrappedTimingFunction {
     /**
      * Debounce function calls, call returned function will start a timeout to call `fn`,
      * But call returned function for the second time in `ms` milliseconds will reset timeout.
-     * Returns a new function.
      * @param fn The function to debounce.
      * @param ms The timeout in milliseconds.
      */
@@ -1294,7 +1295,6 @@ exports.Debounce = Debounce;
 /**
  * Debounce function calls, call returned function will start a timeout to call `fn`,
  * But call returned function for the second time in `ms` milliseconds will reset timeout.
- * Returns a new function.
  * @param fn The function to debounce.
  * @param ms The timeout in milliseconds.
  */
@@ -2285,7 +2285,7 @@ exports.sleep = sleep;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const style_1 = require("./style");
-const node_1 = require("./node");
+const element_1 = require("./element");
 const util_1 = require("./util");
 /**
  * Align `el` to `target` element by specified position.
@@ -2312,9 +2312,9 @@ class Aligner {
         this.fixTrangle = !!options.fixTrangle;
         if (this.trangle) {
             this.trangle.style.transform = '';
-            this.trangleRect = this.trangle ? node_1.getRect(this.trangle) : null;
+            this.trangleRect = this.trangle ? element_1.getRect(this.trangle) : null;
         }
-        this.rect = node_1.getRect(this.el);
+        this.rect = element_1.getRect(this.el);
         this.position = parseAlignPosition(position);
         this.direction = this.getDirections();
         this.margin = this.parseMargin(options.margin || 0);
@@ -2336,7 +2336,7 @@ class Aligner {
         let overflowYSet = this.alignVertical();
         // If scrollbar appeared, width of el may change
         if (overflowYSet) {
-            this.rect = node_1.getRect(this.el);
+            this.rect = element_1.getRect(this.el);
             anchor1 = this.getElRelativeAnchor();
         }
         this.x = anchor2[0] - anchor1[0];
@@ -2397,7 +2397,7 @@ class Aligner {
         return margin;
     }
     getExtendedRect() {
-        let rect = node_1.getRect(this.target);
+        let rect = element_1.getRect(this.target);
         rect.top -= this.margin[0];
         rect.height += this.margin[0] + this.margin[2];
         rect.bottom = rect.top + rect.height;
@@ -2711,7 +2711,7 @@ function alignToEvent(el, event, offset = [0, 0]) {
 }
 exports.alignToEvent = alignToEvent;
 
-},{"./node":20,"./style":24,"./util":25}],14:[function(require,module,exports){
+},{"./element":15,"./style":24,"./util":26}],14:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const style_1 = require("./style");
@@ -3073,7 +3073,153 @@ function stopAnimation(el) {
 }
 exports.stopAnimation = stopAnimation;
 
-},{"./style":24,"./util":25}],15:[function(require,module,exports){
+},{"./style":24,"./util":26}],15:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const style_1 = require("./style");
+/**
+ * Returns the index of node in it's node siblings.
+ * @param node The node.
+ */
+function getNodeIndex(node) {
+    if (node.parentNode) {
+        let i = 0;
+        for (let child of node.parentNode.childNodes) {
+            if (child === node) {
+                return i;
+            }
+            i++;
+        }
+    }
+    return -1;
+}
+exports.getNodeIndex = getNodeIndex;
+/**
+ * Returns the index of element in it's element siblings.
+ * @param el The node.
+ */
+function getElementIndex(el) {
+    if (el.parentNode) {
+        let i = 0;
+        for (let child of el.parentNode.children) {
+            if (child === el) {
+                return i;
+            }
+            i++;
+        }
+    }
+    return -1;
+}
+exports.getElementIndex = getElementIndex;
+/**
+ * Returns inner width of element, which equals `clientWidth - paddingWidths` or `width - paddingWidths - scrollbarWidth`.
+ * Note that this method may cause page reflow.
+ * @param el The element to get width.
+ */
+function getInnerWidth(el) {
+    let w = el.clientWidth;
+    if (w) {
+        return el.clientWidth - style_1.getStyleAsNumber(el, 'paddingLeft') - style_1.getStyleAsNumber(el, 'paddingRight');
+    }
+    else {
+        return 0;
+    }
+}
+exports.getInnerWidth = getInnerWidth;
+/**
+ * Returns inner height of element, which equals to `clientHeight - paddingHeights` or `height - paddingHeights - scrollbarHeight`.
+ * Note that this method may cause page reflow.
+ * @param el The element to get height.
+ */
+function getInnerHeight(el) {
+    let h = el.clientHeight;
+    if (h) {
+        return h - style_1.getStyleAsNumber(el, 'paddingTop') - style_1.getStyleAsNumber(el, 'paddingBottom');
+    }
+    else {
+        return 0;
+    }
+}
+exports.getInnerHeight = getInnerHeight;
+/**
+ * Returns outer width of element, which equals `offsetWidth + marginWidths`.
+ * Note that this method may cause page reflow.
+ * @param el The element to get width.
+ */
+function getOuterWidth(el) {
+    let w = el.offsetWidth;
+    if (w) {
+        return w + style_1.getStyleAsNumber(el, 'marginLeft') + style_1.getStyleAsNumber(el, 'marginRight');
+    }
+    else {
+        return 0;
+    }
+}
+exports.getOuterWidth = getOuterWidth;
+/**
+ * Returns inner height of element, which equals `offsetHeight + marginHeights`.
+ * Note that this method may cause page reflow.
+ * @param el The element to get height.
+ */
+function getOuterHeight(el) {
+    let h = el.offsetHeight;
+    if (h) {
+        return h + style_1.getStyleAsNumber(el, 'marginTop') + style_1.getStyleAsNumber(el, 'marginBottom');
+    }
+    else {
+        return 0;
+    }
+}
+exports.getOuterHeight = getOuterHeight;
+/**
+ * Returns an object like `getBoundingClientRect`, the didderence is it always returns the rect of visible part for `<html>`.
+ * Note that this method may cause page reflow.
+ * @param el The element to get rect size.
+ */
+function getRect(el) {
+    if (el === document.documentElement) {
+        let dw = document.documentElement.clientWidth;
+        let dh = document.documentElement.clientHeight;
+        return {
+            top: 0,
+            right: dw,
+            bottom: dh,
+            left: 0,
+            width: dw,
+            height: dh
+        };
+    }
+    else {
+        let rect = el.getBoundingClientRect();
+        return {
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height
+        };
+    }
+}
+exports.getRect = getRect;
+/**
+ * Check if element is visible in current viewport.
+ * Note that this method may cause page reflow.
+ * @param el The element to check if is in view.
+ * @param percentage Specify how much percentage of el size implies in view.
+ */
+function isInview(el, percentage = 0.5) {
+    let dw = document.documentElement.clientWidth;
+    let dh = document.documentElement.clientHeight;
+    let box = getRect(el);
+    let xIntersect = Math.min(dw, box.right) - Math.max(0, box.left);
+    let yIntersect = Math.min(dh, box.bottom) - Math.max(0, box.top);
+    return xIntersect / Math.min(box.width, dw) > percentage
+        && yIntersect / Math.min(box.height, dh) > percentage;
+}
+exports.isInview = isInview;
+
+},{"./style":24}],16:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -3256,7 +3402,7 @@ function readFilesFromDirectoryReader(reader) {
     });
 }
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -3278,14 +3424,14 @@ function decodeHTML(code) {
 }
 exports.decodeHTML = decodeHTML;
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./style"));
-__export(require("./node"));
+__export(require("./element"));
 __export(require("./align"));
 __export(require("./scroll"));
 __export(require("./animate"));
@@ -3296,8 +3442,9 @@ __export(require("./storage"));
 __export(require("./watch-layout"));
 __export(require("./net"));
 __export(require("./html"));
+__export(require("./timing"));
 
-},{"./align":13,"./animate":14,"./file":15,"./html":16,"./mouse-leave":18,"./net":19,"./node":20,"./query":21,"./scroll":22,"./storage":23,"./style":24,"./watch-layout":26}],18:[function(require,module,exports){
+},{"./align":13,"./animate":14,"./element":15,"./file":16,"./html":17,"./mouse-leave":19,"./net":20,"./query":21,"./scroll":22,"./storage":23,"./style":24,"./timing":25,"./watch-layout":27}],19:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -3477,7 +3624,7 @@ var MouseLeave;
     }
 })(MouseLeave = exports.MouseLeave || (exports.MouseLeave = {}));
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const string_1 = require("../base/string");
@@ -3704,153 +3851,7 @@ class ResourceLoader extends base_1.Emitter {
 }
 exports.ResourceLoader = ResourceLoader;
 
-},{"../base":7,"../base/string":11}],20:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const style_1 = require("./style");
-/**
- * Returns the index of node in it's node siblings.
- * @param node The node.
- */
-function getNodeIndex(node) {
-    if (node.parentNode) {
-        let i = 0;
-        for (let child of node.parentNode.childNodes) {
-            if (child === node) {
-                return i;
-            }
-            i++;
-        }
-    }
-    return -1;
-}
-exports.getNodeIndex = getNodeIndex;
-/**
- * Returns the index of element in it's element siblings.
- * @param el The node.
- */
-function getElementIndex(el) {
-    if (el.parentNode) {
-        let i = 0;
-        for (let child of el.parentNode.children) {
-            if (child === el) {
-                return i;
-            }
-            i++;
-        }
-    }
-    return -1;
-}
-exports.getElementIndex = getElementIndex;
-/**
- * Returns inner width of element, which equals `clientWidth - paddingWidths` or `width - paddingWidths - scrollbarWidth`.
- * Note that this method may cause page reflow.
- * @param el The element to get width.
- */
-function getInnerWidth(el) {
-    let w = el.clientWidth;
-    if (w) {
-        return el.clientWidth - style_1.getStyleAsNumber(el, 'paddingLeft') - style_1.getStyleAsNumber(el, 'paddingRight');
-    }
-    else {
-        return 0;
-    }
-}
-exports.getInnerWidth = getInnerWidth;
-/**
- * Returns inner height of element, which equals to `clientHeight - paddingHeights` or `height - paddingHeights - scrollbarHeight`.
- * Note that this method may cause page reflow.
- * @param el The element to get height.
- */
-function getInnerHeight(el) {
-    let h = el.clientHeight;
-    if (h) {
-        return h - style_1.getStyleAsNumber(el, 'paddingTop') - style_1.getStyleAsNumber(el, 'paddingBottom');
-    }
-    else {
-        return 0;
-    }
-}
-exports.getInnerHeight = getInnerHeight;
-/**
- * Returns outer width of element, which equals `offsetWidth + marginWidths`.
- * Note that this method may cause page reflow.
- * @param el The element to get width.
- */
-function getOuterWidth(el) {
-    let w = el.offsetWidth;
-    if (w) {
-        return w + style_1.getStyleAsNumber(el, 'marginLeft') + style_1.getStyleAsNumber(el, 'marginRight');
-    }
-    else {
-        return 0;
-    }
-}
-exports.getOuterWidth = getOuterWidth;
-/**
- * Returns inner height of element, which equals `offsetHeight + marginHeights`.
- * Note that this method may cause page reflow.
- * @param el The element to get height.
- */
-function getOuterHeight(el) {
-    let h = el.offsetHeight;
-    if (h) {
-        return h + style_1.getStyleAsNumber(el, 'marginTop') + style_1.getStyleAsNumber(el, 'marginBottom');
-    }
-    else {
-        return 0;
-    }
-}
-exports.getOuterHeight = getOuterHeight;
-/**
- * Returns an object like `getBoundingClientRect`, the didderence is it always returns the rect of visible part for `<html>`.
- * Note that this method may cause page reflow.
- * @param el The element to get rect size.
- */
-function getRect(el) {
-    if (el === document.documentElement) {
-        let dw = document.documentElement.clientWidth;
-        let dh = document.documentElement.clientHeight;
-        return {
-            top: 0,
-            right: dw,
-            bottom: dh,
-            left: 0,
-            width: dw,
-            height: dh
-        };
-    }
-    else {
-        let rect = el.getBoundingClientRect();
-        return {
-            top: rect.top,
-            right: rect.right,
-            bottom: rect.bottom,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height
-        };
-    }
-}
-exports.getRect = getRect;
-/**
- * Check if element is visible in current viewport.
- * Note that this method may cause page reflow.
- * @param el The element to check if is in view.
- * @param percentage Specify how much percentage of el size implies in view.
- */
-function isInview(el, percentage = 0.5) {
-    let dw = document.documentElement.clientWidth;
-    let dh = document.documentElement.clientHeight;
-    let box = getRect(el);
-    let xIntersect = Math.min(dw, box.right) - Math.max(0, box.left);
-    let yIntersect = Math.min(dh, box.bottom) - Math.max(0, box.top);
-    return xIntersect / Math.min(box.width, dw) > percentage
-        && yIntersect / Math.min(box.height, dh) > percentage;
-}
-exports.isInview = isInview;
-
-},{"./style":24}],21:[function(require,module,exports){
+},{"../base":7,"../base/string":11}],21:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -4224,7 +4225,43 @@ function setStyle(el, propertyOrMap, value) {
 }
 exports.setStyle = setStyle;
 
-},{"./util":25}],25:[function(require,module,exports){
+},{"./util":26}],25:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Returns a promise which will be resolved after window loaded,
+ * Or resolved immediately if window already loaded.
+ */
+function ensureWindowLoaded() {
+    return new Promise(resolve => {
+        let entrys = window.performance.getEntriesByType("navigation");
+        if (entrys.length > 0 && entrys[0].loadEventEnd > 0) {
+            resolve();
+        }
+        else {
+            window.addEventListener('load', () => resolve());
+        }
+    });
+}
+exports.ensureWindowLoaded = ensureWindowLoaded;
+/**
+ * Returns a promise which will be resolved after document completed,
+ * Or resolved immediately if document already completed.
+ */
+function ensureDocumentComplete() {
+    return new Promise(resolve => {
+        let entrys = window.performance.getEntriesByType("navigation");
+        if (entrys.length > 0 && entrys[0].domContentLoadedEventEnd > 0) {
+            resolve();
+        }
+        else {
+            document.addEventListener('DOMContentLoaded', () => resolve(), false);
+        }
+    });
+}
+exports.ensureDocumentComplete = ensureDocumentComplete;
+
+},{}],26:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function normativeStyleValue(property, value) {
@@ -4255,10 +4292,10 @@ function getClosestFixedElement(el) {
 }
 exports.getClosestFixedElement = getClosestFixedElement;
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const node_1 = require("./node");
+const element_1 = require("./element");
 const base_1 = require("../base");
 const WATCH_STATE_FN = {
     show(el) {
@@ -4268,10 +4305,10 @@ const WATCH_STATE_FN = {
         return el.offsetWidth === 0 && el.offsetHeight === 0;
     },
     inview(el) {
-        return node_1.isInview(el);
+        return element_1.isInview(el);
     },
     outview(el) {
-        return !node_1.isInview(el);
+        return !element_1.isInview(el);
     },
     size(el) {
         return {
@@ -4280,11 +4317,12 @@ const WATCH_STATE_FN = {
         };
     },
     rect(el) {
-        return node_1.getRect(el);
+        return element_1.getRect(el);
     },
 };
 /**
  * Watch specified state, trigger `callback` if state changed.
+ * Please makesure everything was rendered before call this.
  * Returns a cancel function.
  * Note that this method may slow page speed and cause additional reflow.
  * @param el The element to watch.
@@ -4297,6 +4335,7 @@ function watchLayout(el, type, callback) {
 exports.watchLayout = watchLayout;
 /**
  * Watch specified state, trigger `callback` if it changed for only once.
+ * Please makesure everything was rendered before call this.
  * Returns a cancel function.
  * Note that this method may slow page speed and cause additional reflow.
  * @param el The element to watch.
@@ -4309,6 +4348,7 @@ function watchLayoutOnce(el, type, callback) {
 exports.watchLayoutOnce = watchLayoutOnce;
 /**
  * Watch specified state, trigger `callback` if the state becomes `true` and never trigger again.
+ * Please makesure everything was rendered before call this.
  * Returns a cancel function.
  * Note that this method may slow page speed and cause additional reflow.
  * @param el The element to watch.
@@ -4327,36 +4367,33 @@ function bindWatch(isOnce, untilTrue, el, type, callback) {
     if (!getState) {
         throw new Error(`Failed to watch, type "${type}" is not supported`);
     }
-    // When using with flit, it may cause relayout, so please make sure everything rendered already.
-    requestAnimationFrame(() => {
-        if (untilTrue) {
-            oldState = getState(el);
-            if (oldState && untilTrue) {
-                callback(oldState);
-            }
+    if (untilTrue) {
+        oldState = getState(el);
+        if (oldState && untilTrue) {
+            callback(oldState);
         }
-        if (untilTrue && oldState) {
-            return;
-        }
-        if (type === 'size' && typeof window.ResizeObserver === 'function') {
-            observer = new window.ResizeObserver(onResize);
-            observer.observe(el);
-        }
-        else if ((type === 'inview' || type === 'outview') && typeof IntersectionObserver === 'function') {
-            observer = new IntersectionObserver(onInviewChange);
-            observer.observe(el);
-        }
-        else {
-            oldState = getState(el);
-            // `requestAnimationFrame` is better than `setInterval`,
-            // because `setInterval` will either lost frame or trigger multiple times betweens one frame.
-            // But check frequently will significantly affect rendering performance.
-            interval = new base_1.Interval(() => {
-                let newState = getState(el);
-                onNewState(newState);
-            }, 200);
-        }
-    });
+    }
+    if (untilTrue && oldState) {
+        return unwatch;
+    }
+    if (type === 'size' && typeof window.ResizeObserver === 'function') {
+        observer = new window.ResizeObserver(onResize);
+        observer.observe(el);
+    }
+    else if ((type === 'inview' || type === 'outview') && typeof IntersectionObserver === 'function') {
+        observer = new IntersectionObserver(onInviewChange);
+        observer.observe(el);
+    }
+    else {
+        oldState = getState(el);
+        // `requestAnimationFrame` is better than `setInterval`,
+        // because `setInterval` will either lost frame or trigger multiple times betweens one frame.
+        // But check frequently will significantly affect rendering performance.
+        interval = new base_1.Interval(() => {
+            let newState = getState(el);
+            onNewState(newState);
+        }, 200);
+    }
     function onResize(entries) {
         for (let { contentRect } of entries) {
             onNewState({
@@ -4414,7 +4451,7 @@ function valueOrObjectEqual(a, b) {
     return true;
 }
 
-},{"../base":7,"./node":20}],27:[function(require,module,exports){
+},{"../base":7,"./element":15}],28:[function(require,module,exports){
 "use strict";
 function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
@@ -4423,7 +4460,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./base"));
 __export(require("./dom"));
 
-},{"./base":7,"./dom":17}],28:[function(require,module,exports){
+},{"./base":7,"./dom":18}],29:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ff = require("@pucelle/ff");
@@ -5134,7 +5171,43 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				/>
 			</section>
 
-			<section style="padding: 0 0 0 8px">
+
+			<section>
+				<h3>Table with Async Data</h3>
+
+				<f-table
+					.resizable
+					.live
+					.pageSize="10"
+					.store=${new ExampleAsyncStore()}
+					.columns=${[
+            {
+                title: 'Index',
+                render: (_item, index) => {
+                    return index;
+                },
+            },
+            {
+                title: 'Date',
+                render: () => '2019/10/19',
+            },
+            {
+                title: 'ID',
+                orderBy: 'id',
+                render: (item) => item.id,
+            },
+            {
+                title: 'Value',
+                orderBy: 'value',
+                render: (item) => item.value,
+                align: 'right',
+            }
+        ]}
+				/>
+			</section>
+
+
+			<section>
 				<h3>Drag & Drop</h3>
 
 				<div style="display: inline-flex; padding: 4px; background: ${src_1.theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center;"
@@ -5183,17 +5256,17 @@ flit_1.define('f-main-color-select', class MainColorSelect extends src_1.Select 
         super(...arguments);
         this.value = '#3a6cf6';
         this.data = [
-            { value: '#3a6cf6', style: 'color: #3a6cf6;', text: 'Blue' },
-            { value: '#48c7c7', style: 'color: #48c7c7;', text: 'Cyan' },
-            { value: '#0077cf', style: 'color: #0077cf;', text: 'Darkblue' },
-            { value: '#4eb2ea', style: 'color: #4eb2ea;', text: 'Skyblue' },
-            { value: '#be66cc', style: 'color: #be66cc;', text: 'Purple' },
-            { value: '#ff6666', style: 'color: #ff6666;', text: 'Red' },
-            { value: '#ff8095', style: 'color: #ff8095;', text: 'Pink' },
-            { value: '#d65c5c', style: 'color: #d65c5c;', text: 'Brown' },
-            { value: '#f67d51', style: 'color: #f67d51;', text: 'Orange' },
-            { value: '#15af78', style: 'color: #15af78;', text: 'Green' },
-            { value: '#888888', style: 'color: #888888;', text: 'Grey' },
+            { value: '#3a6cf6', text: flit_1.html `<div style="color: #3a6cf6;">Blue</div>` },
+            { value: '#48c7c7', text: flit_1.html `<div style="color: #48c7c7;">Cyan</div>` },
+            { value: '#0077cf', text: flit_1.html `<div style="color: #0077cf;">Darkblue</div>` },
+            { value: '#4eb2ea', text: flit_1.html `<div style="color: #4eb2ea;">Skyblue</div>` },
+            { value: '#be66cc', text: flit_1.html `<div style="color: #be66cc;">Purple</div>` },
+            { value: '#ff6666', text: flit_1.html `<div style="color: #ff6666;">Red</div>` },
+            { value: '#ff8095', text: flit_1.html `<div style="color: #ff8095;">Pink</div>` },
+            { value: '#d65c5c', text: flit_1.html `<div style="color: #d65c5c;">Brown</div>` },
+            { value: '#f67d51', text: flit_1.html `<div style="color: #f67d51;">Orange</div>` },
+            { value: '#15af78', text: flit_1.html `<div style="color: #15af78;">Green</div>` },
+            { value: '#888888', text: flit_1.html `<div style="color: #888888;">Grey</div>` },
         ];
     }
     onReady() {
@@ -5210,47 +5283,23 @@ function range(start, end) {
     }
     return data;
 }
+class ExampleAsyncStore extends src_1.AsyncStore {
+    constructor() {
+        super(...arguments);
+        this.key = 'id';
+        this.dataCount = () => 1000;
+    }
+    async dataGetter(start, count) {
+        await ff.sleep(500);
+        return range(start, start + count - 1).map(v => ({ id: v, value: Math.round(Math.random() * 100) }));
+    }
+}
 
-},{"../src":62,"@pucelle/ff":27,"@pucelle/flit":94}],29:[function(require,module,exports){
+},{"../src":64,"@pucelle/ff":28,"@pucelle/flit":96}],30:[function(require,module,exports){
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
 const ff_1 = require("@pucelle/ff");
-const theme_1 = require("../style/theme");
-const popup_1 = require("../components/popup");
-let ContextMenu = class ContextMenu extends popup_1.Popup {
-    constructor() {
-        super(...arguments);
-        this.trangle = false;
-    }
-    static style() {
-        let { adjust } = theme_1.theme;
-        return flit_1.css `
-		${super.style()}
-		:host{
-			position: fixed;
-			border-radius: 0;
-			
-			.option__f-list{
-				padding: ${adjust(2)}px ${adjust(8)}px;
-
-				&:last-child{
-					border-bottom: none;
-				}
-			}
-		}
-		`.extends(super.style());
-    }
-};
-ContextMenu = __decorate([
-    flit_1.define('f-contextmenu')
-], ContextMenu);
 class ContextMenuBinding {
     constructor(el, context) {
         this.popup = null;
@@ -5320,7 +5369,7 @@ class ContextMenuBinding {
 }
 exports.contextmenu = flit_1.defineBinding('contextmenu', ContextMenuBinding);
 
-},{"../components/popup":49,"../style/theme":67,"@pucelle/ff":27,"@pucelle/flit":94}],30:[function(require,module,exports){
+},{"@pucelle/ff":28,"@pucelle/flit":96}],31:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -5753,7 +5802,7 @@ class Mover {
     }
 }
 
-},{"../style/theme":67,"@pucelle/ff":27,"@pucelle/flit":94}],31:[function(require,module,exports){
+},{"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],32:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -5807,7 +5856,7 @@ class LoadingBinging {
 exports.LoadingBinging = LoadingBinging;
 exports.loading = flit_1.defineBinding('loading', LoadingBinging);
 
-},{"@pucelle/flit":94}],32:[function(require,module,exports){
+},{"@pucelle/flit":96}],33:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -5943,6 +5992,7 @@ class PopupBinding {
         }
         this.alignPopup();
         popup.el.style.visibility = '';
+        this.mayFocus();
         if (inUse) {
             flit_1.clearTransition(popup.el);
         }
@@ -5955,6 +6005,12 @@ class PopupBinding {
         }
         this.bindLeave();
         this.unwatchRect = ff_1.watchLayout(this.el, 'rect', this.onElRectChanged.bind(this));
+    }
+    mayFocus() {
+        let trigger = this.getOption('trigger');
+        if ((trigger === 'hover' || trigger === 'focus') && this.el.tabIndex >= 0) {
+            this.el.focus();
+        }
     }
     bindLeave() {
         let trigger = this.getOption('trigger');
@@ -6165,7 +6221,7 @@ class PopupBinding {
 exports.PopupBinding = PopupBinding;
 exports.popup = flit_1.defineBinding('popup', PopupBinding);
 
-},{"@pucelle/ff":27,"@pucelle/flit":94}],33:[function(require,module,exports){
+},{"@pucelle/ff":28,"@pucelle/flit":96}],34:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -6197,7 +6253,11 @@ class TooltipBinding extends popup_1.PopupBinding {
     }
     bindTrigger() {
         if (this.shouldAlwaysKeepVisible()) {
-            this.showPopupLater();
+            // If not, page scrolling position may be not determinated yet.
+            // So element may be aligned to a wrong position.
+            ff_1.ensureWindowLoaded().then(() => {
+                this.showPopupLater();
+            });
         }
         else {
             super.bindTrigger();
@@ -6243,7 +6303,7 @@ class TooltipBinding extends popup_1.PopupBinding {
 exports.TooltipBinding = TooltipBinding;
 exports.tooltip = flit_1.defineBinding('tooltip', TooltipBinding);
 
-},{"./popup":32,"@pucelle/ff":27,"@pucelle/flit":94}],34:[function(require,module,exports){
+},{"./popup":33,"@pucelle/ff":28,"@pucelle/flit":96}],35:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -6269,7 +6329,7 @@ async function handleActionClicking(context, action, others) {
     context.onActionHandled(action, !failed, others);
 }
 
-},{"@pucelle/ff":27,"@pucelle/flit":94}],35:[function(require,module,exports){
+},{"@pucelle/ff":28,"@pucelle/flit":96}],36:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -6317,7 +6377,7 @@ ButtonGroup = __decorate([
 ], ButtonGroup);
 exports.ButtonGroup = ButtonGroup;
 
-},{"../style/theme":67,"@pucelle/flit":94}],36:[function(require,module,exports){
+},{"../style/theme":69,"@pucelle/flit":96}],37:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -6453,7 +6513,48 @@ CheckboxGroup = __decorate([
 ], CheckboxGroup);
 exports.CheckboxGroup = CheckboxGroup;
 
-},{"../style/theme":67,"@pucelle/ff":27,"@pucelle/flit":94}],37:[function(require,module,exports){
+},{"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],38:[function(require,module,exports){
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const flit_1 = require("@pucelle/flit");
+const theme_1 = require("../style/theme");
+const popup_1 = require("../components/popup");
+let ContextMenu = class ContextMenu extends popup_1.Popup {
+    constructor() {
+        super(...arguments);
+        this.trangle = false;
+    }
+    static style() {
+        let { adjust } = theme_1.theme;
+        return flit_1.css `
+		${super.style()}
+		:host{
+			position: fixed;
+			border-radius: 0;
+			
+			.option__f-list{
+				padding: ${adjust(2)}px ${adjust(8)}px;
+
+				&:last-child{
+					border-bottom: none;
+				}
+			}
+		}
+		`.extends(super.style());
+    }
+};
+ContextMenu = __decorate([
+    flit_1.define('f-contextmenu')
+], ContextMenu);
+exports.ContextMenu = ContextMenu;
+
+},{"../components/popup":51,"../style/theme":69,"@pucelle/flit":96}],39:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -6559,6 +6660,7 @@ let Dialog = class Dialog extends flit_1.Component {
         }
         return flit_1.html `
 		<template
+			tabindex="0"
 			${flit_1.show(this.opened, { transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd })}
 		>
 
@@ -6715,7 +6817,7 @@ class QuickDialog {
 exports.QuickDialog = QuickDialog;
 exports.dialog = new QuickDialog();
 
-},{"../style/theme":67,"./action":34,"@pucelle/ff":27,"@pucelle/flit":94}],38:[function(require,module,exports){
+},{"../style/theme":69,"./action":35,"@pucelle/ff":28,"@pucelle/flit":96}],40:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -6802,7 +6904,7 @@ class Dropdown extends flit_1.Component {
 }
 exports.Dropdown = Dropdown;
 
-},{"../bindings/popup":32,"../style/theme":67,"@pucelle/flit":94}],39:[function(require,module,exports){
+},{"../bindings/popup":33,"../style/theme":69,"@pucelle/flit":96}],41:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -6856,7 +6958,7 @@ Form = __decorate([
 ], Form);
 exports.Form = Form;
 
-},{"@pucelle/flit":94}],40:[function(require,module,exports){
+},{"@pucelle/flit":96}],42:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -6956,7 +7058,7 @@ ColLayout = __decorate([
 ], ColLayout);
 exports.ColLayout = ColLayout;
 
-},{"@pucelle/flit":94}],41:[function(require,module,exports){
+},{"@pucelle/flit":96}],43:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7056,7 +7158,7 @@ IconLoading = __decorate([
 ], IconLoading);
 exports.IconLoading = IconLoading;
 
-},{"../icons/svg-symbol":61,"../style/theme":67,"@pucelle/ff":27,"@pucelle/flit":94}],42:[function(require,module,exports){
+},{"../icons/svg-symbol":63,"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],44:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7094,7 +7196,6 @@ let Input = class Input extends flit_1.Component {
 
 		input, textarea{
 			width: 100%;
-			font-size: ${adjustFontSize(13)}px;
 			border: none;
 			background: none;
 			
@@ -7230,7 +7331,7 @@ Textarea = __decorate([
 ], Textarea);
 exports.Textarea = Textarea;
 
-},{"../style/theme":67,"./form":39,"@pucelle/flit":94}],43:[function(require,module,exports){
+},{"../style/theme":69,"./form":41,"@pucelle/flit":96}],45:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7336,8 +7437,7 @@ let List = class List extends flit_1.Component {
         return flit_1.html `
 		<div
 			class="option"
-			style="${item.style || ''}"
-			class=${this.renderClassName(item)}
+			:class=${this.renderClassName(item)}
 			@click.prevent=${() => this.onClickOption(item)}
 		>
 			${hasChildren ? flit_1.html `
@@ -7363,21 +7463,17 @@ let List = class List extends flit_1.Component {
 		`;
     }
     renderClassName(item) {
-        let classNames = [];
         if (this.type === 'navigation') {
             if (this.active === item.value) {
-                classNames.push('active');
+                return 'active';
             }
         }
         else {
             if (this.isSelected(item)) {
-                classNames.push('selected');
+                return 'selected';
             }
         }
-        if (item.class) {
-            classNames.push(item.class);
-        }
-        return classNames.join(' ');
+        return '';
     }
     isSelected(item) {
         return this.selected.includes(item.value);
@@ -7402,9 +7498,6 @@ let List = class List extends flit_1.Component {
             this.emit('select', this.selected);
         }
         else {
-            if (item.onclick) {
-                item.onclick();
-            }
             this.emit('click', item.value);
         }
     }
@@ -7419,7 +7512,7 @@ List = __decorate([
 ], List);
 exports.List = List;
 
-},{"../style/theme":67,"@pucelle/ff":27,"@pucelle/flit":94}],44:[function(require,module,exports){
+},{"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],46:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7531,7 +7624,7 @@ Loader = Loader_1 = __decorate([
 ], Loader);
 exports.Loader = Loader;
 
-},{"../style/theme":67,"@pucelle/flit":94}],45:[function(require,module,exports){
+},{"../style/theme":69,"@pucelle/flit":96}],47:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7618,7 +7711,7 @@ Menu = __decorate([
 ], Menu);
 exports.Menu = Menu;
 
-},{"../style/theme":67,"./popup":49,"@pucelle/flit":94}],46:[function(require,module,exports){
+},{"../style/theme":69,"./popup":51,"@pucelle/flit":96}],48:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7717,6 +7810,7 @@ let Modal = class Modal extends flit_1.Component {
         let shouldRenderClose = !this.actions || this.actions.length === 0;
         return flit_1.html `
 		<template
+			tabindex="0"
 			${flit_1.show(this.opened, { transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd })}
 		>
 			<div class="mask"
@@ -7793,7 +7887,7 @@ Modal = __decorate([
 ], Modal);
 exports.Modal = Modal;
 
-},{"../style/theme":67,"./action":34,"@pucelle/ff":27,"@pucelle/flit":94}],47:[function(require,module,exports){
+},{"../style/theme":69,"./action":35,"@pucelle/ff":28,"@pucelle/flit":96}],49:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8105,7 +8199,7 @@ class UniqueNotification {
 exports.UniqueNotification = UniqueNotification;
 exports.notification = new QuickNotification();
 
-},{"../style/theme":67,"./action":34,"@pucelle/ff":27,"@pucelle/flit":94}],48:[function(require,module,exports){
+},{"../style/theme":69,"./action":35,"@pucelle/ff":28,"@pucelle/flit":96}],50:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8232,7 +8326,7 @@ Popover = __decorate([
 ], Popover);
 exports.Popover = Popover;
 
-},{"../style/theme":67,"./action":34,"./popup":49,"@pucelle/flit":94}],49:[function(require,module,exports){
+},{"../style/theme":69,"./action":35,"./popup":51,"@pucelle/flit":96}],51:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8300,10 +8394,12 @@ let Popup = class Popup extends flit_1.Component {
     }
     render() {
         return flit_1.html `
+		<template tabindex="0">
 			${this.trangle ? flit_1.html `
 				<div class="trangle" :ref="trangle" :class.trangle-herizontal=${this.herizontal} />
 			` : ''}
 			<slot />
+		</template>
 		`;
     }
     // Call `update` every time after restored from `cache(...)`.
@@ -8349,7 +8445,7 @@ Popup = __decorate([
 ], Popup);
 exports.Popup = Popup;
 
-},{"../style/theme":67,"@pucelle/flit":94}],50:[function(require,module,exports){
+},{"../style/theme":69,"@pucelle/flit":96}],52:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8417,7 +8513,7 @@ Progress = __decorate([
 ], Progress);
 exports.Progress = Progress;
 
-},{"../bindings/tooltip":33,"../style/theme":67,"@pucelle/flit":94}],51:[function(require,module,exports){
+},{"../bindings/tooltip":34,"../style/theme":69,"@pucelle/flit":96}],53:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8547,7 +8643,7 @@ RadioGroup = __decorate([
 ], RadioGroup);
 exports.RadioGroup = RadioGroup;
 
-},{"../style/theme":67,"@pucelle/flit":94}],52:[function(require,module,exports){
+},{"../style/theme":69,"@pucelle/flit":96}],54:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8681,7 +8777,7 @@ Resizer = __decorate([
 ], Resizer);
 exports.Resizer = Resizer;
 
-},{"@pucelle/ff":27,"@pucelle/flit":94}],53:[function(require,module,exports){
+},{"@pucelle/ff":28,"@pucelle/flit":96}],55:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8835,7 +8931,7 @@ var PathParser;
     }
 })(PathParser || (PathParser = {}));
 
-},{"@pucelle/flit":94}],54:[function(require,module,exports){
+},{"@pucelle/flit":96}],56:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8947,7 +9043,7 @@ Search = __decorate([
 ], Search);
 exports.Search = Search;
 
-},{"../style/theme":67,"@pucelle/flit":94}],55:[function(require,module,exports){
+},{"../style/theme":69,"@pucelle/flit":96}],57:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8976,7 +9072,7 @@ let Select = class Select extends dropdown_1.Dropdown {
         this.editing = false;
     }
     static style() {
-        let { mainColor, adjust, adjustFontSize, borderColor, popupShadowBlurRadius, backgroundColor, popupShadowColor } = theme_1.theme;
+        let { mainColor, adjust, borderColor, popupShadowBlurRadius, backgroundColor, popupShadowColor } = theme_1.theme;
         return flit_1.css `
 		:host{
 			display: inline-flex;
@@ -9008,13 +9104,12 @@ let Select = class Select extends dropdown_1.Dropdown {
 			margin-right: 4px;
 		}
 	
-		.input{
+		.display, .input{
 			flex: 1;
 			min-width: 0;
 			padding: 0 0 0 ${adjust(8)}px;
 			height: ${adjust(28)}px;
 			border: none;
-			font-size: ${adjustFontSize(13)}px;
 			background: transparent;
 			white-space: nowrap;
 			overflow: hidden;
@@ -9024,6 +9119,10 @@ let Select = class Select extends dropdown_1.Dropdown {
 			&:focus{
 				box-shadow: none;
 			}
+		}
+
+		.placeholder{
+			opacity: 0.5;
 		}
 	
 		.popup{
@@ -9046,22 +9145,36 @@ let Select = class Select extends dropdown_1.Dropdown {
     render() {
         return flit_1.html `
 		<template :class.not-inputable=${!this.searchable}>
-			${this.renderInput()}
+			${this.renderDisplayOrInput()}
 		</template>
 		`.extends(super.render());
     }
-    renderInput() {
-        return flit_1.html `
-		<input type="text"
-			class="input"
-			:ref="input"
-			.value=${this.editing ? this.inputed : this.renderCurrentDisplay()}
-			.placeholder=${this.placeholder}
-			?readonly=${!this.editing}
-			@click=${this.onClick}
-			@input=${this.onInput}
-		>
-		`;
+    renderDisplayOrInput() {
+        if (this.editing) {
+            return flit_1.html `
+			<input type="text"
+				class="input"
+				:ref="input"
+				.value=${this.inputed}
+				.placeholder=${this.placeholder}
+				?readonly=${!this.editing}
+				@click=${this.onClick}
+				@input=${this.onInput}
+			>
+			`;
+        }
+        else {
+            let text = this.renderCurrentDisplay();
+            return flit_1.html `
+			<div
+				class="input"
+				:class.placeholder=${!text}
+				@click=${this.onClick}
+			>
+				${text || this.placeholder}
+			</div>
+			`;
+        }
     }
     renderPopup() {
         let data = this.getOptionData();
@@ -9087,14 +9200,15 @@ let Select = class Select extends dropdown_1.Dropdown {
             let displays = [];
             for (let { value, text } of this.data) {
                 if (this.value.includes(value)) {
-                    displays.push(text);
+                    // Here may render `<>` tags as value into `input` element
+                    displays.push(text.toString());
                 }
             }
             return displays.join('; ');
         }
         else {
             for (let { value, text } of this.data) {
-                if (this.value == value) {
+                if (this.value === value) {
                     return text;
                 }
             }
@@ -9183,7 +9297,7 @@ Select = __decorate([
 ], Select);
 exports.Select = Select;
 
-},{"../style/theme":67,"./dropdown":38,"@pucelle/ff":27,"@pucelle/flit":94}],56:[function(require,module,exports){
+},{"../style/theme":69,"./dropdown":40,"@pucelle/ff":28,"@pucelle/flit":96}],58:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -9419,7 +9533,7 @@ Slider = __decorate([
 ], Slider);
 exports.Slider = Slider;
 
-},{"../bindings/tooltip":33,"../style/theme":67,"@pucelle/ff":27,"@pucelle/flit":94}],57:[function(require,module,exports){
+},{"../bindings/tooltip":34,"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],59:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -9530,7 +9644,7 @@ Switch = __decorate([
 ], Switch);
 exports.Switch = Switch;
 
-},{"../style/theme":67,"@pucelle/flit":94}],58:[function(require,module,exports){
+},{"../style/theme":69,"@pucelle/flit":96}],60:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -9553,6 +9667,8 @@ let Table = class Table extends flit_1.Component {
          * You can understand this as how many items to render.
          */
         this.pageSize = 50;
+        /** The index of the first item to be visible, to reflect last scrolling position. */
+        this.startIndex = 0;
         this.resizable = false;
         this.minColumnWidth = 64;
         this.orderedColumnName = null;
@@ -9735,7 +9851,7 @@ let Table = class Table extends flit_1.Component {
 		</div>
 
 		<div class="body">
-			<table class="rows">
+			<table class="rows" :ref="table">
 				<colgroup :ref="colgroup">
 					${this.columns.map(column => flit_1.html `
 						<col :style.text-align=${column.align || ''} />
@@ -9774,16 +9890,18 @@ let Table = class Table extends flit_1.Component {
         if (this.store instanceof async_store_1.AsyncStore) {
             return flit_1.refDirective(flit_1.liveAsyncRepeat({
                 key: this.store.key,
+                pageSize: this.pageSize,
+                startIndex: this.startIndex,
                 dataCount: this.store.dataCount.bind(this.store),
                 dataGetter: this.store.dataGetter.bind(this.store),
-                pageSize: this.pageSize,
                 onUpdated: this.onRepeatDataUpdated.bind(this)
             }, this.renderRow.bind(this), this.transition), this.setRepeatDirective.bind(this));
         }
         else if (this.live) {
             return flit_1.refDirective(flit_1.liveRepeat({
-                data: this.store.currentData,
                 pageSize: this.pageSize,
+                startIndex: this.startIndex,
+                data: this.store.currentData,
                 onUpdated: this.onRepeatDataUpdated.bind(this)
             }, this.renderRow.bind(this), this.transition), this.setRepeatDirective.bind(this));
         }
@@ -9797,7 +9915,7 @@ let Table = class Table extends flit_1.Component {
      */
     renderRow(item, index) {
         let tds = this.columns.map((column) => {
-            let result = item && column.render ? column.render(item, index) : '';
+            let result = item && column.render ? column.render(item, index) : '\xa0';
             return flit_1.html `<td :style.text-align=${column.align || ''}>${result}</td>`;
         });
         return flit_1.html `<tr>${tds}</tr>`;
@@ -9844,8 +9962,10 @@ let Table = class Table extends flit_1.Component {
             await flit_1.renderComplete();
             this.updatColumnWidthsRoughly();
         });
-        let unwatchSize = ff_1.watchLayout(this.el, 'size', () => this.updatColumnWidths());
-        this.once('disconnected', unwatchSize);
+        flit_1.onRenderComplete(() => {
+            let unwatchSize = ff_1.watchLayout(this.el, 'size', () => this.updatColumnWidths());
+            this.once('disconnected', unwatchSize);
+        });
     }
     // Order part
     doOrdering(e, index) {
@@ -9996,13 +10116,29 @@ let Table = class Table extends flit_1.Component {
         this.setColumnWidths(widths);
     }
     setStartIndex(index) {
+        let isLive = this.live || this.store instanceof async_store_1.AsyncStore;
         if (this.repeatDir) {
             this.repeatDir.setStartIndex(index);
         }
+        else if (!isLive) {
+            index = Math.min(index, this.store.data.length - 1);
+            let row = this.refs.table.rows[index];
+            if (row) {
+                ff_1.scrollToTop(row);
+            }
+        }
     }
     scrollToViewIndex(index) {
+        let isLive = this.live || this.store instanceof async_store_1.AsyncStore;
         if (this.repeatDir) {
             this.repeatDir.scrollToViewIndex(index);
+        }
+        else if (!isLive) {
+            index = Math.min(index, this.store.data.length - 1);
+            let row = this.refs.table.rows[index];
+            if (row) {
+                ff_1.scrollToView(row);
+            }
         }
     }
 };
@@ -10069,7 +10205,7 @@ function columnWidthCalculator(widthAndFlexArray, clientWidth, minColumnWidth) {
     return widths;
 }
 
-},{"../store/async-store":63,"../style/theme":67,"@pucelle/ff":27,"@pucelle/flit":94}],59:[function(require,module,exports){
+},{"../store/async-store":65,"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],61:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -10132,7 +10268,7 @@ Tag = __decorate([
 ], Tag);
 exports.Tag = Tag;
 
-},{"../style/theme":67,"@pucelle/flit":94}],60:[function(require,module,exports){
+},{"../style/theme":69,"@pucelle/flit":96}],62:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -10231,7 +10367,7 @@ Tooltip = __decorate([
 ], Tooltip);
 exports.Tooltip = Tooltip;
 
-},{"../components/popup":49,"../style/theme":67,"@pucelle/flit":94}],61:[function(require,module,exports){
+},{"../components/popup":51,"../style/theme":69,"@pucelle/flit":96}],63:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.svgSymbols = {
@@ -10368,7 +10504,7 @@ exports.svgSymbols = {
 	`,
 };
 
-},{}],62:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 "use strict";
 function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
@@ -10397,6 +10533,7 @@ __export(require("./components/dropdown"));
 __export(require("./components/list"));
 __export(require("./components/select"));
 __export(require("./components/menu"));
+__export(require("./components/contextmenu"));
 __export(require("./components/notification"));
 __export(require("./components/dialog"));
 __export(require("./components/modal"));
@@ -10412,7 +10549,7 @@ __export(require("./bindings/loading"));
 __export(require("./bindings/drag-drop"));
 require("./bindings/drag-drop");
 
-},{"./bindings/contextmenu":29,"./bindings/drag-drop":30,"./bindings/loading":31,"./bindings/popup":32,"./bindings/tooltip":33,"./components/buttongroup":35,"./components/checkbox":36,"./components/dialog":37,"./components/dropdown":38,"./components/form":39,"./components/grid-layout":40,"./components/icon":41,"./components/input":42,"./components/list":43,"./components/loader":44,"./components/menu":45,"./components/modal":46,"./components/notification":47,"./components/popover":48,"./components/popup":49,"./components/progress":50,"./components/radio":51,"./components/resizer":52,"./components/router":53,"./components/search":54,"./components/select":55,"./components/slider":56,"./components/switch":57,"./components/table":58,"./components/tag":59,"./components/tooltip":60,"./store/async-store":63,"./store/store":64,"./style/color":65,"./style/global-style":66,"./style/theme":67}],63:[function(require,module,exports){
+},{"./bindings/contextmenu":30,"./bindings/drag-drop":31,"./bindings/loading":32,"./bindings/popup":33,"./bindings/tooltip":34,"./components/buttongroup":36,"./components/checkbox":37,"./components/contextmenu":38,"./components/dialog":39,"./components/dropdown":40,"./components/form":41,"./components/grid-layout":42,"./components/icon":43,"./components/input":44,"./components/list":45,"./components/loader":46,"./components/menu":47,"./components/modal":48,"./components/notification":49,"./components/popover":50,"./components/popup":51,"./components/progress":52,"./components/radio":53,"./components/resizer":54,"./components/router":55,"./components/search":56,"./components/select":57,"./components/slider":58,"./components/switch":59,"./components/table":60,"./components/tag":61,"./components/tooltip":62,"./store/async-store":65,"./store/store":66,"./style/color":67,"./style/global-style":68,"./style/theme":69}],65:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ff_1 = require("@pucelle/ff");
@@ -10460,7 +10597,7 @@ class AsyncStore extends ff_1.Emitter {
 }
 exports.AsyncStore = AsyncStore;
 
-},{"@pucelle/ff":27}],64:[function(require,module,exports){
+},{"@pucelle/ff":28}],66:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ff_1 = require("@pucelle/ff");
@@ -10798,7 +10935,7 @@ class Store extends ff_1.Emitter {
 }
 exports.Store = Store;
 
-},{"@pucelle/ff":27}],65:[function(require,module,exports){
+},{"@pucelle/ff":28}],67:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ff_1 = require("@pucelle/ff");
@@ -10926,7 +11063,7 @@ class Color {
 }
 exports.Color = Color;
 
-},{"@pucelle/ff":27}],66:[function(require,module,exports){
+},{"@pucelle/ff":28}],68:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -11118,7 +11255,7 @@ flit_1.addGlobalStyle(() => {
 `;
 });
 
-},{"./theme":67,"@pucelle/flit":94}],67:[function(require,module,exports){
+},{"./theme":69,"@pucelle/flit":96}],69:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -11285,7 +11422,7 @@ exports.theme.defineTheme('touch', {
     lineHeight: 46,
 });
 
-},{"./color":65,"@pucelle/ff":27,"@pucelle/flit":94}],68:[function(require,module,exports){
+},{"./color":67,"@pucelle/ff":28,"@pucelle/flit":96}],70:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11363,7 +11500,7 @@ define_1.defineBinding('class', class ClassNameBinding {
     }
 });
 
-},{"../component":82,"./define":69}],69:[function(require,module,exports){
+},{"../component":84,"./define":71}],71:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const definedMap = new Map();
@@ -11422,7 +11559,7 @@ function refBinding(result, ref) {
 }
 exports.refBinding = refBinding;
 
-},{}],70:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11466,7 +11603,7 @@ define_1.defineBinding('disable', class DisabledBinding {
     }
 });
 
-},{"./define":69}],71:[function(require,module,exports){
+},{"./define":71}],73:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11485,7 +11622,7 @@ define_1.defineBinding('html', class HTMLBinding {
     }
 });
 
-},{"./define":69}],72:[function(require,module,exports){
+},{"./define":71}],74:[function(require,module,exports){
 "use strict";
 function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
@@ -11506,7 +11643,7 @@ require("./src");
 require("./show-hide");
 __export(require("./show-hide"));
 
-},{"./class":68,"./define":69,"./enable-disable":70,"./html":71,"./model":73,"./ref":74,"./show-hide":75,"./src":76,"./style":77}],73:[function(require,module,exports){
+},{"./class":70,"./define":71,"./enable-disable":72,"./html":73,"./model":75,"./ref":76,"./show-hide":77,"./src":78,"./style":79}],75:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11694,7 +11831,7 @@ define_1.defineBinding('model', class ModelBinding {
     }
 });
 
-},{"../component":82,"../libs/dom-event":96,"./define":69}],74:[function(require,module,exports){
+},{"../component":84,"../libs/dom-event":98,"./define":71}],76:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11721,7 +11858,7 @@ define_1.defineBinding('ref', class RefBinding {
     remove() { }
 });
 
-},{"./define":69}],75:[function(require,module,exports){
+},{"./define":71}],77:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11779,7 +11916,7 @@ class HideBinding extends ShowBinding {
 }
 exports.hide = define_1.defineBinding('hide', HideBinding);
 
-},{"../libs/directive-transition":95,"./define":69}],76:[function(require,module,exports){
+},{"../libs/directive-transition":97,"./define":71}],78:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11812,7 +11949,7 @@ define_1.defineBinding('src', class SrcBinding {
     }
 });
 
-},{"./define":69}],77:[function(require,module,exports){
+},{"./define":71}],79:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11905,7 +12042,7 @@ define_1.defineBinding('style', class StyleBinding {
     }
 });
 
-},{"./define":69}],78:[function(require,module,exports){
+},{"./define":71}],80:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const emitter_1 = require("../libs/emitter");
@@ -12143,7 +12280,7 @@ exports.Component = Component;
  */
 Component.style = null;
 
-},{"../libs/emitter":97,"../libs/node-helper":99,"../observer":108,"../queue":116,"../template":121,"../watcher":130,"./from-element":81,"./life-cycle":83,"./slot":84,"./style":85}],79:[function(require,module,exports){
+},{"../libs/emitter":99,"../libs/node-helper":101,"../observer":110,"../queue":118,"../template":123,"../watcher":132,"./from-element":83,"./life-cycle":85,"./slot":86,"./style":87}],81:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /** To cache `name -> component constructor` */
@@ -12170,7 +12307,7 @@ function getComponentConstructor(name) {
 }
 exports.getComponentConstructor = getComponentConstructor;
 
-},{}],80:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const style_1 = require("./style");
@@ -12285,7 +12422,7 @@ function disconnectElement(el) {
     }
 }
 
-},{"./constructor":79,"./from-element":81,"./style":85}],81:[function(require,module,exports){
+},{"./constructor":81,"./from-element":83,"./style":87}],83:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const life_cycle_1 = require("./life-cycle");
@@ -12350,7 +12487,7 @@ function getClosestComponent(el, Com) {
 }
 exports.getClosestComponent = getClosestComponent;
 
-},{"./life-cycle":83}],82:[function(require,module,exports){
+},{"./life-cycle":85}],84:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var constructor_1 = require("./constructor");
@@ -12372,7 +12509,7 @@ var define_1 = require("./define");
 exports.define = define_1.define;
 exports.createComponent = define_1.createComponent;
 
-},{"./component":78,"./constructor":79,"./define":80,"./from-element":81,"./life-cycle":83,"./style":85}],83:[function(require,module,exports){
+},{"./component":80,"./constructor":81,"./define":82,"./from-element":83,"./life-cycle":85,"./style":87}],85:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const watcher_1 = require("../watcher");
@@ -12421,7 +12558,7 @@ function updateComponents() {
 }
 exports.updateComponents = updateComponents;
 
-},{"../watcher":130}],84:[function(require,module,exports){
+},{"../watcher":132}],86:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_helper_1 = require("../libs/node-helper");
@@ -12438,8 +12575,10 @@ class SlotProcesser {
         this.initNamedSlotNodes();
         this.initRestSlotRange();
     }
-    // Must cache slot nodes when com created and before child created,
-    // Because child components may remove them when created, in this situation we will lost it forever.
+    // Here we cache slot nodes when we detected there is `<slot>` in the template,
+    // And only for once..
+    // So if those named slot element were removed before or created dynamically in the future,
+    // We can't capture this and update name slot elements.
     initNamedSlotNodes() {
         let slots = this.slots;
         // We only check `[slot]` in the children, or:
@@ -12498,7 +12637,7 @@ class SlotProcesser {
 }
 exports.SlotProcesser = SlotProcesser;
 
-},{"../libs/node-helper":99}],85:[function(require,module,exports){
+},{"../libs/node-helper":101}],87:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const queue_1 = require("../queue");
@@ -12727,7 +12866,7 @@ var StyleParser;
 })(StyleParser || (StyleParser = {}));
 exports.getScopedClassNameSet = StyleParser.getScopedClassNameSet;
 
-},{"../queue":116}],86:[function(require,module,exports){
+},{"../queue":118}],88:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -12821,7 +12960,7 @@ class CacheDirective {
  */
 exports.cache = define_1.defineDirective(CacheDirective);
 
-},{"../libs/directive-transition":95,"../libs/node-helper":99,"../template":121,"./define":87}],87:[function(require,module,exports){
+},{"../libs/directive-transition":97,"../libs/node-helper":101,"../template":123,"./define":89}],89:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 let seed = 0;
@@ -12871,7 +13010,7 @@ function refDirective(result, ref) {
 }
 exports.refDirective = refDirective;
 
-},{}],88:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var define_1 = require("./define");
@@ -12892,7 +13031,7 @@ var live_async_repeat_1 = require("./live-async-repeat");
 exports.liveAsyncRepeat = live_async_repeat_1.liveAsyncRepeat;
 exports.LiveAsyncRepeatDirective = live_async_repeat_1.LiveAsyncRepeatDirective;
 
-},{"./cache":86,"./define":87,"./live-async-repeat":89,"./live-repeat":90,"./play":91,"./repeat":92}],89:[function(require,module,exports){
+},{"./cache":88,"./define":89,"./live-async-repeat":91,"./live-repeat":92,"./play":93,"./repeat":94}],91:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -12914,7 +13053,6 @@ const observer_1 = require("../observer");
 class LiveAsyncRepeatDirective extends live_repeat_1.LiveRepeatDirective {
     constructor() {
         super(...arguments);
-        this.dataCount = null;
         this.key = null;
         /**
          * Whole data count when using `dataGetter`.
@@ -12928,16 +13066,34 @@ class LiveAsyncRepeatDirective extends live_repeat_1.LiveRepeatDirective {
     }
     merge(options, templateFn, transitionOptions) {
         let firstlyUpdate = !this.options.updated;
+        if (firstlyUpdate) {
+            if (options.startIndex > 0) {
+                this.startIndex = options.startIndex;
+            }
+        }
         this.options.update(options);
         this.templateFn = templateFn;
         this.transition.updateOptions(transitionOptions);
         if (firstlyUpdate) {
             this.validateTemplateFn(templateFn);
             this.dataCacher = new page_data_cacher_1.PageDataCacher(options.pageSize);
-            this.updateDataCount();
+        }
+        this.dataCacher.setDataGetter(options.dataGetter);
+        if (firstlyUpdate) {
+            if (options.startIndex > 0) {
+                this.updateDataCount().then(() => {
+                    this.startIndex = this.limitStartIndex(options.startIndex);
+                    this.needToApplyStartIndex = true;
+                    this.update();
+                });
+            }
+            else {
+                this.updateDataCount();
+                this.update();
+            }
         }
         else {
-            this.dataCacher.setDataGetter(options.dataGetter);
+            this.update();
         }
     }
     validateTemplateFn(templateFn) {
@@ -12957,16 +13113,17 @@ class LiveAsyncRepeatDirective extends live_repeat_1.LiveRepeatDirective {
         }
     }
     async updateDataCount() {
-        if (!this.dataCount) {
+        let dataCountFn = this.options.get('dataCount');
+        if (!dataCountFn) {
             return;
         }
         this.knownDataCount = -1;
         let dataCount;
-        if (typeof this.dataCount === 'function') {
-            dataCount = this.dataCount();
+        if (typeof dataCountFn === 'function') {
+            dataCount = dataCountFn();
         }
         else {
-            dataCount = this.dataCount;
+            dataCount = dataCountFn;
         }
         if (dataCount instanceof Promise) {
             this.knownDataCount = await dataCount;
@@ -12980,9 +13137,8 @@ class LiveAsyncRepeatDirective extends live_repeat_1.LiveRepeatDirective {
     }
     async update(renderPalceholders = true) {
         this.updateSliderPosition();
-        let pageSize = this.options.get('pageSize');
-        let renderPageCount = this.options.get('renderPageCount');
-        let endIndex = this.limitEndIndex(this.startIndex + pageSize * renderPageCount);
+        let renderCount = this.options.get('pageSize') * this.options.get('renderPageCount');
+        let endIndex = this.limitEndIndex(this.startIndex + renderCount);
         let needToRenderWithFreshData = !renderPalceholders;
         let updateImmediatelyPromise;
         if (renderPalceholders) {
@@ -13093,7 +13249,7 @@ exports.LiveAsyncRepeatDirective = LiveAsyncRepeatDirective;
  */
 exports.liveAsyncRepeat = define_1.defineDirective(LiveAsyncRepeatDirective);
 
-},{"../libs/page-data-cacher":101,"../observer":108,"../template":121,"./define":87,"./live-repeat":90}],90:[function(require,module,exports){
+},{"../libs/page-data-cacher":103,"../observer":110,"../template":123,"./define":89,"./live-repeat":92}],92:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -13157,7 +13313,7 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
 				</div>
 			"`);
         }
-        dom_event_1.on(this.scroller, 'scroll.passive', util_1.throttleByAnimationFrame(this.onScroll.bind(this)));
+        dom_event_1.on(this.scroller, 'scroll.passive', this.onScroll, this);
         queue_1.onRenderComplete(() => {
             let computedStyle = getComputedStyle(this.scroller);
             if (!['scroll', 'auto'].includes(computedStyle.overflowY)) {
@@ -13177,10 +13333,18 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         return templateFn.toString() === this.templateFn.toString();
     }
     merge(options, templateFn, transitionOptions) {
+        let firstlyUpdate = !this.options.updated;
         this.options.update(options);
         this.templateFn = templateFn;
         this.transition.updateOptions(transitionOptions);
         if (options.data !== undefined) {
+            if (firstlyUpdate && options.data && options.startIndex > 0) {
+                // `this.data` is not assigned yet, so cant use `limitStartIndex`
+                let renderCount = this.options.get('pageSize') * this.options.get('renderPageCount');
+                let startIndex = Math.min(options.startIndex, options.data.length - renderCount);
+                this.startIndex = Math.max(0, startIndex);
+                this.needToApplyStartIndex = true;
+            }
             this.watchRawDataAndUpdate(options.data);
         }
     }
@@ -13204,21 +13368,11 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
     }
     async update() {
         this.updateSliderPosition();
-        let pageSize = this.options.get('pageSize');
-        let renderPageCount = this.options.get('renderPageCount');
-        let endIndex = this.limitEndIndex(this.startIndex + pageSize * renderPageCount);
+        let endIndex = this.getLimitedEndIndex();
         let data = this.rawData ? this.rawData.slice(this.startIndex, endIndex) : [];
         this.toCompleteRendering = this.updateData(data);
         await this.toCompleteRendering;
         this.toCompleteRendering = null;
-        // let scrollerRect = new ScrollerClientRect(this.scroller)
-        // let sliderRect = this.slider.getBoundingClientRect()
-        // if (scrollerRect.rect.top < sliderRect.top) {
-        // 	debugger
-        // }
-        // else if (scrollerRect.rect.bottom > sliderRect.bottom) {
-        // 	debugger
-        // }
     }
     async updateData(data) {
         super.updateData(data);
@@ -13238,12 +13392,25 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
             }
         }
     }
+    /** `this.data` must be determinated. */
+    limitStartIndex(index) {
+        let renderCount = this.options.get('pageSize') * this.options.get('renderPageCount');
+        let endIndex = this.limitEndIndex(index + renderCount);
+        let startIndex = Math.max(0, endIndex - renderCount);
+        return startIndex;
+    }
     limitEndIndex(index) {
         let maxCount = this.getTotalDataCount();
         if (maxCount >= 0 && index > maxCount) {
             index = maxCount;
         }
         return index;
+    }
+    /** `this.startIndex` must be determinated. */
+    getLimitedEndIndex() {
+        let renderCount = this.options.get('pageSize') * this.options.get('renderPageCount');
+        let endIndex = this.limitEndIndex(this.startIndex + renderCount);
+        return endIndex;
     }
     getTotalDataCount() {
         if (this.rawData) {
@@ -13258,11 +13425,9 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
     // When no child nodes moved in scroller, expecially when rendering placeholder values [null, ...].
     // updating height of placeholder elements will cause `scroller.scrollTop` reset.
     updateSliderPosition() {
-        let pageSize = this.options.get('pageSize');
-        let renderPageCount = this.options.get('renderPageCount');
         let countBeforeStart = this.startIndex;
-        let endIndex = this.limitEndIndex(this.startIndex + pageSize * renderPageCount);
         let countAfterEnd = 0;
+        let endIndex = this.getLimitedEndIndex();
         let totalCount = this.getTotalDataCount();
         if (totalCount >= 0) {
             countAfterEnd = Math.max(0, totalCount - endIndex);
@@ -13313,47 +13478,42 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         this.checkRenderedRange();
     }
     checkRenderedRange() {
-        let scrollerRect = new util_1.ScrollerClientRect(this.scroller);
+        let scrollerRect = this.scroller.getBoundingClientRect();
         let sliderRect = this.slider.getBoundingClientRect();
-        if (scrollerRect.rect.top < sliderRect.top) {
+        if (scrollerRect.top < sliderRect.top) {
             this.updateToCover('up');
         }
-        else if (scrollerRect.rect.bottom > sliderRect.bottom) {
+        else if (scrollerRect.bottom > sliderRect.bottom) {
             this.updateToCover('down');
         }
     }
     // `direction` means where we render new items, and also the direction that the value of `startIndex` will change to.
     updateToCover(scrollDirection) {
-        let pageSize = this.options.get('pageSize');
-        let renderPageCount = this.options.get('renderPageCount');
+        let renderCount = this.options.get('pageSize') * this.options.get('renderPageCount');
         let startIndex = -1;
-        let endIndex = -1; // Max value is `rawData.length`, it's a slice index, not true index of data. 
-        let visibleIndex = -1;
         if (scrollDirection === 'up') {
-            visibleIndex = this.locateLastVisibleIndex();
+            let visibleIndex = this.locateLastVisibleIndex();
             if (visibleIndex > -1) {
-                endIndex = visibleIndex + 1;
+                startIndex = visibleIndex + 1 - renderCount;
             }
         }
         else {
-            visibleIndex = this.locateFirstVisibleIndex();
-            if (startIndex > -1) {
+            let visibleIndex = this.locateFirstVisibleIndex();
+            if (visibleIndex > -1) {
                 startIndex = visibleIndex;
-                endIndex = startIndex + pageSize * renderPageCount;
             }
         }
         // In this situation two rendering have no sharing part
-        if (endIndex === -1) {
+        if (startIndex === -1) {
             if (scrollDirection === 'up') {
-                endIndex = Math.ceil((this.scroller.scrollTop + this.scroller.clientHeight) / this.averageItemHeight);
+                startIndex = Math.ceil((this.scroller.scrollTop + this.scroller.clientHeight) / this.averageItemHeight) - renderCount;
             }
             else {
-                endIndex = Math.floor(this.scroller.scrollTop / this.averageItemHeight)
-                    + pageSize * renderPageCount;
+                startIndex = Math.floor(this.scroller.scrollTop / this.averageItemHeight);
             }
         }
-        endIndex = this.limitEndIndex(endIndex);
-        startIndex = Math.max(0, endIndex - pageSize * renderPageCount);
+        startIndex = this.limitStartIndex(startIndex);
+        let endIndex = this.limitEndIndex(startIndex + renderCount);
         this.validateContinuousScrolling(scrollDirection, startIndex, endIndex);
         this.startIndex = startIndex;
         this.update();
@@ -13365,15 +13525,15 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         return this.locateVisibleIndex(false);
     }
     locateVisibleIndex(isFirst) {
-        let scrollerRect = new util_1.ScrollerClientRect(this.scroller);
+        let scrollerRect = this.scroller.getBoundingClientRect();
         let visibleIndex = util_1.binaryFindIndexToInsert(this.wtems, (wtem) => {
             let firstElement = wtem.template.range.getFirstElement();
             if (firstElement) {
                 let rect = firstElement.getBoundingClientRect();
-                if (scrollerRect.isRectAbove(rect)) {
+                if (rect.bottom <= scrollerRect.top) {
                     return 1;
                 }
-                else if (scrollerRect.isRectBelow(rect)) {
+                else if (rect.top >= scrollerRect.bottom) {
                     return -1;
                 }
                 else {
@@ -13393,10 +13553,10 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         let firstElement = this.wtems[visibleIndex].template.range.getFirstElement();
         let firstElementRect = firstElement.getBoundingClientRect();
         // The found index is just an enge index, may the element still outside the visible range.
-        if (scrollerRect.isRectAbove(firstElementRect)) {
+        if (firstElementRect.bottom <= scrollerRect.top) {
             visibleIndex += 1;
         }
-        else if (scrollerRect.isRectBelow(firstElementRect)) {
+        else if (firstElementRect.top >= scrollerRect.bottom) {
             visibleIndex -= 1;
         }
         if (visibleIndex >= 0 && visibleIndex < this.data.length) {
@@ -13406,16 +13566,17 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
     }
     validateContinuousScrolling(scrollDirection, startIndex, endIndex) {
         let indexToKeepPosition = scrollDirection === 'down' ? startIndex : endIndex;
+        let isSameScrollDirection = this.continuousScrollDirection === scrollDirection;
         let el = this.getElementOfIndex(indexToKeepPosition);
         if (el !== null) {
             this.continuousScrollDirection = scrollDirection;
             if (scrollDirection === 'down') {
-                let position = this.getSliderTopPosition();
+                let position = isSameScrollDirection ? this.continuousSliderPosition : this.getSliderTopPosition();
                 position += el.getBoundingClientRect().top - this.slider.getBoundingClientRect().top;
                 this.continuousSliderPosition = position;
             }
             else {
-                let position = this.getSliderBottomPosition();
+                let position = isSameScrollDirection ? this.continuousSliderPosition : this.getSliderBottomPosition();
                 position += el.getBoundingClientRect().bottom - this.slider.getBoundingClientRect().bottom;
                 this.continuousSliderPosition = position;
             }
@@ -13449,7 +13610,7 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
     }
     /** Set `startIndex`, and the item in which index will be at the top start position of the viewport. */
     async setStartIndex(index) {
-        this.startIndex = this.limitEndIndex(index);
+        this.startIndex = this.limitStartIndex(index);
         this.needToApplyStartIndex = true;
         this.continuousScrollDirection = null;
         // It doesn't update immediately because `rawData` may changed and will update soon.
@@ -13487,19 +13648,15 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
     scrollToViewRenderedIndex(index) {
         let el = this.wtems[index - this.startIndex].template.range.getFirstElement();
         let rect = el.getBoundingClientRect();
-        let scrollerRect = new util_1.ScrollerClientRect(this.scroller);
+        let scrollerRect = this.scroller.getBoundingClientRect();
         // Below it, need to scroll up
-        if (rect.bottom > scrollerRect.rect.bottom) {
-            this.scroller.scrollTop = this.scroller.scrollTop + (scrollerRect.rect.bottom - rect.bottom);
+        if (rect.bottom > scrollerRect.bottom) {
+            this.scroller.scrollTop = this.scroller.scrollTop + (scrollerRect.bottom - rect.bottom);
         }
         // Above it, need to scroll down
-        else if (rect.top < scrollerRect.rect.top) {
-            this.scroller.scrollTop = this.scroller.scrollTop + (scrollerRect.rect.top - rect.top);
+        else if (rect.top < scrollerRect.top) {
+            this.scroller.scrollTop = this.scroller.scrollTop + (scrollerRect.top - rect.top);
         }
-    }
-    /** Get item in index. */
-    getItem(index) {
-        return this.rawData ? this.rawData[index] || null : null;
     }
 }
 exports.LiveRepeatDirective = LiveRepeatDirective;
@@ -13512,7 +13669,7 @@ exports.LiveRepeatDirective = LiveRepeatDirective;
  */
 exports.liveRepeat = define_1.defineDirective(LiveRepeatDirective);
 
-},{"../libs/dom-event":96,"../libs/options":100,"../libs/util":103,"../observer":108,"../queue":116,"../watcher":130,"./define":87,"./repeat":92}],91:[function(require,module,exports){
+},{"../libs/dom-event":98,"../libs/options":102,"../libs/util":105,"../observer":110,"../queue":118,"../watcher":132,"./define":89,"./repeat":94}],93:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -13589,7 +13746,7 @@ class PalyDirective {
  */
 exports.play = define_1.defineDirective(PalyDirective);
 
-},{"../libs/directive-transition":95,"../template":121,"./define":87}],92:[function(require,module,exports){
+},{"../libs/directive-transition":97,"../template":123,"./define":89}],94:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -13827,7 +13984,7 @@ exports.RepeatDirective = RepeatDirective;
  */
 exports.repeat = define_1.defineDirective(RepeatDirective);
 
-},{"../libs/directive-transition":95,"../libs/watched-template":104,"../observer":108,"../watcher":130,"./define":87}],93:[function(require,module,exports){
+},{"../libs/directive-transition":97,"../libs/watched-template":106,"../observer":110,"../watcher":132,"./define":89}],95:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const observer_1 = require("./observer");
@@ -13848,7 +14005,7 @@ class ObservedEmitter extends emitter_1.Emitter {
 }
 exports.ObservedEmitter = ObservedEmitter;
 
-},{"./libs/emitter":97,"./observer":108}],94:[function(require,module,exports){
+},{"./libs/emitter":99,"./observer":110}],96:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var emitter_1 = require("./emitter");
@@ -13914,7 +14071,7 @@ exports.clearTransition = transition_1.clearTransition;
 var options_1 = require("./libs/options");
 exports.Options = options_1.Options;
 
-},{"./bindings":72,"./component":82,"./directives":88,"./emitter":93,"./libs/dom-event":96,"./libs/options":100,"./libs/transition":102,"./observer":108,"./queue":116,"./render":117,"./template":121,"./watcher":130}],95:[function(require,module,exports){
+},{"./bindings":74,"./component":84,"./directives":90,"./emitter":95,"./libs/dom-event":98,"./libs/options":102,"./libs/transition":104,"./observer":110,"./queue":118,"./render":119,"./template":123,"./watcher":132}],97:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const transition_1 = require("./transition");
@@ -13978,7 +14135,7 @@ class DirectiveTransition {
 }
 exports.DirectiveTransition = DirectiveTransition;
 
-},{"./options":100,"./transition":102}],96:[function(require,module,exports){
+},{"./options":102,"./transition":104}],98:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const GLOBAL_EVENT_MODIFIERS = ['capture', 'self', 'once', 'prevent', 'stop', 'passive'];
@@ -14206,7 +14363,7 @@ function wrapHandler(once, modifiers, el, name, handler, scope) {
     };
 }
 
-},{}],97:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 "use strict";
 // This file cloned for https://github.com/pucelle/ff/blob/master/src/base/emitter.ts
 // You may visit it to find more descriptions about the implemention.
@@ -14283,7 +14440,7 @@ class Emitter {
 }
 exports.Emitter = Emitter;
 
-},{}],98:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = require("./util");
@@ -14387,7 +14544,7 @@ function joinHTMLTokens(tokens) {
 }
 exports.joinHTMLTokens = joinHTMLTokens;
 
-},{"./util":103}],99:[function(require,module,exports){
+},{"./util":105}],101:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var NodeAnchorType;
@@ -14490,7 +14647,7 @@ class NodeRange {
 }
 exports.NodeRange = NodeRange;
 
-},{}],100:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /** Used to mange options updating. */
@@ -14516,7 +14673,7 @@ class Options {
 }
 exports.Options = Options;
 
-},{}],101:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = require("./util");
@@ -14739,7 +14896,7 @@ class PageDataCacher {
 }
 exports.PageDataCacher = PageDataCacher;
 
-},{"./util":103}],102:[function(require,module,exports){
+},{"./util":105}],104:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const dom_event_1 = require("./dom-event");
@@ -15092,7 +15249,7 @@ function animateTo(el, endFrame, duration, easing) {
     // el will hide, no need to set style to end frame.
 }
 
-},{"../queue":116,"./dom-event":96}],103:[function(require,module,exports){
+},{"../queue":118,"./dom-event":98}],105:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function trim(text) {
@@ -15155,51 +15312,6 @@ function binaryFindIndexToInsert(array, fn) {
     return end;
 }
 exports.binaryFindIndexToInsert = binaryFindIndexToInsert;
-/** Exclude paddings from `getBoundingClientRect` result. */
-class ScrollerClientRect {
-    constructor(scroller) {
-        let rawRect = scroller.getBoundingClientRect();
-        let style = getComputedStyle(scroller);
-        let paddingTop = parseFloat(style.paddingTop) || 0;
-        let paddingRight = parseFloat(style.paddingRight) || 0;
-        let paddingBottom = parseFloat(style.paddingTop) || 0;
-        let paddingLeft = parseFloat(style.paddingLeft) || 0;
-        this.rect = {
-            top: rawRect.top + paddingTop,
-            right: rawRect.right - paddingRight,
-            bottom: rawRect.bottom - paddingBottom,
-            left: rawRect.left + paddingLeft,
-            width: rawRect.width - paddingLeft - paddingRight,
-            height: rawRect.height - paddingTop - paddingBottom
-        };
-    }
-    /** Returns if the element with `rect` is above the scroller. */
-    isRectAbove(rect) {
-        return rect.bottom <= this.rect.top;
-    }
-    /** Returns if the element with `rect` is below the scroller. */
-    isRectBelow(rect) {
-        return rect.top >= this.rect.bottom;
-    }
-    /** Returns if the element with `rect` is in scroller or cross with the scroller. */
-    isRectIn(rect) {
-        return !this.isRectAbove(rect) && !this.isRectBelow(rect);
-    }
-}
-exports.ScrollerClientRect = ScrollerClientRect;
-/** Used to throttle scroll event to trigger at most once in each animation frame. */
-function throttleByAnimationFrame(fn) {
-    let frameId = null;
-    return function (...args) {
-        if (!frameId) {
-            frameId = requestAnimationFrame(() => {
-                frameId = null;
-            });
-            fn(...args);
-        }
-    };
-}
-exports.throttleByAnimationFrame = throttleByAnimationFrame;
 function repeatValue(value, count) {
     let values = [];
     for (let i = 0; i < count; i++) {
@@ -15209,7 +15321,7 @@ function repeatValue(value, count) {
 }
 exports.repeatValue = repeatValue;
 
-},{}],104:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const template_1 = require("../template");
@@ -15260,7 +15372,7 @@ class WatchedTemplate {
 }
 exports.WatchedTemplate = WatchedTemplate;
 
-},{"../template":121,"../watcher":130}],105:[function(require,module,exports){
+},{"../template":123,"../watcher":132}],107:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -15342,7 +15454,7 @@ class Weak2WayMap {
 }
 exports.Weak2WayMap = Weak2WayMap;
 
-},{}],106:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -15491,7 +15603,7 @@ class Weak2WayPropMap {
 }
 exports.Weak2WayPropMap = Weak2WayPropMap;
 
-},{}],107:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const weak_2way_map_1 = require("../libs/weak-2way-map");
@@ -15620,7 +15732,7 @@ function notifyObjectSet(obj) {
 }
 exports.notifyObjectSet = notifyObjectSet;
 
-},{"../libs/weak-2way-map":105,"../libs/weak-2way-prop-map":106}],108:[function(require,module,exports){
+},{"../libs/weak-2way-map":107,"../libs/weak-2way-prop-map":108}],110:[function(require,module,exports){
 "use strict";
 // Proxy benchmark: https://jsperf.com/es6-proxy/11
 // Proxy getting and setting are always 50x-100x slower than plain object.
@@ -15643,7 +15755,7 @@ exports.restoreAsDependency = dependency_1.restoreAsDependency;
 var observe_getter_1 = require("./observe-getter");
 exports.observeGetter = observe_getter_1.observeGetter;
 
-},{"./dependency":107,"./observe":114,"./observe-com":110,"./observe-getter":111,"./shared":115}],109:[function(require,module,exports){
+},{"./dependency":109,"./observe":116,"./observe-com":112,"./observe-getter":113,"./shared":117}],111:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const dependency_1 = require("./dependency");
@@ -15700,7 +15812,7 @@ const proxyHandler = {
     }
 };
 
-},{"./dependency":107,"./shared":115}],110:[function(require,module,exports){
+},{"./dependency":109,"./shared":117}],112:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const dependency_1 = require("./dependency");
@@ -15754,7 +15866,7 @@ const proxyHandler = {
     }
 };
 
-},{"./dependency":107,"./shared":115}],111:[function(require,module,exports){
+},{"./dependency":109,"./shared":117}],113:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -15789,7 +15901,7 @@ function getPropertyDescriptor(obj, property) {
     return null;
 }
 
-},{}],112:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const dependency_1 = require("./dependency");
@@ -15838,7 +15950,7 @@ const proxyHandler = {
     }
 };
 
-},{"./dependency":107,"./shared":115}],113:[function(require,module,exports){
+},{"./dependency":109,"./shared":117}],115:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const dependency_1 = require("./dependency");
@@ -15872,7 +15984,7 @@ const proxyHandler = {
     }
 };
 
-},{"./dependency":107,"./shared":115}],114:[function(require,module,exports){
+},{"./dependency":109,"./shared":117}],116:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const shared_1 = require("./shared");
@@ -15897,7 +16009,7 @@ function observe(value) {
 }
 exports.observe = observe;
 
-},{"./shared":115}],115:[function(require,module,exports){
+},{"./shared":117}],117:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const observe_object_1 = require("./observe-object");
@@ -15923,7 +16035,7 @@ function observeTarget(obj) {
 }
 exports.observeTarget = observeTarget;
 
-},{"./observe-array":109,"./observe-object":112,"./observe-set-or-map":113}],116:[function(require,module,exports){
+},{"./observe-array":111,"./observe-object":114,"./observe-set-or-map":115}],118:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 let componentSet = new Set();
@@ -16061,7 +16173,7 @@ async function update() {
     }
 }
 
-},{}],117:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const template_1 = require("./template");
@@ -16154,7 +16266,7 @@ function appendTo(el, target) {
 }
 exports.appendTo = appendTo;
 
-},{"./component":82,"./directives":88,"./template":121,"./watcher":130}],118:[function(require,module,exports){
+},{"./component":84,"./directives":90,"./template":123,"./watcher":132}],120:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -16176,7 +16288,7 @@ class AttrPart {
 }
 exports.AttrPart = AttrPart;
 
-},{}],119:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const bindings_1 = require("../bindings");
@@ -16237,7 +16349,7 @@ class BindingPart {
 }
 exports.BindingPart = BindingPart;
 
-},{"../bindings":72}],120:[function(require,module,exports){
+},{"../bindings":74}],122:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const component_1 = require("../component");
@@ -16292,7 +16404,7 @@ class EventPart {
 }
 exports.EventPart = EventPart;
 
-},{"../component":82,"../libs/dom-event":96}],121:[function(require,module,exports){
+},{"../component":84,"../libs/dom-event":98}],123:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var node_part_1 = require("./node-part");
@@ -16305,7 +16417,7 @@ exports.html = template_result_1.html;
 exports.css = template_result_1.css;
 exports.svg = template_result_1.svg;
 
-},{"./node-part":123,"./template":129,"./template-result":128}],122:[function(require,module,exports){
+},{"./node-part":125,"./template":131,"./template-result":130}],124:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -16332,7 +16444,7 @@ class MayAttrPart {
 }
 exports.MayAttrPart = MayAttrPart;
 
-},{}],123:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const template_result_1 = require("./template-result");
@@ -16480,7 +16592,7 @@ class NodePart {
 }
 exports.NodePart = NodePart;
 
-},{"../directives":88,"../libs/util":103,"./template":129,"./template-result":128}],124:[function(require,module,exports){
+},{"../directives":90,"../libs/util":105,"./template":131,"./template-result":130}],126:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const component_1 = require("../component");
@@ -16569,7 +16681,7 @@ class PropertyPart {
 }
 exports.PropertyPart = PropertyPart;
 
-},{"../component":82}],125:[function(require,module,exports){
+},{"../component":84}],127:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const html_token_1 = require("../libs/html-token");
@@ -16731,7 +16843,7 @@ function findEndTagIndex(tokens, startTagIndex) {
     return tokens.length - 1;
 }
 
-},{"../libs/html-token":98,"./template-result":128,"./template-result-operate":127}],126:[function(require,module,exports){
+},{"../libs/html-token":100,"./template-result":130,"./template-result-operate":129}],128:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const template_result_operate_1 = require("./template-result-operate");
@@ -17029,7 +17141,7 @@ function cloneParseResult(sharedResult, el) {
     };
 }
 
-},{"../component":82,"../libs/html-token":98,"../libs/util":103,"./template-result-operate":127}],127:[function(require,module,exports){
+},{"../component":84,"../libs/html-token":100,"../libs/util":105,"./template-result-operate":129}],129:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /** Get the start tag of a `TemplateResult`. */
@@ -17100,7 +17212,7 @@ function splitByOrderedMarkers(string) {
 }
 exports.splitByOrderedMarkers = splitByOrderedMarkers;
 
-},{}],128:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const template_extends_1 = require("./template-extends");
@@ -17173,7 +17285,7 @@ class TemplateResult {
 }
 exports.TemplateResult = TemplateResult;
 
-},{"./template-extends":125}],129:[function(require,module,exports){
+},{"./template-extends":127}],131:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_helper_1 = require("../libs/node-helper");
@@ -17300,7 +17412,7 @@ function join(strings, values) {
     return text;
 }
 
-},{"../libs/node-helper":99,"./attr-part":118,"./binding-part":119,"./event-part":120,"./may-attr-part":122,"./node-part":123,"./property-part":124,"./template-parser":126}],130:[function(require,module,exports){
+},{"../libs/node-helper":101,"./attr-part":120,"./binding-part":121,"./event-part":122,"./may-attr-part":124,"./node-part":125,"./property-part":126,"./template-parser":128}],132:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const observer_1 = require("./observer");
@@ -17476,4 +17588,4 @@ function watchUntil(fn, callback) {
 }
 exports.watchUntil = watchUntil;
 
-},{"./observer":108,"./queue":116}]},{},[28]);
+},{"./observer":110,"./queue":118}]},{},[29]);

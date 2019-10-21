@@ -8,7 +8,7 @@ import * as fui from '../src'
 
 
 import {html, Component, renderComponent, define, repeat, observe} from '@pucelle/flit'
-import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, Column, Select, ListItem} from '../src'
+import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, Column, Select, ListItem, AsyncStore} from '../src'
 
 
 define('flit-preview', class extends Component {
@@ -780,7 +780,43 @@ define('flit-preview', class extends Component {
 				/>
 			</section>
 
-			<section style="padding: 0 0 0 8px">
+
+			<section>
+				<h3>Table with Async Data</h3>
+
+				<f-table
+					.resizable
+					.live
+					.pageSize="10"
+					.store=${new ExampleAsyncStore()}
+					.columns=${[
+						{
+							title: 'Index',
+							render: (_item: {id: number, value: number}, index: number) => {
+								return index
+							},
+						},
+						{
+							title: 'Date',
+							render: () => '2019/10/19',
+						},
+						{
+							title: 'ID',
+							orderBy: 'id',
+							render: (item) => item.id,
+						},
+						{
+							title: 'Value',
+							orderBy: 'value',
+							render: (item) => item.value,
+							align: 'right',
+						}
+					] as Column[]}
+				/>
+			</section>
+
+
+			<section>
 				<h3>Drag & Drop</h3>
 
 				<div style="display: inline-flex; padding: 4px; background: ${theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center;"
@@ -834,17 +870,17 @@ define('f-main-color-select', class MainColorSelect extends Select<string> {
 	value = '#3a6cf6'
 
 	data: ListItem<string>[] = [
-		{value: '#3a6cf6', style: 'color: #3a6cf6;', text: 'Blue'    },
-		{value: '#48c7c7', style: 'color: #48c7c7;', text: 'Cyan'    },
-		{value: '#0077cf', style: 'color: #0077cf;', text: 'Darkblue'},
-		{value: '#4eb2ea', style: 'color: #4eb2ea;', text: 'Skyblue' },
-		{value: '#be66cc', style: 'color: #be66cc;', text: 'Purple'  },
-		{value: '#ff6666', style: 'color: #ff6666;', text: 'Red'     },
-		{value: '#ff8095', style: 'color: #ff8095;', text: 'Pink'    },
-		{value: '#d65c5c', style: 'color: #d65c5c;', text: 'Brown'   },
-		{value: '#f67d51', style: 'color: #f67d51;', text: 'Orange'  },
-		{value: '#15af78', style: 'color: #15af78;', text: 'Green'   },
-		{value: '#888888', style: 'color: #888888;', text: 'Grey'    },
+		{value: '#3a6cf6', text: html`<div style="color: #3a6cf6;">Blue</div>`},
+		{value: '#48c7c7', text: html`<div style="color: #48c7c7;">Cyan</div>`},
+		{value: '#0077cf', text: html`<div style="color: #0077cf;">Darkblue</div>`},
+		{value: '#4eb2ea', text: html`<div style="color: #4eb2ea;">Skyblue</div>`},
+		{value: '#be66cc', text: html`<div style="color: #be66cc;">Purple</div>`},
+		{value: '#ff6666', text: html`<div style="color: #ff6666;">Red</div>`},
+		{value: '#ff8095', text: html`<div style="color: #ff8095;">Pink</div>`},
+		{value: '#d65c5c', text: html`<div style="color: #d65c5c;">Brown</div>`},
+		{value: '#f67d51', text: html`<div style="color: #f67d51;">Orange</div>`},
+		{value: '#15af78', text: html`<div style="color: #15af78;">Green</div>`},
+		{value: '#888888', text: html`<div style="color: #888888;">Grey</div>`},
 	]
 
 	onReady() {
@@ -863,4 +899,16 @@ function range(start: number, end: number) {
 		data.push(i)
 	}
 	return data
+}
+
+
+class ExampleAsyncStore extends AsyncStore {
+
+	key = 'id'
+	dataCount = () => 1000
+
+	async dataGetter(start: number, count: number) {
+		await ff.sleep(500)
+		return range(start, start + count - 1).map(v => ({id: v, value: Math.round(Math.random() * 100)}))
+	}
 }
