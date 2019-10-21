@@ -217,6 +217,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 
 		this.alignPopup()
 		popup.el.style.visibility = ''
+		this.mayFocus()
 
 		if (inUse) {
 			clearTransition(popup.el)
@@ -232,6 +233,13 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 
 		this.bindLeave()
 		this.unwatchRect = watchLayout(this.el, 'rect', this.onElRectChanged.bind(this))
+	}
+
+	protected mayFocus() {
+		let trigger = this.getOption('trigger')
+		if ((trigger === 'hover' || trigger === 'focus') && this.el.tabIndex >= 0) {
+			this.el.focus()
+		}
 	}
 
 	protected bindLeave() {
