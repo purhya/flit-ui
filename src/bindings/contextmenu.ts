@@ -1,35 +1,7 @@
-import {defineBinding, Context, on, off, renderComplete, define, css, Transition, Binding, once, BindingResult, renderComponent, html} from '@pucelle/flit'
+import {defineBinding, Context, on, off, renderComplete, Transition, Binding, once, BindingResult, renderComponent, html} from '@pucelle/flit'
 import {alignToEvent, watchLayout, MouseLeave} from '@pucelle/ff'
-import {theme} from '../style/theme'
-import {Popup} from '../components/popup'
 import {RenderFn} from './popup'
-
-
-@define('f-contextmenu')
-class ContextMenu<E = any> extends Popup<E> {
-
-	static style() {
-		let {adjust} = theme
-		
-		return css`
-		${super.style()}
-		:host{
-			position: fixed;
-			border-radius: 0;
-			
-			.option__f-list{
-				padding: ${adjust(2)}px ${adjust(8)}px;
-
-				&:last-child{
-					border-bottom: none;
-				}
-			}
-		}
-		`.extends(super.style())
-	}
-
-	trangle: boolean = false
-}
+import {ContextMenu} from '../components/contextmenu'
 
 
 class ContextMenuBinding implements Binding<[RenderFn]> {

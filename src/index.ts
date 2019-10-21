@@ -24,6 +24,7 @@ export * from './components/dropdown'
 export * from './components/list'
 export * from './components/select'
 export * from './components/menu'
+export * from './components/contextmenu'
 
 export * from './components/notification'
 export * from './components/dialog'

@@ -1,0 +1,30 @@
+import {define, css} from '@pucelle/flit'
+import {theme} from '../style/theme'
+import {Popup} from '../components/popup'
+
+
+@define('f-contextmenu')
+export class ContextMenu<E = any> extends Popup<E> {
+
+	static style() {
+		let {adjust} = theme
+		
+		return css`
+		${super.style()}
+		:host{
+			position: fixed;
+			border-radius: 0;
+			
+			.option__f-list{
+				padding: ${adjust(2)}px ${adjust(8)}px;
+
+				&:last-child{
+					border-bottom: none;
+				}
+			}
+		}
+		`.extends(super.style())
+	}
+
+	trangle: boolean = false
+}
