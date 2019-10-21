@@ -14,7 +14,7 @@ export interface SelectEvents<T> {
 export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	
 	static style() {
-		let {mainColor, adjust, adjustFontSize, borderColor, popupShadowBlurRadius, backgroundColor, popupShadowColor} = theme
+		let {mainColor, adjust, borderColor, popupShadowBlurRadius, backgroundColor, popupShadowColor} = theme
 
 		return css`
 		:host{
@@ -47,13 +47,12 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			margin-right: 4px;
 		}
 	
-		.input{
+		.display, .input{
 			flex: 1;
 			min-width: 0;
 			padding: 0 0 0 ${adjust(8)}px;
 			height: ${adjust(28)}px;
 			border: none;
-			font-size: ${adjustFontSize(13)}px;
 			background: transparent;
 			white-space: nowrap;
 			overflow: hidden;
@@ -63,6 +62,10 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			&:focus{
 				box-shadow: none;
 			}
+		}
+
+		.placeholder{
+			opacity: 0.5;
 		}
 	
 		.popup{
@@ -99,23 +102,38 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	protected render() {
 		return html`
 		<template :class.not-inputable=${!this.searchable}>
-			${this.renderInput()}
+			${this.renderDisplayOrInput()}
 		</template>
 		`.extends(super.render())
 	}
 
-	protected renderInput(): TemplateResult | string | number {
-		return html`
-		<input type="text"
-			class="input"
-			:ref="input"
-			.value=${this.editing ? this.inputed : this.renderCurrentDisplay()}
-			.placeholder=${this.placeholder}
-			?readonly=${!this.editing}
-			@click=${this.onClick}
-			@input=${this.onInput}
-		>
-		`
+	protected renderDisplayOrInput(): TemplateResult | string | number {
+		if (this.editing) {
+			return html`
+			<input type="text"
+				class="input"
+				:ref="input"
+				.value=${this.inputed}
+				.placeholder=${this.placeholder}
+				?readonly=${!this.editing}
+				@click=${this.onClick}
+				@input=${this.onInput}
+			>
+			`
+		}
+		else {
+			let text = this.renderCurrentDisplay()
+
+			return html`
+			<div
+				class="input"
+				:class.placeholder=${!text}
+				@click=${this.onClick}
+			>
+				${text || this.placeholder}
+			</div>
+			`
+		}
 	}
 
 	protected renderPopup() {
@@ -139,13 +157,14 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 		`
 	}
 
-	protected renderCurrentDisplay(): string | number {
+	protected renderCurrentDisplay(): string | number | TemplateResult {
 		if (this.multiple) {
 			let displays: (string | number)[] = []
 
 			for (let {value, text} of this.data) {
 				if ((this.value! as T[]).includes(value!)) {
-					displays.push(text)
+					// Here may render `<>` tags as value into `input` element
+					displays.push(text.toString())
 				}
 			}
 
@@ -153,7 +172,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 		}
 		else {
 			for (let {value, text} of this.data) {
-				if (this.value == value) {
+				if (this.value === value) {
 					return text
 				}
 			}
