@@ -92,6 +92,7 @@ export class Modal<E = any> extends Component<E> {
 
 		return html`
 		<template
+			tabindex="0"
 			${show(this.opened, {transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
 		>
 			<div class="mask"

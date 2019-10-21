@@ -65,10 +65,12 @@ export class Popup<E = any> extends Component<E> {
 
 	protected render() {
 		return html`
+		<template tabindex="0">
 			${this.trangle ? html`
 				<div class="trangle" :ref="trangle" :class.trangle-herizontal=${this.herizontal} />
 			` : ''}
 			<slot />
+		</template>
 		`
 	}
 	
