@@ -726,8 +726,8 @@ define('flit-preview', class extends Component {
 						<button @click="${() => {
 							let modal = renderComponent(html`
 								<f-modal style="width: ${theme.adjust(360)}px;" .title="Modal Title" .actions=${[
-									{text: 'Cancel'},
-									{text: 'Save', primary: true}
+									{text: 'Cancel', handler: () => modal.hide()},
+									{text: 'Save', handler: () => modal.hide(), primary: true}
 								]}>
 									Here is the modal content
 								</f-modal>
