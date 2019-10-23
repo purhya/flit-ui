@@ -4,14 +4,14 @@ import {RenderFn} from './popup'
 import {ContextMenu} from '../components/contextmenu'
 
 
-class ContextMenuBinding implements Binding<[RenderFn]> {
+export class ContextMenuBinding implements Binding<[RenderFn]> {
 
-	private el: HTMLElement
-	private context: Context
-	private renderFn!: RenderFn
-	private popup: ContextMenu | null = null
-	private unwatchRect: (() => void) | null = null
-	private unkeepEl: (() => void) | null = null
+	protected el: HTMLElement
+	protected context: Context
+	protected renderFn!: RenderFn
+	protected popup: ContextMenu | null = null
+	protected unwatchRect: (() => void) | null = null
+	protected unkeepEl: (() => void) | null = null
 
 	constructor(el: Element, context: Context) {
 		this.el = el as HTMLElement
@@ -23,7 +23,7 @@ class ContextMenuBinding implements Binding<[RenderFn]> {
 		this.renderFn = renderFn
 	}
 
-	private async showMenu(e: Event) {
+	protected async showMenu(e: Event) {
 		let popup = this.renderPopup()
 		popup.applyAppendTo()
 
@@ -39,7 +39,7 @@ class ContextMenuBinding implements Binding<[RenderFn]> {
 		this.unwatchRect = watchLayout(this.el, 'rect', this.onElRectChanged.bind(this))
 	}
 
-	private renderPopup(): ContextMenu  {
+	protected renderPopup(): ContextMenu  {
 		if (!this.popup) {
 			this.popup = renderComponent(this.renderFn, this.context).component as ContextMenu
 		}
@@ -47,7 +47,7 @@ class ContextMenuBinding implements Binding<[RenderFn]> {
 		return this.popup!
 	}
 
-	private onDocMouseDown(e: Event) {
+	protected onDocMouseDown(e: Event) {
 		let target = e.target as Element
 
 		if (this.popup && !this.popup.el.contains(target)) {
@@ -55,7 +55,7 @@ class ContextMenuBinding implements Binding<[RenderFn]> {
 		}
 	}
 
-	private hideContextMenu() {
+	protected hideContextMenu() {
 		if (this.popup) {
 			off(document, 'mousedown', this.onDocMouseDown, this)
 			off(this.popup.el, 'click', this.hideContextMenu, this)
@@ -79,7 +79,7 @@ class ContextMenuBinding implements Binding<[RenderFn]> {
 		}
 	}
 
-	private onElRectChanged() {
+	protected onElRectChanged() {
 		this.hideContextMenu()
 	}
 

@@ -2,7 +2,8 @@ import {defineBinding, Binding, on, getClosestComponent} from '@pucelle/flit'
 import {Router} from '../components/router'
 
 
-defineBinding('goto', class GotoBinding implements Binding<[string]>{
+defineBinding('goto')
+export class GotoBinding implements Binding<[string]>{
 	
 	el: HTMLElement
 	value: string = ''
@@ -17,12 +18,12 @@ defineBinding('goto', class GotoBinding implements Binding<[string]>{
 		this.value = value
 	}
 
-	private onClick() {
+	protected onClick() {
 		this.ensureRouter()
 		this.router!.goto(this.value)
 	}
 
-	private ensureRouter() {
+	protected ensureRouter() {
 		if (!this.router) {
 			this.router = getClosestComponent(this.el.parentElement!, Router)
 			
@@ -33,4 +34,4 @@ defineBinding('goto', class GotoBinding implements Binding<[string]>{
 	}
 
 	remove() {}
-})
+}

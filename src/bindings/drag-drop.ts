@@ -13,12 +13,13 @@ export interface DroppableOptions<T> {
 	onleave?: DropHandler<T>
 }
 
-type DropHandler<T> = (data: T, index: number) => void
+export type DropHandler<T> = (data: T, index: number) => void
+
 type Draggable = DraggableBinding<any>
 type Droppable = DroppableBinding<any>
 
 
-class DraggableBinding<T> implements Binding<[T, number, DraggableOptions | undefined]> {
+export class DraggableBinding<T> implements Binding<[T, number, DraggableOptions | undefined]> {
 
 	el: HTMLElement
 	name: string = ''
@@ -45,7 +46,7 @@ class DraggableBinding<T> implements Binding<[T, number, DraggableOptions | unde
 		}
 	}
 
-	private onMouseDown(e: MouseEvent) {
+	protected onMouseDown(e: MouseEvent) {
 		e.preventDefault()
 
 		let isDragging = false
@@ -74,7 +75,7 @@ class DraggableBinding<T> implements Binding<[T, number, DraggableOptions | unde
 		once(document, 'mouseup', onMouseUp as any)
 	}
 
-	private onMouseEnter() {
+	protected onMouseEnter() {
 		manager.enterDraggable(this)
 	}
 
@@ -88,15 +89,15 @@ export const draggable = defineBinding('draggable', DraggableBinding) as (data: 
 
 
 
-class DroppableBinding<Item> implements Binding<[DropHandler<Item>, DroppableOptions<Item>]> {
+export class DroppableBinding<Item> implements Binding<[DropHandler<Item>, DroppableOptions<Item>]> {
 	
 	el: HTMLElement
 	name: string = ''
 	direction: 'x' | 'y' | null = null
 
-	private onenter: DropHandler<Item> | null = null
-	private onleave: DropHandler<Item> | null = null
-	private ondrop!: DropHandler<Item>
+	protected onenter: DropHandler<Item> | null = null
+	protected onleave: DropHandler<Item> | null = null
+	protected ondrop!: DropHandler<Item>
 
 	constructor(el: Element) {
 		this.el = el as HTMLElement
@@ -111,7 +112,7 @@ class DroppableBinding<Item> implements Binding<[DropHandler<Item>, DroppableOpt
 		}
 	}
 
-	private onMouseEnter() {
+	protected onMouseEnter() {
 		manager.enterDroppable(this)
 		once(this.el, 'mouseleave', this.onMouseLeave as any, this)
 	}
@@ -124,7 +125,7 @@ class DroppableBinding<Item> implements Binding<[DropHandler<Item>, DroppableOpt
 		}
 	}
 
-	private updateDirection() {
+	protected updateDirection() {
 		if (!this.direction) {
 			let style = getComputedStyle(this.el)
 
@@ -146,7 +147,7 @@ class DroppableBinding<Item> implements Binding<[DropHandler<Item>, DroppableOpt
 		}
 	}
 
-	private onMouseLeave() {
+	protected onMouseLeave() {
 		manager.leaveDroppable(this)
 	}
 
@@ -177,13 +178,13 @@ export const droppable = defineBinding('droppable', DroppableBinding) as <Item>(
 //   When dragging element leaves one drop area, remove space that belongs to it.
 class DragDropRelationshipManager {
 
-	private dragging: Draggable | null = null
-	private mover: Mover | null = null
+	protected dragging: Draggable | null = null
+	protected mover: Mover | null = null
 
 	// May mouse enter in some drop areas, and start dragging,
 	// then we need to check which drop area should trigger enter.
-	private enteringDrops: Set<Droppable> = new Set()
-	private activeDrop: Droppable | null = null
+	protected enteringDrops: Set<Droppable> = new Set()
+	protected activeDrop: Droppable | null = null
 	
 	startDragging(drag: Draggable) {
 		this.dragging = drag
@@ -222,7 +223,7 @@ class DragDropRelationshipManager {
 		}
 	}
 
-	private canSwapWith(drag: Draggable) {
+	protected canSwapWith(drag: Draggable) {
 		return this.dragging && this.dragging.name === drag.name && this.dragging !== drag
 	}
 
@@ -236,7 +237,7 @@ class DragDropRelationshipManager {
 		}
 	}
 
-	private canDropTo(drop: Droppable) {
+	protected canDropTo(drop: Droppable) {
 		return this.dragging && this.dragging.name === drop.name
 	}
 
@@ -281,21 +282,21 @@ const manager = new DragDropRelationshipManager()
 
 class Mover {
 
-	private dragging: Draggable
-	private el: HTMLElement
-	private elStyleText: string = ''
-	private width: number
-	private height: number
-	private translate: [number, number] = [0, 0]
+	protected dragging: Draggable
+	protected el: HTMLElement
+	protected elStyleText: string = ''
+	protected width: number
+	protected height: number
+	protected translate: [number, number] = [0, 0]
 
-	private draggedTo: Draggable | null = null
-	private draggedToRect: Rect | null = null
-	private draggedToIndex: number = -1
-	private movedElements: Set<HTMLElement> = new Set()
+	protected draggedTo: Draggable | null = null
+	protected draggedToRect: Rect | null = null
+	protected draggedToIndex: number = -1
+	protected movedElements: Set<HTMLElement> = new Set()
 
-	private startDropArea: Droppable
-	private dropArea: Droppable | null = null
-	private placeholder: HTMLElement | null = null
+	protected startDropArea: Droppable
+	protected dropArea: Droppable | null = null
+	protected placeholder: HTMLElement | null = null
 
 	constructor(drag: Draggable, drop: Droppable) {
 		this.dragging = drag
@@ -309,7 +310,7 @@ class Mover {
 		this.giveSpaceForDraggingElement(drop, false)
 	}
 
-	private setStartDraggingStyle() {
+	protected setStartDraggingStyle() {
 		let rect = getRect(this.el)
 
 		document.body.style.cursor = 'grabbing'
@@ -327,7 +328,7 @@ class Mover {
 		;(this.el.style as any).willChange = 'transform'
 	}
 
-	private moveSiblingsToGiveSpace(playAnimation: boolean) {
+	protected moveSiblingsToGiveSpace(playAnimation: boolean) {
 		let transform = this.getTranslateStyle(this.startDropArea, 1)
 		for (let el of this.getSiblingsAfter(this.el as HTMLElement)) {
 			if (playAnimation) {
@@ -340,7 +341,7 @@ class Mover {
 		}
 	}
 
-	private getSiblingsFrom(fromEl: HTMLElement | null): HTMLElement[] {
+	protected getSiblingsFrom(fromEl: HTMLElement | null): HTMLElement[] {
 		if (!fromEl) {
 			return []
 		}
@@ -352,7 +353,7 @@ class Mover {
 		return els
 	}
 
-	private getSiblingsAfter(afterEl: HTMLElement): HTMLElement[] {
+	protected getSiblingsAfter(afterEl: HTMLElement): HTMLElement[] {
 		return this.getSiblingsFrom(afterEl.nextElementSibling as HTMLElement | null)
 	}
 
@@ -390,7 +391,7 @@ class Mover {
 		drop.el.append(this.placeholder)
 	}
 
-	private getTranslateStyle(drop: Droppable, moveDirection: -1 | 1) {
+	protected getTranslateStyle(drop: Droppable, moveDirection: -1 | 1) {
 		let movePx = drop.direction === 'x' ? this.width : this.height
 		return `translate${drop.direction!.toUpperCase()}(${moveDirection * movePx}px)`
 	}
@@ -407,7 +408,7 @@ class Mover {
 		this.draggedToIndex = -1
 	}
 
-	private restoreMovedElements(playAnimation: boolean) {
+	protected restoreMovedElements(playAnimation: boolean) {
 		for (let el of this.movedElements) {
 			if (playAnimation) {
 				animateTo(el, {transform: ''})
@@ -466,7 +467,7 @@ class Mover {
 	// Assume we have:
 	//	 group 1: 1 2 3
 	//   group 2: 4 5 6
-	private generateDraggedToIndex(drag: Draggable, beenMoved: boolean): number {
+	protected generateDraggedToIndex(drag: Draggable, beenMoved: boolean): number {
 		let isInSameDropArea = this.startDropArea === this.dropArea
 		let index = drag.index
 
@@ -535,7 +536,7 @@ class Mover {
 		}
 	}
 
-	private async animateDraggingElementToDropArea() {
+	protected async animateDraggingElementToDropArea() {
 		let fromRect = getRect(this.el)
 		let toRect = this.draggedToRect || getRect(this.placeholder!)
 		let x = toRect.left - fromRect.left + this.translate[0]
@@ -545,7 +546,7 @@ class Mover {
 		await animateTo(this.el, {transform})
 	}
 
-	private clearDraggingStyle() {
+	protected clearDraggingStyle() {
 		document.body.style.cursor = ''
 		document.body.style.userSelect = ''
 
