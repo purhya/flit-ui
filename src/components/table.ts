@@ -219,6 +219,9 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 	/** The index of the first item to be visible, to reflect last scrolling position. */
 	startIndex: number = 0
 
+	/** If what you rendered is very complex and can't complete in an animation frame, set this to true. */
+	preRendering: boolean = false
+
 	resizable: boolean = false
 	columns!: Column<T>[]
 	minColumnWidth: number = 64
@@ -288,6 +291,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 					key: this.store.key,
 					pageSize: this.pageSize,
 					startIndex: this.startIndex,
+					preRendering: this.preRendering,
 					dataCount: this.store.dataCount.bind(this.store),
 					dataGetter: this.store.dataGetter.bind(this.store) as any,
 					onUpdated: this.onRepeatDataUpdated.bind(this) as any
@@ -301,6 +305,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 				{
 					pageSize: this.pageSize,
 					startIndex: this.startIndex,
+					preRendering: this.preRendering,
 					data: this.store.currentData,
 					onUpdated: this.onRepeatDataUpdated.bind(this)
 				},
