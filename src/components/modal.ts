@@ -37,6 +37,7 @@ export class Modal<E = any> extends Component<E> {
 
 		.header{
 			display: flex;
+			flex: none;
 			height: ${adjust(34) + 1}px;
 			font-size: ${adjustFontSize(13)}px;
 			padding-bottom: ${adjust(6)}px;
@@ -78,7 +79,15 @@ export class Modal<E = any> extends Component<E> {
 			margin-left: ${adjust(8)}px;
 		}
 
-		.content{}
+		.content{
+			flex: 1;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			overflow-y: auto;
+			margin-right: ${adjust(-16)}px;
+			padding-right: ${adjust(16)}px;
+		}
 	`}
 
 	title: string = ''

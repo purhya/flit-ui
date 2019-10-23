@@ -6021,7 +6021,7 @@ class PopupBinding {
     }
     mayFocus() {
         let trigger = this.getOption('trigger');
-        if ((trigger === 'hover' || trigger === 'focus') && this.el.tabIndex >= 0) {
+        if ((trigger !== 'hover' && trigger !== 'focus') && this.el.tabIndex >= 0) {
             this.el.focus();
         }
     }
@@ -7766,6 +7766,7 @@ let Modal = class Modal extends flit_1.Component {
 
 		.header{
 			display: flex;
+			flex: none;
 			height: ${adjust(34) + 1}px;
 			font-size: ${adjustFontSize(13)}px;
 			padding-bottom: ${adjust(6)}px;
@@ -7807,7 +7808,15 @@ let Modal = class Modal extends flit_1.Component {
 			margin-left: ${adjust(8)}px;
 		}
 
-		.content{}
+		.content{
+			flex: 1;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			overflow-y: auto;
+			margin-right: ${adjust(-16)}px;
+			padding-right: ${adjust(16)}px;
+		}
 	`;
     }
     //extensions may make win wrapped by a mask, so we need a win el
@@ -13713,13 +13722,18 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         return !this.transition.shouldPlay() && !this.options.get('preRendering');
     }
     createWatchedTemplate(item, index) {
-        if (this.preRendered.has(item)) {
-            return this.preRendered.get(item);
+        if (this.options.get('preRendering')) {
+            if (this.preRendered.has(item)) {
+                return this.preRendered.get(item);
+            }
+            else {
+                let wtem = super.createWatchedTemplate(item, index);
+                this.preRendered.set(wtem.item, wtem);
+                return wtem;
+            }
         }
         else {
-            let wtem = super.createWatchedTemplate(item, index);
-            this.preRendered.set(wtem.item, wtem);
-            return wtem;
+            return super.createWatchedTemplate(item, index);
         }
     }
     onWatchedTemplateNotInUse(wtem) {

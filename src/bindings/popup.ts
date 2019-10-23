@@ -240,7 +240,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 
 	protected mayFocus() {
 		let trigger = this.getOption('trigger')
-		if ((trigger === 'hover' || trigger === 'focus') && this.el.tabIndex >= 0) {
+		if ((trigger !== 'hover' && trigger !== 'focus') && this.el.tabIndex >= 0) {
 			this.el.focus()
 		}
 	}
