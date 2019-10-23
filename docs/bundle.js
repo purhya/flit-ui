@@ -3203,21 +3203,28 @@ function getRect(el) {
 }
 exports.getRect = getRect;
 /**
- * Check if element is visible in current viewport.
+ * Check if element is visible in current viewport, Otherwise element can't be covered.
  * Note that this method may cause page reflow.
  * @param el The element to check if is in view.
  * @param percentage Specify how much percentage of el size implies in view.
  */
-function isInview(el, percentage = 0.5) {
+function isInViewport(el, percentage = 0.5) {
     let dw = document.documentElement.clientWidth;
     let dh = document.documentElement.clientHeight;
-    let box = getRect(el);
-    let xIntersect = Math.min(dw, box.right) - Math.max(0, box.left);
-    let yIntersect = Math.min(dh, box.bottom) - Math.max(0, box.top);
-    return xIntersect / Math.min(box.width, dw) > percentage
-        && yIntersect / Math.min(box.height, dh) > percentage;
+    let rect = getRect(el);
+    let xIntersect = Math.min(dw, rect.right) - Math.max(0, rect.left);
+    let yIntersect = Math.min(dh, rect.bottom) - Math.max(0, rect.top);
+    let inRange = xIntersect / Math.min(rect.width, dw) > percentage
+        && yIntersect / Math.min(rect.height, dh) > percentage;
+    if (inRange) {
+        let notBeenCovered = el.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
+        if (notBeenCovered) {
+            return true;
+        }
+    }
+    return false;
 }
-exports.isInview = isInview;
+exports.isInViewport = isInViewport;
 
 },{"./style":24}],16:[function(require,module,exports){
 "use strict";
@@ -4305,10 +4312,10 @@ const WATCH_STATE_FN = {
         return el.offsetWidth === 0 && el.offsetHeight === 0;
     },
     inview(el) {
-        return element_1.isInview(el);
+        return element_1.isInViewport(el);
     },
     outview(el) {
-        return !element_1.isInview(el);
+        return !element_1.isInViewport(el);
     },
     size(el) {
         return {
@@ -5363,6 +5370,7 @@ class ContextMenuBinding {
         flit_1.off(this.el, 'contextmenu', this.showMenu, this);
     }
 }
+exports.ContextMenuBinding = ContextMenuBinding;
 /**
  * Popup a contextmenu when right click binded element.
  * @param renderFn Should returns a `<f-contextmenu>` result.
@@ -5425,6 +5433,7 @@ class DraggableBinding {
         flit_1.off(this.el, 'mouseenter', this.onMouseEnter, this);
     }
 }
+exports.DraggableBinding = DraggableBinding;
 exports.draggable = flit_1.defineBinding('draggable', DraggableBinding);
 class DroppableBinding {
     constructor(el) {
@@ -5488,6 +5497,7 @@ class DroppableBinding {
         flit_1.off(this.el, 'mouseenter', this.onMouseEnter, this);
     }
 }
+exports.DroppableBinding = DroppableBinding;
 exports.droppable = flit_1.defineBinding('droppable', DroppableBinding);
 // Used to:
 //   When start dragging, check it's related drop area.
@@ -5606,7 +5616,7 @@ class Mover {
         this.el.style.height = rect.height + 'px';
         this.el.style.left = rect.left + 'px';
         this.el.style.top = rect.top + 'px';
-        this.el.style.boxShadow = `1px 1px ${theme_1.theme.popupShadowBlurRadius}px #888`;
+        this.el.style.boxShadow = `0 0 ${theme_1.theme.popupShadowBlurRadius}px #888`;
         this.el.style.pointerEvents = 'none';
         this.el.style.willChange = 'transform';
     }
@@ -6125,18 +6135,9 @@ class PopupBinding {
             this.hidePopupLater();
         }
     }
-    onElRectChanged(rect) {
-        let dw = document.documentElement.offsetWidth;
-        let dh = document.documentElement.offsetHeight;
-        let inViewport = rect.width > 0 && rect.height > 0 && rect.top < dh && rect.bottom > 0 && rect.left < dw && rect.right > 0;
-        if (inViewport) {
-            let isNotBeenCovered = this.el.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
-            if (isNotBeenCovered) {
-                this.alignPopup();
-            }
-            else {
-                this.onNotInViewport();
-            }
+    onElRectChanged() {
+        if (ff_1.isInViewport(this.el)) {
+            this.alignPopup();
         }
         else {
             this.onNotInViewport();
@@ -9672,6 +9673,8 @@ let Table = class Table extends flit_1.Component {
         this.pageSize = 50;
         /** The index of the first item to be visible, to reflect last scrolling position. */
         this.startIndex = 0;
+        /** If what you rendered is very complex and can't complete in an animation frame, set this to true. */
+        this.preRendering = false;
         this.resizable = false;
         this.minColumnWidth = 64;
         this.orderedColumnName = null;
@@ -9895,6 +9898,7 @@ let Table = class Table extends flit_1.Component {
                 key: this.store.key,
                 pageSize: this.pageSize,
                 startIndex: this.startIndex,
+                preRendering: this.preRendering,
                 dataCount: this.store.dataCount.bind(this.store),
                 dataGetter: this.store.dataGetter.bind(this.store),
                 onUpdated: this.onRepeatDataUpdated.bind(this)
@@ -9904,6 +9908,7 @@ let Table = class Table extends flit_1.Component {
             return flit_1.refDirective(flit_1.liveRepeat({
                 pageSize: this.pageSize,
                 startIndex: this.startIndex,
+                preRendering: this.preRendering,
                 data: this.store.currentData,
                 onUpdated: this.onRepeatDataUpdated.bind(this)
             }, this.renderRow.bind(this), this.transition), this.setRepeatDirective.bind(this));
@@ -11438,7 +11443,7 @@ const component_1 = require("../component");
  */
 define_1.defineBinding('class', class ClassNameBinding {
     constructor(el, context, modifiers) {
-        this.lastClassNames = null;
+        this.lastClassNames = [];
         if (modifiers) {
             if (modifiers.length > 1) {
                 throw new Error(`Modifier "${modifiers.join('.')}" is not allowed, at most one modifier as class name can be specified for ":class"`);
@@ -11453,13 +11458,21 @@ define_1.defineBinding('class', class ClassNameBinding {
         this.scopedClassNameSet = this.scopeName ? component_1.getScopedClassNameSet(this.scopeName) : undefined;
     }
     update(value) {
-        if (this.lastClassNames) {
-            this.el.classList.remove(...this.lastClassNames);
-        }
+        let newClassNames = [];
         if (value) {
-            let classNames = this.lastClassNames = this.parseClass(value);
-            this.el.classList.add(...classNames);
+            newClassNames = this.parseClass(value);
         }
+        for (let name of this.lastClassNames) {
+            if (!newClassNames.includes(name)) {
+                this.el.classList.remove(name);
+            }
+        }
+        for (let name of newClassNames) {
+            if (!this.lastClassNames.includes(name)) {
+                this.el.classList.add(name);
+            }
+        }
+        this.lastClassNames = newClassNames;
     }
     parseClass(value) {
         let o = {};
@@ -11959,7 +11972,7 @@ const define_1 = require("./define");
 const ALLOWED_MODIFIERS = ['px', 'percent', 'url'];
 define_1.defineBinding('style', class StyleBinding {
     constructor(el, _context, modifiers) {
-        this.lastStyle = null;
+        this.lastStyle = {};
         if (modifiers) {
             if (modifiers.length > 2) {
                 throw new Error(`Modifier "${modifiers.join('.')}" is not allowed, at most two modifiers (as style name property value modifier) can be specified for ":style"`);
@@ -11975,40 +11988,40 @@ define_1.defineBinding('style', class StyleBinding {
         this.modifiers = modifiers;
     }
     update(value) {
-        if (this.lastStyle) {
-            this.removeStyle(this.lastStyle);
+        let oldStyleNames = Object.keys(this.lastStyle);
+        let newStyle = this.parseStyle(value);
+        let newStyleNames = Object.keys(newStyle);
+        for (let name of oldStyleNames) {
+            if (!newStyleNames.includes(name)) {
+                this.el.style[name] = '';
+            }
         }
-        if (value !== '' && value !== null && value !== undefined) {
-            this.addStyle(this.lastStyle = this.parseStyle(value));
+        for (let name of newStyleNames) {
+            if (!oldStyleNames.includes(name) || this.lastStyle[name] !== newStyle[name]) {
+                this.setStyle(name, newStyle[name]);
+            }
         }
+        this.lastStyle = newStyle;
     }
-    removeStyle(style) {
-        for (let name of Object.keys(style)) {
-            this.el.style[name] = '';
-        }
-    }
-    addStyle(style) {
+    setStyle(name, value) {
         let unit = this.modifiers ? this.modifiers[1] : '';
-        for (let name of Object.keys(style)) {
-            let value = style[name];
-            if (value === null || value === undefined) {
-                value = '';
-            }
-            // Units like `s`, `deg` is very rare to use.
-            else if (unit === 'px') {
-                value = value + 'px';
-            }
-            else if (unit === 'percent') {
-                value = value + '%';
-            }
-            else if (unit === 'url') {
-                value = 'url("' + value + '")';
-            }
-            if (typeof value === 'number') {
-                value = value + 'px';
-            }
-            this.el.style[name] = value;
+        if (value === null || value === undefined) {
+            value = '';
         }
+        // Units like `s`, `deg` is very rare to use.
+        else if (unit === 'px') {
+            value = value + 'px';
+        }
+        else if (unit === 'percent') {
+            value = value + '%';
+        }
+        else if (unit === 'url') {
+            value = 'url("' + value + '")';
+        }
+        if (typeof value === 'number') {
+            value = value + 'px';
+        }
+        this.el.style[name] = value;
     }
     parseStyle(style) {
         let o = {};
@@ -12040,7 +12053,9 @@ define_1.defineBinding('style', class StyleBinding {
     }
     remove() {
         if (this.lastStyle) {
-            this.removeStyle(this.lastStyle);
+            for (let name of Object.keys(this.lastStyle)) {
+                this.el.style[name] = '';
+            }
         }
     }
 });
@@ -12072,11 +12087,14 @@ class Component extends emitter_1.Emitter {
          */
         // Should be `Element` type, but in 99% scenarios it's HTMLElement.
         this.refs = {};
+        this.slots = {};
         this.__slotProcesser = null;
         this.__rootPart = null;
         this.__updated = false;
         this.__watcherGroup = null;
-        this.__connected = true;
+        this.__connected = false;
+        this.__connectedBefore = false;
+        this.__mustUpdate = true;
         this.el = el;
         return observer_1.observeComTarget(this);
     }
@@ -12098,19 +12116,27 @@ class Component extends emitter_1.Emitter {
     /** @hidden */
     __emitConnected() {
         // Not do following things when firstly connected.
-        if (!this.__connected) {
+        if (this.__connectedBefore) {
             // Must restore before updating, because the restored result may be changed when updating.
-            observer_1.restoreAsDependency(observer_1.targetMap.get(this));
+            observer_1.restoreAsDependency(this);
             if (this.__watcherGroup) {
                 this.__watcherGroup.connect();
             }
-            this.__connected = true;
         }
-        // Why using `update` but not `__updateImmediately`?
+        else {
+            this.__connectedBefore = true;
+        }
+        this.__connected = true;
+        // Sometimes we may pre render but not connect component,
+        // In this condition watchers of component are active and they keep notify component to update.
+        // When connect the component, may no need to update.
+        // Why `update` here but not `__updateImmediately`?
         // After component created, it may delete element belongs to other components in `onCreated`
         // Then in following micro task, the deleted components's `__connected` becomes false,
         // and they will not been updated finally as expected.
-        this.update();
+        if (this.__mustUpdate) {
+            this.update();
+        }
         this.onConnected();
         this.emit('connected');
         life_cycle_1.onComponentConnected(this);
@@ -12118,13 +12144,12 @@ class Component extends emitter_1.Emitter {
     /** @hidden */
     __emitDisconnected() {
         observer_1.clearDependencies(this);
-        // We generated `updatable proxy -> dependency target` maps in dependency module,
-        // So here need to pass component target but not proxy to clear dependencies.
-        observer_1.clearAsDependency(observer_1.targetMap.get(this));
+        observer_1.clearAsDependency(this);
         if (this.__watcherGroup) {
             this.__watcherGroup.disconnect();
         }
         this.__connected = false;
+        this.__mustUpdate = true;
         this.onDisconnected();
         this.emit('disconnected');
         life_cycle_1.onComponentDisconnected(this);
@@ -12145,10 +12170,12 @@ class Component extends emitter_1.Emitter {
         }
     }
     /** @hidden */
-    __updateImmediately() {
-        if (!this.__connected) {
+    __updateImmediately(force = false) {
+        if (!this.__connected && !force) {
+            this.__mustUpdate = true;
             return;
         }
+        this.__mustUpdate = false;
         observer_1.startUpdating(this);
         let result = this.render();
         observer_1.endUpdating(this);
@@ -12382,25 +12409,27 @@ function enqueueUpdate() {
 }
 function update() {
     let connectMap = connectSoonMap;
-    let disconnectMap = disconnectSoonMap;
-    // Very import, more connect and disconnect map may be added when updating.
+    // Very import, more connect and disconnect requests may be added when updating.
     // So we must reset `connectSoonMap` and `disconnectSoonMap` and set `willUpdate` to false before updating.
     connectSoonMap = new Map();
-    disconnectSoonMap = new Map();
     willUpdate = false;
-    for (let [el] of disconnectMap.entries()) {
-        disconnectElement(el);
-    }
     // `el` was sorted inside map.
     for (let [el, Com] of connectMap.entries()) {
         // `el` may not in document,
         // e.g., inserted into a fragment.
         // No need to worry about forgetting to instantiate it,
         // it will trigger `connectedCallback` again after insert into document.
-        if (document.contains(el)) {
-            connectElement(el, Com);
-        }
+        // Here also have a small rate document not contains el.
+        connectElement(el, Com);
     }
+    // We disconnect elements later to avoid it slow following rendering.
+    requestAnimationFrame(() => {
+        let disconnectMap = disconnectSoonMap;
+        disconnectSoonMap = new Map();
+        for (let el of disconnectMap.keys()) {
+            disconnectElement(el);
+        }
+    });
 }
 function connectElement(el, Com) {
     let com = from_element_1.getComponent(el);
@@ -12408,6 +12437,12 @@ function connectElement(el, Com) {
         com = createComponent(el, Com);
     }
     com.__emitConnected();
+}
+function disconnectElement(el) {
+    let com = from_element_1.getComponent(el);
+    if (com) {
+        com.__emitDisconnected();
+    }
 }
 /** Export for `renderComponent`, which will create component manually. */
 /** @hidden */
@@ -12418,12 +12453,6 @@ function createComponent(el, Com) {
     return com;
 }
 exports.createComponent = createComponent;
-function disconnectElement(el) {
-    let com = from_element_1.getComponent(el);
-    if (com) {
-        com.__emitDisconnected();
-    }
-}
 
 },{"./constructor":81,"./from-element":83,"./style":87}],83:[function(require,module,exports){
 "use strict";
@@ -12567,7 +12596,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const node_helper_1 = require("../libs/node-helper");
 class SlotProcesser {
     constructor(com) {
-        this.slots = {};
         this.restSlotNodeRange = null;
         // When updated inner templates and found there are slots need to be filled, This value will become `true`.
         // Why not just move slots into template fragment?
@@ -12583,7 +12611,7 @@ class SlotProcesser {
     // So if those named slot element were removed before or created dynamically in the future,
     // We can't capture this and update name slot elements.
     initNamedSlotNodes() {
-        let slots = this.slots;
+        let slots = this.com.slots;
         // We only check `[slot]` in the children, or:
         // <com1><com2><el slot="for com2"></com2></com1>
         // it will cause `slot` for `com2` was captured by `com1`.
@@ -12616,19 +12644,19 @@ class SlotProcesser {
         if (!this.hasSlotsToBeFilled) {
             return;
         }
-        let slots = this.slots;
+        let slots = this.com.slots;
         let slotAnchors = this.com.el.querySelectorAll('slot');
         for (let slotAnchor of slotAnchors) {
             let name = slotAnchor.getAttribute('name');
             if (name) {
-                if (slots && slots[name]) {
+                if (slots && slots[name] && slotAnchor.firstChild !== slots[name][0]) {
                     while (slotAnchor.firstChild) {
                         slotAnchor.firstChild.remove();
                     }
                     slotAnchor.append(...slots[name]);
                 }
             }
-            else if (this.restSlotNodeRange) {
+            else if (this.restSlotNodeRange && slotAnchor.firstChild !== this.restSlotNodeRange.startNode) {
                 while (slotAnchor.firstChild) {
                     slotAnchor.firstChild.remove();
                 }
@@ -12956,6 +12984,7 @@ class CacheDirective {
         }
     }
 }
+exports.CacheDirective = CacheDirective;
 /**
  * When returned vlaue of `result` changed, this directive will try to reuse old rendered elements.
  * Note that when old rendering result restored, the scroll positions in it will fall back to start position.
@@ -13023,10 +13052,13 @@ exports.DirectiveResult = define_1.DirectiveResult;
 exports.createDirectiveFromResult = define_1.createDirectiveFromResult;
 var cache_1 = require("./cache");
 exports.cache = cache_1.cache;
+exports.CacheDirective = cache_1.CacheDirective;
 var play_1 = require("./play");
 exports.play = play_1.play;
+exports.PalyDirective = play_1.PalyDirective;
 var repeat_1 = require("./repeat");
 exports.repeat = repeat_1.repeat;
+exports.RepeatDirective = repeat_1.RepeatDirective;
 var live_repeat_1 = require("./live-repeat");
 exports.liveRepeat = live_repeat_1.liveRepeat;
 exports.LiveRepeatDirective = live_repeat_1.LiveRepeatDirective;
@@ -13200,6 +13232,9 @@ class LiveAsyncRepeatDirective extends live_repeat_1.LiveRepeatDirective {
     getTotalDataCount() {
         return this.knownDataCount;
     }
+    async getDataBetweens(startIndex, endIndex) {
+        return await this.dataCacher.getFreshData(startIndex, endIndex);
+    }
     /** When data ordering changed and you want to keep scroll position, e.g., after sorting by columns. */
     async reload() {
         this.dataCacher.beStale();
@@ -13256,6 +13291,7 @@ exports.liveAsyncRepeat = define_1.defineDirective(LiveAsyncRepeatDirective);
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
+const watched_template_1 = require("../libs/watched-template");
 const dom_event_1 = require("../libs/dom-event");
 const watcher_1 = require("../watcher");
 const repeat_1 = require("./repeat");
@@ -13266,6 +13302,7 @@ const options_1 = require("../libs/options");
 const defaultLiveRepeatOptions = {
     pageSize: 50,
     renderPageCount: 1,
+    preRendering: false,
 };
 // Benchmark about using static layout or absolute layout: https://jsperf.com/is-absolute-layout-faster
 // The `liveRepeat` only support render one item in one line.
@@ -13302,6 +13339,13 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         this.toCompleteRendering = null;
         /** Whole data from options. */
         this.rawData = null;
+        /**
+         * PreRender renders 3x of templates, includes before, current, after.
+         * So it doesn't affect by scrolling direction.
+         */
+        this.toCompletePreRendering = null;
+        this.preRenderStartIndex = 0;
+        this.preRendered = new Map();
         this.initElements();
     }
     async initElements() {
@@ -13376,6 +13420,9 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         this.toCompleteRendering = this.updateData(data);
         await this.toCompleteRendering;
         this.toCompleteRendering = null;
+        if (this.options.get('preRendering')) {
+            this.checkPreRendering();
+        }
     }
     async updateData(data) {
         super.updateData(data);
@@ -13475,9 +13522,6 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         return null;
     }
     async onScroll() {
-        if (this.toCompleteRendering) {
-            await this.toCompleteRendering;
-        }
         this.checkRenderedRange();
     }
     checkRenderedRange() {
@@ -13491,7 +13535,7 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         }
     }
     // `direction` means where we render new items, and also the direction that the value of `startIndex` will change to.
-    updateToCover(scrollDirection) {
+    async updateToCover(scrollDirection) {
         let renderCount = this.options.get('pageSize') * this.options.get('renderPageCount');
         let startIndex = -1;
         if (scrollDirection === 'up') {
@@ -13598,9 +13642,93 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         let sliderAreaBottom = this.slider.getBoundingClientRect().bottom;
         return sliderAreaBottom - scrollerPaddingAreaBottom + this.scroller.scrollTop;
     }
-    remove() {
-        for (let wtem of this.wtems) {
-            wtem.remove();
+    // Handle pre rendering
+    async checkPreRendering() {
+        if (this.toCompletePreRendering) {
+            return;
+        }
+        this.toCompletePreRendering = this.mayDoPreRendering();
+        await this.toCompletePreRendering;
+        this.toCompletePreRendering = null;
+    }
+    async mayDoPreRendering() {
+        // Wait page to layout & render
+        await untilNextFrame();
+        if (this.shouldUpdatePreRendering()) {
+            await this.updatePreRendering();
+        }
+    }
+    shouldUpdatePreRendering() {
+        let totalCount = this.getTotalDataCount();
+        let renderCount = this.options.get('pageSize') * this.options.get('renderPageCount');
+        let preRenderCount = Math.min(renderCount * 3, totalCount);
+        let startIndex = Math.max(0, this.startIndex - renderCount);
+        let shouldUpdate = startIndex !== this.preRenderStartIndex || this.preRendered.size < preRenderCount;
+        return shouldUpdate;
+    }
+    async updatePreRendering() {
+        let totalCount = this.getTotalDataCount();
+        let renderCount = this.options.get('pageSize') * this.options.get('renderPageCount');
+        let preRenderCount = Math.min(renderCount * 3, totalCount);
+        let startIndex = Math.max(0, this.startIndex - renderCount);
+        let endIndex = startIndex + preRenderCount;
+        let startTime = performance.now();
+        let data = await this.getDataBetweens(startIndex, endIndex);
+        let dataSet = new Set(data);
+        for (let item of this.preRendered.keys()) {
+            if (!dataSet.has(item)) {
+                let wtem = this.preRendered.get(item);
+                wtem.remove();
+                this.preRendered.delete(item);
+            }
+        }
+        for (let i = 0; i < data.length; i++) {
+            let item = data[i];
+            let index = i + startIndex;
+            if (!this.preRendered.has(item)) {
+                let wtem = new watched_template_1.WatchedTemplate(this.context, this.templateFn, item, index);
+                wtem.template.preRender();
+                this.preRendered.set(item, wtem);
+            }
+            if (i % 10 === 0) {
+                let currentTime = performance.now();
+                if (currentTime - startTime > 10) {
+                    startTime = currentTime;
+                    await untilNextFrame();
+                    // Is rendering, no need to update,
+                    // Will start a new prerendering later.
+                    if (this.toCompleteRendering) {
+                        return;
+                    }
+                }
+            }
+        }
+        this.preRenderStartIndex = startIndex;
+    }
+    async getDataBetweens(startIndex, endIndex) {
+        return this.rawData ? this.rawData.slice(startIndex, endIndex) : [];
+    }
+    // Overwrites methods of super class
+    shouldReuse() {
+        return !this.transition.shouldPlay() && !this.options.get('preRendering');
+    }
+    createWatchedTemplate(item, index) {
+        if (this.preRendered.has(item)) {
+            return this.preRendered.get(item);
+        }
+        else {
+            let wtem = super.createWatchedTemplate(item, index);
+            this.preRendered.set(wtem.item, wtem);
+            return wtem;
+        }
+    }
+    onWatchedTemplateNotInUse(wtem) {
+        wtem.remove();
+        // Note than we doesn't cache the removed wtem,
+        // The reason is the component will trigger disconnect,
+        // And when reconnect, it will update, even if we keep watcher alive here.
+        if (this.options.get('preRendering')) {
+            this.preRendered.delete(wtem.item);
         }
     }
     /** Get `startIndex` property. */
@@ -13671,8 +13799,13 @@ exports.LiveRepeatDirective = LiveRepeatDirective;
  * @param transitionOptions The transition options, it can be a transition name, property or properties, or {transition, enterAtStart}.
  */
 exports.liveRepeat = define_1.defineDirective(LiveRepeatDirective);
+function untilNextFrame() {
+    return new Promise(resolve => {
+        requestAnimationFrame(resolve);
+    });
+}
 
-},{"../libs/dom-event":98,"../libs/options":102,"../libs/util":105,"../observer":110,"../queue":118,"../watcher":132,"./define":89,"./repeat":94}],93:[function(require,module,exports){
+},{"../libs/dom-event":98,"../libs/options":102,"../libs/util":105,"../libs/watched-template":106,"../observer":110,"../queue":118,"../watcher":132,"./define":89,"./repeat":94}],93:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -13743,6 +13876,7 @@ class PalyDirective {
         }
     }
 }
+exports.PalyDirective = PalyDirective;
 /**
  * Play enter transition when have rendering result, please leave transition when no result anymore.
  * @param result The html`...` result, can be null or empty string.
@@ -13860,8 +13994,9 @@ class RepeatDirective {
         }
         let nextMatchedOldIndex = getNextMatchedOldIndex(0);
         let lastStayedOldIndex = -1;
-        for (let index = 0; index < newData.length; index++) {
-            let item = newData[index];
+        for (let i = 0; i < newData.length; i++) {
+            let item = newData[i];
+            let index = i + this.startIndex;
             // May reuse
             if (oldItemIndexMap.has(item)) {
                 // Find the old index for item
@@ -13889,7 +14024,7 @@ class RepeatDirective {
                 }
             }
             // Reuse template that will be removed and rerender it
-            if (!this.transition.shouldPlay() && notInUseIndexSet.size > 0) {
+            if (this.shouldReuse() && notInUseIndexSet.size > 0) {
                 let reuseIndex = notInUseIndexSet.keys().next().value; // index in `notInUseIndexSet` is ordered.
                 // If the index betweens `lastStayedOldIndex + 1` and `nextMatchedOldIndex`, no need to move it.
                 let canStay = reuseIndex > lastStayedOldIndex && reuseIndex < nextMatchedOldIndex;
@@ -13915,12 +14050,15 @@ class RepeatDirective {
             }
         }
     }
+    shouldReuse() {
+        return !this.transition.shouldPlay();
+    }
     useMatchedOne(wtem, index) {
-        wtem.updateIndex(index + this.startIndex);
+        wtem.updateIndex(index);
         this.wtems.push(wtem);
     }
     reuseOne(wtem, item, index) {
-        wtem.update(item, index + this.startIndex);
+        wtem.update(item, index);
         this.wtems.push(wtem);
     }
     moveOneBefore(wtem, nextOldWtem) {
@@ -13933,7 +14071,7 @@ class RepeatDirective {
         }
     }
     createOne(item, index, nextOldWtem) {
-        let wtem = new watched_template_1.WatchedTemplate(this.context, this.templateFn, item, index + this.startIndex);
+        let wtem = this.createWatchedTemplate(item, index);
         let template = wtem.template;
         let fragment = template.range.getFragment();
         let firstElement = null;
@@ -13951,6 +14089,9 @@ class RepeatDirective {
         }
         return wtem;
     }
+    createWatchedTemplate(item, index) {
+        return new watched_template_1.WatchedTemplate(this.context, this.templateFn, item, index);
+    }
     removeOne(wtem) {
         let template = wtem.template;
         if (this.transition.shouldPlay()) {
@@ -13958,17 +14099,20 @@ class RepeatDirective {
             if (firstElement) {
                 this.transition.playLeave(firstElement).then((finish) => {
                     if (finish) {
-                        wtem.remove();
+                        this.onWatchedTemplateNotInUse(wtem);
                     }
                 });
             }
             else {
-                wtem.remove();
+                this.onWatchedTemplateNotInUse(wtem);
             }
         }
         else {
-            wtem.remove();
+            this.onWatchedTemplateNotInUse(wtem);
         }
+    }
+    onWatchedTemplateNotInUse(wtem) {
+        wtem.remove();
     }
     remove() {
         for (let wtem of this.wtems) {
@@ -14058,6 +14202,9 @@ exports.renderComplete = queue_1.renderComplete;
 var directives_1 = require("./directives");
 exports.defineDirective = directives_1.defineDirective;
 exports.refDirective = directives_1.refDirective;
+exports.RepeatDirective = directives_1.RepeatDirective;
+exports.PalyDirective = directives_1.PalyDirective;
+exports.CacheDirective = directives_1.CacheDirective;
 exports.DirectiveResult = directives_1.DirectiveResult;
 exports.cache = directives_1.cache;
 exports.play = directives_1.play;
@@ -15360,13 +15507,17 @@ class WatchedTemplate {
         this.template = new template_1.Template(this.watcher.value, this.context);
     }
     updateIndex(index) {
-        this.index = index;
-        this.watcher.__updateImmediately();
+        if (index !== this.index) {
+            this.index = index;
+            this.watcher.__updateImmediately();
+        }
     }
     update(item, index) {
-        this.item = item;
-        this.index = index;
-        this.watcher.__updateImmediately();
+        if (item !== this.item || index !== this.index) {
+            this.item = item;
+            this.index = index;
+            this.watcher.__updateImmediately();
+        }
     }
     remove() {
         this.template.remove();
@@ -15609,6 +15760,7 @@ exports.Weak2WayPropMap = Weak2WayPropMap;
 },{}],109:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const shared_1 = require("./shared");
 const weak_2way_map_1 = require("../libs/weak-2way-map");
 const weak_2way_prop_map_1 = require("../libs/weak-2way-prop-map");
 /**
@@ -15617,7 +15769,7 @@ const weak_2way_prop_map_1 = require("../libs/weak-2way-prop-map");
  * Otherwise we need to remove from left when component disconnected.
  *
  * If the dependent objects were removed, the component or watchers should be updated, And it will clear dependencies before.
- * So cached the objects will not prevent their GC.
+ * So cached the objects will not prevent GC.
  */
 const depMap = new weak_2way_map_1.Weak2WayMap();
 /**
@@ -15671,7 +15823,8 @@ exports.clearDependencies = clearDependencies;
  * Called when don't want to obserse object or component changing.
  * In fact `dep` can only be component target.
  */
-function clearAsDependency(dep) {
+function clearAsDependency(proxiedDep) {
+    let dep = shared_1.targetMap.get(proxiedDep);
     depMap.clearFromRight(dep);
     comPropMap.clearFromRight(dep);
 }
@@ -15680,8 +15833,9 @@ exports.clearAsDependency = clearAsDependency;
 // it can easily restore it's dependencies by `update()`,
 // But an dependency, we can't restore it's influenced components or watchers .
 // So we keep the `dep -> prop -> upt` map, and restore `upt -> dep -> prop` map when `dep` connected again.
-/** When one component or watcher connected again, here to restore the what it can update. */
-function restoreAsDependency(dep) {
+/** When one component or watcher connected again, here to restore that what it can update. */
+function restoreAsDependency(proxiedDep) {
+    let dep = shared_1.targetMap.get(proxiedDep);
     comPropMap.restoreFromRight(dep);
 }
 exports.restoreAsDependency = restoreAsDependency;
@@ -15735,7 +15889,7 @@ function notifyObjectSet(obj) {
 }
 exports.notifyObjectSet = notifyObjectSet;
 
-},{"../libs/weak-2way-map":107,"../libs/weak-2way-prop-map":108}],110:[function(require,module,exports){
+},{"../libs/weak-2way-map":107,"../libs/weak-2way-prop-map":108,"./shared":117}],110:[function(require,module,exports){
 "use strict";
 // Proxy benchmark: https://jsperf.com/es6-proxy/11
 // Proxy getting and setting are always 50x-100x slower than plain object.
@@ -15920,15 +16074,13 @@ exports.observePlainObjectTarget = observePlainObjectTarget;
 const proxyHandler = {
     get(obj, prop) {
         let value = obj[prop];
-        if (obj.hasOwnProperty(prop)) {
-            dependency_1.mayAddDependency(obj);
-            if (value && typeof value === 'object') {
-                if (shared_1.proxyMap.has(value)) {
-                    return shared_1.proxyMap.get(value);
-                }
-                else if (dependency_1.isUpdating()) {
-                    return shared_1.observeTarget(value);
-                }
+        dependency_1.mayAddDependency(obj);
+        if (value && typeof value === 'object') {
+            if (shared_1.proxyMap.has(value)) {
+                return shared_1.proxyMap.get(value);
+            }
+            else if (dependency_1.isUpdating()) {
+                return shared_1.observeTarget(value);
             }
         }
         return value;
@@ -17299,6 +17451,7 @@ const event_part_1 = require("./event-part");
 const attr_part_1 = require("./attr-part");
 const binding_part_1 = require("./binding-part");
 const property_part_1 = require("./property-part");
+const component_1 = require("../component");
 /**
  * Class to parse a template result returned from html`...` to element,
  * And can do some patches on it according to newly rendered template result.
@@ -17399,6 +17552,27 @@ class Template {
     remove() {
         this.range.remove();
     }
+    /**
+     * Initialize components inside a template and update it immediately.
+     * Elements are not connected but will be pre rendered.
+     */
+    preRender() {
+        let fragment = this.range.fragment;
+        if (!fragment) {
+            return;
+        }
+        let walker = document.createTreeWalker(fragment, NodeFilter.SHOW_ELEMENT, null);
+        let el;
+        while (el = walker.nextNode()) {
+            if (el instanceof HTMLElement && el.localName.includes('-')) {
+                let Com = component_1.getComponentConstructor(el.localName);
+                if (Com && !component_1.getComponent(el)) {
+                    let com = component_1.createComponent(el, Com);
+                    com.__updateImmediately(true);
+                }
+            }
+        }
+    }
 }
 exports.Template = Template;
 /** Join strings and values to string, returns `values[0]` if `strings` is null. */
@@ -17415,7 +17589,7 @@ function join(strings, values) {
     return text;
 }
 
-},{"../libs/node-helper":101,"./attr-part":120,"./binding-part":121,"./event-part":122,"./may-attr-part":124,"./node-part":125,"./property-part":126,"./template-parser":128}],132:[function(require,module,exports){
+},{"../component":84,"../libs/node-helper":101,"./attr-part":120,"./binding-part":121,"./event-part":122,"./may-attr-part":124,"./node-part":125,"./property-part":126,"./template-parser":128}],132:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const observer_1 = require("./observer");
