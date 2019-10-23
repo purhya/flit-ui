@@ -127,11 +127,7 @@ export class Modal<E = any> extends Component<E> {
 		`
 	}
 
-	onActionHandled(_action: Action, success: boolean) {
-		if (success) {
-			this.hide()
-		}
-	}
+	onActionHandled(_action: Action, _success: boolean) {}
 
 	protected onTransitionEnd(type: string, finish: boolean) {
 		if (type === 'leave' && finish) {

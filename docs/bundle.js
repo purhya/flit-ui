@@ -7849,11 +7849,7 @@ let Modal = class Modal extends flit_1.Component {
 		</template>
 		`;
     }
-    onActionHandled(_action, success) {
-        if (success) {
-            this.hide();
-        }
-    }
+    onActionHandled(_action, _success) { }
     onTransitionEnd(type, finish) {
         if (type === 'leave' && finish) {
             if (this.refs.mask) {
