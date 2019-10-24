@@ -6149,7 +6149,7 @@ class PopupBinding {
     alignPopup() {
         let popup = this.popup;
         let alignToFn = this.getOption('alignTo');
-        let alignTo = alignToFn ? alignToFn() : this.el;
+        let alignTo = alignToFn ? alignToFn(this.el) : this.el;
         let trangle = this.popup.refs.trangle;
         ff_1.align(popup.el, alignTo, this.getOption('alignPosition'), {
             margin: this.getOption('alignMargin'),
@@ -10356,6 +10356,10 @@ let Tooltip = class Tooltip extends popup_1.Popup {
 			}
 			`;
         })}
+
+		.type-prompt{
+			pointer-events: auto;
+		}
 
 		`.extends(super.style());
     }

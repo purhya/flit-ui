@@ -72,6 +72,10 @@ export class Tooltip<E = any> extends Popup<E> {
 			`
 		})}
 
+		.type-prompt{
+			pointer-events: auto;
+		}
+
 		`.extends(super.style())
 	}
 
