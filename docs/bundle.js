@@ -13652,31 +13652,20 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         if (this.toCompletePreRendering) {
             return;
         }
-        this.toCompletePreRendering = this.mayDoPreRendering();
+        this.toCompletePreRendering = this.doingUpdatePreRendering();
         await this.toCompletePreRendering;
         this.toCompletePreRendering = null;
     }
-    async mayDoPreRendering() {
+    async doingUpdatePreRendering() {
         // Wait page to layout & render
         await untilNextFrame();
-        if (this.shouldUpdatePreRendering()) {
-            await this.updatePreRendering();
-        }
-    }
-    shouldUpdatePreRendering() {
-        let totalCount = this.getTotalDataCount();
-        let renderCount = this.options.get('pageSize') * this.options.get('renderPageCount');
-        let preRenderCount = Math.min(renderCount * 3, totalCount);
-        let startIndex = Math.max(0, this.startIndex - renderCount);
-        let shouldUpdate = startIndex !== this.preRenderStartIndex || this.preRendered.size < preRenderCount;
-        return shouldUpdate;
+        await this.updatePreRendering();
     }
     async updatePreRendering() {
         let totalCount = this.getTotalDataCount();
         let renderCount = this.options.get('pageSize') * this.options.get('renderPageCount');
-        let preRenderCount = Math.min(renderCount * 3, totalCount);
         let startIndex = Math.max(0, this.startIndex - renderCount);
-        let endIndex = startIndex + preRenderCount;
+        let endIndex = Math.min(totalCount, this.startIndex + renderCount * 2);
         let startTime = performance.now();
         let data = await this.getDataBetweens(startIndex, endIndex);
         let dataSet = new Set(data);
@@ -13714,8 +13703,15 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         return this.rawData ? this.rawData.slice(startIndex, endIndex) : [];
     }
     // Overwrites methods of super class
-    shouldReuse() {
-        return !this.transition.shouldPlay() && !this.options.get('preRendering');
+    shouldReuse(item) {
+        return !this.options.get('preRendering') || !this.preRendered.has(item);
+    }
+    reuseOne(wtem, item, index) {
+        if (this.options.get('preRendering')) {
+            this.preRendered.delete(wtem.item);
+            this.preRendered.set(item, wtem);
+        }
+        super.reuseOne(wtem, item, index);
     }
     createWatchedTemplate(item, index) {
         if (this.options.get('preRendering')) {
@@ -13957,6 +13953,7 @@ class RepeatDirective {
     //   matched: same item, no need to update item. if duplicate items exist, only the first one match.
     //   reuse: reuse not in use item and update item on it.
     updateData(data) {
+        let shouldPaly = this.transition.shouldPlay();
         // Old
         let oldData = this.data;
         let oldItemIndexMap = new Map();
@@ -14034,7 +14031,7 @@ class RepeatDirective {
                 }
             }
             // Reuse template that will be removed and rerender it
-            if (this.shouldReuse() && notInUseIndexSet.size > 0) {
+            if (!shouldPaly && this.shouldReuse(item) && notInUseIndexSet.size > 0) {
                 let reuseIndex = notInUseIndexSet.keys().next().value; // index in `notInUseIndexSet` is ordered.
                 // If the index betweens `lastStayedOldIndex + 1` and `nextMatchedOldIndex`, no need to move it.
                 let canStay = reuseIndex > lastStayedOldIndex && reuseIndex < nextMatchedOldIndex;
@@ -14060,8 +14057,8 @@ class RepeatDirective {
             }
         }
     }
-    shouldReuse() {
-        return !this.transition.shouldPlay();
+    shouldReuse(_item) {
+        return true;
     }
     useMatchedOne(wtem, index) {
         wtem.updateIndex(index);

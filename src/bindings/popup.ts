@@ -18,7 +18,7 @@ export interface PopupOptions {
 	trigger?: 'hover' | 'click' | 'focus' | 'contextmenu'
 
 	/** Element to align to, default value is current element. */
-	alignTo?: () => Element
+	alignTo?: (trigger: Element) => Element
 
 	/** Where the popup align, reference to `align`. */
 	alignPosition?: string
@@ -397,7 +397,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 	protected alignPopup() {
 		let popup = this.popup!
 		let alignToFn = this.getOption('alignTo')
-		let alignTo = alignToFn ? alignToFn() : this.el
+		let alignTo = alignToFn ? alignToFn(this.el) : this.el
 		let trangle = this.popup!.refs.trangle
 
 		align(popup.el, alignTo, this.getOption('alignPosition'), {

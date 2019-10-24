@@ -6,7 +6,7 @@ import {TooltipType} from '../components/tooltip'
 
 export interface TooltipOptions {
 	name?: string
-	alignTo?: () => Element
+	alignTo?: (trigger: Element) => Element
 	alignPosition?: string
 	alignMargin?: number | number[]
 	showDelay?: number
