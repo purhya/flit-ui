@@ -30,11 +30,12 @@ export interface ListEvents<T> {
 export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 	static style() {
-		let {mainColor, adjust, borderColor} = theme
+		let {mainColor, adjust, borderColor, adjustFontSize} = theme
 
 		return css`
 		:host{
 			display: block;
+			border-bottom: 1px solid ${borderColor.alpha(0.4)};
 		}
 		
 		.option{
@@ -43,7 +44,11 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 			padding-top: ${adjust(2)}px;
 			padding-bottom: ${adjust(2)}px;
 			cursor: pointer;
-			border-bottom: 1px solid ${borderColor.alpha(0.4)};
+			border-top: 1px solid ${borderColor.alpha(0.4)};
+
+			&:first-child{
+				border-top: none;
+			}
 
 			&:hover{
 				color: ${mainColor};
@@ -62,21 +67,21 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 					top: ${adjust(3)}px;
 					bottom: ${adjust(3)}px;
 					right: 0;
-					width: 1px;
-					background: ${mainColor.alpha(0.5)};
+					width: 2px;
+					background: ${mainColor.alpha(0.8)};
 				}
 			}
 		}
 
 		.toggle{
 			display: flex;
-			width: ${adjust(23)}px;
-			opacity: 0.6;
+			width: ${adjust(22)}px;
+			opacity: 0.7;
 		}
 
 		.icon{
 			display: flex;
-			width: ${adjust(23)}px;
+			width: ${adjust(22)}px;
 		}
 
 		.text{
@@ -92,8 +97,21 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		}
 
 		.subsection{
-			padding-left: ${adjust(23)}px;
+			padding-left: ${adjust(22)}px;
 			overflow: hidden;
+			font-size: ${adjustFontSize(13)}px;
+
+			.option{
+				padding-top: 0;
+				padding-bottom: 0;
+				border-top: none;
+				line-height: ${adjust(26)}px;
+			}
+
+			.subsection{
+				padding-top: 0;
+				padding-bottom: 0;
+			}
 		}
 		`
 	}
@@ -106,7 +124,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 	active: T | null = null
 
 	protected render() {
-		return this.renderDataOrChildren(this.data)
+		return html`${this.renderDataOrChildren(this.data)}`
 	}
 
 	protected renderDataOrChildren(items: ListItem<T>[]): DirectiveResult {

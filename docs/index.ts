@@ -7,8 +7,8 @@ import * as fui from '../src'
 ;(window as any).fui = fui
 
 
-import {html, Component, renderComponent, define, repeat, observe} from '@pucelle/flit'
-import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, Column, Select, ListItem, AsyncStore} from '../src'
+import {html, Component, renderComponent, define, repeat, observe, getComponent} from '@pucelle/flit'
+import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, Column, Select, ListItem, AsyncStore, Popover} from '../src'
 
 
 define('flit-preview', class extends Component {
@@ -379,6 +379,48 @@ define('flit-preview', class extends Component {
 
 
 			<section>
+				<h3>Navigations</h3>
+
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<f-navigation
+							.active=${111}
+							.title="Navigation Menu"
+							.data=${[
+								{value: 1, text: 'User A', children:
+									[
+										{value: 11, text: 'Folder 1', children: [
+											{value: 111, text: 'Item 1'},
+											{value: 112, text: 'Item 2'},
+										]},
+										{value: 12, text: 'Folder 2', children: [
+											{value: 121, text: 'Item 1'},
+											{value: 122, text: 'Item 2'},
+										]}
+									]
+								},
+								{value: 2, text: 'User B', opened: true, children:
+									[
+										{value: 21, text: 'Folder 1', children: [
+											{value: 211, text: 'Item 1'},
+											{value: 212, text: 'Item 2'},
+										]},
+										{value: 22, text: 'Folder 2', children: [
+											{value: 221, text: 'Item 1'},
+											{value: 222, text: 'Item 2'},
+										]}
+									]
+								},
+							]}
+						/>
+					</f-col>
+
+				</f-row>
+
+			</section>
+
+
+			<section>
 				<h3>Popovers</h3>
 				
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
@@ -430,13 +472,12 @@ define('flit-preview', class extends Component {
 							popup(
 								() => html`
 								<f-popover
+									:ref="popupWithActions"
 									.title="Popover title" 
-									.actions=${[
-										{text: 'Cancel'},
-										{text: 'Save', primary: true}
-									]}
 								>
 									Here is the Popover content.
+									<button slot="action" @click=${() => (getComponent(this.refs.popupWithActions) as Popover).close()}>Cancel</button>
+									<button slot="action" primary @click=${() => (getComponent(this.refs.popupWithActions) as Popover).close()}>Save</button>
 								</f-popover>
 								`,
 								{trigger: 'click'}
@@ -673,31 +714,7 @@ define('flit-preview', class extends Component {
 			</section>
 
 
-			<!-- <section>
-				<f-dropdown icon="">
-					<button><span>Dropdown</span><f-icon .type="down" /></button>
-					<f-menu slot="content">
-						<f-menuitem icon="user">User A</f-menuitem>
-						<f-submenu>
-							<f-menuitem>Item A</f-menuitem>
-							<f-menuitem>Item B</f-menuitem>
-						</f-submenu>
-						<f-menuitem icon="user">User B</f-menuitem>
-						<f-submenu>
-							<f-menuitem icon="folder">Folder A</f-menuitem>
-							<f-menuitem icon="folder">Folder B</f-menuitem>
-							<f-menuitem icon="folder">Folder C</f-menuitem>
-							<f-menuitem icon="folder">Folder D</f-menuitem>
-							<f-menuitem icon="folder">Folder E</f-menuitem>
-							<f-menuitem icon="folder">Folder F</f-menuitem>
-							<f-submenu>
-								<f-menuitem>Item A</f-menuitem>
-								<f-menuitem>Item B</f-menuitem>
-							</f-submenu>
-						</f-submenu>	
-					</f-menu>
-				</f-dropdown>
-			</section> -->
+			
 
 
 			<section>
@@ -725,11 +742,10 @@ define('flit-preview', class extends Component {
 
 						<button @click="${() => {
 							let modal = renderComponent(html`
-								<f-modal style="width: ${theme.adjust(360)}px;" .title="Modal Title" .actions=${[
-									{text: 'Cancel', handler: () => modal.hide()},
-									{text: 'Save', handler: () => modal.hide(), primary: true}
-								]}>
+								<f-modal style="width: ${theme.adjust(360)}px;" .title="Modal Title">
 									Here is the modal content
+									<button slot="action" @click=${() => modal.hide()}>Cancel</button>
+									<button slot="action" primary @click=${() => modal.hide()}>Save</button>
 								</f-modal>
 							`).component as Modal
 

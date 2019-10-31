@@ -2,13 +2,11 @@ import {css, define, html} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Popup} from './popup'
 import {PopupOptions} from '../bindings/popup'
-import {Action, ContextHasActions, renderActions} from './action'
-
 
 
 // Compare to `<popup>`, it can set title and actions.
 @define('f-popover')
-export class Popover<E = any> extends Popup<E> implements ContextHasActions {
+export class Popover<E = any> extends Popup<E> {
 
 	static style() {
 		let {adjust, adjustFontSize, textColor} = theme
@@ -62,13 +60,13 @@ export class Popover<E = any> extends Popup<E> implements ContextHasActions {
 
 		.actions{
 			margin-left: ${adjust(15)}px;
-		}
 
-		.action{
-			margin-left: ${adjust(6)}px;
-			height: ${adjust(22)}px;
-			line-height: ${20}px;
-			padding: 0 ${adjust(8)}px;
+			button{
+				margin-left: ${adjust(6)}px;
+				height: ${adjust(22)}px;
+				line-height: ${20}px;
+				padding: 0 ${adjust(8)}px;
+			}
 		}
 
 		.content{}
@@ -77,7 +75,6 @@ export class Popover<E = any> extends Popup<E> implements ContextHasActions {
 
 	title: string = ''
 	closable: boolean = false
-	actions: Action[] | null = null
 
 	defaultPopupOptions: PopupOptions = {
 		// `trigger` not work here because when handle it, current component is not created.
@@ -96,12 +93,15 @@ export class Popover<E = any> extends Popup<E> implements ContextHasActions {
 
 	protected renderHead() {
 		if (this.title) {
-			let shouldRenderClose = this.closable && (!this.actions || this.actions.length === 0)
-
+			let shouldRenderClose = this.closable && !this.slots.action
+			
 			return html`
 			<div class="header">
 				<div class="title">${this.title}</div>
-				${renderActions(this, this.actions)}
+
+				<div class="actions" :show=${this.slots.action}>
+					<slot name="action" />
+				</div>
 
 				${shouldRenderClose ? html`
 					<div class="close" @click=${this.close}>
@@ -113,11 +113,5 @@ export class Popover<E = any> extends Popup<E> implements ContextHasActions {
 		}
 
 		return ''
-	}
-
-	onActionHandled(_action: Action, success: boolean) {
-		if (success) {
-			this.close()
-		}
 	}
 }

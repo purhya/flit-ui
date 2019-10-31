@@ -1,7 +1,6 @@
 import {css, define, html, on, renderComplete, off, Component, appendTo, show} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {debounce, align} from '@pucelle/ff'
-import {renderActions, Action} from './action'
 
 
 @define('f-modal')
@@ -73,10 +72,10 @@ export class Modal<E = any> extends Component<E> {
 
 		.actions{
 			margin-left: ${adjust(16)}px;
-		}
 
-		.action{
-			margin-left: ${adjust(8)}px;
+			button{
+				margin-left: ${adjust(8)}px;
+			}
 		}
 
 		.content{
@@ -92,12 +91,11 @@ export class Modal<E = any> extends Component<E> {
 
 	title: string = ''
 	opened: boolean = true
-	actions: Action[] | null = null
 	appendTo: string | HTMLElement | null = 'body'
 
 	//extensions may make win wrapped by a mask, so we need a win el
 	protected render() {
-		let shouldRenderClose = !this.actions || this.actions.length === 0
+		let shouldRenderClose = !this.slots.action
 
 		return html`
 		<template
@@ -111,7 +109,10 @@ export class Modal<E = any> extends Component<E> {
 
 			<div class="header">
 				<div class="title">${this.title}</div>
-				${renderActions(this, this.actions)}
+
+				<div class="actions" :show=${this.slots.action}>
+					<slot name="action" />
+				</div>
 
 				${shouldRenderClose ? html`
 					<div class="close" @click=${this.hide}>
@@ -126,8 +127,6 @@ export class Modal<E = any> extends Component<E> {
 		</template>
 		`
 	}
-
-	onActionHandled(_action: Action, _success: boolean) {}
 
 	protected onTransitionEnd(type: string, finish: boolean) {
 		if (type === 'leave' && finish) {
@@ -160,7 +159,7 @@ export class Modal<E = any> extends Component<E> {
 		}
 	}
 
-	toCenter() {
+	protected toCenter() {
 		align(this.el, document.documentElement, 'c')
 	}
 

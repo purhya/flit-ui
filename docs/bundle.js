@@ -4843,6 +4843,46 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 
 			<section>
+				<h3>Navigations</h3>
+
+				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<f-navigation
+							.active=${111}
+							.title="Navigation Menu"
+							.data=${[
+            { value: 1, text: 'User A', children: [
+                    { value: 11, text: 'Folder 1', children: [
+                            { value: 111, text: 'Item 1' },
+                            { value: 112, text: 'Item 2' },
+                        ] },
+                    { value: 12, text: 'Folder 2', children: [
+                            { value: 121, text: 'Item 1' },
+                            { value: 122, text: 'Item 2' },
+                        ] }
+                ]
+            },
+            { value: 2, text: 'User B', opened: true, children: [
+                    { value: 21, text: 'Folder 1', children: [
+                            { value: 211, text: 'Item 1' },
+                            { value: 212, text: 'Item 2' },
+                        ] },
+                    { value: 22, text: 'Folder 2', children: [
+                            { value: 221, text: 'Item 1' },
+                            { value: 222, text: 'Item 2' },
+                        ] }
+                ]
+            },
+        ]}
+						/>
+					</f-col>
+
+				</f-row>
+
+			</section>
+
+
+			<section>
 				<h3>Popovers</h3>
 				
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
@@ -4877,13 +4917,12 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 						<header style="margin-bottom: 8px;">With actions</header>
 						<button ${src_1.popup(() => flit_1.html `
 								<f-popover
+									:ref="popupWithActions"
 									.title="Popover title" 
-									.actions=${[
-            { text: 'Cancel' },
-            { text: 'Save', primary: true }
-        ]}
 								>
 									Here is the Popover content.
+									<button slot="action" @click=${() => flit_1.getComponent(this.refs.popupWithActions).close()}>Cancel</button>
+									<button slot="action" primary @click=${() => flit_1.getComponent(this.refs.popupWithActions).close()}>Save</button>
 								</f-popover>
 								`, { trigger: 'click' })}>Click to Open Popover</button>
 					</f-col>
@@ -5073,31 +5112,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 			</section>
 
 
-			<!-- <section>
-				<f-dropdown icon="">
-					<button><span>Dropdown</span><f-icon .type="down" /></button>
-					<f-menu slot="content">
-						<f-menuitem icon="user">User A</f-menuitem>
-						<f-submenu>
-							<f-menuitem>Item A</f-menuitem>
-							<f-menuitem>Item B</f-menuitem>
-						</f-submenu>
-						<f-menuitem icon="user">User B</f-menuitem>
-						<f-submenu>
-							<f-menuitem icon="folder">Folder A</f-menuitem>
-							<f-menuitem icon="folder">Folder B</f-menuitem>
-							<f-menuitem icon="folder">Folder C</f-menuitem>
-							<f-menuitem icon="folder">Folder D</f-menuitem>
-							<f-menuitem icon="folder">Folder E</f-menuitem>
-							<f-menuitem icon="folder">Folder F</f-menuitem>
-							<f-submenu>
-								<f-menuitem>Item A</f-menuitem>
-								<f-menuitem>Item B</f-menuitem>
-							</f-submenu>
-						</f-submenu>	
-					</f-menu>
-				</f-dropdown>
-			</section> -->
+			
 
 
 			<section>
@@ -5124,11 +5139,10 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 						<button @click="${() => {
             let modal = flit_1.renderComponent(flit_1.html `
-								<f-modal style="width: ${src_1.theme.adjust(360)}px;" .title="Modal Title" .actions=${[
-                { text: 'Cancel', handler: () => modal.hide() },
-                { text: 'Save', handler: () => modal.hide(), primary: true }
-            ]}>
+								<f-modal style="width: ${src_1.theme.adjust(360)}px;" .title="Modal Title">
 									Here is the modal content
+									<button slot="action" @click=${() => modal.hide()}>Cancel</button>
+									<button slot="action" primary @click=${() => modal.hide()}>Save</button>
 								</f-modal>
 							`).component;
             modal.show();
@@ -5302,7 +5316,7 @@ class ExampleAsyncStore extends src_1.AsyncStore {
     }
 }
 
-},{"../src":64,"@pucelle/ff":28,"@pucelle/flit":96}],30:[function(require,module,exports){
+},{"../src":65,"@pucelle/ff":28,"@pucelle/flit":97}],30:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -5377,7 +5391,7 @@ exports.ContextMenuBinding = ContextMenuBinding;
  */
 exports.contextmenu = flit_1.defineBinding('contextmenu', ContextMenuBinding);
 
-},{"@pucelle/ff":28,"@pucelle/flit":96}],31:[function(require,module,exports){
+},{"@pucelle/ff":28,"@pucelle/flit":97}],31:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -5812,7 +5826,47 @@ class Mover {
     }
 }
 
-},{"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],32:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/ff":28,"@pucelle/flit":97}],32:[function(require,module,exports){
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const flit_1 = require("@pucelle/flit");
+const router_1 = require("../components/router");
+let GotoBinding = class GotoBinding {
+    constructor(el) {
+        this.value = '';
+        this.router = null;
+        this.el = el;
+        flit_1.on(this.el, 'click', this.onClick, this);
+    }
+    update(value) {
+        this.value = value;
+    }
+    onClick() {
+        this.ensureRouter();
+        this.router.goto(this.value);
+    }
+    ensureRouter() {
+        if (!this.router) {
+            this.router = flit_1.getClosestComponent(this.el.parentElement, router_1.Router);
+            if (!this.router) {
+                throw new Error(`":goto" must be contained in a extended component of "Router"`);
+            }
+        }
+    }
+    remove() { }
+};
+GotoBinding = __decorate([
+    flit_1.defineBinding('goto')
+], GotoBinding);
+exports.GotoBinding = GotoBinding;
+
+},{"../components/router":56,"@pucelle/flit":97}],33:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -5866,7 +5920,7 @@ class LoadingBinging {
 exports.LoadingBinging = LoadingBinging;
 exports.loading = flit_1.defineBinding('loading', LoadingBinging);
 
-},{"@pucelle/flit":96}],33:[function(require,module,exports){
+},{"@pucelle/flit":97}],34:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -6228,7 +6282,7 @@ class PopupBinding {
 exports.PopupBinding = PopupBinding;
 exports.popup = flit_1.defineBinding('popup', PopupBinding);
 
-},{"@pucelle/ff":28,"@pucelle/flit":96}],34:[function(require,module,exports){
+},{"@pucelle/ff":28,"@pucelle/flit":97}],35:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -6304,33 +6358,7 @@ class TooltipBinding extends popup_1.PopupBinding {
 exports.TooltipBinding = TooltipBinding;
 exports.tooltip = flit_1.defineBinding('tooltip', TooltipBinding);
 
-},{"./popup":33,"@pucelle/ff":28,"@pucelle/flit":96}],35:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const flit_1 = require("@pucelle/flit");
-const ff_1 = require("@pucelle/ff");
-function renderActions(context, actions, others) {
-    if (actions && actions.length > 0) {
-        actions = ff_1.orderBy([...actions], action => action.third ? 0 : 1);
-        let results = actions.map(action => flit_1.html `
-			<button class="action"
-				?primary=${action.primary}
-				style="${action.third ? 'margin-left: 0; margin-right: auto;' : ''}"
-				@click=${() => handleActionClicking(context, action, others)}>
-				${action.text}
-			</button>
-		`);
-        return flit_1.html `<div class="actions">${results}</div>`;
-    }
-    return '';
-}
-exports.renderActions = renderActions;
-async function handleActionClicking(context, action, others) {
-    let failed = action.handler && await action.handler() === false;
-    context.onActionHandled(action, !failed, others);
-}
-
-},{"@pucelle/ff":28,"@pucelle/flit":96}],36:[function(require,module,exports){
+},{"./popup":34,"@pucelle/ff":28,"@pucelle/flit":97}],36:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -6378,7 +6406,7 @@ ButtonGroup = __decorate([
 ], ButtonGroup);
 exports.ButtonGroup = ButtonGroup;
 
-},{"../style/theme":69,"@pucelle/flit":96}],37:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/flit":97}],37:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -6514,7 +6542,7 @@ CheckboxGroup = __decorate([
 ], CheckboxGroup);
 exports.CheckboxGroup = CheckboxGroup;
 
-},{"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],38:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/ff":28,"@pucelle/flit":97}],38:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -6555,7 +6583,7 @@ ContextMenu = __decorate([
 ], ContextMenu);
 exports.ContextMenu = ContextMenu;
 
-},{"../components/popup":51,"../style/theme":69,"@pucelle/flit":96}],39:[function(require,module,exports){
+},{"../components/popup":52,"../style/theme":70,"@pucelle/flit":97}],39:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -6566,7 +6594,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
 const theme_1 = require("../style/theme");
-const action_1 = require("./action");
 const ff_1 = require("@pucelle/ff");
 let Dialog = class Dialog extends flit_1.Component {
     constructor() {
@@ -6647,10 +6674,15 @@ let Dialog = class Dialog extends flit_1.Component {
 			display: flex;
 			justify-content: flex-end;
 			margin-top: ${adjust(16)}px;
-		}
 
-		.action{
-			margin-left: ${adjust(8)}px;
+			button{
+				margin-left: ${adjust(8)}px;
+			}
+
+			.third{
+				margin-left: 0;
+				margin-right: auto;
+			}
 		}
 		`;
     }
@@ -6695,11 +6727,25 @@ let Dialog = class Dialog extends flit_1.Component {
 				` : ''}
 			</div>
 
-			${action_1.renderActions(this, options.actions)}
+			${this.renderActions(options.actions)}
 		</template>
 		`;
     }
-    onActionHandled(action) {
+    renderActions(actions) {
+        if (actions && actions.length > 0) {
+            let results = actions.map(action => flit_1.html `
+				<button class="action"
+					?primary=${action.primary}
+					:class.third=${action.third}
+					@click=${() => this.onClickActionButton(action)}>
+					${action.text}
+				</button>
+			`);
+            return flit_1.html `<div class="actions">${results}</div>`;
+        }
+        return '';
+    }
+    onClickActionButton(action) {
         if (this.resolve) {
             this.resolve(action.value);
             this.resolve = null;
@@ -6818,7 +6864,7 @@ class QuickDialog {
 exports.QuickDialog = QuickDialog;
 exports.dialog = new QuickDialog();
 
-},{"../style/theme":69,"./action":35,"@pucelle/ff":28,"@pucelle/flit":96}],40:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/ff":28,"@pucelle/flit":97}],40:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -6905,7 +6951,7 @@ class Dropdown extends flit_1.Component {
 }
 exports.Dropdown = Dropdown;
 
-},{"../bindings/popup":33,"../style/theme":69,"@pucelle/flit":96}],41:[function(require,module,exports){
+},{"../bindings/popup":34,"../style/theme":70,"@pucelle/flit":97}],41:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -6959,7 +7005,7 @@ Form = __decorate([
 ], Form);
 exports.Form = Form;
 
-},{"@pucelle/flit":96}],42:[function(require,module,exports){
+},{"@pucelle/flit":97}],42:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7059,7 +7105,7 @@ ColLayout = __decorate([
 ], ColLayout);
 exports.ColLayout = ColLayout;
 
-},{"@pucelle/flit":96}],43:[function(require,module,exports){
+},{"@pucelle/flit":97}],43:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7159,7 +7205,7 @@ IconLoading = __decorate([
 ], IconLoading);
 exports.IconLoading = IconLoading;
 
-},{"../icons/svg-symbol":63,"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],44:[function(require,module,exports){
+},{"../icons/svg-symbol":64,"../style/theme":70,"@pucelle/ff":28,"@pucelle/flit":97}],44:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7332,7 +7378,7 @@ Textarea = __decorate([
 ], Textarea);
 exports.Textarea = Textarea;
 
-},{"../style/theme":69,"./form":41,"@pucelle/flit":96}],45:[function(require,module,exports){
+},{"../style/theme":70,"./form":41,"@pucelle/flit":97}],45:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7356,10 +7402,11 @@ let List = class List extends flit_1.Component {
         this.active = null;
     }
     static style() {
-        let { mainColor, adjust, borderColor } = theme_1.theme;
+        let { mainColor, adjust, borderColor, adjustFontSize } = theme_1.theme;
         return flit_1.css `
 		:host{
 			display: block;
+			border-bottom: 1px solid ${borderColor.alpha(0.4)};
 		}
 		
 		.option{
@@ -7368,7 +7415,11 @@ let List = class List extends flit_1.Component {
 			padding-top: ${adjust(2)}px;
 			padding-bottom: ${adjust(2)}px;
 			cursor: pointer;
-			border-bottom: 1px solid ${borderColor.alpha(0.4)};
+			border-top: 1px solid ${borderColor.alpha(0.4)};
+
+			&:first-child{
+				border-top: none;
+			}
 
 			&:hover{
 				color: ${mainColor};
@@ -7387,21 +7438,21 @@ let List = class List extends flit_1.Component {
 					top: ${adjust(3)}px;
 					bottom: ${adjust(3)}px;
 					right: 0;
-					width: 1px;
-					background: ${mainColor.alpha(0.5)};
+					width: 2px;
+					background: ${mainColor.alpha(0.8)};
 				}
 			}
 		}
 
 		.toggle{
 			display: flex;
-			width: ${adjust(23)}px;
-			opacity: 0.6;
+			width: ${adjust(22)}px;
+			opacity: 0.7;
 		}
 
 		.icon{
 			display: flex;
-			width: ${adjust(23)}px;
+			width: ${adjust(22)}px;
 		}
 
 		.text{
@@ -7417,13 +7468,26 @@ let List = class List extends flit_1.Component {
 		}
 
 		.subsection{
-			padding-left: ${adjust(23)}px;
+			padding-left: ${adjust(22)}px;
 			overflow: hidden;
+			font-size: ${adjustFontSize(13)}px;
+
+			.option{
+				padding-top: 0;
+				padding-bottom: 0;
+				border-top: none;
+				line-height: ${adjust(26)}px;
+			}
+
+			.subsection{
+				padding-top: 0;
+				padding-bottom: 0;
+			}
 		}
 		`;
     }
     render() {
-        return this.renderDataOrChildren(this.data);
+        return flit_1.html `${this.renderDataOrChildren(this.data)}`;
     }
     renderDataOrChildren(items) {
         let hasIcon = items.some(item => item.icon);
@@ -7513,7 +7577,7 @@ List = __decorate([
 ], List);
 exports.List = List;
 
-},{"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],46:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/ff":28,"@pucelle/flit":97}],46:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7625,7 +7689,7 @@ Loader = Loader_1 = __decorate([
 ], Loader);
 exports.Loader = Loader;
 
-},{"../style/theme":69,"@pucelle/flit":96}],47:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/flit":97}],47:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7716,7 +7780,7 @@ Menu = __decorate([
 ], Menu);
 exports.Menu = Menu;
 
-},{"../style/theme":69,"./popup":51,"@pucelle/flit":96}],48:[function(require,module,exports){
+},{"../style/theme":70,"./popup":52,"@pucelle/flit":97}],48:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7728,13 +7792,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
 const theme_1 = require("../style/theme");
 const ff_1 = require("@pucelle/ff");
-const action_1 = require("./action");
 let Modal = class Modal extends flit_1.Component {
     constructor() {
         super(...arguments);
         this.title = '';
         this.opened = true;
-        this.actions = null;
         this.appendTo = 'body';
     }
     static style() {
@@ -7802,10 +7864,10 @@ let Modal = class Modal extends flit_1.Component {
 
 		.actions{
 			margin-left: ${adjust(16)}px;
-		}
 
-		.action{
-			margin-left: ${adjust(8)}px;
+			button{
+				margin-left: ${adjust(8)}px;
+			}
 		}
 
 		.content{
@@ -7821,7 +7883,7 @@ let Modal = class Modal extends flit_1.Component {
     }
     //extensions may make win wrapped by a mask, so we need a win el
     render() {
-        let shouldRenderClose = !this.actions || this.actions.length === 0;
+        let shouldRenderClose = !this.slots.action;
         return flit_1.html `
 		<template
 			tabindex="0"
@@ -7834,7 +7896,10 @@ let Modal = class Modal extends flit_1.Component {
 
 			<div class="header">
 				<div class="title">${this.title}</div>
-				${action_1.renderActions(this, this.actions)}
+
+				<div class="actions" :show=${this.slots.action}>
+					<slot name="action" />
+				</div>
 
 				${shouldRenderClose ? flit_1.html `
 					<div class="close" @click=${this.hide}>
@@ -7849,7 +7914,6 @@ let Modal = class Modal extends flit_1.Component {
 		</template>
 		`;
     }
-    onActionHandled(_action, _success) { }
     onTransitionEnd(type, finish) {
         if (type === 'leave' && finish) {
             if (this.refs.mask) {
@@ -7897,7 +7961,61 @@ Modal = __decorate([
 ], Modal);
 exports.Modal = Modal;
 
-},{"../style/theme":69,"./action":35,"@pucelle/ff":28,"@pucelle/flit":96}],49:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/ff":28,"@pucelle/flit":97}],49:[function(require,module,exports){
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const flit_1 = require("@pucelle/flit");
+const list_1 = require("./list");
+const theme_1 = require("../style/theme");
+let Navigation = class Navigation extends list_1.List {
+    constructor() {
+        super(...arguments);
+        this.type = 'navigation';
+        this.title = '';
+    }
+    static style() {
+        let { backgroundColor, adjust, adjustFontSize } = theme_1.theme;
+        return flit_1.css `
+		:host{
+			padding: ${adjust(8)}px ${adjust(16)}px;
+			border-bottom: none;
+			background: ${backgroundColor.toMiddle(9)};
+			overflow-y: auto;
+		}
+
+		.title{
+			font-size: ${adjustFontSize(18)}px;
+			font-weight: 300;
+			margin-top: ${adjust(4)}px;
+			margin-bottom: ${adjust(8)}px;
+		}
+
+		`.extends(super.style());
+    }
+    render() {
+        return flit_1.html `
+		<tempalte>
+			${this.title ? flit_1.html `
+			<div class="title">
+				${this.title}
+			</div>` : ''}
+
+			${this.renderDataOrChildren(this.data)}
+		</tempalte>`;
+    }
+};
+Navigation = __decorate([
+    flit_1.define('f-navigation')
+], Navigation);
+exports.Navigation = Navigation;
+
+},{"../style/theme":70,"./list":45,"@pucelle/flit":97}],50:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -7909,7 +8027,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
 const theme_1 = require("../style/theme");
 const ff_1 = require("@pucelle/ff");
-const action_1 = require("./action");
 let Notification = class Notification extends flit_1.Component {
     constructor() {
         super(...arguments);
@@ -8066,13 +8183,33 @@ let Notification = class Notification extends flit_1.Component {
 						</ul>
 					` : ''}
 
-					${action_1.renderActions(this, item.actions, item)}
+					${this.renderActions(item)}
 				</div>
 
 				<div class="close" @click=${() => this.onClickClose(item)}>
 					<f-icon .type="close" />
 				</div>
 			</div>`, { transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd });
+    }
+    renderActions(item) {
+        let actions = item.actions;
+        if (actions && actions.length > 0) {
+            let results = actions.map(action => flit_1.html `
+				<button class="action"
+					?primary=${action.primary}
+					@click=${() => this.onClickActionButton(action, item)}>
+					${action.text}
+				</button>
+			`);
+            return flit_1.html `<div class="actions">${results}</div>`;
+        }
+        return '';
+    }
+    async onClickActionButton(action, item) {
+        if (action.handler) {
+            action.handler();
+        }
+        this.hide(item.id);
     }
     onMouseEnter(item) {
         item.entered = true;
@@ -8084,9 +8221,6 @@ let Notification = class Notification extends flit_1.Component {
         }
     }
     onClickClose(item) {
-        this.hide(item.id);
-    }
-    onActionHandled(_action, _success, item) {
         this.hide(item.id);
     }
     onTransitionEnd(type) {
@@ -8209,7 +8343,7 @@ class UniqueNotification {
 exports.UniqueNotification = UniqueNotification;
 exports.notification = new QuickNotification();
 
-},{"../style/theme":69,"./action":35,"@pucelle/ff":28,"@pucelle/flit":96}],50:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/ff":28,"@pucelle/flit":97}],51:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8221,14 +8355,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
 const theme_1 = require("../style/theme");
 const popup_1 = require("./popup");
-const action_1 = require("./action");
 // Compare to `<popup>`, it can set title and actions.
 let Popover = class Popover extends popup_1.Popup {
     constructor() {
         super(...arguments);
         this.title = '';
         this.closable = false;
-        this.actions = null;
         this.defaultPopupOptions = {
             // `trigger` not work here because when handle it, current component is not created.
             alignPosition: 'bc',
@@ -8286,13 +8418,13 @@ let Popover = class Popover extends popup_1.Popup {
 
 		.actions{
 			margin-left: ${adjust(15)}px;
-		}
 
-		.action{
-			margin-left: ${adjust(6)}px;
-			height: ${adjust(22)}px;
-			line-height: ${20}px;
-			padding: 0 ${adjust(8)}px;
+			button{
+				margin-left: ${adjust(6)}px;
+				height: ${adjust(22)}px;
+				line-height: ${20}px;
+				padding: 0 ${adjust(8)}px;
+			}
 		}
 
 		.content{}
@@ -8308,11 +8440,14 @@ let Popover = class Popover extends popup_1.Popup {
     }
     renderHead() {
         if (this.title) {
-            let shouldRenderClose = this.closable && (!this.actions || this.actions.length === 0);
+            let shouldRenderClose = this.closable && !this.slots.action;
             return flit_1.html `
 			<div class="header">
 				<div class="title">${this.title}</div>
-				${action_1.renderActions(this, this.actions)}
+
+				<div class="actions" :show=${this.slots.action}>
+					<slot name="action" />
+				</div>
 
 				${shouldRenderClose ? flit_1.html `
 					<div class="close" @click=${this.close}>
@@ -8324,18 +8459,13 @@ let Popover = class Popover extends popup_1.Popup {
         }
         return '';
     }
-    onActionHandled(_action, success) {
-        if (success) {
-            this.close();
-        }
-    }
 };
 Popover = __decorate([
     flit_1.define('f-popover')
 ], Popover);
 exports.Popover = Popover;
 
-},{"../style/theme":69,"./action":35,"./popup":51,"@pucelle/flit":96}],51:[function(require,module,exports){
+},{"../style/theme":70,"./popup":52,"@pucelle/flit":97}],52:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8454,7 +8584,7 @@ Popup = __decorate([
 ], Popup);
 exports.Popup = Popup;
 
-},{"../style/theme":69,"@pucelle/flit":96}],52:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/flit":97}],53:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8522,7 +8652,7 @@ Progress = __decorate([
 ], Progress);
 exports.Progress = Progress;
 
-},{"../bindings/tooltip":34,"../style/theme":69,"@pucelle/flit":96}],53:[function(require,module,exports){
+},{"../bindings/tooltip":35,"../style/theme":70,"@pucelle/flit":97}],54:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8652,7 +8782,7 @@ RadioGroup = __decorate([
 ], RadioGroup);
 exports.RadioGroup = RadioGroup;
 
-},{"../style/theme":69,"@pucelle/flit":96}],54:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/flit":97}],55:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8786,7 +8916,7 @@ Resizer = __decorate([
 ], Resizer);
 exports.Resizer = Resizer;
 
-},{"@pucelle/ff":28,"@pucelle/flit":96}],55:[function(require,module,exports){
+},{"@pucelle/ff":28,"@pucelle/flit":97}],56:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -8940,7 +9070,7 @@ var PathParser;
     }
 })(PathParser || (PathParser = {}));
 
-},{"@pucelle/flit":96}],56:[function(require,module,exports){
+},{"@pucelle/flit":97}],57:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -9052,7 +9182,7 @@ Search = __decorate([
 ], Search);
 exports.Search = Search;
 
-},{"../style/theme":69,"@pucelle/flit":96}],57:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/flit":97}],58:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -9306,7 +9436,7 @@ Select = __decorate([
 ], Select);
 exports.Select = Select;
 
-},{"../style/theme":69,"./dropdown":40,"@pucelle/ff":28,"@pucelle/flit":96}],58:[function(require,module,exports){
+},{"../style/theme":70,"./dropdown":40,"@pucelle/ff":28,"@pucelle/flit":97}],59:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -9542,7 +9672,7 @@ Slider = __decorate([
 ], Slider);
 exports.Slider = Slider;
 
-},{"../bindings/tooltip":34,"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],59:[function(require,module,exports){
+},{"../bindings/tooltip":35,"../style/theme":70,"@pucelle/ff":28,"@pucelle/flit":97}],60:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -9653,7 +9783,7 @@ Switch = __decorate([
 ], Switch);
 exports.Switch = Switch;
 
-},{"../style/theme":69,"@pucelle/flit":96}],60:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/flit":97}],61:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -10218,7 +10348,7 @@ function columnWidthCalculator(widthAndFlexArray, clientWidth, minColumnWidth) {
     return widths;
 }
 
-},{"../store/async-store":65,"../style/theme":69,"@pucelle/ff":28,"@pucelle/flit":96}],61:[function(require,module,exports){
+},{"../store/async-store":66,"../style/theme":70,"@pucelle/ff":28,"@pucelle/flit":97}],62:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -10281,7 +10411,7 @@ Tag = __decorate([
 ], Tag);
 exports.Tag = Tag;
 
-},{"../style/theme":69,"@pucelle/flit":96}],62:[function(require,module,exports){
+},{"../style/theme":70,"@pucelle/flit":97}],63:[function(require,module,exports){
 "use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -10384,7 +10514,7 @@ Tooltip = __decorate([
 ], Tooltip);
 exports.Tooltip = Tooltip;
 
-},{"../components/popup":51,"../style/theme":69,"@pucelle/flit":96}],63:[function(require,module,exports){
+},{"../components/popup":52,"../style/theme":70,"@pucelle/flit":97}],64:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.svgSymbols = {
@@ -10521,7 +10651,7 @@ exports.svgSymbols = {
 	`,
 };
 
-},{}],64:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 "use strict";
 function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
@@ -10548,6 +10678,7 @@ __export(require("./components/tooltip"));
 __export(require("./components/popover"));
 __export(require("./components/dropdown"));
 __export(require("./components/list"));
+__export(require("./components/navigation"));
 __export(require("./components/select"));
 __export(require("./components/menu"));
 __export(require("./components/contextmenu"));
@@ -10563,10 +10694,10 @@ __export(require("./bindings/tooltip"));
 __export(require("./bindings/contextmenu"));
 __export(require("./bindings/popup"));
 __export(require("./bindings/loading"));
+__export(require("./bindings/goto"));
 __export(require("./bindings/drag-drop"));
-require("./bindings/drag-drop");
 
-},{"./bindings/contextmenu":30,"./bindings/drag-drop":31,"./bindings/loading":32,"./bindings/popup":33,"./bindings/tooltip":34,"./components/buttongroup":36,"./components/checkbox":37,"./components/contextmenu":38,"./components/dialog":39,"./components/dropdown":40,"./components/form":41,"./components/grid-layout":42,"./components/icon":43,"./components/input":44,"./components/list":45,"./components/loader":46,"./components/menu":47,"./components/modal":48,"./components/notification":49,"./components/popover":50,"./components/popup":51,"./components/progress":52,"./components/radio":53,"./components/resizer":54,"./components/router":55,"./components/search":56,"./components/select":57,"./components/slider":58,"./components/switch":59,"./components/table":60,"./components/tag":61,"./components/tooltip":62,"./store/async-store":65,"./store/store":66,"./style/color":67,"./style/global-style":68,"./style/theme":69}],65:[function(require,module,exports){
+},{"./bindings/contextmenu":30,"./bindings/drag-drop":31,"./bindings/goto":32,"./bindings/loading":33,"./bindings/popup":34,"./bindings/tooltip":35,"./components/buttongroup":36,"./components/checkbox":37,"./components/contextmenu":38,"./components/dialog":39,"./components/dropdown":40,"./components/form":41,"./components/grid-layout":42,"./components/icon":43,"./components/input":44,"./components/list":45,"./components/loader":46,"./components/menu":47,"./components/modal":48,"./components/navigation":49,"./components/notification":50,"./components/popover":51,"./components/popup":52,"./components/progress":53,"./components/radio":54,"./components/resizer":55,"./components/router":56,"./components/search":57,"./components/select":58,"./components/slider":59,"./components/switch":60,"./components/table":61,"./components/tag":62,"./components/tooltip":63,"./store/async-store":66,"./store/store":67,"./style/color":68,"./style/global-style":69,"./style/theme":70}],66:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ff_1 = require("@pucelle/ff");
@@ -10614,7 +10745,7 @@ class AsyncStore extends ff_1.Emitter {
 }
 exports.AsyncStore = AsyncStore;
 
-},{"@pucelle/ff":28}],66:[function(require,module,exports){
+},{"@pucelle/ff":28}],67:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ff_1 = require("@pucelle/ff");
@@ -10952,7 +11083,7 @@ class Store extends ff_1.Emitter {
 }
 exports.Store = Store;
 
-},{"@pucelle/ff":28}],67:[function(require,module,exports){
+},{"@pucelle/ff":28}],68:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ff_1 = require("@pucelle/ff");
@@ -11080,7 +11211,7 @@ class Color {
 }
 exports.Color = Color;
 
-},{"@pucelle/ff":28}],68:[function(require,module,exports){
+},{"@pucelle/ff":28}],69:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -11272,7 +11403,7 @@ flit_1.addGlobalStyle(() => {
 `;
 });
 
-},{"./theme":69,"@pucelle/flit":96}],69:[function(require,module,exports){
+},{"./theme":70,"@pucelle/flit":97}],70:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const flit_1 = require("@pucelle/flit");
@@ -11439,7 +11570,7 @@ exports.theme.defineTheme('touch', {
     lineHeight: 46,
 });
 
-},{"./color":67,"@pucelle/ff":28,"@pucelle/flit":96}],70:[function(require,module,exports){
+},{"./color":68,"@pucelle/ff":28,"@pucelle/flit":97}],71:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11525,7 +11656,7 @@ define_1.defineBinding('class', class ClassNameBinding {
     }
 });
 
-},{"../component":84,"./define":71}],71:[function(require,module,exports){
+},{"../component":85,"./define":72}],72:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const definedMap = new Map();
@@ -11584,7 +11715,7 @@ function refBinding(result, ref) {
 }
 exports.refBinding = refBinding;
 
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11628,7 +11759,7 @@ define_1.defineBinding('disable', class DisabledBinding {
     }
 });
 
-},{"./define":71}],73:[function(require,module,exports){
+},{"./define":72}],74:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11647,7 +11778,7 @@ define_1.defineBinding('html', class HTMLBinding {
     }
 });
 
-},{"./define":71}],74:[function(require,module,exports){
+},{"./define":72}],75:[function(require,module,exports){
 "use strict";
 function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
@@ -11668,7 +11799,7 @@ require("./src");
 require("./show-hide");
 __export(require("./show-hide"));
 
-},{"./class":70,"./define":71,"./enable-disable":72,"./html":73,"./model":75,"./ref":76,"./show-hide":77,"./src":78,"./style":79}],75:[function(require,module,exports){
+},{"./class":71,"./define":72,"./enable-disable":73,"./html":74,"./model":76,"./ref":77,"./show-hide":78,"./src":79,"./style":80}],76:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11856,7 +11987,7 @@ define_1.defineBinding('model', class ModelBinding {
     }
 });
 
-},{"../component":84,"../libs/dom-event":98,"./define":71}],76:[function(require,module,exports){
+},{"../component":85,"../libs/dom-event":99,"./define":72}],77:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11883,7 +12014,7 @@ define_1.defineBinding('ref', class RefBinding {
     remove() { }
 });
 
-},{"./define":71}],77:[function(require,module,exports){
+},{"./define":72}],78:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11941,7 +12072,7 @@ class HideBinding extends ShowBinding {
 }
 exports.hide = define_1.defineBinding('hide', HideBinding);
 
-},{"../libs/directive-transition":97,"./define":71}],78:[function(require,module,exports){
+},{"../libs/directive-transition":98,"./define":72}],79:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -11974,7 +12105,7 @@ define_1.defineBinding('src', class SrcBinding {
     }
 });
 
-},{"./define":71}],79:[function(require,module,exports){
+},{"./define":72}],80:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -12069,7 +12200,7 @@ define_1.defineBinding('style', class StyleBinding {
     }
 });
 
-},{"./define":71}],80:[function(require,module,exports){
+},{"./define":72}],81:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const emitter_1 = require("../libs/emitter");
@@ -12292,6 +12423,16 @@ class Component extends emitter_1.Emitter {
         this.__watcherGroup = this.__watcherGroup || new watcher_1.WatcherGroup();
         return this.__watcherGroup.watchUntil(fn, callback.bind(this));
     }
+    /** @hidden */
+    __addWatcher(watcher) {
+        this.__watcherGroup = this.__watcherGroup || new watcher_1.WatcherGroup();
+        this.__watcherGroup.add(watcher);
+    }
+    /** @hidden */
+    __deleteWatcher(watcher) {
+        this.__watcherGroup = this.__watcherGroup || new watcher_1.WatcherGroup();
+        this.__watcherGroup.delete(watcher);
+    }
     /** returns scoped class name E `.name -> .name__com-name` */
     scopeClassName(className) {
         let startsWithDot = className[0] === '.';
@@ -12319,7 +12460,7 @@ exports.Component = Component;
  */
 Component.style = null;
 
-},{"../libs/emitter":99,"../libs/node-helper":101,"../observer":110,"../queue":118,"../template":123,"../watcher":132,"./from-element":83,"./life-cycle":85,"./slot":86,"./style":87}],81:[function(require,module,exports){
+},{"../libs/emitter":100,"../libs/node-helper":102,"../observer":111,"../queue":119,"../template":124,"../watcher":133,"./from-element":84,"./life-cycle":86,"./slot":87,"./style":88}],82:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /** To cache `name -> component constructor` */
@@ -12346,7 +12487,7 @@ function getComponentConstructor(name) {
 }
 exports.getComponentConstructor = getComponentConstructor;
 
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const style_1 = require("./style");
@@ -12463,7 +12604,7 @@ function createComponent(el, Com) {
 }
 exports.createComponent = createComponent;
 
-},{"./constructor":81,"./from-element":83,"./style":87}],83:[function(require,module,exports){
+},{"./constructor":82,"./from-element":84,"./style":88}],84:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const life_cycle_1 = require("./life-cycle");
@@ -12528,7 +12669,7 @@ function getClosestComponent(el, Com) {
 }
 exports.getClosestComponent = getClosestComponent;
 
-},{"./life-cycle":85}],84:[function(require,module,exports){
+},{"./life-cycle":86}],85:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var constructor_1 = require("./constructor");
@@ -12550,7 +12691,7 @@ var define_1 = require("./define");
 exports.define = define_1.define;
 exports.createComponent = define_1.createComponent;
 
-},{"./component":80,"./constructor":81,"./define":82,"./from-element":83,"./life-cycle":85,"./style":87}],85:[function(require,module,exports){
+},{"./component":81,"./constructor":82,"./define":83,"./from-element":84,"./life-cycle":86,"./style":88}],86:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const watcher_1 = require("../watcher");
@@ -12599,7 +12740,7 @@ function updateComponents() {
 }
 exports.updateComponents = updateComponents;
 
-},{"../watcher":132}],86:[function(require,module,exports){
+},{"../watcher":133}],87:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_helper_1 = require("../libs/node-helper");
@@ -12677,7 +12818,7 @@ class SlotProcesser {
 }
 exports.SlotProcesser = SlotProcesser;
 
-},{"../libs/node-helper":101}],87:[function(require,module,exports){
+},{"../libs/node-helper":102}],88:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const queue_1 = require("../queue");
@@ -12906,7 +13047,7 @@ var StyleParser;
 })(StyleParser || (StyleParser = {}));
 exports.getScopedClassNameSet = StyleParser.getScopedClassNameSet;
 
-},{"../queue":118}],88:[function(require,module,exports){
+},{"../queue":119}],89:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -13001,7 +13142,7 @@ exports.CacheDirective = CacheDirective;
  */
 exports.cache = define_1.defineDirective(CacheDirective);
 
-},{"../libs/directive-transition":97,"../libs/node-helper":101,"../template":123,"./define":89}],89:[function(require,module,exports){
+},{"../libs/directive-transition":98,"../libs/node-helper":102,"../template":124,"./define":90}],90:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 let seed = 0;
@@ -13051,7 +13192,7 @@ function refDirective(result, ref) {
 }
 exports.refDirective = refDirective;
 
-},{}],90:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var define_1 = require("./define");
@@ -13075,7 +13216,7 @@ var live_async_repeat_1 = require("./live-async-repeat");
 exports.liveAsyncRepeat = live_async_repeat_1.liveAsyncRepeat;
 exports.LiveAsyncRepeatDirective = live_async_repeat_1.LiveAsyncRepeatDirective;
 
-},{"./cache":88,"./define":89,"./live-async-repeat":91,"./live-repeat":92,"./play":93,"./repeat":94}],91:[function(require,module,exports){
+},{"./cache":89,"./define":90,"./live-async-repeat":92,"./live-repeat":93,"./play":94,"./repeat":95}],92:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -13296,7 +13437,7 @@ exports.LiveAsyncRepeatDirective = LiveAsyncRepeatDirective;
  */
 exports.liveAsyncRepeat = define_1.defineDirective(LiveAsyncRepeatDirective);
 
-},{"../libs/page-data-cacher":103,"../observer":110,"../template":123,"./define":89,"./live-repeat":92}],92:[function(require,module,exports){
+},{"../libs/page-data-cacher":104,"../observer":111,"../template":124,"./define":90,"./live-repeat":93}],93:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -13733,13 +13874,13 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
         }
     }
     onWatchedTemplateNotInUse(wtem) {
-        wtem.remove();
         // Note than we doesn't cache the removed wtem,
         // The reason is the component will trigger disconnect,
         // And when reconnect, it will update, even if we keep watcher alive here.
         if (this.options.get('preRendering')) {
             this.preRendered.delete(wtem.item);
         }
+        wtem.remove();
     }
     /** Get `startIndex` property. */
     getStartIndex() {
@@ -13799,6 +13940,21 @@ class LiveRepeatDirective extends repeat_1.RepeatDirective {
             this.scroller.scrollTop = this.scroller.scrollTop + (scrollerRect.top - rect.top);
         }
     }
+    remove() {
+        if (this.unwatchData) {
+            this.unwatchData();
+        }
+        if (this.options.get('preRendering')) {
+            for (let wtem of this.preRendered.values()) {
+                wtem.remove();
+            }
+        }
+        else {
+            for (let wtem of this.wtems) {
+                wtem.remove();
+            }
+        }
+    }
 }
 exports.LiveRepeatDirective = LiveRepeatDirective;
 /**
@@ -13815,7 +13971,7 @@ function untilNextFrame() {
     });
 }
 
-},{"../libs/dom-event":98,"../libs/options":102,"../libs/util":105,"../libs/watched-template":106,"../observer":110,"../queue":118,"../watcher":132,"./define":89,"./repeat":94}],93:[function(require,module,exports){
+},{"../libs/dom-event":99,"../libs/options":103,"../libs/util":106,"../libs/watched-template":107,"../observer":111,"../queue":119,"../watcher":133,"./define":90,"./repeat":95}],94:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -13893,7 +14049,7 @@ exports.PalyDirective = PalyDirective;
  */
 exports.play = define_1.defineDirective(PalyDirective);
 
-},{"../libs/directive-transition":97,"../template":123,"./define":89}],94:[function(require,module,exports){
+},{"../libs/directive-transition":98,"../template":124,"./define":90}],95:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const define_1 = require("./define");
@@ -14126,6 +14282,9 @@ class RepeatDirective {
         wtem.remove();
     }
     remove() {
+        if (this.unwatchData) {
+            this.unwatchData();
+        }
         for (let wtem of this.wtems) {
             wtem.remove();
         }
@@ -14142,7 +14301,7 @@ exports.RepeatDirective = RepeatDirective;
  */
 exports.repeat = define_1.defineDirective(RepeatDirective);
 
-},{"../libs/directive-transition":97,"../libs/watched-template":106,"../observer":110,"../watcher":132,"./define":89}],95:[function(require,module,exports){
+},{"../libs/directive-transition":98,"../libs/watched-template":107,"../observer":111,"../watcher":133,"./define":90}],96:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const observer_1 = require("./observer");
@@ -14163,7 +14322,7 @@ class ObservedEmitter extends emitter_1.Emitter {
 }
 exports.ObservedEmitter = ObservedEmitter;
 
-},{"./libs/emitter":99,"./observer":110}],96:[function(require,module,exports){
+},{"./libs/emitter":100,"./observer":111}],97:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var emitter_1 = require("./emitter");
@@ -14232,7 +14391,7 @@ exports.clearTransition = transition_1.clearTransition;
 var options_1 = require("./libs/options");
 exports.Options = options_1.Options;
 
-},{"./bindings":74,"./component":84,"./directives":90,"./emitter":95,"./libs/dom-event":98,"./libs/options":102,"./libs/transition":104,"./observer":110,"./queue":118,"./render":119,"./template":123,"./watcher":132}],97:[function(require,module,exports){
+},{"./bindings":75,"./component":85,"./directives":91,"./emitter":96,"./libs/dom-event":99,"./libs/options":103,"./libs/transition":105,"./observer":111,"./queue":119,"./render":120,"./template":124,"./watcher":133}],98:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const transition_1 = require("./transition");
@@ -14296,7 +14455,7 @@ class DirectiveTransition {
 }
 exports.DirectiveTransition = DirectiveTransition;
 
-},{"./options":102,"./transition":104}],98:[function(require,module,exports){
+},{"./options":103,"./transition":105}],99:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const GLOBAL_EVENT_MODIFIERS = ['capture', 'self', 'once', 'prevent', 'stop', 'passive'];
@@ -14524,7 +14683,7 @@ function wrapHandler(once, modifiers, el, name, handler, scope) {
     };
 }
 
-},{}],99:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 "use strict";
 // This file cloned for https://github.com/pucelle/ff/blob/master/src/base/emitter.ts
 // You may visit it to find more descriptions about the implemention.
@@ -14601,7 +14760,7 @@ class Emitter {
 }
 exports.Emitter = Emitter;
 
-},{}],100:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = require("./util");
@@ -14705,7 +14864,7 @@ function joinHTMLTokens(tokens) {
 }
 exports.joinHTMLTokens = joinHTMLTokens;
 
-},{"./util":105}],101:[function(require,module,exports){
+},{"./util":106}],102:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var NodeAnchorType;
@@ -14808,7 +14967,7 @@ class NodeRange {
 }
 exports.NodeRange = NodeRange;
 
-},{}],102:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /** Used to mange options updating. */
@@ -14834,7 +14993,7 @@ class Options {
 }
 exports.Options = Options;
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = require("./util");
@@ -15057,7 +15216,7 @@ class PageDataCacher {
 }
 exports.PageDataCacher = PageDataCacher;
 
-},{"./util":105}],104:[function(require,module,exports){
+},{"./util":106}],105:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const dom_event_1 = require("./dom-event");
@@ -15410,7 +15569,7 @@ function animateTo(el, endFrame, duration, easing) {
     // el will hide, no need to set style to end frame.
 }
 
-},{"../queue":118,"./dom-event":98}],105:[function(require,module,exports){
+},{"../queue":119,"./dom-event":99}],106:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function trim(text) {
@@ -15482,7 +15641,7 @@ function repeatValue(value, count) {
 }
 exports.repeatValue = repeatValue;
 
-},{}],106:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const template_1 = require("../template");
@@ -15514,8 +15673,15 @@ class WatchedTemplate {
                 this.template = newTemplate;
             }
         };
-        this.watcher = new watcher_1.Watcher(watchFn, onUpdate);
-        this.template = new template_1.Template(this.watcher.value, this.context);
+        let watcher = new watcher_1.Watcher(watchFn, onUpdate);
+        this.watcher = watcher;
+        this.template = new template_1.Template(watcher.value, this.context);
+        if (this.context) {
+            this.context.__addWatcher(watcher);
+        }
+        else {
+            watcher_1.globalWatcherGroup.add(watcher);
+        }
     }
     updateIndex(index) {
         if (index !== this.index) {
@@ -15537,7 +15703,7 @@ class WatchedTemplate {
 }
 exports.WatchedTemplate = WatchedTemplate;
 
-},{"../template":123,"../watcher":132}],107:[function(require,module,exports){
+},{"../template":124,"../watcher":133}],108:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -15619,7 +15785,7 @@ class Weak2WayMap {
 }
 exports.Weak2WayMap = Weak2WayMap;
 
-},{}],108:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -15768,7 +15934,7 @@ class Weak2WayPropMap {
 }
 exports.Weak2WayPropMap = Weak2WayPropMap;
 
-},{}],109:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const shared_1 = require("./shared");
@@ -15900,7 +16066,7 @@ function notifyObjectSet(obj) {
 }
 exports.notifyObjectSet = notifyObjectSet;
 
-},{"../libs/weak-2way-map":107,"../libs/weak-2way-prop-map":108,"./shared":117}],110:[function(require,module,exports){
+},{"../libs/weak-2way-map":108,"../libs/weak-2way-prop-map":109,"./shared":118}],111:[function(require,module,exports){
 "use strict";
 // Proxy benchmark: https://jsperf.com/es6-proxy/11
 // Proxy getting and setting are always 50x-100x slower than plain object.
@@ -15923,7 +16089,7 @@ exports.restoreAsDependency = dependency_1.restoreAsDependency;
 var observe_getter_1 = require("./observe-getter");
 exports.observeGetter = observe_getter_1.observeGetter;
 
-},{"./dependency":109,"./observe":116,"./observe-com":112,"./observe-getter":113,"./shared":117}],111:[function(require,module,exports){
+},{"./dependency":110,"./observe":117,"./observe-com":113,"./observe-getter":114,"./shared":118}],112:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const dependency_1 = require("./dependency");
@@ -15980,7 +16146,7 @@ const proxyHandler = {
     }
 };
 
-},{"./dependency":109,"./shared":117}],112:[function(require,module,exports){
+},{"./dependency":110,"./shared":118}],113:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const dependency_1 = require("./dependency");
@@ -16034,7 +16200,7 @@ const proxyHandler = {
     }
 };
 
-},{"./dependency":109,"./shared":117}],113:[function(require,module,exports){
+},{"./dependency":110,"./shared":118}],114:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -16069,7 +16235,7 @@ function getPropertyDescriptor(obj, property) {
     return null;
 }
 
-},{}],114:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const dependency_1 = require("./dependency");
@@ -16116,7 +16282,7 @@ const proxyHandler = {
     }
 };
 
-},{"./dependency":109,"./shared":117}],115:[function(require,module,exports){
+},{"./dependency":110,"./shared":118}],116:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const dependency_1 = require("./dependency");
@@ -16150,7 +16316,7 @@ const proxyHandler = {
     }
 };
 
-},{"./dependency":109,"./shared":117}],116:[function(require,module,exports){
+},{"./dependency":110,"./shared":118}],117:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const shared_1 = require("./shared");
@@ -16175,7 +16341,7 @@ function observe(value) {
 }
 exports.observe = observe;
 
-},{"./shared":117}],117:[function(require,module,exports){
+},{"./shared":118}],118:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const observe_object_1 = require("./observe-object");
@@ -16201,7 +16367,7 @@ function observeTarget(obj) {
 }
 exports.observeTarget = observeTarget;
 
-},{"./observe-array":111,"./observe-object":114,"./observe-set-or-map":115}],118:[function(require,module,exports){
+},{"./observe-array":112,"./observe-object":115,"./observe-set-or-map":116}],119:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 let componentSet = new Set();
@@ -16339,7 +16505,7 @@ async function update() {
     }
 }
 
-},{}],119:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const template_1 = require("./template");
@@ -16432,11 +16598,11 @@ function appendTo(el, target) {
 }
 exports.appendTo = appendTo;
 
-},{"./component":84,"./directives":90,"./template":123,"./watcher":132}],120:[function(require,module,exports){
+},{"./component":85,"./directives":91,"./template":124,"./watcher":133}],121:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * `attr=${...}`, set attribute value.
+ * `<tag attr=${...}`, to set attribute value.
  */
 class AttrPart {
     constructor(el, name, value) {
@@ -16451,10 +16617,11 @@ class AttrPart {
     update(value) {
         this.setValue(value);
     }
+    remove() { }
 }
 exports.AttrPart = AttrPart;
 
-},{}],121:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const bindings_1 = require("../bindings");
@@ -16473,11 +16640,14 @@ class FixedBindingPart {
     update(value) {
         this.binding.update(value);
     }
+    remove() {
+        this.binding.remove();
+    }
 }
 exports.FixedBindingPart = FixedBindingPart;
 /**
  * Transfer arguments to binding module, used in:
- * `show(...)`, `hide(...)`, `cache(...)`.
+ * `<tag show(...)>`, `<tag hide(...)>`, `<tag cache(...)>`.
  */
 class BindingPart {
     constructor(el, value, context) {
@@ -16512,10 +16682,15 @@ class BindingPart {
             this.binding = null;
         }
     }
+    remove() {
+        if (this.binding) {
+            this.binding.remove();
+        }
+    }
 }
 exports.BindingPart = BindingPart;
 
-},{"../bindings":74}],122:[function(require,module,exports){
+},{"../bindings":75}],123:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const component_1 = require("../component");
@@ -16570,7 +16745,7 @@ class EventPart {
 }
 exports.EventPart = EventPart;
 
-},{"../component":84,"../libs/dom-event":98}],123:[function(require,module,exports){
+},{"../component":85,"../libs/dom-event":99}],124:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var node_part_1 = require("./node-part");
@@ -16583,7 +16758,7 @@ exports.html = template_result_1.html;
 exports.css = template_result_1.css;
 exports.svg = template_result_1.svg;
 
-},{"./node-part":125,"./template":131,"./template-result":130}],124:[function(require,module,exports){
+},{"./node-part":126,"./template":132,"./template-result":131}],125:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -16610,19 +16785,22 @@ class MayAttrPart {
 }
 exports.MayAttrPart = MayAttrPart;
 
-},{}],125:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const template_result_1 = require("./template-result");
 const template_1 = require("./template");
 const directives_1 = require("../directives");
 const util_1 = require("../libs/util");
-var ChildContentType;
-(function (ChildContentType) {
-    ChildContentType[ChildContentType["Templates"] = 0] = "Templates";
-    ChildContentType[ChildContentType["Directive"] = 1] = "Directive";
-    ChildContentType[ChildContentType["Text"] = 2] = "Text";
-})(ChildContentType || (ChildContentType = {}));
+var ContentType;
+(function (ContentType) {
+    ContentType[ContentType["Templates"] = 0] = "Templates";
+    ContentType[ContentType["Directive"] = 1] = "Directive";
+    ContentType[ContentType["Text"] = 2] = "Text";
+})(ContentType || (ContentType = {}));
+/**
+ * Related to the content betweens `<tag>${...}</tag>`, may be a template result, text, template result array, or a directive.
+ */
 class NodePart {
     constructor(anchor, value, context) {
         this.templates = null;
@@ -16640,10 +16818,10 @@ class NodePart {
             this.contentType = contentType;
         }
         switch (contentType) {
-            case ChildContentType.Directive:
+            case ContentType.Directive:
                 this.updateDirective(value);
                 break;
-            case ChildContentType.Templates:
+            case ContentType.Templates:
                 if (Array.isArray(value)) {
                     this.updateTemplates(value.filter(v => v));
                 }
@@ -16657,13 +16835,13 @@ class NodePart {
     }
     getContentType(value) {
         if (value instanceof directives_1.DirectiveResult) {
-            return ChildContentType.Directive;
+            return ContentType.Directive;
         }
         else if (value instanceof template_result_1.TemplateResult || Array.isArray(value)) {
-            return ChildContentType.Templates;
+            return ContentType.Templates;
         }
         else {
-            return ChildContentType.Text;
+            return ContentType.Text;
         }
     }
     clearContent() {
@@ -16671,17 +16849,17 @@ class NodePart {
         if (contentType === null) {
             return;
         }
-        if (contentType === ChildContentType.Directive) {
+        if (contentType === ContentType.Directive) {
             this.directive.remove();
             this.directive = null;
         }
-        else if (contentType === ChildContentType.Templates) {
+        else if (contentType === ContentType.Templates) {
             for (let template of this.templates) {
                 template.remove();
             }
             this.templates = null;
         }
-        else if (contentType === ChildContentType.Text) {
+        else if (contentType === ContentType.Text) {
             if (this.textNode) {
                 this.textNode.remove();
                 this.textNode = null;
@@ -16755,10 +16933,13 @@ class NodePart {
             }
         }
     }
+    remove() {
+        this.clearContent();
+    }
 }
 exports.NodePart = NodePart;
 
-},{"../directives":90,"../libs/util":105,"./template":131,"./template-result":130}],126:[function(require,module,exports){
+},{"../directives":91,"../libs/util":106,"./template":132,"./template-result":131}],127:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const component_1 = require("../component");
@@ -16847,7 +17028,7 @@ class PropertyPart {
 }
 exports.PropertyPart = PropertyPart;
 
-},{"../component":84}],127:[function(require,module,exports){
+},{"../component":85}],128:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const html_token_1 = require("../libs/html-token");
@@ -17009,7 +17190,7 @@ function findEndTagIndex(tokens, startTagIndex) {
     return tokens.length - 1;
 }
 
-},{"../libs/html-token":100,"./template-result":130,"./template-result-operate":129}],128:[function(require,module,exports){
+},{"../libs/html-token":101,"./template-result":131,"./template-result-operate":130}],129:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const template_result_operate_1 = require("./template-result-operate");
@@ -17307,7 +17488,7 @@ function cloneParseResult(sharedResult, el) {
     };
 }
 
-},{"../component":84,"../libs/html-token":100,"../libs/util":105,"./template-result-operate":129}],129:[function(require,module,exports){
+},{"../component":85,"../libs/html-token":101,"../libs/util":106,"./template-result-operate":130}],130:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /** Get the start tag of a `TemplateResult`. */
@@ -17378,7 +17559,7 @@ function splitByOrderedMarkers(string) {
 }
 exports.splitByOrderedMarkers = splitByOrderedMarkers;
 
-},{}],130:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const template_extends_1 = require("./template-extends");
@@ -17451,7 +17632,7 @@ class TemplateResult {
 }
 exports.TemplateResult = TemplateResult;
 
-},{"./template-extends":127}],131:[function(require,module,exports){
+},{"./template-extends":128}],132:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_helper_1 = require("../libs/node-helper");
@@ -17562,6 +17743,9 @@ class Template {
     // Been called when this template will never be used any more.
     remove() {
         this.range.remove();
+        for (let { part } of this.canUpdateParts) {
+            part.remove();
+        }
     }
     /**
      * Initialize components inside a template and update it immediately.
@@ -17600,7 +17784,7 @@ function join(strings, values) {
     return text;
 }
 
-},{"../component":84,"../libs/node-helper":101,"./attr-part":120,"./binding-part":121,"./event-part":122,"./may-attr-part":124,"./node-part":125,"./property-part":126,"./template-parser":128}],132:[function(require,module,exports){
+},{"../component":85,"../libs/node-helper":102,"./attr-part":121,"./binding-part":122,"./event-part":123,"./may-attr-part":125,"./node-part":126,"./property-part":127,"./template-parser":129}],133:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const observer_1 = require("./observer");
@@ -17608,6 +17792,8 @@ const queue_1 = require("./queue");
 /**
  * Used to watch a function returns and trigger callback if it is changed.
  * You need to know that when callback was called, it doesn't ensure the watched datas are truly changed.
+ * Normally you should create watcher but using `context.watch` or `globalWatcherGroup.watch`.
+ * If you use created watcher, makesure to add it to a `context` or the `globalWatcherGroup`.
  */
 class Watcher {
     constructor(fn, callback) {
@@ -17776,4 +17962,4 @@ function watchUntil(fn, callback) {
 }
 exports.watchUntil = watchUntil;
 
-},{"./observer":110,"./queue":118}]},{},[29]);
+},{"./observer":111,"./queue":119}]},{},[29]);

@@ -2,7 +2,6 @@ import {css, define, html, Component, repeat, renderComponent, TemplateResult} f
 import {theme} from '../style/theme'
 import {remove, Timeout, timeout} from '@pucelle/ff'
 import {Color} from '../style/color'
-import {ContextHasActions, Action, renderActions} from './action'
 
 
 export type NotificationType = 'info' | 'warning' | 'error' | 'success'
@@ -13,8 +12,22 @@ export interface NotificationOptions {
 	title?: string
 	message?: string | TemplateResult
 	list?: string[]
-	actions?: Action[]
+	actions?: NotificationAction[]
 	hideDelay?: number
+}
+
+export interface NotificationAction {
+	/** Used at Dialog to know which action button clicked */
+	value?: string
+
+	/** Button text. */
+	text: string
+
+	/** Button of action becomes primary if set this to true. */
+	primary?: boolean
+
+	/** To process after clicked the action button. */
+	handler?: () => void
 }
 
 interface NotificationItem extends NotificationOptions {
@@ -25,7 +38,7 @@ interface NotificationItem extends NotificationOptions {
 
 
 @define('f-notification')
-export class Notification<E = any> extends Component<E> implements ContextHasActions {
+export class Notification<E = any> extends Component<E> {
 	static style() {
 		let {infoColor, adjust, successColor, errorColor, warningColor, popupBorderRadius, popupShadowBlurRadius, adjustFontSize, backgroundColor, textColor, popupShadowColor} = theme
 		
@@ -184,7 +197,7 @@ export class Notification<E = any> extends Component<E> implements ContextHasAct
 						</ul>
 					`: ''}
 
-					${renderActions(this, item.actions, item)}
+					${this.renderActions(item)}
 				</div>
 
 				<div class="close" @click=${() => this.onClickClose(item)}>
@@ -192,6 +205,32 @@ export class Notification<E = any> extends Component<E> implements ContextHasAct
 				</div>
 			</div>`
 		, {transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd})
+	}
+
+	protected renderActions(item: NotificationItem) {
+		let actions = item.actions
+
+		if (actions && actions.length > 0) {
+			let results = actions.map(action => html`
+				<button class="action"
+					?primary=${action.primary}
+					@click=${() => this.onClickActionButton(action, item)}>
+					${action.text}
+				</button>
+			`)
+	
+			return html`<div class="actions">${results}</div>`
+		}
+	
+		return ''
+	}
+	
+	protected async onClickActionButton(action: NotificationAction, item: NotificationItem) {
+		if (action.handler) {
+			action.handler()
+		}
+
+		this.hide(item.id)
 	}
 
 	protected onMouseEnter(item: NotificationItem) {
@@ -207,10 +246,6 @@ export class Notification<E = any> extends Component<E> implements ContextHasAct
 	}
 
 	protected onClickClose(item: NotificationItem) {
-		this.hide(item.id)
-	}
-
-	onActionHandled(_action: Action, _success: boolean, item: NotificationItem) {
 		this.hide(item.id)
 	}
 

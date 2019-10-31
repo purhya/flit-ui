@@ -1,6 +1,5 @@
 import {css, define, html, renderComponent, renderComplete, show, Component, TemplateResult, appendTo, on, off} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {Action, renderActions} from './action'
 import {align, debounce} from '@pucelle/ff'
 
 
@@ -8,8 +7,25 @@ export interface DialogOptions {
 	icon?: string
 	title?: string
 	message?: string | TemplateResult
-	actions?: Action[]
+	actions?: DialogAction[]
 	list?: string[]
+}
+
+export interface DialogAction {
+	/** Used at Dialog to know which action button clicked */
+	value?: string
+
+	/** Button text. */
+	text: string
+
+	/** Button of action becomes primary if set this to true. */
+	primary?: boolean
+
+	/** Button of third action will be put left, only one third action is allowed. */
+	third?: boolean
+
+	/** To process after clicked the action button. */
+	handler?: () => void
 }
 
 interface DialogItem {
@@ -91,10 +107,15 @@ export class Dialog<E = any> extends Component<E> {
 			display: flex;
 			justify-content: flex-end;
 			margin-top: ${adjust(16)}px;
-		}
 
-		.action{
-			margin-left: ${adjust(8)}px;
+			button{
+				margin-left: ${adjust(8)}px;
+			}
+
+			.third{
+				margin-left: 0;
+				margin-right: auto;
+			}
 		}
 		`
 	}
@@ -151,12 +172,29 @@ export class Dialog<E = any> extends Component<E> {
 				`: ''}
 			</div>
 
-			${renderActions(this, options.actions)}
+			${this.renderActions(options.actions)}
 		</template>
 		`
 	}
 
-	onActionHandled(action: Action) {
+	protected renderActions(actions: DialogAction[] | undefined) {
+		if (actions && actions.length > 0) {
+			let results = actions.map(action => html`
+				<button class="action"
+					?primary=${action.primary}
+					:class.third=${action.third}
+					@click=${() => this.onClickActionButton(action)}>
+					${action.text}
+				</button>
+			`)
+	
+			return html`<div class="actions">${results}</div>`
+		}
+	
+		return ''
+	}
+
+	onClickActionButton(action: DialogAction) {
 		if (this.resolve) {
 			this.resolve(action.value)
 			this.resolve = null

@@ -2,7 +2,7 @@ import {defineBinding, Binding, on, getClosestComponent} from '@pucelle/flit'
 import {Router} from '../components/router'
 
 
-defineBinding('goto')
+@defineBinding('goto')
 export class GotoBinding implements Binding<[string]>{
 	
 	el: HTMLElement
@@ -28,7 +28,7 @@ export class GotoBinding implements Binding<[string]>{
 			this.router = getClosestComponent(this.el.parentElement!, Router)
 			
 			if (!this.router) {
-				throw new Error(`":goto" must be contained in a extended component of "<f-router>"`)
+				throw new Error(`":goto" must be contained in a extended component of "Router"`)
 			}
 		}
 	}
