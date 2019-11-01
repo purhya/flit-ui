@@ -147,7 +147,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 			@click.prevent=${() => this.onClickOption(item)}
 		>
 			${hasChildren ? html`
-				<div class='toggle' @click=${() => this.toggle(item)}>
+				<div class='toggle' @click.stop=${() => this.toggle(item)}>
 					<f-icon .type=${item.opened ? 'trangle-down' : 'trangle-right'} />
 				</div>
 			` : ''}
