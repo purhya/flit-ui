@@ -1,10 +1,10 @@
 import * as ff from '@pucelle/ff'
 import * as flit from '@pucelle/flit'
-import * as fui from '../src'
+import * as flitUI from '../src'
 
 ;(window as any).ff = ff
 ;(window as any).flit = flit
-;(window as any).fui = fui
+;(window as any).flitUI = flitUI
 
 
 import {html, Component, renderComponent, define, repeat, observe, getComponent} from '@pucelle/flit'

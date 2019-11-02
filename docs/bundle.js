@@ -3217,6 +3217,9 @@ function isInViewport(el, percentage = 0.5) {
     let inRange = xIntersect / Math.min(rect.width, dw) > percentage
         && yIntersect / Math.min(rect.height, dh) > percentage;
     if (inRange) {
+        if (el.disabled) {
+            return true;
+        }
         let notBeenCovered = el.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
         if (notBeenCovered) {
             return true;
