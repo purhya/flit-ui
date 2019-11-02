@@ -128,14 +128,14 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 	}
 
 	protected renderDataOrChildren(items: ListItem<T>[]): DirectiveResult {
-		let hasIcon = items.some(item => item.icon)
-		let hasChildren = items.some(item => item.children)
-		let options = repeat(items, item => this.renderOption(item, hasIcon, hasChildren))
+		let siblingsHaveIcon = items.some(item => item.icon)
+		let siblingsHaveChildren = items.some(item => item.children)
+		let options = repeat(items, item => this.renderOption(item, siblingsHaveIcon, siblingsHaveChildren))
 
 		return options
 	}
 
-	protected renderOption(item: ListItem<T>, hasIcon: boolean, hasChildren: boolean) {
+	protected renderOption(item: ListItem<T>, siblingsHaveIcon: boolean, siblingsHaveChildren: boolean) {
 		let subsection = item.children && item.opened ? html`
 			<div class="subsection">${this.renderDataOrChildren(item.children)}</div>
 		` : null
@@ -146,13 +146,15 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 			:class=${this.renderClassName(item)}
 			@click.prevent=${() => this.onClickOption(item)}
 		>
-			${hasChildren ? html`
+			${item.children ? html`
 				<div class='toggle' @click.stop=${() => this.toggle(item)}>
 					<f-icon .type=${item.opened ? 'trangle-down' : 'trangle-right'} />
 				</div>
+			` : siblingsHaveChildren ? html`
+				<div class='toggle' />
 			` : ''}
 
-			${hasIcon ? html`
+			${siblingsHaveIcon ? html`
 				<div class='icon'>
 					<f-icon .type=${item.icon} />
 				</div>
