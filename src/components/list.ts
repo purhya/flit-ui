@@ -98,6 +98,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 		.subsection{
 			padding-left: ${adjust(22)}px;
+			padding-bottom: ${adjust(4)}px;
 			overflow: hidden;
 			font-size: ${adjustFontSize(13)}px;
 
@@ -219,5 +220,28 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		if (item.children) {
 			item.opened = !item.opened
 		}
+	}
+
+	protected onCreated() {
+		if (this.active) {
+			this.showActiveItem(this.data)
+		}
+	}
+
+	private showActiveItem(items: ListItem<T>[]) {
+		return items.some(item => {
+			if (item.value === this.active) {
+				return true
+			}
+
+			if (item.children) {
+				let hasActiveChildItem = this.showActiveItem(item.children)
+				if (hasActiveChildItem) {
+					item.opened = true
+				}
+			}
+
+			return false
+		})
 	}
 }
