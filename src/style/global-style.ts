@@ -173,18 +173,18 @@ addGlobalStyle(() => {
 	::-webkit-scrollbar{
 		height: 10px;
 		width: 10px;
-		background: ${backgroundColor.toMiddle(5)};
+		background: ${backgroundColor.toMiddle(10)};
 	}
 
 	::-webkit-scrollbar-thumb{
-		background: ${backgroundColor.toMiddle(15)};
+		background: ${backgroundColor.toMiddle(30)};
 
 		&:hover{
-			background: ${backgroundColor.toMiddle(25)};
+			background: ${backgroundColor.toMiddle(40)};
 		}
 
 		&:active{
-			background: ${backgroundColor.toMiddle(35)};
+			background: ${backgroundColor.toMiddle(50)};
 		}
 	}
 `})
