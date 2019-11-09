@@ -1344,7 +1344,7 @@ exports.toDecimal = toDecimal;
  */
 function toPower(number, power = 0) {
     if (number < 0) {
-        return -toPower(-number);
+        return -toPower(-number, power);
     }
     if (number === 0) {
         return 0;
@@ -2785,15 +2785,13 @@ exports.getEasing = getEasing;
 /**
 F(t)  = (1-t)^3 * P0 + 3t(1-t)^2 * P1 + 3t^2(1-t)^2 * P2 + t^3 * P3, t in [0, 1]
 
+Get the x axis projecting function, and knows x0 = 0, x3 = 1, got:
 Cx(t) = 3t(1-t)^2 * x1 + 3t^2(1-t) * x2 + t^3
       = (3x1 - 3x2 + 1) * t^3 + (-6x1 + 3x2) * t^2 + 3x1 * t
 
-Cx(t) = x
-      => (3x1 - 3x2 + 1) * t^3 + (-6x1 + 3x2) * t^2 + 3x1 * t = x
+From Cx(t) = x, got t by binary iteration algorithm, then pass it to y axis projecting function:
+Cy(t) = (3y1 - 3y2 + 1) * t^3 + (-6y1 + 3y2) * t^2 + 3y1 * t
 
-Cy(t) = 3t(1-t)^2 * y1 + 3t^2(1-t) * y2 + t^3 = y
-
-For any `x` betweens [0, 1], got `t` from Cx(t), then got `y` from Cy(t).
 */
 function getCubicBezierEasingFunction(name) {
     let [x1, y1, x2, y2] = CUBIC_BEZIER_EASINGS[name];
@@ -4475,10 +4473,10 @@ __export(require("./dom"));
 Object.defineProperty(exports, "__esModule", { value: true });
 const ff = require("@pucelle/ff");
 const flit = require("@pucelle/flit");
-const fui = require("../src");
+const flitUI = require("../src");
 window.ff = ff;
 window.flit = flit;
-window.fui = fui;
+window.flitUI = flitUI;
 const flit_1 = require("@pucelle/flit");
 const src_1 = require("../src");
 flit_1.define('flit-preview', class extends flit_1.Component {
@@ -5081,6 +5079,15 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 					</f-col>
 
 					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Prompt</header>
+						<button @click=${() => src_1.dialog.prompt('Please input the name of your account:', { title: 'Dialog Title' })}>
+							Click to Open Dialog
+						</button>
+					</f-col>
+				</f-row>
+				
+				<f-row style="margin: 32px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
 						<header style="margin-bottom: 8px;">With Third actions</header>
 						<button @click=${() => src_1.dialog.confirm('You have unsaved data, are you sure you want to save your changes?', {
             title: 'Dialog Title',
@@ -5093,9 +5100,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 							Click to Open Dialog
 						</button>
 					</f-col>
-				</f-row>
-				
-				<f-row style="margin: 32px 0 8px 0;" .gutter="24">
+					
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Customize</header>
 						<button @click=${() => {
@@ -5114,8 +5119,6 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 			</section>
 
-
-			
 
 
 			<section>
@@ -6687,6 +6690,11 @@ let Dialog = class Dialog extends flit_1.Component {
 				margin-right: auto;
 			}
 		}
+
+		.input{
+			margin-top: 8px;
+			width: 100%;
+		}
 		`;
     }
     render() {
@@ -6699,7 +6707,6 @@ let Dialog = class Dialog extends flit_1.Component {
 			tabindex="0"
 			${flit_1.show(this.opened, { transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd })}
 		>
-
 			<div class="mask"
 				:ref="mask"
 				${flit_1.show(this.opened, { transition: 'fade', enterAtStart: true })}
@@ -6857,6 +6864,20 @@ class QuickDialog {
         return this.addOptions(Object.assign({
             icon: 'confirm',
             message,
+            actions: [
+                { value: 'cancel', text: this.actionLabels.cancel },
+                { value: 'ok', text: this.actionLabels.ok, primary: true },
+            ],
+        }, options));
+    }
+    /** Show prompt type dialog or add it to dialog stack. */
+    async prompt(message, options = {}) {
+        let messageWithInput = flit_1.html `
+			${message}
+			<f-input class="input" .placeholder=${options.placeholder} />
+		`;
+        return this.addOptions(Object.assign({
+            message: messageWithInput,
             actions: [
                 { value: 'cancel', text: this.actionLabels.cancel },
                 { value: 'ok', text: this.actionLabels.ok, primary: true },
@@ -7472,6 +7493,7 @@ let List = class List extends flit_1.Component {
 
 		.subsection{
 			padding-left: ${adjust(22)}px;
+			padding-bottom: ${adjust(4)}px;
 			overflow: hidden;
 			font-size: ${adjustFontSize(13)}px;
 
@@ -7493,12 +7515,12 @@ let List = class List extends flit_1.Component {
         return flit_1.html `${this.renderDataOrChildren(this.data)}`;
     }
     renderDataOrChildren(items) {
-        let hasIcon = items.some(item => item.icon);
-        let hasChildren = items.some(item => item.children);
-        let options = flit_1.repeat(items, item => this.renderOption(item, hasIcon, hasChildren));
+        let siblingsHaveIcon = items.some(item => item.icon);
+        let siblingsHaveChildren = items.some(item => item.children);
+        let options = flit_1.repeat(items, item => this.renderOption(item, siblingsHaveIcon, siblingsHaveChildren));
         return options;
     }
-    renderOption(item, hasIcon, hasChildren) {
+    renderOption(item, siblingsHaveIcon, siblingsHaveChildren) {
         let subsection = item.children && item.opened ? flit_1.html `
 			<div class="subsection">${this.renderDataOrChildren(item.children)}</div>
 		` : null;
@@ -7508,13 +7530,15 @@ let List = class List extends flit_1.Component {
 			:class=${this.renderClassName(item)}
 			@click.prevent=${() => this.onClickOption(item)}
 		>
-			${hasChildren ? flit_1.html `
-				<div class='toggle' @click=${() => this.toggle(item)}>
+			${item.children ? flit_1.html `
+				<div class='toggle' @click.stop=${() => this.toggle(item)}>
 					<f-icon .type=${item.opened ? 'trangle-down' : 'trangle-right'} />
 				</div>
+			` : siblingsHaveChildren ? flit_1.html `
+				<div class='toggle' />
 			` : ''}
 
-			${hasIcon ? flit_1.html `
+			${siblingsHaveIcon ? flit_1.html `
 				<div class='icon'>
 					<f-icon .type=${item.icon} />
 				</div>
@@ -7573,6 +7597,25 @@ let List = class List extends flit_1.Component {
         if (item.children) {
             item.opened = !item.opened;
         }
+    }
+    onCreated() {
+        if (this.active) {
+            this.showActiveItem(this.data);
+        }
+    }
+    showActiveItem(items) {
+        return items.some(item => {
+            if (item.value === this.active) {
+                return true;
+            }
+            if (item.children) {
+                let hasActiveChildItem = this.showActiveItem(item.children);
+                if (hasActiveChildItem) {
+                    item.opened = true;
+                }
+            }
+            return false;
+        });
     }
 };
 List = __decorate([
@@ -9276,7 +9319,7 @@ let Select = class Select extends dropdown_1.Dropdown {
 	
 		.list .option__f-list{
 			padding-left: ${adjust(8)}px;
-			border-bottom: none;
+			border-top: none;
 		}
 
 		.selected-icon{
@@ -14498,7 +14541,8 @@ function keyEventFilter(e, filters) {
         keyOrCodeFilters.push(filter);
     }
     return keyOrCodeFilters.length === 0
-        || keyOrCodeFilters.includes(e.key.toLowerCase());
+        || keyOrCodeFilters.includes(e.key.toLowerCase())
+        || keyOrCodeFilters.includes(e.code.toLowerCase());
 }
 function mouseEventFilter(e, filters) {
     let buttonFilters = [];
@@ -17000,17 +17044,26 @@ class PropertyPart {
     setFixedComProperty(value) {
         let com = this.com;
         let type = typeof com[this.name];
-        if (type === 'boolean') {
-            com[this.name] = value === 'false' ? false : true;
+        if (type === 'object' && /^\s*(?:\{.+?\}|\[.+?\])\s*$/.test(value)) {
+            type = 'undefined';
         }
-        else if (type === 'number') {
-            com[this.name] = Number(value);
-        }
-        else if (type !== 'undefined') {
-            com[this.name] = value;
-        }
-        else {
-            console.warn(`Please makesure value of property "${this.name}" exist on "<${com.el.localName} />" when assigning fixed property!`);
+        switch (type) {
+            case 'boolean':
+                com[this.name] = value === 'false' ? false : true;
+                break;
+            case 'number':
+                com[this.name] = Number(value);
+                break;
+            case 'object':
+                com[this.name] = JSON.parse(value);
+                break;
+            default:
+                if (type !== 'undefined') {
+                    com[this.name] = value;
+                }
+                else {
+                    console.warn(`Please makesure value of property "${this.name}" exist on "<${com.el.localName} />" when assigning fixed property!`);
+                }
         }
     }
     updateElementProperty(value) {

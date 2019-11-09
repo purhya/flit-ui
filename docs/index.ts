@@ -672,6 +672,17 @@ define('flit-preview', class extends Component {
 					</f-col>
 
 					<f-col .span="6">
+						<header style="margin-bottom: 8px;">Prompt</header>
+						<button @click=${
+							() => dialog.prompt('Please input the name of your account:', {title: 'Dialog Title'})
+						}>
+							Click to Open Dialog
+						</button>
+					</f-col>
+				</f-row>
+				
+				<f-row style="margin: 32px 0 8px 0;" .gutter="24">
+					<f-col .span="6">
 						<header style="margin-bottom: 8px;">With Third actions</header>
 						<button @click=${
 							() => dialog.confirm('You have unsaved data, are you sure you want to save your changes?', {
@@ -686,9 +697,7 @@ define('flit-preview', class extends Component {
 							Click to Open Dialog
 						</button>
 					</f-col>
-				</f-row>
-				
-				<f-row style="margin: 32px 0 8px 0;" .gutter="24">
+					
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Customize</header>
 						<button @click=${
@@ -713,8 +722,6 @@ define('flit-preview', class extends Component {
 
 			</section>
 
-
-			
 
 
 			<section>

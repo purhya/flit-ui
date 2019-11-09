@@ -33,6 +33,10 @@ interface DialogItem {
 	resolve: (value: string | undefined) => void
 }
 
+export interface PromptDialogOptions extends DialogOptions {
+	placeholder?: string
+}
+
 
 @define('f-dialog')
 export class Dialog<E = any> extends Component<E> {
@@ -117,6 +121,11 @@ export class Dialog<E = any> extends Component<E> {
 				margin-right: auto;
 			}
 		}
+
+		.input{
+			margin-top: 8px;
+			width: 100%;
+		}
 		`
 	}
 
@@ -141,7 +150,6 @@ export class Dialog<E = any> extends Component<E> {
 			tabindex="0"
 			${show(this.opened, {transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
 		>
-
 			<div class="mask"
 				:ref="mask"
 				${show(this.opened, {transition: 'fade', enterAtStart: true})}
@@ -324,6 +332,22 @@ export class QuickDialog {
 		return this.addOptions(Object.assign({
 			icon: 'confirm',
 			message,
+			actions: [
+				{value: 'cancel', text: this.actionLabels.cancel},
+				{value: 'ok', text: this.actionLabels.ok, primary: true},
+			],
+		}, options))
+	}
+
+	/** Show prompt type dialog or add it to dialog stack. */
+	async prompt(message: string | TemplateResult, options: PromptDialogOptions = {}) {
+		let messageWithInput = html`
+			${message}
+			<f-input class="input" .placeholder=${options.placeholder} />
+		`
+
+		return this.addOptions(Object.assign({
+			message: messageWithInput,
 			actions: [
 				{value: 'cancel', text: this.actionLabels.cancel},
 				{value: 'ok', text: this.actionLabels.ok, primary: true},
