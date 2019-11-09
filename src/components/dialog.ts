@@ -35,6 +35,7 @@ interface DialogItem {
 
 export interface PromptDialogOptions extends DialogOptions {
 	placeholder?: string
+	value?: string | number
 }
 
 
@@ -96,6 +97,8 @@ export class Dialog<E = any> extends Component<E> {
 		}
 
 		.message{
+			flex: 1;
+			min-width: 0;
 			line-height: ${adjust(20)}px;
 			padding: ${adjust(4)}px 0;
 		}
@@ -340,19 +343,27 @@ export class QuickDialog {
 	}
 
 	/** Show prompt type dialog or add it to dialog stack. */
-	async prompt(message: string | TemplateResult, options: PromptDialogOptions = {}) {
+	async prompt(message: string | TemplateResult, options: PromptDialogOptions = {}): Promise<string | undefined> {
+		let value = options.value ? String(options.value) : ''
+
 		let messageWithInput = html`
 			${message}
-			<f-input class="input" .placeholder=${options.placeholder} />
+			<f-input class="input" .placeholder=${options.placeholder} @change=${(v: string) => value = v} />
 		`
 
-		return this.addOptions(Object.assign({
+		let btn = await this.addOptions(Object.assign({
 			message: messageWithInput,
 			actions: [
 				{value: 'cancel', text: this.actionLabels.cancel},
 				{value: 'ok', text: this.actionLabels.ok, primary: true},
 			],
 		}, options))
+
+		if (btn === 'ok') {
+			return value
+		}
+
+		return undefined
 	}
 }
 
