@@ -5250,7 +5250,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
         })}
 				>
 					${flit_1.repeat(leftData, (data, index) => flit_1.html `
-						<div style="width: 100px; margin: 4px;" :style.background=${src_1.theme.backgroundColor.toMiddle(10)} ${src_1.draggable(data, index)}>${data}</div>
+						<div style="width: 100px; margin: 4px;" :style.background=${src_1.theme.backgroundColor.toMiddle(15)} ${src_1.draggable(data, index)}>${data}</div>
 					`)}
 				</div>
 				<br>
@@ -5267,7 +5267,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
         })}
 				>
 					${flit_1.repeat(rightData, (data, index) => flit_1.html `
-						<div style="width: 100px; margin: 4px;" :style.background=${src_1.theme.backgroundColor.toMiddle(10)} ${src_1.draggable(data, index)}>${data}</div>
+						<div style="width: 100px; margin: 4px;" :style.background=${src_1.theme.backgroundColor.toMiddle(15)} ${src_1.draggable(data, index)}>${data}</div>
 					`)}
 				</div>
 			</section>
@@ -6575,10 +6575,10 @@ let ContextMenu = class ContextMenu extends popup_1.Popup {
 			
 			.option__f-list{
 				padding: ${adjust(2)}px ${adjust(8)}px;
+			}
 
-				&:last-child{
-					border-bottom: none;
-				}
+			f-list{
+				border-bottom: none;
 			}
 		}
 		`.extends(super.style());
@@ -6665,6 +6665,8 @@ let Dialog = class Dialog extends flit_1.Component {
 		}
 
 		.message{
+			flex: 1;
+			min-width: 0;
 			line-height: ${adjust(20)}px;
 			padding: ${adjust(4)}px 0;
 		}
@@ -6872,17 +6874,22 @@ class QuickDialog {
     }
     /** Show prompt type dialog or add it to dialog stack. */
     async prompt(message, options = {}) {
+        let value = options.value ? String(options.value) : '';
         let messageWithInput = flit_1.html `
 			${message}
-			<f-input class="input" .placeholder=${options.placeholder} />
+			<f-input class="input" .placeholder=${options.placeholder} @change=${(v) => value = v} />
 		`;
-        return this.addOptions(Object.assign({
+        let btn = await this.addOptions(Object.assign({
             message: messageWithInput,
             actions: [
                 { value: 'cancel', text: this.actionLabels.cancel },
                 { value: 'ok', text: this.actionLabels.ok, primary: true },
             ],
         }, options));
+        if (btn === 'ok') {
+            return value;
+        }
+        return undefined;
     }
 }
 exports.QuickDialog = QuickDialog;
@@ -7764,9 +7771,10 @@ let Menu = class Menu extends popup_1.Popup {
 		:host{
 			min-width: ${adjust(180)}px;
 			max-width: ${adjust(320)}px;
+			padding: ${adjust(8)}px ${adjust(16)}px;
 
 			f-list{
-				padding: ${adjust(8)}px ${adjust(16)}px;
+				border-bottom: none;
 				max-height: 100%;
 				overflow-y: auto;
 			}
@@ -7793,12 +7801,6 @@ let Menu = class Menu extends popup_1.Popup {
 			overflow: hidden;
 			white-space: nowrap;
 			text-overflow: ellipsis;
-		}
-
-		:host .option__f-list{
-			&:last-child{
-				border-bottom: none;
-			}
 		}
 		`.extends(super.style());
     }
@@ -9316,10 +9318,14 @@ let Select = class Select extends dropdown_1.Dropdown {
 			filter: none;
 			box-shadow: 0 1px ${popupShadowBlurRadius}px ${popupShadowColor};
 		}
-	
-		.list .option__f-list{
-			padding-left: ${adjust(8)}px;
-			border-top: none;
+
+		.list{
+			border-bottom: none;
+
+			.option__f-list{
+				padding-left: ${adjust(8)}px;
+				border-top: none;
+			}
 		}
 
 		.selected-icon{
@@ -11432,18 +11438,18 @@ flit_1.addGlobalStyle(() => {
 	::-webkit-scrollbar{
 		height: 10px;
 		width: 10px;
-		background: ${backgroundColor.toMiddle(5)};
+		background: ${backgroundColor.toMiddle(10)};
 	}
 
 	::-webkit-scrollbar-thumb{
-		background: ${backgroundColor.toMiddle(15)};
+		background: ${backgroundColor.toMiddle(30)};
 
 		&:hover{
-			background: ${backgroundColor.toMiddle(25)};
+			background: ${backgroundColor.toMiddle(40)};
 		}
 
 		&:active{
-			background: ${backgroundColor.toMiddle(35)};
+			background: ${backgroundColor.toMiddle(50)};
 		}
 	}
 `;

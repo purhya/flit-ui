@@ -15,9 +15,10 @@ export class Menu<E = any> extends Popup<E> {
 		:host{
 			min-width: ${adjust(180)}px;
 			max-width: ${adjust(320)}px;
+			padding: ${adjust(8)}px ${adjust(16)}px;
 
 			f-list{
-				padding: ${adjust(8)}px ${adjust(16)}px;
+				border-bottom: none;
 				max-height: 100%;
 				overflow-y: auto;
 			}
@@ -44,12 +45,6 @@ export class Menu<E = any> extends Popup<E> {
 			overflow: hidden;
 			white-space: nowrap;
 			text-overflow: ellipsis;
-		}
-
-		:host .option__f-list{
-			&:last-child{
-				border-bottom: none;
-			}
 		}
 		`.extends(super.style())
 	}

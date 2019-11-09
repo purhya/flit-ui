@@ -856,7 +856,7 @@ define('flit-preview', class extends Component {
 					})}
 				>
 					${repeat(leftData, (data: number, index: number) => html`
-						<div style="width: 100px; margin: 4px;" :style.background=${theme.backgroundColor.toMiddle(10)} ${draggable(data, index)}>${data}</div>
+						<div style="width: 100px; margin: 4px;" :style.background=${theme.backgroundColor.toMiddle(15)} ${draggable(data, index)}>${data}</div>
 					`)}
 				</div>
 				<br>
@@ -874,7 +874,7 @@ define('flit-preview', class extends Component {
 					})}
 				>
 					${repeat(rightData, (data: number, index: number) => html`
-						<div style="width: 100px; margin: 4px;" :style.background=${theme.backgroundColor.toMiddle(10)} ${draggable(data, index)}>${data}</div>
+						<div style="width: 100px; margin: 4px;" :style.background=${theme.backgroundColor.toMiddle(15)} ${draggable(data, index)}>${data}</div>
 					`)}
 				</div>
 			</section>

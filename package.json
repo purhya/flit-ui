@@ -1,6 +1,6 @@
 {
 	"name": "@pucelle/flit-ui",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"description": "A foundational Web UI base on Flit & FF, it can be easily customized.",
 	"author": "pucelle",
 	"license": "MIT",

@@ -74,10 +74,14 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			filter: none;
 			box-shadow: 0 1px ${popupShadowBlurRadius}px ${popupShadowColor};
 		}
-	
-		.list .option__f-list{
-			padding-left: ${adjust(8)}px;
-			border-top: none;
+
+		.list{
+			border-bottom: none;
+
+			.option__f-list{
+				padding-left: ${adjust(8)}px;
+				border-top: none;
+			}
 		}
 
 		.selected-icon{
