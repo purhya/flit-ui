@@ -17,10 +17,7 @@ export class ContextMenu<E = any> extends Popup<E> {
 			
 			.option__f-list{
 				padding: ${adjust(2)}px ${adjust(8)}px;
-
-				&:last-child{
-					border-bottom: none;
-				}
+				border-bottom: none;
 			}
 		}
 		`.extends(super.style())
