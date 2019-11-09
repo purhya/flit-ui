@@ -5080,7 +5080,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Prompt</header>
-						<button @click=${() => src_1.dialog.prompt('Please input the name of your account:', { title: 'Dialog Title' })}>
+						<button @click=${() => src_1.dialog.prompt('Please input the name of your account:', { title: 'Dialog Title', placeholder: "Name of your account" })}>
 							Click to Open Dialog
 						</button>
 					</f-col>
@@ -7334,7 +7334,7 @@ let Input = class Input extends flit_1.Component {
 			:class.invalid=${this.touched && this.valid === false}
 		>
 			<input type=${this.type}
-				placeholder=${this.placeholder}
+				placeholder=${this.placeholder || ''}
 				.value=${this.value}
 				:ref="input"
 				@blur=${this.onBlur}
@@ -17044,8 +17044,8 @@ class PropertyPart {
     setFixedComProperty(value) {
         let com = this.com;
         let type = typeof com[this.name];
-        if (type === 'object' && /^\s*(?:\{.+?\}|\[.+?\])\s*$/.test(value)) {
-            type = 'undefined';
+        if (type === 'object' && !/^\s*(?:\{.+?\}|\[.+?\])\s*$/.test(value)) {
+            type = 'string';
         }
         switch (type) {
             case 'boolean':

@@ -103,7 +103,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 			:class.invalid=${this.touched && this.valid === false}
 		>
 			<input type=${this.type}
-				placeholder=${this.placeholder}
+				placeholder=${this.placeholder || ''}
 				.value=${this.value}
 				:ref="input"
 				@blur=${this.onBlur}

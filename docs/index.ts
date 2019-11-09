@@ -674,7 +674,7 @@ define('flit-preview', class extends Component {
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Prompt</header>
 						<button @click=${
-							() => dialog.prompt('Please input the name of your account:', {title: 'Dialog Title'})
+							() => dialog.prompt('Please input the name of your account:', {title: 'Dialog Title', placeholder: "Name of your account"})
 						}>
 							Click to Open Dialog
 						</button>
