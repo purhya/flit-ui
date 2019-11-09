@@ -77,7 +77,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	
 		.list .option__f-list{
 			padding-left: ${adjust(8)}px;
-			border-bottom: none;
+			border-top: none;
 		}
 
 		.selected-icon{
