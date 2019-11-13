@@ -150,6 +150,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			.trangle="false"
 		>
 			<f-list class="list"
+				:ref="list"
 				.type="selection"
 				.selectable
 				.data=${data}
@@ -266,7 +267,8 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			let popupEl = this.popupBinding.popup.el
 			popupEl.style.minWidth = String(this.el.offsetWidth) + 'px'
 
-			let el = popupEl.querySelector(this.scopeClassName('.selected')) as HTMLElement | null
+			await renderComplete()
+			let el = popupEl.querySelector('.selected__f-list') as HTMLElement | null
 			if (el && getScrollDirection(this.refs.list) === 'y') {
 				scrollToTop(el)
 			}

@@ -1,4 +1,4 @@
-import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, renderComplete, Context, Transition, Template, renderComponent, clearTransition, Options, DirectiveResult, html} from '@pucelle/flit'
+import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, renderComplete, Context, Transition, Template, renderComponent, clearTransition, Options, DirectiveResult, html, onRenderComplete} from '@pucelle/flit'
 import {Timeout, timeout, MouseLeave, watchLayout, align, isInViewport, } from '@pucelle/ff'
 import {Popup} from '../components/popup'
 
@@ -199,7 +199,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 		}
 	}
 
-	protected async showPopup() {
+	protected showPopup() {
 		if (this.opened) {
 			return
 		}
@@ -210,32 +210,34 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 		
 		this.setOpened(true)
 
-		await renderComplete()
-		if (!this.isPopupInControl()) {
-			return
-		}
+		// May do something in callback of `setOpened` and `await renderComplete` there.
+		onRenderComplete(() => {
+			if (!this.isPopupInControl()) {
+				return
+			}
 
-		this.alignPopup()
-		popup.el.style.visibility = ''
-		this.mayFocus()
+			this.alignPopup()
+			popup.el.style.visibility = ''
+			this.mayFocus()
 
-		if (inUse) {
-			clearTransition(popup.el)
-		}
-		else {
-			new Transition(popup.el, this.getOption('transition')).enter()
-		}
+			if (inUse) {
+				clearTransition(popup.el)
+			}
+			else {
+				new Transition(popup.el, this.getOption('transition')).enter()
+			}
 
-		let trigger = this.getOption('trigger')
-		if (trigger === 'hover') {
-			off(this.el, 'mouseleave', this.hidePopupLater, this)
-		}
-		else if (trigger === 'focus') {
-			off(this.el, 'blur', this.hidePopupLater, this)
-		}
+			let trigger = this.getOption('trigger')
+			if (trigger === 'hover') {
+				off(this.el, 'mouseleave', this.hidePopupLater, this)
+			}
+			else if (trigger === 'focus') {
+				off(this.el, 'blur', this.hidePopupLater, this)
+			}
 
-		this.bindLeave()
-		this.unwatchRect = watchLayout(this.el, 'rect', this.onElRectChanged.bind(this))
+			this.bindLeave()
+			this.unwatchRect = watchLayout(this.el, 'rect', this.onElRectChanged.bind(this))
+		})
 	}
 
 	protected mayFocus() {
