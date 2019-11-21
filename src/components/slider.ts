@@ -6,6 +6,8 @@ import {tooltip} from '../bindings/tooltip'
 
 export interface SliderEvents {
 	change: (value: number) => void
+	dragstart: () => void
+	dragend: () => void
 }
 
 @define('f-slider')
@@ -99,8 +101,16 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		`
 	}
 
+	vertical: boolean = false
+	min: number = 0
+	max: number = 100
+	step: number = 1
+	value: number = 0
+
+	protected draging: boolean = false
+
 	protected render() {
-		let tip = tooltip(String(this.value), {
+		let tip = tooltip(this.renderTooltipValue(), {
 			alignTo: () => this.refs.ball,
 			alignPosition: this.vertical ? 'r' : 't'
 		})
@@ -127,13 +137,9 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		`
 	}
 
-	vertical: boolean = false
-	min: number = 0
-	max: number = 100
-	step: number = 1
-	value: number = 0
-
-	protected draging: boolean = false
+	protected renderTooltipValue(): string {
+		return String(this.value)
+	}
 
 	protected getPercent() {
 		if (this.value === this.min) {
@@ -166,7 +172,10 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 			off(document, 'mousemove', onMouseMove as (e: Event) => void)
 			unkeep()
 			this.draging = false
+			this.emit('dragend')
 		})
+
+		this.emit('dragstart')
 	}
 
 	protected changeValueByEvent(e: MouseEvent, rect: Rect) {
