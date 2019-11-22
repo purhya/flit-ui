@@ -26,7 +26,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 			justify-content: center;
 			position: relative;
 			width: ${adjust(150)}px;
-			height: ${adjust(30)}px;
+			height: ${adjust(28)}px;
 			font-size: ${adjustFontSize(13)}px;
 			cursor: pointer;
 
@@ -57,13 +57,16 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		}
 	
 		.ball{
+			position: absolute;
+			top: -${(ballSize - grooveSize) / 2}px;
+			right: -${Math.round(ballSize / 2)}px;
+			will-change: top right;
 			border-radius: 50%;
 			border: 1px solid ${borderColor};
 			background: ${backgroundColor};
 			float: right;
 			width: ${ballSize}px;
 			height: ${ballSize}px;
-			margin: -${(ballSize - grooveSize) / 2}px -${Math.round(ballSize / 2)}px;
 
 			&:hover{
 				border-color: ${mainColor};
