@@ -224,24 +224,24 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 	protected onCreated() {
 		if (this.active) {
-			this.showActiveItem(this.data)
+			this.ensureActiveItemVisible(this.data)
 		}
 	}
 
-	private showActiveItem(items: ListItem<T>[]) {
+	private ensureActiveItemVisible(items: ListItem<T>[]) {
 		return items.some(item => {
 			if (item.value === this.active) {
 				return true
 			}
 
 			if (item.children) {
-				let hasActiveChildItem = this.showActiveItem(item.children)
+				let hasActiveChildItem = this.ensureActiveItemVisible(item.children)
 				if (hasActiveChildItem) {
 					item.opened = true
 				}
 			}
 
-			return false
+			return item.opened
 		})
 	}
 }
