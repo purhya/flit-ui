@@ -111,7 +111,9 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 			.subsection{
 				padding-top: 0;
-				padding-bottom: 0;
+				padding-bottom: ${adjust(3)}px;
+				margin-bottom: ${adjust(3)}px;
+				border-bottom: 1px solid ${borderColor.alpha(0.4)};
 			}
 		}
 		`
