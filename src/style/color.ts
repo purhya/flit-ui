@@ -4,6 +4,35 @@ import {toPower, avg} from '@pucelle/ff'
 /** Class to process colors. */
 export class Color {
 
+	static fromRGBA(r: number, g: number, b: number, a: number): Color {
+		r = Math.max(Math.min(r, 1), 0)
+		g = Math.max(Math.min(g, 1), 0)
+		b = Math.max(Math.min(b, 1), 0)
+		a = Math.max(Math.min(a, 1), 0)
+
+		if (a === 1) {
+			return new Color(
+				'#'
+				+ (Math.round(255 * r)).toString(16).padStart(2, '0')
+				+ (Math.round(255 * g)).toString(16).padStart(2, '0')
+				+ (Math.round(255 * b)).toString(16).padStart(2, '0')
+			)
+		}
+		else {
+			return new Color(
+				'rgba('
+				+ (Math.round(255 * r)).toString() + ', '
+				+ (Math.round(255 * g)).toString() + ', '
+				+ (Math.round(255 * b)).toString() + ', '
+				+ toPower(a, -2) + ')'
+			)
+		}
+	}
+
+	static fromRGB(r: number, g: number, b: number): Color {
+		return Color.fromRGBA(r, g, b, 1)
+	}
+
 	private value: string
 
 	constructor(value: string) {
@@ -14,7 +43,7 @@ export class Color {
 		return this.value
 	}
 
-	/** Get [r, g, b, a], all betweens 0 ~ 1 from current color. */
+	/** Get [r, g, b, a], all betweens 0 ~ 1. */
 	getRGBA(): [number, number, number, number] {
 		if (/^#[0-9a-fA-F]{3,6}$/.test(this.value)) {
 			return [...this.parseNormalColor(this.value), 1] as [number, number, number, number]
@@ -48,6 +77,11 @@ export class Color {
 		throw new Error(`"${this.value}" is not a valid RGB color`)
 	}
 
+	/** Get [r, g, b], all betweens 0 ~ 1. */
+	getRGB(): [number, number, number] {
+		return this.getRGBA().slice(0, 3) as [number, number, number]
+	}
+
 	private parseNormalColor(color: string): [number, number, number] {
 		if (color.length === 4) {
 			return [
@@ -65,31 +99,6 @@ export class Color {
 		}
 	}
 
-	private formatRGBA(r: number, g: number, b: number, a: number): Color {
-		r = Math.max(Math.min(r, 1), 0)
-		g = Math.max(Math.min(g, 1), 0)
-		b = Math.max(Math.min(b, 1), 0)
-		a = Math.max(Math.min(a, 1), 0)
-
-		if (a === 1) {
-			return new Color(
-				'#'
-				+ (Math.round(255 * r)).toString(16).padStart(2, '0')
-				+ (Math.round(255 * g)).toString(16).padStart(2, '0')
-				+ (Math.round(255 * b)).toString(16).padStart(2, '0')
-			)
-		}
-		else {
-			return new Color(
-				'rgba('
-				+ (Math.round(255 * r)).toString() + ', '
-				+ (Math.round(255 * g)).toString() + ', '
-				+ (Math.round(255 * b)).toString() + ', '
-				+ toPower(a, -2) + ')'
-			)
-		}
-	}
-
 	/** Darken current color with percentage value betweens 0-100. */
 	darken(percentage: number): Color {
 		return this.lighten(-percentage)
@@ -104,7 +113,7 @@ export class Color {
 		g += p
 		b += p
 
-		return this.formatRGBA(r, g, b, a)
+		return Color.fromRGBA(r, g, b, a)
 	}
 
 	/** 
@@ -129,7 +138,7 @@ export class Color {
 	/** Change alpha channel of current color to value betweens 0-1. */
 	alpha(a: number): Color {
 		let [r, g, b] = this.getRGBA()
-		return this.formatRGBA(r, g, b, a)
+		return Color.fromRGBA(r, g, b, a)
 	}
 
 	/** Mix with another color in percentage value betweens 0-100. */
@@ -148,6 +157,6 @@ export class Color {
 		b = b * (1 - p) + b2 * p
 		a = a * (1 - p) + a2 * p
 
-		return this.formatRGBA(r, g, b, a)
+		return Color.fromRGBA(r, g, b, a)
 	}
 }
