@@ -51,7 +51,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			flex: 1;
 			min-width: 0;
 			padding: 0 0 0 ${adjust(8)}px;
-			height: ${adjust(28)}px;
+			height: 100%;
 			border: none;
 			background: transparent;
 			white-space: nowrap;
