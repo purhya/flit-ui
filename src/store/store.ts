@@ -1,8 +1,9 @@
-import {Emitter, Order} from '@pucelle/ff'
+import {Emitter, Order, OrderFunction, CanSortKeys} from '@pucelle/ff'
 
 
 export interface StoreEvents {
 	change: () => void
+	orderchanged: (name: string, direction: 'asc' | 'desc' | '') => void
 }
 
 export interface StoreOptions<T> {
@@ -65,8 +66,14 @@ export class Store<T extends object = object> extends Emitter<StoreEvents> {
 	/** Used to search data items. */
 	filter: ((item: T) => boolean) | null = null
 
-	/** used to sort items, see `ff.orderBy` */
+	/** Used to sort items, see `ff.orderBy` */
 	order: Order<T> | null = null
+
+	/** The readable name relatated to current ordered state. */
+	orderName: string = ''
+
+	/** Current ordered direction. */
+	orderDirection: 'asc' | 'desc' | '' = ''
 
 	/** Used to select range items by `shift + click`. */
 	private lastTouchItem: T | null = null
@@ -138,14 +145,20 @@ export class Store<T extends object = object> extends Emitter<StoreEvents> {
 		}
 	}
 
-	setOrder(order: Order<T> | null) {
-		this.order = order
-		this.updateCurrentData()
-		this.emit('change')
+	setNamedOrder(name: string, by: CanSortKeys<T> | OrderFunction<T>, direction: 'asc' | 'desc' | '') {
+		this.order = new Order([by, direction || 'asc'])
+		this.orderName = name
+		this.orderDirection = direction
+		this.emit('orderchanged', name, direction)
+	}
+
+	setOrder(key: CanSortKeys<T>, direction: 'asc' | 'desc' | '') {
+		this.setNamedOrder(String(key), key, direction)
 	}
 
 	clearOrder() {
-		this.setOrder(null)
+		this.order = null
+		this.emit('orderchanged', '', '')
 	}
 
 	setFilter(filter: ((item: T) => boolean) | null) {
@@ -406,6 +419,11 @@ export class Store<T extends object = object> extends Emitter<StoreEvents> {
 		else {
 			this.selectAll()
 		}
+	}
+
+	reload() {
+		this.updateCurrentData()
+		this.emit('change')
 	}
 
 	clear() {

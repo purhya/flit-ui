@@ -1,9 +1,10 @@
-import {Emitter} from '@pucelle/ff'
+import {Emitter, OrderDirection} from '@pucelle/ff'
 import {LiveAsyncRepeatDirective} from '@pucelle/flit'
 
 
 export interface AsyncStoreEvents {
 	change: () => void
+	orderchanged: (name: string, direction: OrderDirection) => void
 }
 
 
@@ -17,8 +18,16 @@ export abstract class AsyncStore<Item = any> extends Emitter<AsyncStoreEvents> {
 
 	private repeatDir!: LiveAsyncRepeatDirective<Item>
 
+	/** Main key property. */
 	key: string = ''
+
+	/** The readable name relatated to current ordering state. */
+	orderName: string = ''
+
+	/** Current ordered key. */
 	orderKey: string = ''
+
+	/** Current ordered direction. */
 	orderDirection: 'asc' | 'desc' | '' = ''
 
 	abstract dataCount(): Promise<number> | number
@@ -35,18 +44,23 @@ export abstract class AsyncStore<Item = any> extends Emitter<AsyncStoreEvents> {
 		this.emit('change')
 	}
 
-	setOrder(key: string, direction: 'asc' | 'desc' | '') {
+	setNamedOrder(name: string, key: string, direction: 'asc' | 'desc' | '') {
+		this.orderName = name
 		this.orderKey = key
 		this.orderDirection = direction
-		this.reload()
+		this.emit('orderchanged', name, direction)
+	}
+
+	setOrder(key: string, direction: 'asc' | 'desc' | '') {
+		this.setNamedOrder(key, key, direction)
 	}
 
 	clearOrder() {
 		this.orderKey = ''
 		this.orderDirection = ''
-		this.reload()
+		this.emit('orderchanged', '', '')
 	}
-	
+
 	reload() {
 		if (this.repeatDir) {
 			this.repeatDir.reload()

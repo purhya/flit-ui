@@ -1,14 +1,13 @@
 import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, observeGetter, renderComplete, refDirective, Directive} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Store} from '../store/store'
-import {getScrollbarWidth, watchLayout, Order, getStyleAsNumber, sum, repeatTimes, scrollToTop, scrollToView} from '@pucelle/ff'
+import {getScrollbarWidth, watchLayout, getStyleAsNumber, sum, repeatTimes, scrollToTop, scrollToView} from '@pucelle/ff'
 import {AsyncStore} from '../store/async-store'
 import {DirectiveTransitionOptions} from '@pucelle/flit/out/libs/directive-transition'
 
 
 interface GridEvents<Item> {
 	livedataupdated: (data: Item[], index: number) => void
-	orderchanged: (name: string, direction: 'asc' | 'desc' | '') => void
 }
 
 export type RowRenderer<T extends object> = (this: Table<T>, item: T | null, index: number) => TemplateResult
@@ -20,7 +19,7 @@ export interface Column<T = any> {
 	 * or want to restore last ordered column from storage,
 	 * You should set name.
 	 */
-	name?: string
+	name: string
 
 	title: string
 	width?: number
@@ -227,10 +226,9 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 	minColumnWidth: number = 64
 	store!: Store<T> | AsyncStore<T>
 	transition: DirectiveTransitionOptions | undefined
-	orderedColumnName: string | null = null
-	orderDirection: 'asc' | 'desc' | '' = ''
 
-	protected orderedColumnIndex: number = -1
+	protected orderColumnName: string | null = null
+	protected orderDirection: 'asc' | 'desc' | '' = ''
 	protected columnWidths: number[] | null = null
 	protected resizingColumnWidths: number[] | null = null
 	protected columnResized: boolean = false
@@ -260,7 +258,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 
 	protected renderColumns() {
 		return this.columns.map((column, index) => {
-			let isOrdered = this.orderedColumnIndex === index
+			let isOrdered = this.orderColumnName === column.name
 			let flexAlign = column.align === 'right' ? 'flex-end' : column.align === 'center' ? 'center' : ''
 
 			return html`
@@ -272,7 +270,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 					<div class="column-title">${column.title}</div>
 					${column.orderBy ? html`
 						<div class="order" :class.current=${isOrdered && this.orderDirection !== ''}>
-							<f-icon .type=${this.getOrderIcon(index)} />
+							<f-icon .type=${this.getOrderIcon(column.name)} />
 						</div>`
 					: ''}
 				</div>
@@ -347,8 +345,8 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		this.emit('livedataupdated', data, index)
 	}
 
-	protected getOrderIcon(index: number): string {
-		if (index === this.orderedColumnIndex) {
+	protected getOrderIcon(name: string): string {
+		if (name === this.orderColumnName) {
 			if (this.orderDirection === 'asc') {
 				return 'order-asc'
 			}
@@ -369,7 +367,9 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 			}
 		}
 
-		this.restoreOrderedColumn()
+		this.orderColumnName = this.store.orderName
+		this.orderDirection = this.store.orderDirection
+		this.store.on('orderchanged', this.onOrderChanged, this)
 	}
 
 	onReady() {
@@ -393,7 +393,6 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		})
 	}
 
-	// Order part
 	protected doOrdering(e: MouseEvent, index: number) {
 		if ((e.target as HTMLElement).closest(this.scopeClassName('.resizer'))) {
 			return
@@ -409,7 +408,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		let direction: 'asc' | 'desc' | '' = ''
 		let descFirst = column.descFirst
 
-		if (index === this.orderedColumnIndex) {
+		if (column.name === this.orderColumnName) {
 			if (descFirst) {
 				direction = this.orderDirection === '' ? 'desc' : this.orderDirection === 'desc' ? 'asc' : 'desc'
 			}
@@ -421,38 +420,21 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 			direction = descFirst ? 'desc' : 'asc'
 		}
 
-		
-		this.orderedColumnName = column.name || (typeof column.orderBy === 'string' ? column.orderBy : null) || null
-		this.orderedColumnIndex = index
-		this.orderDirection = direction
-
-		this.orderStore()
-
-		if (this.orderedColumnName) {
-			this.emit('orderchanged', this.orderedColumnName, direction)
-		}
+		this.orderStore(column, direction)
 	}
 
-	private orderStore() {
-		if (this.orderDirection === '') {
+	private orderStore(column: Column, direction: 'asc' | 'desc' | '') {
+		if (direction === '') {
 			this.store.clearOrder()
 		}
-		else if (this.store instanceof AsyncStore) {
-			let column = this.columns[this.orderedColumnIndex]
-			this.store.setOrder(column.orderBy as string, this.orderDirection)
-		}
 		else {
-			let column = this.columns[this.orderedColumnIndex]
-			let order = new Order([(column.orderBy || column.render) as (item: T) => string | number, this.orderDirection])
-			this.store.setOrder(order)
+			this.store.setNamedOrder(column.name, column.orderBy || column.render as any, direction)
 		}
+
+		this.store.reload()
 	}
 
-	orderByColumn(name: string, direction: 'asc' | 'desc' | '' = '') {
-		if (this.orderedColumnName === name) {
-			return
-		}
-
+	private onOrderChanged(name: string, direction: 'asc' | 'desc' | '' = '') {
 		let columns = this.columns
 		let index = -1
 
@@ -464,35 +446,23 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		}
 
 		if (index > -1) {
-			let column = columns[index]
-			this.orderedColumnName = column.name || (typeof column.orderBy === 'string' ? column.orderBy : null) || null
-			this.orderedColumnIndex = index
+			this.orderColumnName = columns[index].name
 			this.orderDirection = direction
-
-			this.orderStore()
-
-			if (this.orderedColumnName) {
-				this.emit('orderchanged', this.orderedColumnName, direction)
-			}
+		}
+		else {
+			this.orderColumnName = ''
+			this.orderDirection = ''
 		}
 	}
 
 	private restoreOrderedColumn() {
-		let oldOrderedColumnIndex = this.orderedColumnIndex
-
-		if (this.orderedColumnName) {
-			let columnIndex = this.columns.findIndex(column => column.name === this.orderedColumnName || column.orderBy === this.orderedColumnName)
-			if (columnIndex > -1) {
-				this.orderedColumnIndex = columnIndex
-				if (oldOrderedColumnIndex === -1) {
-					this.orderStore()
-				}
-				return
+		if (this.orderColumnName) {
+			let index = this.columns.findIndex(column => column.name === this.orderColumnName)
+			if (index === -1) {
+				this.orderColumnName = ''
+				this.orderDirection = ''
 			}
 		}
-		
-		this.orderedColumnIndex = -1
-		this.orderDirection = ''
 	}
 
 	// Resizing part
