@@ -69,7 +69,7 @@ export class Store<T extends object = object> extends Emitter<StoreEvents> {
 	order: Order<T> | null = null
 
 	/** Used to select range items by `shift + click`. */
-	private lastTouchedItem: T | null = null
+	private lastTouchItem: T | null = null
 
 	private selected: T[] = []
 	private map: KeyMap<T> | null = null
@@ -305,7 +305,7 @@ export class Store<T extends object = object> extends Emitter<StoreEvents> {
 			}
 		}
 
-		this.lastTouchedItem = items[0]
+		this.lastTouchItem = items[0]
 	}
 
 	deselect(...items: T[]) {
@@ -336,7 +336,7 @@ export class Store<T extends object = object> extends Emitter<StoreEvents> {
 			}
 		}
 
-		this.lastTouchedItem = items[0]
+		this.lastTouchItem = items[0]
 	}
 
 	toggleSelect(item: T) {
@@ -347,7 +347,7 @@ export class Store<T extends object = object> extends Emitter<StoreEvents> {
 			this.select(item)
 		}
 
-		this.lastTouchedItem = item
+		this.lastTouchItem = item
 	}
 
 	selectByKeyboardEvent(item: T, event: KeyboardEvent) {
@@ -360,7 +360,7 @@ export class Store<T extends object = object> extends Emitter<StoreEvents> {
 	}
 
 	shiftSelect(item: T) {
-		let startIndex = Math.max(this.lastTouchedItem ? this.getIndex(this.lastTouchedItem) : 0, 0)
+		let startIndex = Math.max(this.lastTouchItem ? this.getIndex(this.lastTouchItem) : 0, 0)
 		let endIndex = this.getIndex(item)
 
 		if (endIndex >= 0) {

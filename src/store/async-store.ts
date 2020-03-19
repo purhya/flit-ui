@@ -35,14 +35,6 @@ export abstract class AsyncStore<Item = any> extends Emitter<AsyncStoreEvents> {
 		this.emit('change')
 	}
 
-	reload() {
-		if (this.repeatDir) {
-			this.repeatDir.reload()
-		}
-
-		this.emit('change')
-	}
-
 	setOrder(key: string, direction: 'asc' | 'desc' | '') {
 		this.orderKey = key
 		this.orderDirection = direction
@@ -53,6 +45,14 @@ export abstract class AsyncStore<Item = any> extends Emitter<AsyncStoreEvents> {
 		this.orderKey = ''
 		this.orderDirection = ''
 		this.reload()
+	}
+	
+	reload() {
+		if (this.repeatDir) {
+			this.repeatDir.reload()
+		}
+
+		this.emit('change')
 	}
 
 	getFirstVisibleIndex() {
