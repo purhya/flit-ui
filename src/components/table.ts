@@ -400,13 +400,14 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		}
 
 		let columns = this.columns
-		let canOrder = columns[index].orderBy
+		let column = columns[index]
+		let canOrder = column.orderBy
 		if (!canOrder) {
 			return
 		}
 
 		let direction: 'asc' | 'desc' | '' = ''
-		let descFirst = columns[index].descFirst
+		let descFirst = column.descFirst
 
 		if (index === this.orderedColumnIndex) {
 			if (descFirst) {
@@ -420,8 +421,8 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 			direction = descFirst ? 'desc' : 'asc'
 		}
 
-
-		this.orderedColumnName = columns[index].name || null
+		
+		this.orderedColumnName = column.name || (typeof column.orderBy === 'string' ? column.orderBy : null) || null
 		this.orderedColumnIndex = index
 		this.orderDirection = direction
 
@@ -463,7 +464,8 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		}
 
 		if (index > -1) {
-			this.orderedColumnName = columns[index].name || null
+			let column = columns[index]
+			this.orderedColumnName = column.name || (typeof column.orderBy === 'string' ? column.orderBy : null) || null
 			this.orderedColumnIndex = index
 			this.orderDirection = direction
 
@@ -479,7 +481,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		let oldOrderedColumnIndex = this.orderedColumnIndex
 
 		if (this.orderedColumnName) {
-			let columnIndex = this.columns.findIndex(column => column.name === this.orderedColumnName)
+			let columnIndex = this.columns.findIndex(column => column.name === this.orderedColumnName || column.orderBy === this.orderedColumnName)
 			if (columnIndex > -1) {
 				this.orderedColumnIndex = columnIndex
 				if (oldOrderedColumnIndex === -1) {
