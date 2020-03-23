@@ -27,6 +27,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 
 		input, textarea{
 			width: 100%;
+			height: 100%;
 			border: none;
 			background: none;
 			
