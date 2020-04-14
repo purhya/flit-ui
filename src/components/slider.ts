@@ -226,6 +226,8 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 	}
 
 	protected onFocus() {
+		this.onBlur()
+		
 		on(document, 'keydown', this.onKeyDown as (e: Event) => void, this)
 		on(document, 'wheel.prevent', this.onWheel as (e: Event) => void, this)
 	}
