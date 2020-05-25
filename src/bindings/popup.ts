@@ -32,14 +32,14 @@ export interface PopupOptions {
 	/** Such that when mouse hover from `el` to `layer` will not cause it flush. */
 	hideDelay?: number
 
-	/** Should show trangle. */
-	trangle?: boolean
+	/** Should show triangle. */
+	triangle?: boolean
 
 	/** 
-	 * Should align trangle in a fixed position.
-	 * Default value is `false`, means trangle will be adjusted to be in the center of the edge of el or target.
+	 * Should align triangle in a fixed position.
+	 * Default value is `false`, means triangle will be adjusted to be in the center of the edge of el or target.
 	 */
-	fixTrangle?: boolean
+	fixTriangle?: boolean
 
 	/** Transition options for popup hiding and showing. */
 	transition?: TransitionOptions
@@ -75,8 +75,8 @@ const defaultPopupOptions: PopupOptions = {
 	alignMargin: 4,
 	showDelay: 0,
 	hideDelay: 200,
-	trangle: true,
-	fixTrangle: false,
+	triangle: true,
+	fixTriangle: false,
 	transition: 'fade',
 	onOpenedChanged: () => undefined
 }
@@ -400,13 +400,13 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 		let popup = this.popup!
 		let alignToFn = this.getOption('alignTo')
 		let alignTo = alignToFn ? alignToFn(this.el) : this.el
-		let trangle = this.popup!.refs.trangle
+		let triangle = this.popup!.refs.triangle
 
 		align(popup.el, alignTo, this.getOption('alignPosition'), {
 			margin: this.getOption('alignMargin'),
 			canShrinkInY: true,
-			trangle,
-			fixTrangle: this.getOption('fixTrangle'), 
+			triangle,
+			fixTriangle: this.getOption('fixTriangle'), 
 		})
 	}
 

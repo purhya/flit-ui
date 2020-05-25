@@ -91,7 +91,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	}
 
 	trigger: 'click' | 'contextmenu' = 'click'
-	trangle: boolean = false
+	triangle: boolean = false
 	alignMargin: number | number[] = 0
 	data: Iterable<ListItem<T>> = []
 	value: T | T[] | null = null
@@ -147,7 +147,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 		<f-popup
 			class="popup"
 			:ref="popup"
-			.trangle="false"
+			.triangle="false"
 		>
 			<f-list class="list"
 				:ref="list"

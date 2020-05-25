@@ -39,7 +39,7 @@ export class Dropdown<E = any> extends Component<E> {
 	opened: boolean = false
 
 	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'click'
-	trangle: boolean = true
+	triangle: boolean = true
 	alignPosition: string = 'b'
 	alignMargin: number | number[] = 3
 	transition: string = 'fade'
@@ -49,11 +49,11 @@ export class Dropdown<E = any> extends Component<E> {
 	protected popupBinding: PopupBinding | null = null
 
 	protected render() {
-		let {trigger, trangle, alignPosition, alignMargin, transition, showDelay, hideDelay} = this
+		let {trigger, triangle, alignPosition, alignMargin, transition, showDelay, hideDelay} = this
 		let onOpenedChanged = this.setOpened.bind(this)
 		
 		let toPopup = refBinding(
-			popup(() => this.renderPopup(), {trigger, trangle, alignPosition, alignMargin, transition, showDelay, hideDelay, onOpenedChanged}),
+			popup(() => this.renderPopup(), {trigger, triangle, alignPosition, alignMargin, transition, showDelay, hideDelay, onOpenedChanged}),
 			(v: any) => {this.popupBinding = v}
 		)
 		
@@ -69,7 +69,7 @@ export class Dropdown<E = any> extends Component<E> {
 		return html`
 		<f-popup
 			class="popup"
-			.trangle=${this.trangle}
+			.triangle=${this.triangle}
 		/>
 		`
 	}

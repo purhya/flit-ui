@@ -132,13 +132,13 @@ export const svgSymbols = {
 		</svg>
 	`,
 
-	'trangle-down': `
+	'triangle-down': `
 		<svg viewBox="0 0 15 15">
 			<polygon style="fill:currentColor; stroke:none;" points="7,11 11,3 3,3"/>
 		</svg>
 	`,
 
-	'trangle-right': `
+	'triangle-right': `
 		<svg viewBox="0 0 15 15">
 			<polygon style="fill:currentColor; stroke:none;" points="11,7 3,3 3,11"/>
 		</svg>

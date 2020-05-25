@@ -24,7 +24,7 @@ export class Menu<E = any> extends Popup<E> {
 			}
 		}
 
-		.trangle{
+		.triangle{
 			left: ${adjust(15)}px;
 		}
 
@@ -54,7 +54,7 @@ export class Menu<E = any> extends Popup<E> {
 	defaultPopupOptions: PopupOptions = {
 		// `trigger` not work here because when handle it, current component is not created.
 		alignPosition: 'bc',
-		fixTrangle: true,
+		fixTriangle: true,
 	}
 
 	protected render() {

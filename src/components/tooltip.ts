@@ -60,7 +60,7 @@ export class Tooltip<E = any> extends Popup<E> {
 				background: ${color};
 				color: ${textColor};
 
-				.trangle{
+				.triangle{
 					border-bottom-color: ${color};
 
 					&-herizontal{

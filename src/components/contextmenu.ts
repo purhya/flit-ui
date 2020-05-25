@@ -26,5 +26,5 @@ export class ContextMenu<E = any> extends Popup<E> {
 		`.extends(super.style())
 	}
 
-	trangle: boolean = false
+	triangle: boolean = false
 }

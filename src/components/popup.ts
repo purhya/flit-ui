@@ -24,7 +24,7 @@ export class Popup<E = any> extends Component<E> {
 			filter: drop-shadow(0 0 ${popupShadowBlurRadius / 2}px ${popupShadowColor});	// 3px nearly equals 6px in box-shadow.
 		}
 
-		.trangle{
+		.triangle{
 			// Must be the styles in top position
 			position: absolute;
 			border-left: ${w / 2}px solid transparent;
@@ -46,7 +46,7 @@ export class Popup<E = any> extends Component<E> {
 	}
 
 	herizontal: boolean = false
-	trangle: boolean = true
+	triangle: boolean = true
 	
 	/**
 	 * The selector to get HTML element to append to or the HTML element.
@@ -66,8 +66,8 @@ export class Popup<E = any> extends Component<E> {
 	protected render() {
 		return html`
 		<template tabindex="0">
-			${this.trangle ? html`
-				<div class="trangle" :ref="trangle" :class.trangle-herizontal=${this.herizontal} />
+			${this.triangle ? html`
+				<div class="triangle" :ref="triangle" :class.triangle-herizontal=${this.herizontal} />
 			` : ''}
 			<slot />
 		</template>

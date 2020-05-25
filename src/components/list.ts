@@ -159,7 +159,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		>
 			${item.children ? html`
 				<div class='toggle' @click.stop=${() => this.toggle(item)}>
-					<f-icon .type=${item.opened ? 'trangle-down' : 'trangle-right'} />
+					<f-icon .type=${item.opened ? 'triangle-down' : 'triangle-right'} />
 				</div>
 			` : siblingsHaveChildren ? html`
 				<div class='toggle' />
