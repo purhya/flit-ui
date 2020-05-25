@@ -2,7 +2,7 @@ import {define, Component, css, getComponent} from '@pucelle/flit'
 
 
 /** 
- * Now these components only used to align, not for responsive layout.
+ * Note these components only used to align, not for responsive layout.
  * Will extend later when needed.
  */
 @define('f-row')

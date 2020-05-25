@@ -1,6 +1,7 @@
 import {css, define, Component, html, repeat, DirectiveResult, play, TemplateResult} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {add, remove} from '@pucelle/ff'
+import {tooltip} from '../bindings/tooltip'
 
 
 export interface ListItem<T = any> {
@@ -8,6 +9,9 @@ export interface ListItem<T = any> {
 
 	/** Should not set background-color if is a TemplateResult. */
 	text: string | number | TemplateResult
+
+	/** Set pop-up tooltip when hover. */
+	tip?: string | TemplateResult
 
 	icon?: string
 
@@ -143,11 +147,15 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 			<div class="subsection">${this.renderDataOrChildren(item.children)}</div>
 		` : null
 
+		let tip = item.tip ? tooltip(item.tip) : null
+
 		return html`
 		<div
 			class="option"
 			:class=${this.renderClassName(item)}
 			@click.prevent=${() => this.onClickOption(item)}
+			${tip}
+
 		>
 			${item.children ? html`
 				<div class='toggle' @click.stop=${() => this.toggle(item)}>
