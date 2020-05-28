@@ -42,7 +42,7 @@ export class Progress<E = any> extends Component<E> {
 	value: number = 0
 
 	protected render() {
-		let value = Math.round(Math.min(this.value, 1) * 100) + '%'
+		let value = Math.floor(Math.min(this.value, 1) * 100) + '%'
 
 		let tip = tooltip(value, {
 			alignTo: () => this.refs.progress,
