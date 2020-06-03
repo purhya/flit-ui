@@ -1,7 +1,7 @@
 import {define, Component, css, html} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {tooltip} from '../bindings/tooltip'
-
+import {toDecimal} from '@pucelle/ff'
 
 
 /** Now only a input, will extend to list suggestted local or remote data in future. */
@@ -38,11 +38,15 @@ export class Progress<E = any> extends Component<E> {
 		`
 	}
 
-	/** Betweens 0-1 */
+	/** Betweens 0-1. */
 	value: number = 0
 
+	/** Decimal count. */
+	decimalCount: number = 1
+
 	protected render() {
-		let value = Math.floor(Math.min(this.value, 1) * 100) + '%'
+		// 0.5123 -> 51.2%
+		let value = toDecimal(Math.min(this.value, 1) * 100, this.decimalCount) + '%'
 
 		let tip = tooltip(value, {
 			alignTo: () => this.refs.progress,
