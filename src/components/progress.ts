@@ -40,7 +40,7 @@ export class Progress<E = any> extends Component<E> {
 	/** Betweens 0-1. */
 	value: number = 0
 
-	/** Decimal count. */
+	/** Fixed decimal count of progress text. */
 	decimalCount: number = 1
 
 	protected render() {
