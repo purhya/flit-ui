@@ -34,6 +34,10 @@ export class Progress<E = any> extends Component<E> {
 			height: 100%;
 			background: ${mainColor};
 		}
+
+		.tooltip{
+			font-family: monospace;
+		}
 		`
 	}
 
@@ -44,9 +48,7 @@ export class Progress<E = any> extends Component<E> {
 	decimalCount: number = 1
 
 	protected render() {
-		let value = this.renderTooltipValue()
-
-		let tip = tooltip(value, {
+		let tip = tooltip(this.renderTooltipValue(), {
 			alignTo: () => this.refs.progress,
 			alignPosition: 'bc-tr',
 			alignMargin: [8, 0],
@@ -63,6 +65,8 @@ export class Progress<E = any> extends Component<E> {
 
 	renderTooltipValue() {
 		// 0.5123 -> 51.2%
-		return (Math.min(this.value, 1) * 100).toFixed(this.decimalCount) + '%'
+		let value = (Math.min(this.value, 1) * 100).toFixed(this.decimalCount) + '%'
+
+		return html`<span class="${this.scopeClassName('tooltip')}">${value}</span>`
 	}
 }

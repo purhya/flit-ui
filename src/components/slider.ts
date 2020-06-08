@@ -101,6 +101,10 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 				margin: -${Math.round(ballSize / 2)}px -${(ballSize - grooveSize) / 2}px;
 			}
 		}
+
+		.tooltip{
+			font-family: monospace;
+		}
 		`
 	}
 
@@ -109,6 +113,9 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 	max: number = 100
 	step: number = 1
 	value: number = 0
+
+	/** Fixed decimal count of progress text. */
+	decimalCount: number = 0
 
 	protected draging: boolean = false
 
@@ -140,8 +147,10 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		`
 	}
 
-	protected renderTooltipValue(): string {
-		return String(this.value)
+	protected renderTooltipValue() {
+		let value = this.value.toFixed(this.decimalCount)
+		
+		return html`<span class="${this.scopeClassName('tooltip')}">${value}</span>`
 	}
 
 	protected getPercent() {
