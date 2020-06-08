@@ -44,8 +44,7 @@ export class Progress<E = any> extends Component<E> {
 	decimalCount: number = 1
 
 	protected render() {
-		// 0.5123 -> 51.2%
-		let value = (Math.min(this.value, 1) * 100).toFixed(this.decimalCount) + '%'
+		let value = this.renderTooltipValue()
 
 		let tip = tooltip(value, {
 			alignTo: () => this.refs.progress,
@@ -60,5 +59,10 @@ export class Progress<E = any> extends Component<E> {
 			</div>
 		</template>
 		`
+	}
+
+	renderTooltipValue() {
+		// 0.5123 -> 51.2%
+		return (Math.min(this.value, 1) * 100).toFixed(this.decimalCount) + '%'
 	}
 }
