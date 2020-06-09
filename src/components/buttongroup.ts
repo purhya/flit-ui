@@ -33,6 +33,11 @@ export class ButtonGroup<E = any> extends Component<E> {
 				border-color: ${textColor};
 				color: ${backgroundColor};
 			}
+
+			&:hover{
+				position: relative;
+				z-index: 1;
+			}
 		}
 		`
 	}
