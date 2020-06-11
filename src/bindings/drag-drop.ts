@@ -1,5 +1,5 @@
 import {defineBinding, Binding, on, once, off} from "@pucelle/flit"
-import {getStyleAsNumber, animateTo, getRect, stopAnimation, Rect} from "@pucelle/ff"
+import {getStyleAsNumber, animateTo, getRect, stopAnimation, Rect, getStyle} from "@pucelle/ff"
 import {theme} from "../style/theme"
 
 
@@ -93,7 +93,6 @@ export class DroppableBinding<Item> implements Binding<[DropHandler<Item>, Dropp
 	
 	el: HTMLElement
 	name: string = ''
-	direction: 'x' | 'y' | null = null
 
 	protected onenter: DropHandler<Item> | null = null
 	protected onleave: DropHandler<Item> | null = null
@@ -118,32 +117,8 @@ export class DroppableBinding<Item> implements Binding<[DropHandler<Item>, Dropp
 	}
 
 	emitEnter(dragging: Draggable) {
-		this.updateDirection()
-
 		if (this.onenter) {
 			this.onenter(dragging.data as Item, dragging.index)
-		}
-	}
-
-	protected updateDirection() {
-		if (!this.direction) {
-			let style = getComputedStyle(this.el)
-
-			if (style.overflowX === 'auto' || style.overflowX === 'scroll') {
-				this.direction = 'x'
-			}
-			else if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
-				this.direction = 'y'
-			}
-			else if (style.display!.includes('flex') && style.flexDirection!.includes('row')) {
-				this.direction = 'x'
-			}
-			else if (style.display!.includes('flex') && style.flexDirection!.includes('column')) {
-				this.direction = 'y'
-			}
-			else {
-				this.direction = 'y'
-			}
 		}
 	}
 
@@ -183,17 +158,17 @@ class DragDropRelationshipManager {
 
 	// May mouse enter in some drop areas, and start dragging,
 	// then we need to check which drop area should trigger enter.
-	protected enteringDrops: Set<Droppable> = new Set()
+	protected canEnterDrops: Set<Droppable> = new Set()
 	protected activeDrop: Droppable | null = null
 	
 	startDragging(drag: Draggable) {
 		this.dragging = drag
 		let activeDrop: Droppable | undefined
 
-		for (let drop of this.enteringDrops) {
+		for (let drop of this.canEnterDrops) {
 			// May element has been removed
 			if (!document.contains(drop.el)) {
-				this.enteringDrops.delete(drop)
+				this.canEnterDrops.delete(drop)
 			}
 
 			else if (drop.name === name) {
@@ -228,7 +203,7 @@ class DragDropRelationshipManager {
 	}
 
 	enterDroppable(drop: Droppable) {
-		this.enteringDrops.add(drop)
+		this.canEnterDrops.add(drop)
 
 		if (this.canDropTo(drop)) {
 			drop.emitEnter(this.dragging!)
@@ -242,7 +217,7 @@ class DragDropRelationshipManager {
 	}
 
 	leaveDroppable(drop: Droppable) {
-		this.enteringDrops.delete(drop)
+		this.canEnterDrops.delete(drop)
 
 		if (this.activeDrop === drop) {
 			drop.emitLeave(this.dragging!)
@@ -284,7 +259,9 @@ class Mover {
 
 	protected dragging: Draggable
 	protected el: HTMLElement
+	protected direction: 'x' | 'y' = 'y'
 	protected elStyleText: string = ''
+	protected autoLayout: boolean
 	protected width: number
 	protected height: number
 	protected translate: [number, number] = [0, 0]
@@ -303,11 +280,27 @@ class Mover {
 		this.el = drag.el
 		this.startDropArea = this.dropArea = drop
 
+		this.autoLayout = getStyle(this.el, 'position') !== 'absolute'
 		this.width = this.el.offsetWidth + Math.max(getStyleAsNumber(this.el, 'marginLeft'), getStyleAsNumber(this.el, 'marginRight'))
 		this.height = this.el.offsetHeight + Math.max(getStyleAsNumber(this.el, 'marginTop'), getStyleAsNumber(this.el, 'marginBottom'))
 
+		this.initializeDirection()
 		this.setStartDraggingStyle()
 		this.giveSpaceForDraggingElement(drop, false)
+	}
+
+	protected initializeDirection() {
+		if (this.el.nextElementSibling || this.el.previousElementSibling) {
+			let nextRect = getRect(this.el.nextElementSibling || this.el.previousElementSibling!)
+			let currRect = getRect(this.el)
+
+			if (Math.abs(nextRect.left - currRect.left) > Math.abs(nextRect.top - currRect.top)) {
+				this.direction = 'x'
+			}
+			else {
+				this.direction = 'y'
+			}
+		}
 	}
 
 	protected setStartDraggingStyle() {
@@ -325,36 +318,33 @@ class Mover {
 		this.el.style.top = rect.top + 'px'
 		this.el.style.boxShadow = `0 0 ${theme.popupShadowBlurRadius}px #888`
 		this.el.style.pointerEvents = 'none'
+		this.el.style.opacity = '1'
 		;(this.el.style as any).willChange = 'transform'
 	}
 
 	protected moveSiblingsToGiveSpace(playAnimation: boolean) {
-		let transform = this.getTranslateStyle(this.startDropArea, 1)
-		for (let el of this.getSiblingsAfter(this.el as HTMLElement)) {
+		for (let el of this.getSiblingsAfter(this.el)) {
+			let transform = this.getTransformStyle(el, 1)
+
 			if (playAnimation) {
 				animateTo(el, {transform})
 			}
 			else {
 				el.style.transform = transform
 			}
+
 			this.movedElements.add(el)
 		}
 	}
 
-	protected getSiblingsFrom(fromEl: HTMLElement | null): HTMLElement[] {
-		if (!fromEl) {
-			return []
-		}
-		
+	protected getSiblingsAfter(afterEl: HTMLElement): HTMLElement[] {
 		let els: HTMLElement[] = []
-		for (let el = fromEl as HTMLElement; el; el = el.nextElementSibling as HTMLElement) {
+
+		for (let el = afterEl.nextElementSibling as HTMLElement; el; el = el.nextElementSibling as HTMLElement) {
 			els.push(el)
 		}
-		return els
-	}
 
-	protected getSiblingsAfter(afterEl: HTMLElement): HTMLElement[] {
-		return this.getSiblingsFrom(afterEl.nextElementSibling as HTMLElement | null)
+		return els
 	}
 
 	onEnterDroppable(drop: Droppable) {
@@ -364,16 +354,17 @@ class Mover {
 	
 	giveSpaceForDraggingElement(drop: Droppable, playAnimation: boolean) {
 		let isDraggingInStartArea = this.startDropArea === drop
-
 		if (isDraggingInStartArea) {
-			let transform = this.getTranslateStyle(drop, 1)
 			for (let el of this.getSiblingsAfter(this.el as HTMLElement)) {
+				let transform = this.getTransformStyle(el, 1)
+
 				if (playAnimation) {
 					animateTo(el, {transform})
 				}
 				else {
 					el.style.transform = transform
 				}
+
 				this.movedElements.add(el)
 			}
 		}
@@ -381,7 +372,7 @@ class Mover {
 		this.placeholder = document.createElement('div')
 		this.placeholder.style.visibility = 'hidden'
 
-		if (drop.direction === 'x') {
+		if (this.direction === 'x') {
 			this.placeholder.style.width = this.width + 'px'
 		}
 		else {
@@ -391,9 +382,15 @@ class Mover {
 		drop.el.append(this.placeholder)
 	}
 
-	protected getTranslateStyle(drop: Droppable, moveDirection: -1 | 1) {
-		let movePx = drop.direction === 'x' ? this.width : this.height
-		return `translate${drop.direction!.toUpperCase()}(${moveDirection * movePx}px)`
+	protected getTransformStyle(el: HTMLElement, moveDirection: -1 | 1 | 0) {
+		let isRightSiblings = this.el.compareDocumentPosition(el) === el.DOCUMENT_POSITION_FOLLOWING
+		let movePx = this.direction === 'x' ? this.width : this.height
+
+		if (!this.autoLayout && isRightSiblings) {
+			moveDirection -= 1
+		}
+
+		return `translate${this.direction!.toUpperCase()}(${moveDirection * movePx}px)`
 	}
 
 	onLeaveDroppable(drop: Droppable) {
@@ -409,7 +406,14 @@ class Mover {
 	}
 
 	protected restoreMovedElements(playAnimation: boolean) {
-		for (let el of this.movedElements) {
+		let needToRestoreElements = this.movedElements
+		if (!this.autoLayout) {
+			for (let el of this.getSiblingsAfter(this.el)) {
+				needToRestoreElements.add(el)
+			}
+		}
+
+		for (let el of needToRestoreElements) {
 			if (playAnimation) {
 				animateTo(el, {transform: ''})
 			}
@@ -432,28 +436,25 @@ class Mover {
 			return
 		}
 
-		let willMoveElements: Set<HTMLElement> = new Set()
-		for (let el of this.getSiblingsFrom(drag.el)) {
-			if (el !== this.el) {
-				willMoveElements.add(el)
-			}
-		}
+		let willMoveElements = new Set([drag.el, ...this.getSiblingsAfter(drag.el)])
+		willMoveElements.delete(this.el)
 
 		// When the dragged into element has been moved, dragged into it again means that it's movement will be restored.
 		if (this.movedElements.has(drag.el)) {
 			willMoveElements.delete(drag.el)
 		}
 
-		let transform = this.getTranslateStyle(this.dropArea, 1)
 		for (let el of this.movedElements) {
 			if (!willMoveElements.has(el)) {
-				animateTo(el, {transform: ''})
+				let transform = this.getTransformStyle(el, 0)
+				animateTo(el, {transform})
 			}
 		}
 
 		// Each element either move down compare to it's original position, or keep position.
 		for (let el of willMoveElements) {
 			if (!this.movedElements.has(el)) {
+				let transform = this.getTransformStyle(el, 1)
 				animateTo(el, {transform})
 			}
 		}
@@ -521,8 +522,6 @@ class Mover {
 		if (this.willSwapElements()) {
 			await this.animateDraggingElementToDropArea()
 			this.el.style.transform = ''
-			this.clearDraggingStyle()
-			this.restoreMovedElements(false)
 		}
 		else {
 			// When moved dragging element outside
@@ -531,9 +530,11 @@ class Mover {
 			}
 
 			await animateTo(this.el, {transform: ''})
-			this.clearDraggingStyle()
-			this.restoreMovedElements(false)
 		}
+
+		this.clearDraggingStyle()
+		this.restoreMovedElements(false)
+
 	}
 
 	protected async animateDraggingElementToDropArea() {

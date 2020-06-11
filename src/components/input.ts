@@ -4,6 +4,8 @@ import {Form} from './form'
 
 
 interface InputEvents {
+	/** Not validate and set value. */
+	input: (value: string) => void
 	change: (value: string, valid: boolean) => void
 }
 
@@ -108,6 +110,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 				.value=${this.value}
 				:ref="input"
 				@blur=${this.onBlur}
+				@input=${(e: InputEvent) => this.onInput(e)}
 				@change=${(e: InputEvent) => this.onChange(e)}
 			/>
 			${this.touched && this.valid === true ? html`<f-icon class="valid-icon" .type="checked" />` : ''}
@@ -118,6 +121,13 @@ export class Input<E = any> extends Component<InputEvents & E> {
 
 	protected onBlur() {
 		this.touched = true
+	}
+
+	protected onInput(e: InputEvent) {
+		let input = e.target as HTMLInputElement
+		let value = input.value
+
+		this.emit('input', value)
 	}
 
 	protected onChange(e: InputEvent) {
