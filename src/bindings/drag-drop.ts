@@ -383,10 +383,10 @@ class Mover {
 	}
 
 	protected getTransformStyle(el: HTMLElement, moveDirection: -1 | 1 | 0) {
-		let isRightSiblings = this.el.compareDocumentPosition(el) === el.DOCUMENT_POSITION_FOLLOWING
 		let movePx = this.direction === 'x' ? this.width : this.height
 
-		if (!this.autoLayout && isRightSiblings) {
+		// Moves left in absolute layout.
+		if (!this.autoLayout && this.el.compareDocumentPosition(el) === el.DOCUMENT_POSITION_FOLLOWING) {
 			moveDirection -= 1
 		}
 
