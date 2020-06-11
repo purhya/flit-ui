@@ -281,8 +281,14 @@ class Mover {
 		this.startDropArea = this.dropArea = drop
 
 		this.autoLayout = getStyle(this.el, 'position') !== 'absolute'
-		this.width = this.el.offsetWidth + Math.max(getStyleAsNumber(this.el, 'marginLeft'), getStyleAsNumber(this.el, 'marginRight'))
-		this.height = this.el.offsetHeight + Math.max(getStyleAsNumber(this.el, 'marginTop'), getStyleAsNumber(this.el, 'marginBottom'))
+
+		let marginLeft = getStyleAsNumber(this.el, 'marginLeft')
+		let marginRight = getStyleAsNumber(this.el, 'marginRight')
+		let marginTop = getStyleAsNumber(this.el, 'marginTop')
+		let marginBottom = getStyleAsNumber(this.el, 'marginBottom')
+
+		this.width = this.el.offsetWidth + (Math.abs(marginLeft) > Math.abs(marginRight) ? marginLeft : marginRight)
+		this.height = this.el.offsetHeight + (Math.abs(marginTop) > Math.abs(marginBottom) ? marginTop : marginBottom)
 
 		this.initializeDirection()
 		this.setStartDraggingStyle()
