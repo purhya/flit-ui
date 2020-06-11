@@ -261,7 +261,10 @@ class Mover {
 	protected el: HTMLElement
 	protected direction: 'x' | 'y' = 'y'
 	protected elStyleText: string = ''
+
+	/** `true` means after this.el moved, followed elements will shrink and take it's */
 	protected autoLayout: boolean
+	
 	protected width: number
 	protected height: number
 	protected translate: [number, number] = [0, 0]
