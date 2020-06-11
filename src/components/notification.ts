@@ -383,6 +383,11 @@ export class UniqueNotification {
 		return this.id = this.raw.info(message, options)
 	}
 
+	warn(message: string | TemplateResult, options: NotificationOptions = {}): number {
+		this.overwriteNotificationId(options)
+		return this.id = this.raw.warn(message, options)
+	}
+
 	error(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		this.overwriteNotificationId(options)
 		return this.id = this.raw.error(message, options)
