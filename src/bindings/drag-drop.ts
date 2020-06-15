@@ -268,17 +268,22 @@ class Mover {
 	/** Keeps orignal style of el before starting dragging. */
 	protected elStyleText: string = ''
 
-	/** `true` means after this.el moved, followed elements will shrink and take it's */
+	/** `true` means after this.el moved, followed elements will shrink and take it's place. */
 	protected autoLayout: boolean
 	
 	protected width: number
 	protected height: number
 	protected translate: [number, number] = [0, 0]
 
-	protected draggedTo: Draggable | null = null
-	protected draggedToRect: Rect | null = null
-	protected draggedToIndex: number = -1
+	protected dragTo: Draggable | null = null
+	protected dragToRect: Rect | null = null
+	protected dragToIndex: number = -1
+
+	/** Elements that were moved to right, compare to their auto layout position. */
 	protected movedElements: Set<HTMLElement> = new Set()
+
+	/** Elements that were actually translated. */
+	protected translatedElements: Set<HTMLElement> = new Set()
 
 	protected startDropArea: Droppable
 	protected dropArea: Droppable | null = null
@@ -337,25 +342,10 @@ class Mover {
 		;(this.el.style as any).willChange = 'transform'
 	}
 
-	protected moveSiblingsToGiveSpace(playAnimation: boolean) {
-		for (let el of this.getSiblingsAfter(this.el)) {
-			let transform = this.getTransformStyle(el, 1)
-
-			if (playAnimation) {
-				animateTo(el, {transform})
-			}
-			else {
-				el.style.transform = transform
-			}
-
-			this.movedElements.add(el)
-		}
-	}
-
-	protected getSiblingsAfter(afterEl: HTMLElement): HTMLElement[] {
+	protected getSiblingsAfter(fromEl: HTMLElement): HTMLElement[] {
 		let els: HTMLElement[] = []
 
-		for (let el = afterEl.nextElementSibling as HTMLElement; el; el = el.nextElementSibling as HTMLElement) {
+		for (let el = fromEl.nextElementSibling as HTMLElement; el; el = el.nextElementSibling as HTMLElement) {
 			els.push(el)
 		}
 
@@ -371,16 +361,7 @@ class Mover {
 		let isDraggingInStartArea = this.startDropArea === drop
 		if (isDraggingInStartArea) {
 			for (let el of this.getSiblingsAfter(this.el as HTMLElement)) {
-				let transform = this.getTransformStyle(el, 1)
-
-				if (playAnimation) {
-					animateTo(el, {transform})
-				}
-				else {
-					el.style.transform = transform
-				}
-
-				this.movedElements.add(el)
+				this.moveElement(el, 1, playAnimation)
 			}
 		}
 
@@ -397,93 +378,87 @@ class Mover {
 		drop.el.append(this.placeholder)
 	}
 
-	protected getTransformStyle(el: HTMLElement, moveDirection: -1 | 1 | 0) {
-		let movePx = this.direction === 'x' ? this.width : this.height
-
-		// Moves left in absolute layout.
-		if (!this.autoLayout && this.el.compareDocumentPosition(el) === el.DOCUMENT_POSITION_FOLLOWING) {
-			moveDirection -= 1
-		}
-
-		return `translate${this.direction!.toUpperCase()}(${moveDirection * movePx}px)`
-	}
-
-	onLeaveDroppable(drop: Droppable) {
-		if (drop !== this.dropArea) {
+	/** 
+	 * Move element based on a move direction.
+	 * The `moveDirection` argument considers `autoLayout` always true,
+	 * So we should fix it inside.
+	 */
+	protected moveElement(el: HTMLElement, moveDirection: 1 | 0, playAnimation: boolean) {
+		if (el === this.el) {
 			return
 		}
 
-		this.restoreMovedElements(true)
-		this.dropArea = null
-		this.draggedTo = null
-		this.draggedToRect = null
-		this.draggedToIndex = -1
+		let movePx = this.direction === 'x' ? this.width : this.height
+		let translateDirection = moveDirection
+
+		// in not in `autoLayout` mode, element will not affect the position of it's followed sibling elements,
+		// So we make `moveDirection` -= 1 to balance.
+		if (!this.autoLayout && this.el.compareDocumentPosition(el) === el.DOCUMENT_POSITION_FOLLOWING) {
+			translateDirection -= 1
+		}
+
+		let transform = translateDirection !== 0
+			? `translate${this.direction!.toUpperCase()}(${translateDirection * movePx}px)`
+			: ''
+
+		if (playAnimation) {
+			animateTo(el, {transform})
+		}
+		else {
+			el.style.transform = transform
+		}
+
+		if (moveDirection) {
+			this.movedElements.add(el)
+		}
+		else {
+			this.movedElements.delete(el)
+		}
+
+		if (translateDirection) {
+			this.translatedElements.add(el)
+		}
+		else {
+			this.translatedElements.delete(el)
+		}
 	}
 
-	protected restoreMovedElements(playAnimation: boolean) {
-		let needToRestoreElements = this.movedElements
-
-		// If in absolute layout mode, need to restore siblings after el.
-		if (!this.autoLayout) {
-			for (let el of this.getSiblingsAfter(this.el)) {
-				needToRestoreElements.add(el)
-			}
-		}
-
-		for (let el of needToRestoreElements) {
-			if (playAnimation) {
-				animateTo(el, {transform: ''})
-			}
-			else {
-				el.style.transform = ''
-				stopAnimation(el)
-			}
-		}
-
-		this.movedElements = new Set()
-
-		if (this.placeholder) {
-			this.placeholder.remove()
-			this.placeholder = null
-		}
-	}
-
-	onEnterDraggable(drag: Draggable) {
+	onEnterDraggable(dragTo: Draggable) {
 		if (!this.dropArea) {
 			return
 		}
 
-		if (isPlayingAnimation(drag.el)) {
+		// Sometimes element trigger enter event twice when playing animation,
+		// Which will cause element accidentaly restore it's position.
+		// We should avoid it be do this.
+		if (isPlayingAnimation(dragTo.el)) {
 			return
 		}
 
-		let willMoveElements = new Set([drag.el, ...this.getSiblingsAfter(drag.el)])
+		let willMoveElements = new Set([dragTo.el, ...this.getSiblingsAfter(dragTo.el)])
 		willMoveElements.delete(this.el)
 
 		// When the dragged into element has been moved, dragged into it again means that it's movement will be restored.
-		if (this.movedElements.has(drag.el)) {
-			willMoveElements.delete(drag.el)
+		if (this.movedElements.has(dragTo.el)) {
+			willMoveElements.delete(dragTo.el)
 		}
 
 		for (let el of this.movedElements) {
 			if (!willMoveElements.has(el)) {
-				let transform = this.getTransformStyle(el, 0)
-				animateTo(el, {transform})
+				this.moveElement(el, 0, true)
 			}
 		}
 
-		// Each element either move down compare to it's original position, or keep position.
+		// Each element either moves right or down, or keep position.
 		for (let el of willMoveElements) {
 			if (!this.movedElements.has(el)) {
-				let transform = this.getTransformStyle(el, 1)
-				animateTo(el, {transform})
+				this.moveElement(el, 1, true)
 			}
 		}
 
-		this.draggedToIndex = this.generateDraggedToIndex(drag, willMoveElements.has(drag.el))
-		this.movedElements = willMoveElements
-		this.draggedTo = drag
-		this.draggedToRect = getRect(drag.el)
+		this.dragToIndex = this.generateDraggedToIndex(dragTo, willMoveElements.has(dragTo.el))
+		this.dragTo = dragTo
+		this.dragToRect = getRect(dragTo.el)
 	}
 
 	// Assume we have:
@@ -532,11 +507,26 @@ class Mover {
 	}
 
 	willSwapElements(): boolean {
-		return !!(this.draggedTo || this.dropArea && this.startDropArea !== this.dropArea)
+		return !!(this.dragTo || this.dropArea && this.startDropArea !== this.dropArea)
 	}
 
 	getSwapIndex(): number {
-		return this.draggedToIndex
+		return this.dragToIndex
+	}
+
+	onLeaveDroppable(drop: Droppable) {
+		if (drop !== this.dropArea) {
+			return
+		}
+
+		for (let el of this.movedElements) {
+			this.moveElement(el, 0, true)
+		}
+
+		this.dropArea = null
+		this.dragTo = null
+		this.dragToRect = null
+		this.dragToIndex = -1
 	}
 
 	async playEndDraggingAnimation() {
@@ -553,27 +543,26 @@ class Mover {
 			await animateTo(this.el, {transform: ''})
 		}
 
-		this.clearDraggingStyle()
 		this.restoreMovedElements(false)
-
+		this.clearDraggingStyle()
 	}
 
 	protected async animateDraggingElementToDropArea() {
 		let fromRect = getRect(this.el)
-		let toRect = this.draggedToRect || getRect(this.placeholder!)
+		let toRect = this.dragToRect || getRect(this.placeholder!)
 
 		let x = toRect.left - fromRect.left + this.translate[0]
 		let y = toRect.top - fromRect.top + this.translate[1]
 
 		if (this.direction === 'x') {
 			// Move from left to right, align at right.
-			if (this.dragging.index < this.draggedToIndex) {
+			if (this.dragging.index < this.dragToIndex) {
 				x = toRect.right - fromRect.right + this.translate[0]
 			}
 		}
 		else {
 			// Move from top to bottom, align at bottom.
-			if (this.dragging.index < this.draggedToIndex) {
+			if (this.dragging.index < this.dragToIndex) {
 				y = toRect.bottom - fromRect.bottom + this.translate[1]
 			}
 		}
@@ -581,6 +570,32 @@ class Mover {
 		let transform = `translate(${x}px, ${y}px)`
 
 		await animateTo(this.el, {transform})
+	}
+
+	protected moveSiblingsToGiveSpace(playAnimation: boolean) {
+		for (let el of this.getSiblingsAfter(this.el)) {
+			this.moveElement(el, 1, playAnimation)
+		}
+	}
+
+	protected restoreMovedElements(playAnimation: boolean) {
+		for (let el of this.translatedElements) {
+			if (playAnimation) {
+				animateTo(el, {transform: ''})
+			}
+			else {
+				stopAnimation(el)
+				el.style.transform = ''
+			}
+		}
+
+		this.movedElements = new Set()
+		this.translatedElements = new Set()
+
+		if (this.placeholder) {
+			this.placeholder.remove()
+			this.placeholder = null
+		}
 	}
 
 	protected clearDraggingStyle() {
