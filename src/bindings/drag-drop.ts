@@ -1,5 +1,5 @@
 import {defineBinding, Binding, on, once, off} from "@pucelle/flit"
-import {getStyleAsNumber, animateTo, getRect, stopAnimation, Rect, getStyle} from "@pucelle/ff"
+import {getStyleAsNumber, animateTo, getRect, stopAnimation, Rect, getStyle, isPlayingAnimation} from "@pucelle/ff"
 import {theme} from "../style/theme"
 
 
@@ -453,10 +453,7 @@ class Mover {
 			return
 		}
 
-		// When drag enter one element, it will play animatio,
-		// and becomes un pointerable for a while.
-		// After that, it may trigger enter again, then it "dances".
-		if (drag === this.draggedTo) {
+		if (isPlayingAnimation(drag.el)) {
 			return
 		}
 
