@@ -258,8 +258,14 @@ const manager = new DragDropRelationshipManager()
 class Mover {
 
 	protected dragging: Draggable
+
+	/** Dragging element. */
 	protected el: HTMLElement
+
+	/** Elements align direction */
 	protected direction: 'x' | 'y' = 'y'
+
+	/** Keeps orignal style of el before starting dragging. */
 	protected elStyleText: string = ''
 
 	/** `true` means after this.el moved, followed elements will shrink and take it's */
@@ -416,6 +422,8 @@ class Mover {
 
 	protected restoreMovedElements(playAnimation: boolean) {
 		let needToRestoreElements = this.movedElements
+
+		// If in absolute layout mode, need to restore siblings after el.
 		if (!this.autoLayout) {
 			for (let el of this.getSiblingsAfter(this.el)) {
 				needToRestoreElements.add(el)
@@ -442,6 +450,13 @@ class Mover {
 
 	onEnterDraggable(drag: Draggable) {
 		if (!this.dropArea) {
+			return
+		}
+
+		// When drag enter one element, it will play animatio,
+		// and becomes un pointerable for a while.
+		// After that, it may trigger enter again, then it "dances".
+		if (drag === this.draggedTo) {
 			return
 		}
 
@@ -549,8 +564,23 @@ class Mover {
 	protected async animateDraggingElementToDropArea() {
 		let fromRect = getRect(this.el)
 		let toRect = this.draggedToRect || getRect(this.placeholder!)
+
 		let x = toRect.left - fromRect.left + this.translate[0]
 		let y = toRect.top - fromRect.top + this.translate[1]
+
+		if (this.direction === 'x') {
+			// Move from left to right, align at right.
+			if (this.dragging.index < this.draggedToIndex) {
+				x = toRect.right - fromRect.right + this.translate[0]
+			}
+		}
+		else {
+			// Move from top to bottom, align at bottom.
+			if (this.dragging.index < this.draggedToIndex) {
+				y = toRect.bottom - fromRect.bottom + this.translate[1]
+			}
+		}
+
 		let transform = `translate(${x}px, ${y}px)`
 
 		await animateTo(this.el, {transform})
