@@ -1,5 +1,5 @@
-import {defineBinding, Binding, TransitionOptions, Transition, render, html, Options} from "@pucelle/flit"
-import {LoaderSize} from "../components/loader"
+import {defineBinding, Binding, TransitionOptions, Transition, render, html, Options} from '@pucelle/flit'
+import {LoaderSize} from '../components/loader'
 
 
 export interface LoadingOptions {

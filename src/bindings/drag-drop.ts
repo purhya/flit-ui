@@ -1,6 +1,6 @@
-import {defineBinding, Binding, on, once, off} from "@pucelle/flit"
-import {getStyleAsNumber, animateTo, getRect, stopAnimation, Rect, getStyle, isPlayingAnimation} from "@pucelle/ff"
-import {theme} from "../style/theme"
+import {defineBinding, Binding, on, once, off} from '@pucelle/flit'
+import {getStyleAsNumber, animateTo, getRect, stopAnimation, Rect, getStyle, isPlayingAnimation} from '@pucelle/ff'
+import {theme} from '../style/theme'
 
 
 export interface DraggableOptions {
@@ -178,7 +178,7 @@ class DragDropRelationshipManager {
 		}
 
 		if (!activeDrop) {
-			throw new Error(`Element with ":draggable" must be contained in a ":droppable" elemenet`)
+			throw new Error(`Element with ':draggable' must be contained in a ':droppable' elemenet`)
 		}
 
 		activeDrop.emitEnter(this.dragging!)	// will also update direction
