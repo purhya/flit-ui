@@ -148,11 +148,12 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 	}
 
 	protected renderTooltipValue() {
-		let tipText = String(this.value)
-
-		if (this.decimalCount !== null) {
-			tipText = this.value.toFixed(this.decimalCount)
+		let decimalCount = this.decimalCount
+		if (decimalCount === null) {
+			decimalCount = String(this.step).replace(/^\d+\.?/, '').length
 		}
+
+		let tipText = this.value.toFixed(decimalCount)
 		
 		return html`<span class="${this.scopeClassName('tooltip')}">${tipText}</span>`
 	}
