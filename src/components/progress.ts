@@ -65,8 +65,8 @@ export class Progress<E = any> extends Component<E> {
 
 	renderTooltipValue() {
 		// 0.5123 -> 51.2%
-		let value = (Math.min(this.value, 1) * 100).toFixed(this.decimalCount) + '%'
+		let tipText = (Math.min(this.value, 1) * 100).toFixed(this.decimalCount) + '%'
 
-		return html`<span class="${this.scopeClassName('tooltip')}">${value}</span>`
+		return html`<span class="${this.scopeClassName('tooltip')}">${tipText}</span>`
 	}
 }

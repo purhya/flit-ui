@@ -115,7 +115,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 	value: number = 0
 
 	/** Fixed decimal count of progress text. */
-	decimalCount: number = 0
+	decimalCount: number | null = null
 
 	protected draging: boolean = false
 
@@ -148,9 +148,13 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 	}
 
 	protected renderTooltipValue() {
-		let value = this.value.toFixed(this.decimalCount)
+		let tipText = String(this.value)
+
+		if (this.decimalCount !== null) {
+			tipText = this.value.toFixed(this.decimalCount)
+		}
 		
-		return html`<span class="${this.scopeClassName('tooltip')}">${value}</span>`
+		return html`<span class="${this.scopeClassName('tooltip')}">${tipText}</span>`
 	}
 
 	protected getPercent() {
