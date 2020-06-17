@@ -319,18 +319,18 @@ export class Notification<E = any> extends Component<E> {
 
 export class QuickNotification {
 
-	protected tips: Notification | null = null
+	protected noti: Notification | null = null
 
 	unique() {
 		return new UniqueNotification(this)
 	}
 
 	protected showNotification(options: NotificationOptions): number {
-		if (!this.tips) {
-			this.tips = renderComponent(html`<f-notification />`).component as Notification
+		if (!this.noti) {
+			this.noti = renderComponent(html`<f-notification />`).component as Notification
 		}
 
-		return this.tips!.show(options)
+		return this.noti!.show(options)
 	}
 
 	info(message: string | TemplateResult, options: NotificationOptions = {}): number {
@@ -359,6 +359,14 @@ export class QuickNotification {
 		options.message = message
 
 		return this.showNotification(options)
+	}
+
+	hide(id: number) {
+		return this.noti!.hide(id)
+	}
+
+	hideAll() {
+		return this.noti!.hideAll()
 	}
 }
 
@@ -396,6 +404,15 @@ export class UniqueNotification {
 	success(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		this.overwriteNotificationId(options)
 		return this.id = this.raw.success(message, options)
+	}
+
+	hide() {
+		if (this.id) {
+			return this.raw.hide(this.id)
+		}
+		else {
+			return false
+		}
 	}
 }
 
