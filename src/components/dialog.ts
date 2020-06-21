@@ -205,7 +205,7 @@ export class Dialog<E = any> extends Component<E> {
 		return ''
 	}
 
-	onClickActionButton(action: DialogAction) {
+	protected onClickActionButton(action: DialogAction) {
 		if (this.resolve) {
 			this.resolve(action.value)
 			this.resolve = null
@@ -217,6 +217,17 @@ export class Dialog<E = any> extends Component<E> {
 		}
 		else {
 			this.hide()
+		}
+	}
+
+	triggerAction(value: string) {
+		if (!this.options || !this.options.actions) {
+			return
+		}
+
+		let action = this.options.actions.find(action => action.value === value)
+		if (action) {
+			this.onClickActionButton(action)
 		}
 	}
 
@@ -348,7 +359,11 @@ export class QuickDialog {
 
 		let messageWithInput = html`
 			${message}
-			<f-input class="input" .placeholder=${options.placeholder} @change=${(v: string) => value = v} />
+			<f-input class="input" 
+				.placeholder=${options.placeholder}
+				@input=${(v: string) => value = v}
+				@@keydown.enter=${() => this.dialogComponent!.triggerAction('ok')}
+			/>
 		`
 
 		let btn = await this.addOptions(Object.assign({
