@@ -238,6 +238,12 @@ export class Dialog<E = any> extends Component<E> {
 			}
 			this.el.remove()
 		}
+		else if (type === 'enter') {
+			let input = this.el.querySelector('input')
+			if (input) {
+				input.focus()
+			}
+		}
 	}
 
 	protected async onConnected() {
