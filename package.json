@@ -11,25 +11,24 @@
 	},
 	"main": "out/index.js",
 	"scripts": {
-		"compile": "tsc -b",
+		"build": "tsc -b",
 		"watch": "tsc -b -w",
 		"docs": "gulp docs",
 		"docs-watch": "gulp docs-watch"
 	},
-	"dependencies": {
-		"@pucelle/ff": "^1.1.0",
-		"@pucelle/flit": "^1.1.0"
-	},
+	"dependencies": {},
 	"devDependencies": {
-		"browserify": "^16.2.3",
+		"@pucelle/ff": "^1.2.0",
+		"@pucelle/flit": "^1.2.1",
+		"browserify": "^16.5.1",
 		"chai": "^4.2.0",
 		"chai-spies": "^1.0.0",
 		"exorcist": "^1.0.1",
-		"gulp": "^4.0.0",
+		"gulp": "^4.0.2",
 		"gulp-util": "^3.0.8",
 		"mocha": "^6.0.2",
-		"tsify": "^4.0.1",
-		"typescript": "^3.3.3",
+		"tsify": "^4.0.2",
+		"typescript": "^3.9.5",
 		"vinyl-source-stream": "^2.0.0",
 		"watchify": "^3.11.1"
 	}
