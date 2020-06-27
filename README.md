@@ -9,7 +9,7 @@
 
 ## Preview
 
-A very simple [preview page](https://pucelle.github.io/flit-ui/) is here, more resources will come in the future.
+A simple [Preview Page](https://pucelle.github.io/flit-ui/) is here, more resources will come in the future.
 
 
 ## Note
