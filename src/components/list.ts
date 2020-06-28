@@ -91,6 +91,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		.text{
 			flex: 1;
 			min-width: 0;
+			padding-right: 4px;
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
