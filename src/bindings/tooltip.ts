@@ -43,6 +43,15 @@ export class TooltipBinding extends PopupBinding<string | TemplateResult> {
 		super.update(this.getRenderFn.bind(this) as any, this.getPopupOptions(options))
 	}
 
+	async showPopupLater() {
+		// Not popup if no `title` specified.
+		if (!this.title) {
+			return
+		}
+		
+		await super.showPopupLater()
+	}
+
 	protected bindTrigger() {
 		if (this.shouldAlwaysKeepVisible()) {
 			// If not, page scrolling position may be not determinated yet.

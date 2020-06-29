@@ -195,7 +195,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 			}
 		}
 		else {
-			await this.showPopup()
+			this.showPopup()
 		}
 	}
 
