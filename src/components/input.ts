@@ -181,6 +181,7 @@ export class Textarea extends Input {
 			:class.valid=${this.touched && this.valid === true}
 			:class.invalid=${this.touched && this.valid === false}
 			@focus=${this.onBlur}
+			@input=${(e: InputEvent) => this.onInput(e)}
 			@change=${(e: InputEvent) => this.onChange(e)}
 		/>
 		`
