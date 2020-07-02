@@ -385,7 +385,9 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 
 	protected onElRectChanged() {
 		if (isInViewport(this.el)) {
-			this.alignPopup()
+			if (this.popup) {
+				this.alignPopup()
+			}
 		}
 		else {
 			this.onNotInViewport()
