@@ -1,4 +1,4 @@
-import {toPower, avg} from '@pucelle/ff'
+import {toPower} from '@pucelle/ff'
 
 
 /** Class to process colors. */
@@ -132,7 +132,7 @@ export class Color {
 	/** Returns lightless value of current color, betweens 0 ~ 1. */
 	getLightness() {
 		let [r, g, b] = this.getRGBA()
-		return avg([r, g, b])
+		return r * 0.299 + g * 0.587 + b * 0.114
 	}
 
 	/** Change alpha channel of current color to value betweens 0-1. */
