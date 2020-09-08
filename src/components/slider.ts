@@ -59,8 +59,8 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		.ball{
 			position: absolute;
 			top: -${(ballSize - grooveSize) / 2}px;
-			right: -${Math.round(ballSize / 2)}px;
-			will-change: top right;
+			margin-left: -${Math.round(ballSize / 2)}px;
+			will-change: top, left;
 			border-radius: 50%;
 			border: 1px solid ${borderColor};
 			background: ${backgroundColor};
@@ -125,6 +125,22 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 			alignPosition: this.vertical ? 'r' : 't'
 		})
 
+		let sizeStyle: any = {}
+		if (this.vertical) {
+			sizeStyle.height = this.getPercent() + '%'
+		}
+		else {
+			sizeStyle.width = this.getPercent() + '%'
+		}
+
+		let positionStyle: any = {}
+		if (this.vertical) {
+			positionStyle.top = this.getPercent() + '%'
+		}
+		else {
+			positionStyle.left = this.getPercent() + '%'
+		}
+
 		return html`
 		<template
 			tabindex="0"
@@ -136,13 +152,10 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		>
 			<div class="groove" :ref="groove">
 				<div class="groove-bg" />
-				<div class="progress"
-					:style.width.percent=${this.vertical ? '' : this.getPercent()}
-					:style.height.percent=${this.vertical ? this.getPercent() : ''}
-				>
-					<div class="ball" :ref="ball" />
-				</div>
+				<div class="progress" :style=${sizeStyle} />
+				<div class="ball" :ref="ball" :style=${positionStyle} />
 			</div>
+			
 		</template>
 		`
 	}
