@@ -235,18 +235,25 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 	protected onCreated() {
 		if (this.active) {
-			this.ensureActiveItemVisible(this.data)
+			this.ensureActiveItemVisible()
 		}
 	}
 
-	private ensureActiveItemVisible(items: ListItem<T>[]) {
+	/** Open sub list recursively to make sure active item becomes visible. */
+	ensureActiveItemVisible() {
+		if (this.active) {
+			this.ensureActiveItemVisibleRecursively(this.data)
+		}
+	}
+
+	private ensureActiveItemVisibleRecursively(items: ListItem<T>[]) {
 		return items.some(item => {
 			if (item.value === this.active) {
 				return true
 			}
 
 			if (item.children) {
-				let hasActiveChildItem = this.ensureActiveItemVisible(item.children)
+				let hasActiveChildItem = this.ensureActiveItemVisibleRecursively(item.children)
 				if (hasActiveChildItem) {
 					item.opened = true
 				}
