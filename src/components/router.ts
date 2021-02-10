@@ -8,7 +8,7 @@ export interface RouteMatch {
 	captures: string[]
 }
 
-export type RouteParams = {[key: string]: string}
+export type RouteParams = Record<string, string>
 
 export interface RouteOptions {
 	title?: string
@@ -63,8 +63,8 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 			let params = this.match(routePath)
 
 			let match: RouteMatch = {
-				params: params ? params.params : {},
-				captures: params ? params.captures : []
+				params: params?.params || {},
+				captures: params?.captures || []
 			}
 
 			return renderFn(match)

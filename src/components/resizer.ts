@@ -1,5 +1,5 @@
 import {css, define, html, on, once, Component, off, render} from '@pucelle/flit'
-import {getStyle, constrain} from '@pucelle/ff';
+import {constrain, getStyleValue} from '@pucelle/ff'
 
 
 export interface ResizerEvents {
@@ -82,13 +82,13 @@ export class Resizer<E = any> extends Component<E & ResizerEvents> {
 		return html`
 		<template
 			:class=${this.position}
-			@@mousedown=${this.onStartResize}
+			@mousedown=${this.onStartResize}
 		/>
 		`
 	}
 
 	protected onReady() {
-		if (getStyle(this.el.parentElement!, 'position') === 'static') {
+		if (getStyleValue(this.el.parentElement!, 'position') === 'static') {
 			throw new Error('Parent of "<f-resizer>" must can\'t have an "static" position')
 		}
 	}
@@ -112,7 +112,7 @@ export class Resizer<E = any> extends Component<E & ResizerEvents> {
 
 		let cursorMask = render(html`
 			<div class="resizing-mask" class="${this.position === 'left' || this.position === 'right' ? 'herizontal' : 'vertical'}"
-		/>`, this).fragment.firstElementChild as HTMLElement
+		/>`, this).getFirstElement() as HTMLElement
 
 		document.body.append(cursorMask)
 

@@ -1,13 +1,13 @@
 import {html, defineBinding, BindingResult, TemplateResult} from '@pucelle/flit'
 import {PopupBinding, PopupOptions} from './popup'
-import {getMainAlignDirection, assignIf, ensureWindowLoaded} from '@pucelle/ff'
+import {getMainAlignDirection, assignIf, ensureWindowLoaded, AlignPosition} from '@pucelle/ff'
 import {TooltipType} from '../components/tooltip'
 
 
 export interface TooltipOptions {
 	name?: string
 	alignTo?: (trigger: Element) => Element
-	alignPosition?: string
+	alignPosition?: AlignPosition
 	alignMargin?: number | number[]
 	showDelay?: number
 	hideDelay?: number

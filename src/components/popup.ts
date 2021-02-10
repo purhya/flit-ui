@@ -1,6 +1,7 @@
-import {css, define, Component, html, appendTo} from '@pucelle/flit'
+import {css, define, Component, html} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {PopupBinding, PopupOptions} from '../bindings/popup'
+import {appendTo} from '../utils/element'
 
 
 /**It's the base class for all the popup which will align with another element. */
@@ -44,6 +45,8 @@ export class Popup<E = any> extends Component<E> {
 		}
 		`
 	}
+
+	readonly refs!: {triangle: HTMLElement}
 
 	herizontal: boolean = false
 	triangle: boolean = true

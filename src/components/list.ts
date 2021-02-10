@@ -1,4 +1,4 @@
-import {css, define, Component, html, repeat, DirectiveResult, play, TemplateResult} from '@pucelle/flit'
+import {css, define, Component, html, repeat, DirectiveResult, TemplateResult, toggle} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {add, remove} from '@pucelle/ff'
 import {tooltip} from '../bindings/tooltip'
@@ -179,7 +179,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 			${this.isSelected(item) ? html`<f-icon class="selected-icon" .type="checked" />` : ''}
 		</div>
 
-		${play(subsection, {transition: {properties: ['height', 'opacity']}})}
+		${toggle(subsection, {properties: ['height', 'opacity']})}
 		`
 	}
 

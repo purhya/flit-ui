@@ -1,4 +1,4 @@
-import {define, Component, css, html, getClosestComponent} from '@pucelle/flit'
+import {define, Component, css, html, getClosestComponentOfType} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Form} from './form'
 
@@ -141,7 +141,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 	protected onCreated() {
 		this.validate()
 
-		let form = getClosestComponent(this.el, Form)
+		let form = getClosestComponentOfType(this.el, Form)
 		if (form) {
 			form.register(this)
 		}

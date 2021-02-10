@@ -1,9 +1,8 @@
-import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, observeGetter, renderComplete, refDirective, Directive} from '@pucelle/flit'
+import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, renderComplete, refDirective, Directive, ContextualTransitionOptions, observeGetting} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Store} from '../store/store'
-import {getScrollbarWidth, watchLayout, getStyleAsNumber, sum, repeatTimes, scrollToTop, scrollToView} from '@pucelle/ff'
+import {getScrollbarWidth, watchLayout, getStyleValueAsNumber, sum, repeatTimes, scrollToTop, scrollToView} from '@pucelle/ff'
 import {AsyncStore} from '../store/async-store'
-import {DirectiveTransitionOptions} from '@pucelle/flit/out/libs/directive-transition'
 
 
 interface GridEvents<Item> {
@@ -225,7 +224,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 	columns!: Column<T>[]
 	minColumnWidth: number = 64
 	store!: Store<T> | AsyncStore<T>
-	transition: DirectiveTransitionOptions | undefined
+	transition: ContextualTransitionOptions | undefined
 
 	protected orderColumnName: string | null = null
 	protected orderDirection: 'asc' | 'desc' | '' = ''
@@ -287,27 +286,25 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 			return refDirective(liveAsyncRepeat(
 				{
 					key: this.store.key,
-					pageSize: this.pageSize,
-					startIndex: this.startIndex,
-					preRendering: this.preRendering,
 					dataCount: this.store.dataCount.bind(this.store),
 					dataGetter: this.store.dataGetter.bind(this.store) as any,
-					onUpdated: this.onRepeatDataUpdated.bind(this) as any
 				},
 				this.renderRow.bind(this as any) as any,
+				{
+					pageSize: this.pageSize,
+					preRendering: this.preRendering,
+				},
 				this.transition
 			), this.setRepeatDirective.bind(this))
 		}
 		else if (this.live) {
 			return refDirective(liveRepeat(
+				this.store.currentData,
+				this.renderRow.bind(this as any),
 				{
 					pageSize: this.pageSize,
-					startIndex: this.startIndex,
 					preRendering: this.preRendering,
-					data: this.store.currentData,
-					onUpdated: this.onRepeatDataUpdated.bind(this)
 				},
-				this.renderRow.bind(this as any),
 				this.transition
 			), this.setRepeatDirective.bind(this))
 		}
@@ -339,6 +336,8 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		if (this.store instanceof AsyncStore) {
 			this.store.setRepeatDirective(dir as LiveAsyncRepeatDirective<T>)
 		}
+
+		(dir as any).on('liveDataUpdated', this.onRepeatDataUpdated, this)
 	}
 
 	protected onRepeatDataUpdated(data: T[], index: number) {
@@ -379,7 +378,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 	}
 
 	onConnected() {
-		this.watch(() => observeGetter(this, 'columns'), async () => {
+		this.watch(() => observeGetting(this, 'columns'), async () => {
 			this.restoreOrderedColumn()
 
 			// Here we need it render new `<col>`s.
@@ -467,7 +466,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 
 	// Resizing part
 	protected updatColumnWidths() {
-		let totalWidth = this.refs.head.clientWidth - getStyleAsNumber(this.refs.head, 'paddingLeft') - getStyleAsNumber(this.refs.head, 'paddingRight')
+		let totalWidth = this.refs.head.clientWidth - getStyleValueAsNumber(this.refs.head, 'paddingLeft') - getStyleValueAsNumber(this.refs.head, 'paddingRight')
 		this.cachedTotalWidth = totalWidth
 		this.updatColumnWidthsWithTotalWidth(totalWidth)
 	}
@@ -541,7 +540,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 			this.columnResized = true
 		}
 
-		let cursorMask = render(html`<div class="resizing-mask" />`, this).fragment.firstElementChild as HTMLElement
+		let cursorMask = render(html`<div class="resizing-mask" />`, this).getFirstElement() as HTMLElement
 		document.body.append(cursorMask)
 
 		on(document, 'mousemove', onMouseMove as (e: Event) => void)

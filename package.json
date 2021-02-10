@@ -11,25 +11,18 @@
 	},
 	"main": "out/index.js",
 	"scripts": {
-		"build": "tsc -b",
-		"watch": "tsc -b -w",
-		"docs": "gulp docs",
-		"docs-watch": "gulp docs-watch"
+		"build": "webpack",
+		"watch": "webpack --watch",
+		"start": "webpack-dev-server --open"
 	},
-	"dependencies": {},
+	"dependencies": {
+		"@pucelle/ff": "^1.2.3",
+		"@pucelle/flit": "^1.2.3"
+	},
 	"devDependencies": {
-		"@pucelle/ff": "^1.2.0",
-		"@pucelle/flit": "^1.2.1",
-		"browserify": "^16.5.1",
-		"chai": "^4.2.0",
-		"chai-spies": "^1.0.0",
-		"exorcist": "^1.0.1",
-		"gulp": "^4.0.2",
-		"gulp-util": "^3.0.8",
-		"mocha": "^6.0.2",
-		"tsify": "^4.0.2",
-		"typescript": "^3.9.5",
-		"vinyl-source-stream": "^2.0.0",
-		"watchify": "^3.11.1"
+		"@pucelle/webpack-svg-loader": "^1.0.0",
+		"fork-ts-checker-webpack-plugin": "^5.0.5",
+		"ts-loader": "^8.0.16",
+		"typescript": "^3.9.5"
 	}
 }

@@ -2,13 +2,13 @@ import * as ff from '@pucelle/ff'
 import * as flit from '@pucelle/flit'
 import * as flitUI from '../src'
 
+import {html, Component, define, repeat, observe, getComponent, getRenderedAsComponent, render} from '@pucelle/flit'
+import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, Column, Select, ListItem, AsyncStore, Popover} from '../src'
+
+
 ;(window as any).ff = ff
 ;(window as any).flit = flit
 ;(window as any).flitUI = flitUI
-
-
-import {html, Component, renderComponent, define, repeat, observe, getComponent} from '@pucelle/flit'
-import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, Column, Select, ListItem, AsyncStore, Popover} from '../src'
 
 
 define('flit-preview', class extends Component {
@@ -23,7 +23,7 @@ define('flit-preview', class extends Component {
 				<f-row style="margin: 8px 0;">
 					<f-col .span="4">Mode</f-col>
 					<f-col .span="20">
-						<f-radiogroup .value="light" @change=${(name: string) => theme.changeTheme(name)}>
+						<f-radiogroup .value="light" @@change=${(name: string) => theme.changeTheme(name)}>
 							<f-radio .value="light" style="margin-right: 20px;">Light</f-radio>
 							<f-radio .value="dark" style="margin-right: 20px;">Dark</f-radio>
 						</f-radiogroup>
@@ -33,7 +33,7 @@ define('flit-preview', class extends Component {
 				<f-row style="margin: 8px 0;">
 					<f-col .span="4">Size</f-col>
 					<f-col .span="20">
-						<f-radiogroup .value="medium" @change=${(name: string) => theme.changeTheme(name)}>
+						<f-radiogroup .value="medium" @@change=${(name: string) => theme.changeTheme(name)}>
 							<f-radio .value="small" style="margin-right: 20px;">Small</f-radio>
 							<f-radio .value="medium" style="margin-right: 20px;">Medium</f-radio>
 							<f-radio .value="large" style="margin-right: 20px;">Large</f-radio>
@@ -50,7 +50,7 @@ define('flit-preview', class extends Component {
 				</f-row>
 			</section>
 
-
+<!-- 
 			<h2>Basic Elements</h2>
 
 			<section class="basic">
@@ -476,8 +476,8 @@ define('flit-preview', class extends Component {
 									.title="Popover title" 
 								>
 									Here is the Popover content.
-									<button slot="action" @click=${() => (getComponent(this.refs.popupWithActions) as Popover).close()}>Cancel</button>
-									<button slot="action" primary @click=${() => (getComponent(this.refs.popupWithActions) as Popover).close()}>Save</button>
+									<button slot="action" @click=${() => (getComponent(this.refs.popupWithActions as HTMLElement) as Popover).close()}>Cancel</button>
+									<button slot="action" primary @click=${() => (getComponent(this.refs.popupWithActions as HTMLElement) as Popover).close()}>Save</button>
 								</f-popover>
 								`,
 								{trigger: 'click'}
@@ -732,11 +732,11 @@ define('flit-preview', class extends Component {
 						<header style="margin-bottom: 8px;">Default</header>
 
 						<button @click="${() => {
-							let modal = renderComponent(html`
+							let modal = getRenderedAsComponent(render(html`
 								<f-modal style="width: ${theme.adjust(360)}px;" .title="Modal Title">
 									Here is the modal content
 								</f-modal>
-							`).component as Modal
+							`)) as Modal
 
 							modal.show()
 						}}">
@@ -748,13 +748,13 @@ define('flit-preview', class extends Component {
 						<header style="margin-bottom: 8px;">With Actions</header>
 
 						<button @click="${() => {
-							let modal = renderComponent(html`
+							let modal = getRenderedAsComponent(render(html`
 								<f-modal style="width: ${theme.adjust(360)}px;" .title="Modal Title">
 									Here is the modal content
 									<button slot="action" @click=${() => modal.hide()}>Cancel</button>
 									<button slot="action" primary @click=${() => modal.hide()}>Save</button>
 								</f-modal>
-							`).component as Modal
+							`)) as Modal
 
 							modal.show()
 						}}">
@@ -877,7 +877,7 @@ define('flit-preview', class extends Component {
 						<div style="width: 100px; margin: 4px;" :style.background=${theme.backgroundColor.toMiddle(15)} ${draggable(data, index)}>${data}</div>
 					`)}
 				</div>
-			</section>
+			</section> -->
 
 		</div>
 	`}
@@ -888,11 +888,11 @@ let leftData = observe([1, 2, 3])
 let rightData = observe([4, 5, 6])
 
 
-define('f-main-color-select', class MainColorSelect extends Select<string> {
+define('f-main-color-select', class extends Select<string> {
 
 	value = '#3a6cf6'
 
-	data: ListItem<string>[] = [
+	data = [
 		{value: '#3a6cf6', text: html`<div style="color: #3a6cf6;">Blue</div>`},
 		{value: '#48c7c7', text: html`<div style="color: #48c7c7;">Cyan</div>`},
 		{value: '#0077cf', text: html`<div style="color: #0077cf;">Darkblue</div>`},

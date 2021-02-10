@@ -2,7 +2,7 @@ import {css, define, html} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Popup} from './popup'
 import {PopupOptions} from '../bindings/popup'
-
+HTMLMediaElement
 
 // Compare to `<popup>`, it can set title and actions.
 @define('f-popover')

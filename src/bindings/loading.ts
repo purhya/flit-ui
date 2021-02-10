@@ -1,4 +1,4 @@
-import {defineBinding, Binding, TransitionOptions, Transition, render, html, Options} from '@pucelle/flit'
+import {defineBinding, Binding, TransitionOptions, Transition, render, html, UpdatableOptions} from '@pucelle/flit'
 import {LoaderSize} from '../components/loader'
 
 
@@ -10,15 +10,15 @@ export interface LoadingOptions {
 
 const defaultLoadingOptions: LoadingOptions = {
 	size: 'medium',
-	transition: 'fade',
+	transition: {name: 'fade'},
 }
 
 
-export class LoadingBinging implements Binding<[boolean, LoadingOptions]> {
+export class LoadingBinging implements Binding<boolean> {
 
 	protected el: Element
 	protected value: boolean = false
-	protected options: Options<LoadingOptions> = new Options(defaultLoadingOptions)
+	protected options: UpdatableOptions<LoadingOptions> = new UpdatableOptions(defaultLoadingOptions)
 	protected cover: HTMLElement | null = null
 
 	constructor(el: Element) {
@@ -49,7 +49,7 @@ export class LoadingBinging implements Binding<[boolean, LoadingOptions]> {
 		}
 		else {
 			if (!this.cover) {
-				this.cover = render(html`<f-loader .size=${this.options.get('size')} .asCover />`).fragment.firstElementChild as HTMLElement
+				this.cover = render(html`<f-loader .size=${this.options.get('size')} .asCover />`).getFirstElement() as HTMLElement
 				this.el.append(this.cover)
 			}
 			

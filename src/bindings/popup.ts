@@ -1,9 +1,7 @@
-import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, renderComplete, Context, Transition, Template, renderComponent, clearTransition, Options, DirectiveResult, html, onRenderComplete} from '@pucelle/flit'
-import {Timeout, timeout, MouseLeave, watchLayout, align, isInViewport, } from '@pucelle/ff'
+import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, renderComplete, Context, Transition, Template, clearTransition, UpdatableOptions, html, onRenderComplete, render, getRenderedAsComponent} from '@pucelle/flit'
+import {Timeout, timeout, MouseLeave, watchLayout, align, isVisibleInViewport, AlignPosition} from '@pucelle/ff'
 import {Popup} from '../components/popup'
-
-
-export type RenderFn = () => TemplateResult | DirectiveResult
+import {RenderFn} from '../types'
 
 
 export interface PopupOptions {
@@ -21,7 +19,7 @@ export interface PopupOptions {
 	alignTo?: (trigger: Element) => Element
 
 	/** Where the popup align, reference to `align`. */
-	alignPosition?: string
+	alignPosition?: AlignPosition
 
 	/** Popup align margin, reference to `align`. */
 	alignMargin?: number | number[]
@@ -77,7 +75,7 @@ const defaultPopupOptions: PopupOptions = {
 	hideDelay: 200,
 	triangle: true,
 	fixTriangle: false,
-	transition: 'fade',
+	transition: {name: 'fade'},
 	onOpenedChanged: () => undefined
 }
 
@@ -86,12 +84,12 @@ const defaultPopupOptions: PopupOptions = {
  * `:popup="..."`
  * `popup(title: string, {alignPosition: ..., ...})`
  */
-export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | undefined]> {
+export class PopupBinding<R = RenderFn> implements Binding<R> {
 
 	protected el: HTMLElement
 	protected context: Context
 	protected renderFn!: RenderFn
-	protected options: Options<PopupOptions> = new Options(defaultPopupOptions)
+	protected options: UpdatableOptions<PopupOptions> = new UpdatableOptions(defaultPopupOptions)
 	protected opened: boolean = false
 	protected showTimeout: Timeout | null = null
 	protected hideTimeout: Timeout | null = null
@@ -109,12 +107,12 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 
 	/** `renderFn` should never change. */
 	update(renderFn: R, options?: PopupOptions) {
-		let firstlyUpdate = !this.options.updated
+		let firstTimeUpdate = this.options.isNotUpdated()
 
 		this.renderFn = renderFn as unknown as RenderFn
 		this.options.update(options)
 
-		if (firstlyUpdate) {
+		if (firstTimeUpdate) {
 			this.bindTrigger()
 		}
 		else {
@@ -123,7 +121,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 	}
 
 	protected getOption<K extends keyof PopupOptions>(key: K): Required<PopupOptions>[K] {
-		let value: PopupOptions[K]
+		let value: PopupOptions[K] | undefined
 
 		if (this.popup && this.popup.defaultPopupOptions) {
 			value = this.popup.defaultPopupOptions[key]
@@ -319,9 +317,8 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 		}
 		
 		if (!popup) {
-			let renderResult = renderComponent(result, this.context)
-			template = renderResult.template
-			popup = renderResult.component! as Popup
+			let template = render(result, this.context)
+			popup = getRenderedAsComponent(template) as Popup
 
 			if (name) {
 				NamedPopupCache.set(name, {popup, template})
@@ -357,9 +354,8 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 			else {
 				popup.el.remove()
 				
-				let renderResult = renderComponent(result, this.context)
-				template = this.popupTemplate = renderResult.template
-				popup = renderResult.component! as Popup
+				let template = this.popupTemplate = render(result, this.context)
+				popup = getRenderedAsComponent(template) as Popup
 
 				if (name) {
 					NamedPopupCache.set(name, {popup, template})
@@ -384,7 +380,7 @@ export class PopupBinding<R = RenderFn> implements Binding<[R, PopupOptions | un
 	}
 
 	protected onElRectChanged() {
-		if (isInViewport(this.el)) {
+		if (isVisibleInViewport(this.el)) {
 			if (this.popup) {
 				this.alignPopup()
 			}

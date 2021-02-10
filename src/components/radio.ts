@@ -1,4 +1,4 @@
-import {define, Component, html, css, off, once, getClosestComponent} from '@pucelle/flit'
+import {define, Component, html, css, off, once, getClosestComponentOfType} from '@pucelle/flit'
 import {theme} from '../style/theme'
 
 
@@ -35,6 +35,7 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 		.icon{
 			border-radius: 50%;
 			margin-right: ${adjust(6)}px;
+			margin-top: ${adjust(5)}px;
 		}
 
 		.checked{
@@ -61,8 +62,8 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 			<template
 				tabindex="0"
 				:class.checked=${this.checked}
-				@@click=${this.onClick}
-				@@focus=${this.onFocus}
+				@click=${this.onClick}
+				@focus=${this.onFocus}
 			>
 				<f-icon class="icon" .type=${this.checked ? 'radio-checked' : 'radio-unchecked'} />
 				<div class="label">
@@ -73,7 +74,7 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 	}
 
 	protected onCreated() {
-		let group = getClosestComponent(this.el, RadioGroup)
+		let group = getClosestComponentOfType(this.el, RadioGroup)
 		if (group) {
 			this.radioGroup = group
 			this.checked = this.radioGroup.value == this.value

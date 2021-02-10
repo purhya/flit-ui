@@ -1,6 +1,7 @@
-import {css, html, Component, refBinding} from '@pucelle/flit'
+import {css, html, Component, refBinding, TransitionOptions} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {popup, PopupBinding} from '../bindings/popup'
+import {AlignPosition} from '@pucelle/ff'
 
 
 /** 
@@ -40,9 +41,9 @@ export class Dropdown<E = any> extends Component<E> {
 
 	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'click'
 	triangle: boolean = true
-	alignPosition: string = 'b'
+	alignPosition: AlignPosition = 'b'
 	alignMargin: number | number[] = 3
-	transition: string = 'fade'
+	transition: TransitionOptions = {name: 'fade'}
 	showDelay: number = 100
 	hideDelay: number = 100
 

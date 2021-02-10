@@ -1,6 +1,7 @@
-import {css, define, html, on, renderComplete, off, Component, appendTo, show} from '@pucelle/flit'
+import {css, define, html, on, renderComplete, off, Component, show} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {debounce, align} from '@pucelle/ff'
+import {appendTo} from '../utils/element'
 
 
 @define('f-modal')
@@ -100,11 +101,11 @@ export class Modal<E = any> extends Component<E> {
 		return html`
 		<template
 			tabindex="0"
-			${show(this.opened, {transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
+			${show(this.opened, {name: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
 		>
 			<div class="mask"
 				:ref="mask"
-				${show(this.opened, {transition: 'fade', enterAtStart: true})}
+				${show(this.opened, {name: 'fade', enterAtStart: true})}
 			/>
 
 			<div class="header">

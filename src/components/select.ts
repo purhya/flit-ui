@@ -90,6 +90,11 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 		`.extends(super.style())
 	}
 
+	readonly refs!: {
+		input: HTMLInputElement
+		list: HTMLElement
+	}
+
 	trigger: 'click' | 'contextmenu' = 'click'
 	triangle: boolean = false
 	alignMargin: number | number[] = 0
@@ -156,7 +161,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 				.data=${data}
 				.multipleSelect=${this.multiple}
 				.selected=${this.multiple ? this.value : [this.value]}
-				@select=${this.select}
+				@@select=${this.select}
 			/>
 		</f-popup>
 		`

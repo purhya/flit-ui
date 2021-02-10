@@ -1,4 +1,4 @@
-import {updateComponents, updateStyles} from '@pucelle/flit'
+import {updateAllComponents, updateAllStyles} from '@pucelle/flit'
 import {avg} from '@pucelle/ff'
 import {Color} from './color'
 
@@ -104,8 +104,8 @@ export class Theme implements ColorOptions, NotColorOptions {
 			this.willUpdate = true
 
 			await Promise.resolve()
-			updateComponents()
-			updateStyles()
+			updateAllComponents()
+			updateAllStyles()
 			this.willUpdate = false
 		}
 	}

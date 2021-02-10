@@ -1,5 +1,5 @@
 import {defineBinding, Binding, on, once, off} from '@pucelle/flit'
-import {getStyleAsNumber, animateTo, getRect, stopAnimation, Rect, getStyle, isPlayingAnimation} from '@pucelle/ff'
+import {getStyleValueAsNumber, animateTo, getRect, stopAnimation, Rect, getStyleValue, isPlayingAnimation} from '@pucelle/ff'
 import {theme} from '../style/theme'
 
 
@@ -19,7 +19,7 @@ type Draggable = DraggableBinding<any>
 type Droppable = DroppableBinding<any>
 
 
-export class DraggableBinding<T> implements Binding<[T, number, DraggableOptions | undefined]> {
+export class DraggableBinding<T> implements Binding<T> {
 
 	el: HTMLElement
 	name: string = ''
@@ -88,8 +88,7 @@ export class DraggableBinding<T> implements Binding<[T, number, DraggableOptions
 export const draggable = defineBinding('draggable', DraggableBinding) as (data: any, index: number, options?: DraggableOptions) => void
 
 
-
-export class DroppableBinding<Item> implements Binding<[DropHandler<Item>, DroppableOptions<Item>]> {
+export class DroppableBinding<Item> implements Binding<DropHandler<Item>> {
 	
 	el: HTMLElement
 	name: string = ''
@@ -171,7 +170,7 @@ class DragDropRelationshipManager {
 				this.canEnterDrops.delete(drop)
 			}
 
-			else if (drop.name === name) {
+			else if (drop.name === drag.name) {
 				activeDrop = drop
 				break
 			}
@@ -294,12 +293,12 @@ class Mover {
 		this.el = drag.el
 		this.startDropArea = this.dropArea = drop
 
-		this.autoLayout = getStyle(this.el, 'position') !== 'absolute'
+		this.autoLayout = getStyleValue(this.el, 'position') !== 'absolute'
 
-		let marginLeft = getStyleAsNumber(this.el, 'marginLeft')
-		let marginRight = getStyleAsNumber(this.el, 'marginRight')
-		let marginTop = getStyleAsNumber(this.el, 'marginTop')
-		let marginBottom = getStyleAsNumber(this.el, 'marginBottom')
+		let marginLeft = getStyleValueAsNumber(this.el, 'marginLeft')
+		let marginRight = getStyleValueAsNumber(this.el, 'marginRight')
+		let marginTop = getStyleValueAsNumber(this.el, 'marginTop')
+		let marginBottom = getStyleValueAsNumber(this.el, 'marginBottom')
 
 		this.width = this.el.offsetWidth + (Math.abs(marginLeft) > Math.abs(marginRight) ? marginLeft : marginRight)
 		this.height = this.el.offsetHeight + (Math.abs(marginTop) > Math.abs(marginBottom) ? marginTop : marginBottom)

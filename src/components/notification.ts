@@ -1,4 +1,4 @@
-import {css, define, html, Component, repeat, renderComponent, TemplateResult} from '@pucelle/flit'
+import {css, define, html, Component, repeat, TemplateResult, getRenderedAsComponent, render} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {remove, Timeout, timeout} from '@pucelle/ff'
 import {Color} from '../style/color'
@@ -204,7 +204,7 @@ export class Notification<E = any> extends Component<E> {
 					<f-icon .type="close" />
 				</div>
 			</div>`
-		, {transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd})
+		, {name: 'fade', enterAtStart: true, onend: this.onTransitionEnd})
 	}
 
 	protected renderActions(item: NotificationItem) {
@@ -327,7 +327,7 @@ export class QuickNotification {
 
 	protected showNotification(options: NotificationOptions): number {
 		if (!this.noti) {
-			this.noti = renderComponent(html`<f-notification />`).component as Notification
+			this.noti = getRenderedAsComponent(render(html`<f-notification />`)) as Notification
 		}
 
 		return this.noti!.show(options)

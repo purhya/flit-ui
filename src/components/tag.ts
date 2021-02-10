@@ -49,7 +49,7 @@ export class Tag<E = any> extends Component<E & TagEvents> {
 	protected render() {
 		return html`
 			<slot />
-			${this.closable ? html`<div class="icon" @@click=${this.close}><f-icon .type="close" /></div>` : ''}
+			${this.closable ? html`<div class="icon" @click=${this.close}><f-icon .type="close" /></div>` : ''}
 		`
 	}
 

@@ -1,6 +1,7 @@
-import {css, define, html, renderComponent, renderComplete, show, Component, TemplateResult, appendTo, on, off} from '@pucelle/flit'
+import {css, define, html, renderComplete, show, Component, TemplateResult, on, off, render, getRenderedAsComponent} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {align, debounce} from '@pucelle/ff'
+import {appendTo} from '../utils/element'
 
 
 export interface DialogOptions {
@@ -151,11 +152,11 @@ export class Dialog<E = any> extends Component<E> {
 		return html`
 		<template
 			tabindex="0"
-			${show(this.opened, {transition: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
+			${show(this.opened, {name: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
 		>
 			<div class="mask"
 				:ref="mask"
-				${show(this.opened, {transition: 'fade', enterAtStart: true})}
+				${show(this.opened, {name: 'fade', enterAtStart: true})}
 			/>
 
 			${options.title ? html`
@@ -320,7 +321,7 @@ export class QuickDialog {
 
 	protected dialogComponent: Dialog | null = null
 
-	protected actionLabels: {[key: string]: string} = {
+	protected actionLabels: Record<string, string> = {
 		ok: 'OK',
 		cancel: 'Cancel',
 		yes: 'Yes',
@@ -329,13 +330,13 @@ export class QuickDialog {
 
 	protected addOptions(options: DialogOptions) {
 		if (!this.dialogComponent) {
-			this.dialogComponent = renderComponent(html`<f-dialog />`).component as Dialog
+			this.dialogComponent = getRenderedAsComponent(render(html`<f-dialog />`)) as Dialog
 		}
 
 		return this.dialogComponent.addOptions(options)
 	}
 
-	setLabels(labels: {[key: string]: string}) {
+	setLabels(labels: Record<string, string>) {
 		Object.assign(this.actionLabels, labels)
 	}
 	
@@ -367,8 +368,8 @@ export class QuickDialog {
 			${message}
 			<f-input class="input" 
 				.placeholder=${options.placeholder}
-				@input=${(v: string) => value = v}
-				@@keydown.enter=${() => this.dialogComponent!.triggerAction('ok')}
+				@@input=${(v: string) => value = v}
+				@keydown.enter=${() => this.dialogComponent!.triggerAction('ok')}
 			/>
 		`
 

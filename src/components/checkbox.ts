@@ -1,4 +1,4 @@
-import {define, Component, html, css, on, off, getClosestComponent} from '@pucelle/flit'
+import {define, Component, html, css, on, off, getClosestComponentOfType} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {removeWhere, orderBy} from '@pucelle/ff'
 
@@ -67,9 +67,10 @@ export class Checkbox<E = any> extends Component<E & CheckboxEvents> {
 				tabindex="0"
 				:class.checked=${this.checked}
 				:class.indeterminate=${this.indeterminate}
-				@@click=${this.onClick}
-				@@focus=${this.onFocus}
-				@@blur=${this.onBlur}
+				:model.lazy.number.lazy
+				@click=${this.onClick}
+				@focus=${this.onFocus}
+				@blur=${this.onBlur}
 			>
 				<f-icon class="icon" .type=${iconType} />
 				<div class="label">
@@ -80,7 +81,7 @@ export class Checkbox<E = any> extends Component<E & CheckboxEvents> {
 	}
 
 	protected onCreated() {
-		let group = getClosestComponent(this.el, CheckboxGroup)
+		let group = getClosestComponentOfType(this.el, CheckboxGroup)
 		if (group) {
 			this.checkboxGroup = group
 			this.checked = this.checkboxGroup.value === this.value

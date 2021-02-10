@@ -1,4 +1,4 @@
-import {define, Component, html, css, getEasing, on, off} from '@pucelle/flit'
+import {define, Component, html, css, getCSSEasingValue, on, off} from '@pucelle/flit'
 import {theme} from '../style/theme'
 
 
@@ -24,7 +24,7 @@ export class Switch<E = any> extends Component<E & SwitchEvents> {
 			border-radius: ${h / 2}px;
 			padding: 1px;
 			margin: ${(adjust(28) - h ) / 2}px 0;
-			transition: background-color 0.2s ${getEasing('ease-out-cubic')};
+			transition: background-color 0.2s ${getCSSEasingValue('ease-out-cubic')};
 			cursor: pointer;
 
 			&:hover{
@@ -41,7 +41,7 @@ export class Switch<E = any> extends Component<E & SwitchEvents> {
 			height: ${h - 2}px;
 			background: ${backgroundColor};
 			border-radius: 50%;
-			transition: margin 0.2s ${getEasing('ease-out-cubic')};
+			transition: margin 0.2s ${getCSSEasingValue('ease-out-cubic')};
 		}
 	
 		.on{		
@@ -66,9 +66,9 @@ export class Switch<E = any> extends Component<E & SwitchEvents> {
 		<template
 			tabindex="0"
 			:class.on=${this.checked}
-			@@click=${this.onClick}
-			@@focus=${this.onFocus}
-			@@blur=${this.onBlur}
+			@click=${this.onClick}
+			@focus=${this.onFocus}
+			@blur=${this.onBlur}
 		>
 			<div class="ball"></div>
 		</template>

@@ -1,4 +1,4 @@
-import {Emitter, Order, OrderFunction, CanSortKeys} from '@pucelle/ff'
+import {EventEmitter, Order, OrderFunction, CanSortKeys} from '@pucelle/ff'
 
 
 export interface StoreEvents {
@@ -52,7 +52,7 @@ class KeyMap<T extends object> {
 
 
 /* Used to cache object type data and support selection, ordering and filtering. */
-export class Store<T extends object = object> extends Emitter<StoreEvents> {
+export class Store<T extends object = object> extends EventEmitter<StoreEvents> {
 
 	/** The whole data. */
 	data: T[] = []
