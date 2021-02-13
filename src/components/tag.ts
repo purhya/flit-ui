@@ -3,10 +3,13 @@ import {theme} from '../style/theme'
 
 
 export interface TagEvents {
-	close: () => void
+
+	/** Triggers after closed tag. */
+	close: (value: string | number | null) => void
 }
 
 
+/** `<f-tag>` used to give a label to an item. */
 @define('f-tag')
 export class Tag<E = any> extends Component<E & TagEvents> {
 
@@ -34,7 +37,10 @@ export class Tag<E = any> extends Component<E & TagEvents> {
 		}
 	
 		.icon{
+			position: relative;
+			top: -1px;
 			margin-left: ${adjust(4)}px;
+			margin-right: ${adjust(-4)}px;
 			display: inline-flex;
 
 			f-icon{
@@ -44,6 +50,14 @@ export class Tag<E = any> extends Component<E & TagEvents> {
 		`
 	}
 
+	/** Unique value to identify current tag. */
+	value: string | number | null = null
+
+	/** 
+	 * Whether current tag closeable.
+	 * Not tag element were not removed automatically,
+	 * you must capture close event and update rendered result.
+	 */
 	closable: boolean = false
 
 	protected render() {
@@ -54,6 +68,6 @@ export class Tag<E = any> extends Component<E & TagEvents> {
 	}
 
 	protected close () {
-		this.emit('close')
+		this.emit('close', this.value)
 	}
 }

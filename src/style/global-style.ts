@@ -81,12 +81,15 @@ addGlobalStyle(() => {
 		}
 
 		f-icon, f-icon-loading{
+			position: relative;
+			top: -1px;
+
 			&:first-child{
-				margin-right: ${adjust(8)}px;
+				margin-right: ${adjust(6)}px;
 			}
 
 			&:last-child{
-				margin-left: ${adjust(8)}px;
+				margin-left: ${adjust(6)}px;
 			}
 
 			&:only-child{

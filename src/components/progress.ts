@@ -3,12 +3,12 @@ import {theme} from '../style/theme'
 import {tooltip} from '../bindings/tooltip'
 
 
-/** Now only a input, will extend to list suggestted local or remote data in future. */
+/** `<f-progress>` gives a progress notification in percentage, just like `<input type=progress>`. */
 @define('f-progress')
 export class Progress<E = any> extends Component<E> {
 
 	static style() {
-		let {mainColor, adjust} = theme
+		let {mainColor, adjust, adjustFontSize} = theme
 
 		return css`
 		:host{
@@ -36,16 +36,23 @@ export class Progress<E = any> extends Component<E> {
 		}
 
 		.tooltip{
-			font-family: monospace;
+			font-family: consolas;
+			font-size: ${adjustFontSize(14)}px;
 		}
 		`
 	}
 
-	/** Betweens 0-1. */
+	/** 
+	 * Progress value betweens 0~1.
+	 * Defult value is `0`.
+	 */
 	value: number = 0
 
-	/** Fixed decimal count of progress text. */
-	decimalCount: number = 1
+	/** 
+	 * Fixed decimal count of progress text.
+	 * Defult value is `null`.
+	 */
+	decimalCount: number | null = null
 
 	protected render() {
 		let tip = tooltip(this.renderTooltipValue(), {
@@ -64,8 +71,13 @@ export class Progress<E = any> extends Component<E> {
 	}
 
 	renderTooltipValue() {
-		// 0.5123 -> 51.2%
-		let tipText = (Math.min(this.value, 1) * 100).toFixed(this.decimalCount) + '%'
+		let tipValue = (Math.min(this.value, 1) * 100)
+		let tipText = tipValue.toString()
+
+		if (this.decimalCount !== null) {
+			tipText = tipValue.toFixed(this.decimalCount)
+		}
+		tipText += '%'
 
 		return html`<span class="${this.scopeClassName('tooltip')}">${tipText}</span>`
 	}

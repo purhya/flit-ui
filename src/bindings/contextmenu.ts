@@ -4,6 +4,11 @@ import {ContextMenu} from '../components/contextmenu'
 import {RenderFn} from '../types'
 
 
+/** 
+ * `:contextmenu` binding pops-up a contextmenu when right click binded element.
+ * 
+ * `:contextmenu=${() => contextmenuComponent}`
+ */
 export class ContextMenuBinding implements Binding<RenderFn> {
 
 	protected readonly el: HTMLElement
@@ -17,14 +22,14 @@ export class ContextMenuBinding implements Binding<RenderFn> {
 	constructor(el: Element, context: Context) {
 		this.el = el as HTMLElement
 		this.context = context
-		on(this.el, 'contextmenu.prevent', this.showMenu, this)
+		on(this.el, 'contextmenu.prevent', this.showContextMenu, this)
 	}
 
 	update(renderFn: RenderFn) {
 		this.renderFn = renderFn
 	}
 
-	protected async showMenu(e: Event) {
+	protected async showContextMenu(e: Event) {
 		this.renderPopup()
 		let popup = this.popup!
 
@@ -34,7 +39,7 @@ export class ContextMenuBinding implements Binding<RenderFn> {
 		alignToEvent(popup.el, e as MouseEvent)
 		popup.el.focus()
 
-		// Makesure mouse enter to submenu doesn't cause contextmenu hidden.
+		// Makesure mouse enter to submenu doesn't cause current contextmenu hidden.
 		this.unkeepEl = MouseLeave.keep(this.el)
 
 		// Play enter transition.
@@ -101,13 +106,13 @@ export class ContextMenuBinding implements Binding<RenderFn> {
 	}
 
 	remove() {
-		off(this.el, 'contextmenu', this.showMenu, this)
+		off(this.el, 'contextmenu', this.showContextMenu, this)
 	}
 }
 
 
 /** 
- * Popup a contextmenu when right click binded element.
- * @param renderFn Should returns a `<f-contextmenu />` template result.
+ * Pops-up a contextmenu when right click binded element.
+ * @param renderFn Should return a `<f-contextmenu />` type template result.
  */
 export const contextmenu = defineBinding('contextmenu', ContextMenuBinding) as (renderFn: RenderFn) => BindingResult

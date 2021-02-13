@@ -3,13 +3,19 @@ import {constrain, getStyleValue} from '@pucelle/ff'
 
 
 export interface ResizerEvents {
+
+	/** Triggers after every time resizing. */
+	resize: (size: number) => void
+
+	/** Triggers after resize end. */
 	change: (size: number) => void
 }
 
+/** Resize direction to indicate which direction the resizer should be align to relative it's parent. */
 export type ResizerPosition = 'top' | 'right' | 'bottom' | 'left'
 
 
-/** Resizer can only adjust in one direction, will extend if needed. */
+/** `<f-resizer>` should an absolute type resizer bar, drag it will */
 @define('f-resizer')
 export class Resizer<E = any> extends Component<E & ResizerEvents> {
 	
@@ -71,12 +77,20 @@ export class Resizer<E = any> extends Component<E & ResizerEvents> {
 		`
 	}
 
+	/** Which position should align resizer relative to parent. */
 	position: ResizerPosition = 'right'
-	rate: number = 1	// You may set this to `2` if element aligns to center .
-	max: number = Infinity
+
+	/** Resizing speed rate, set it to `2` if element aligns to center, and moves 1px will cause 2px increases. */
+	rate: number = 1
+
+	/** Minimum size of parent. */
 	min: number = 0
 
-	protected resizedValue: number = -1
+	/** Maximum size of parent. */
+	max: number = Infinity
+
+	/** Current size of parent. */
+	size: number = -1
 
 	protected render() {
 		return html`
@@ -107,7 +121,7 @@ export class Resizer<E = any> extends Component<E & ResizerEvents> {
 		let onMouseUp = () => {
 			off(document, 'mousemove', onMouseMove as (e: Event) => void)
 			cursorMask.remove()
-			this.emit('change', this.resizedValue)
+			this.emit('change', this.size)
 		}
 
 		let cursorMask = render(html`
@@ -138,6 +152,7 @@ export class Resizer<E = any> extends Component<E & ResizerEvents> {
 			this.el.parentElement!.style.width = value + 'px'
 		}
 
-		this.resizedValue = value
+		this.size = value
+		this.emit('change', this.size)
 	}
 }

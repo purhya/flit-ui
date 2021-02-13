@@ -2,10 +2,53 @@ import {define, Component, html, css, off, once, getClosestComponentOfType} from
 import {theme} from '../style/theme'
 
 
+export interface RadioGroupEvents {
+
+	/** 
+	 * If a child `<f-radio>` was checked and have `value` property specified,
+	 * it will trigger change event with the radio value as parameter.
+	 */
+	change: (value: any) => void
+}
+
+
+/** `<f-radiogroup>` can contain several `<f-radio>` elements as it's child radios. */
+@define('f-radiogroup')
+export class RadioGroup extends Component<RadioGroupEvents> {
+	
+	/** All child `<f-checkbox>`. */
+	readonly radios: Radio[] = []
+
+	/** Current value, child radio which have same value will be checked. */
+	value: any = null
+
+	/** Retister a child radio. */
+	register(radio: Radio) {
+		this.radios.push(radio)
+		radio.on('change', this.onRadioChange.bind(this, radio))
+	}
+
+	protected onRadioChange(changedRadio: Radio) {
+		for (let radio of this.radios) {
+			if (radio !== changedRadio) {
+				radio.checked = false
+			}
+		}
+
+		this.value = changedRadio.value
+		this.emit('change', this.value)
+	}
+}
+
+
+
 export interface RadioEvents {
+
+	/** Triggers change event only when a radio checked. */
 	change: (checked: boolean) => void
 }
 
+/** `<f-radio>` just like `<input type=radio>`, you can click to check one radio in a radio group. */
 @define('f-radio')
 export class Radio<E = any> extends Component<E & RadioEvents> {
 
@@ -33,9 +76,10 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 		}
 
 		.icon{
+			position: relative;
+			top: -2px;
 			border-radius: 50%;
 			margin-right: ${adjust(6)}px;
-			margin-top: ${adjust(5)}px;
 		}
 
 		.checked{
@@ -51,11 +95,22 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 		`
 	}
 
-	checked: boolean = false
-	radioGroup: RadioGroup | null = null
+	protected radioGroup: RadioGroup | null = null
 
-	// Used to compare with `RadioGroup.value`
+	/** Whether the radio was checked. */
+	checked: boolean = false
+
+	/** If having a parent `<f-radiogroup>`, the `value` property will be assign to it after current ratio checked. */
 	value: any = null
+
+	protected onCreated() {
+		let group = getClosestComponentOfType(this.el, RadioGroup)
+		if (group) {
+			this.radioGroup = group
+			this.checked = this.radioGroup.value == this.value
+			this.radioGroup.register(this)
+		}
+	}
 
 	protected render() {
 		return html`
@@ -71,15 +126,6 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 				</div>
 			</template>
 		`
-	}
-
-	protected onCreated() {
-		let group = getClosestComponentOfType(this.el, RadioGroup)
-		if (group) {
-			this.radioGroup = group
-			this.checked = this.radioGroup.value == this.value
-			this.radioGroup.register(this)
-		}
 	}
 
 	protected onClick() {
@@ -102,31 +148,5 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 
 	protected onEnter() {
 		this.onClick()
-	}
-}
-
-
-// Not `radio-group` because we want to correspond with `radiogroup` with `https://www.w3.org/TR/wai-aria-practices-1.2/`.
-@define('f-radiogroup')
-export class RadioGroup extends Component<{change: (value: (string | number)[]) => void}> {
-
-	value: any = null
-	
-	protected radios: Radio[] = []
-
-	register(radio: Radio) {
-		this.radios.push(radio)
-		radio.on('change', this.onRadioChange.bind(this, radio))
-	}
-
-	protected onRadioChange(changedRadio: Radio) {
-		for (let radio of this.radios) {
-			if (radio !== changedRadio) {
-				radio.checked = false
-			}
-		}
-
-		this.value = changedRadio.value
-		this.emit('change', this.value)
 	}
 }

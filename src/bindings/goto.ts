@@ -2,12 +2,19 @@ import {defineBinding, Binding, on, getClosestComponentOfType} from '@pucelle/fl
 import {Router} from '../components/router'
 
 
+/** 
+ * A `:goto` binding will goto a target hre after clicking binded element.
+ * 
+ * `:goto="relativeURL"`
+ * `:goto=${relativeURL}`
+ */
 @defineBinding('goto')
 export class GotoBinding implements Binding<string>{
 	
-	el: HTMLElement
+	protected readonly el: HTMLElement
+	protected router: Router | null = null
+
 	value: string = ''
-	router: Router | null = null
 
 	constructor(el: Element) {
 		this.el = el as HTMLElement

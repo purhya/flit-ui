@@ -5,6 +5,7 @@ import {theme} from '../style/theme'
 export type LoaderSize = 'small' | 'medium' | 'large'
 
 
+/** `<f-loader>` shows an loading animation to indicate resource is loading. */
 @define('f-loader')
 export class Loader<E = any> extends Component<E> {
 
@@ -61,7 +62,16 @@ export class Loader<E = any> extends Component<E> {
 		`
 	}
 
+	/** 
+	 * Size of loader, one of `small | medium | large`.
+	 * Default value is `medium`.
+	 */
 	size: LoaderSize = 'medium'
+
+	/** 
+	 * Whether work as a cover to cover whole parent.
+	 * Default value is `false`.
+	 */
 	asCover: boolean = false
 
 	protected render() {

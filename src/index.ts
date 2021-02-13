@@ -1,3 +1,5 @@
+export * from './icons/icons'
+
 import './style/global-style'
 export * from './style/theme'
 export * from './style/color'
@@ -43,4 +45,6 @@ export * from './bindings/popup'
 export * from './bindings/loading'
 export * from './bindings/goto'
 export * from './bindings/drag-drop'
+
+export * from './translations/translations'
 

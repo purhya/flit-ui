@@ -4,7 +4,7 @@ import {PopupBinding, PopupOptions} from '../bindings/popup'
 import {appendTo} from '../utils/element'
 
 
-/**It's the base class for all the popup which will align with another element. */
+/** `<f-popup>` is the container for popup content. */
 @define('f-popup')
 export class Popup<E = any> extends Component<E> {
 
@@ -46,25 +46,28 @@ export class Popup<E = any> extends Component<E> {
 		`
 	}
 
-	readonly refs!: {triangle: HTMLElement}
+	readonly refs!: {
 
-	herizontal: boolean = false
-	triangle: boolean = true
-	
-	/**
-	 * The selector to get HTML element to append to or the HTML element.
-	 * Note that don't specify this value to `document.body`, it may not prepared when class initialize. 
-	 */
-	appendTo: Element | string | null = 'body'
+		/** Triangle element, may be `undefined`. */
+		triangle: HTMLElement
+	}
 
 	/** 
-	 * Used for sub classes to specify default popup options,
-	 * Such that no need to specify them each time in the `popup()`.
-	 * Will be overwrite by options in `popup()`.
+	 * Options to overwrite default popup binding to control default alignment.
+	 * Will be overwritten by options passed to `popup(...)`.
 	 */
-	defaultPopupOptions: PopupOptions | null = null
+	readonly defaultPopupOptions: PopupOptions | null = null
 
 	protected binding: PopupBinding | null = null
+
+	/** Show triangle element in herizontal order - left or right position. */
+	herizontal: boolean = false
+
+	/** Whether shows triangle element. */
+	triangle: boolean = true
+	
+	/** Where to append current popup. */
+	appendTo: Element | string | null = 'body'
 
 	protected render() {
 		return html`
@@ -105,16 +108,19 @@ export class Popup<E = any> extends Component<E> {
 		this.applyAppendTo()
 	}
 	
+	/** Insert popup element into target specified by `appendTo`. */
 	applyAppendTo() {
 		if (this.appendTo) {
 			appendTo(this.el, this.appendTo)
 		}
 	}
 
-	setPopupBinding(binding: PopupBinding) {
+	/** Set related popup binding. */
+	setBinding(binding: PopupBinding) {
 		this.binding = binding
 	}
 
+	/** Close popup content, may play leave transition. */
 	close() {
 		if (this.binding) {
 			this.binding.hidePopupLater()

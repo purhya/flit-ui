@@ -5,11 +5,19 @@ import {tooltip} from '../bindings/tooltip'
 
 
 export interface SliderEvents {
+
+	/** Triggers after user slide and make slider value changed. */
 	change: (value: number) => void
+
+	/** Triggers when user begin to drag slider thumbnail. */
 	dragstart: () => void
+
+	/** Triggers when user stop to drag slider thumbnail. */
 	dragend: () => void
 }
 
+
+/** `<f-slider>` provides a range selector, you may pick one value by sliding in the bar. */
 @define('f-slider')
 export class Slider<E = any> extends Component<E & SliderEvents> {
 
@@ -80,7 +88,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 			}
 		}
 
-		:host[vertical]{
+		.vertical{
 			width: ${adjust(30)}px;
 			height: ${adjust(150)}px;
 			flex-direction: row;
@@ -103,26 +111,36 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		}
 
 		.tooltip{
-			font-family: monospace;
+			font-family: consolas;
+			font-size: ${adjustFontSize(14)}px;
 		}
 		`
 	}
 
+	/** Whether in vertical mode. Defult value is `false` */
 	vertical: boolean = false
+
+	/** Minimum value. Defult value is `0`. */
 	min: number = 0
+
+	/** Maximum value. Defult value is `100`. */
 	max: number = 100
+
+	/** Value step when increasing or decreasing. Defult value is `1`. */
 	step: number = 1
+
+	/** Current value. Defult value is `0`. */
 	value: number = 0
 
-	/** Fixed decimal count of progress text. */
+	/** Fixed decimal count of progress text. Default value is `null`. */
 	decimalCount: number | null = null
 
 	protected draging: boolean = false
 
 	protected render() {
-		let tip = tooltip(this.renderTooltipValue(), {
+		let tip = tooltip(this.renderTooltipContent(), {
 			alignTo: () => this.refs.ball,
-			alignPosition: this.vertical ? 'r' : 't'
+			alignPosition: this.vertical ? 'r' : 't',
 		})
 
 		let sizeStyle: any = {}
@@ -135,7 +153,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 
 		let positionStyle: any = {}
 		if (this.vertical) {
-			positionStyle.top = this.getPercent() + '%'
+			positionStyle.top = (100 - this.getPercent()) + '%'
 		}
 		else {
 			positionStyle.left = this.getPercent() + '%'
@@ -144,6 +162,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		return html`
 		<template
 			tabindex="0"
+			:class.vertical=${this.vertical}
 			:class.dragging=${this.draging}
 			${tip}
 			@mousedown=${this.onMouseDown}
@@ -160,7 +179,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		`
 	}
 
-	protected renderTooltipValue() {
+	protected renderTooltipContent() {
 		let decimalCount = this.decimalCount
 		if (decimalCount === null) {
 			decimalCount = String(this.step).replace(/^\d+\.?/, '').length
@@ -281,6 +300,11 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 				e.preventDefault()
 				newValue = Math.min(this.value + this.step, this.max)
 			}
+		}
+		
+		if (e.key === 'Escape') {
+			e.preventDefault()
+			this.el.blur()
 		}
 		
 		if (newValue !== undefined && newValue !== this.value) {

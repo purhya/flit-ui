@@ -2,41 +2,62 @@ import {css, define, html, Component, repeat, TemplateResult, getRenderedAsCompo
 import {theme} from '../style/theme'
 import {remove, Timeout, timeout} from '@pucelle/ff'
 import {Color} from '../style/color'
+import {appendTo} from '../utils/element'
 
-
-export type NotificationType = 'info' | 'warning' | 'error' | 'success'
 
 export interface NotificationOptions {
+
+	/** Notification id, if same with an existed item, will replace it. */
 	id?: number
+
+	/** Notification type, `info, warning, error, success`. */
 	type?: NotificationType
+
+	/** Notification title. */
 	title?: string
+
+	/** Notification message. */
 	message?: string | TemplateResult
+
+	/** A data list to show below message. */
 	list?: string[]
+
+	/** Additional action buttons. */
 	actions?: NotificationAction[]
+
+	/** Hide notification after millseconds. Default value is `5000`. */
 	hideDelay?: number
 }
 
+/** Notification type. */
+export type NotificationType = 'info' | 'warning' | 'error' | 'success'
+
 export interface NotificationAction {
-	/** Used at Dialog to know which action button clicked */
-	value?: string
 
 	/** Button text. */
 	text: string
 
-	/** Button of action becomes primary if set this to true. */
+	/** Action button becomes primary if set this to true. */
 	primary?: boolean
 
-	/** To process after clicked the action button. */
+	/** Call after clicked the action button. */
 	handler?: () => void
 }
 
 interface NotificationItem extends NotificationOptions {
+
+	/** Notification id. */
 	id: number
-	entered: boolean
+
+	/** Whether mouse hover. */
+	hover: boolean
+
+	/** Timeout to hide current notification. */
 	timeout: Timeout | null
 }
 
 
+/** `<f-notification>` helps to show a notification list to notify some info. */
 @define('f-notification')
 export class Notification<E = any> extends Component<E> {
 	static style() {
@@ -56,7 +77,7 @@ export class Notification<E = any> extends Component<E> {
 			bottom: ${adjust(12)}px;
 			min-width: ${adjust(280)}px;
 			max-width: ${adjust(480)}px;
-			z-index: 1200;	// Higher than message
+			z-index: 1100;	// Higher than tooltip, dialog, ...
 			font-size: ${adjustFontSize(13)}px;
 		}
 
@@ -163,15 +184,14 @@ export class Notification<E = any> extends Component<E> {
 				}
 			}
 		`)}
-		
 		`
 	}
-	
-	hideDelay: number = 10000
-	appendTo: string | HTMLElement | null = 'body'
 
 	protected seed: number = 1
 	protected items: NotificationItem[] = []
+	
+	/** Where to append notification list. */
+	appendTo: string | HTMLElement | null = 'body'
 
 	protected render() {
 		return repeat(this.items, (item) => 
@@ -225,7 +245,7 @@ export class Notification<E = any> extends Component<E> {
 		return ''
 	}
 	
-	protected async onClickActionButton(action: NotificationAction, item: NotificationItem) {
+	protected onClickActionButton(action: NotificationAction, item: NotificationItem) {
 		if (action.handler) {
 			action.handler()
 		}
@@ -234,11 +254,11 @@ export class Notification<E = any> extends Component<E> {
 	}
 
 	protected onMouseEnter(item: NotificationItem) {
-		item.entered = true
+		item.hover = true
 	}
 
 	protected onMouseLeave(item: NotificationItem) {
-		item.entered = false
+		item.hover = false
 
 		if (!item.timeout) {
 			this.hideLater(item)
@@ -255,28 +275,30 @@ export class Notification<E = any> extends Component<E> {
 		}
 	}
 
+	/** Shows a notification and returns it's list. */
 	show(options: NotificationOptions): number {
 		if (options.id) {
 			let item = this.items.find(v => v.id === options.id)
 			if (item) {
-				delete item.hideDelay
 				Object.assign(item, options)
 				this.hideLater(item)
+				
 				return options.id
 			}
 		}
 
-		let item = Object.assign({
+		let item = {
 			id: this.seed++,
-			entered: false,
-			timeout: null
-		}, options)
-		
+			...options,
+			hover: false,
+			timeout: null,
+		}
+				
 		this.items.unshift(item)
 		this.hideLater(item)
 
-		if (this.items.length === 1) {
-			document.body.append(this.el)
+		if (this.items.length === 1 && this.appendTo) {
+			appendTo(this.el, this.appendTo)
 		}
 
 		return item.id
@@ -290,12 +312,13 @@ export class Notification<E = any> extends Component<E> {
 		item.timeout = timeout(() => {
 			item.timeout = null
 
-			if (!item.entered) {
+			if (!item.hover) {
 				this.hide(item.id)
 			}
-		}, item.hideDelay || this.hideDelay)
+		}, item.hideDelay || 5000)
 	}
 
+	/** Hide notification by it's id. */
 	hide(id: number): boolean {
 		let item = this.items.find(v => v.id === id)
 		if (item) {
@@ -307,6 +330,7 @@ export class Notification<E = any> extends Component<E> {
 		}
 	}
 
+	/** Hide all notifications. */
 	hideAll() {
 		this.items = []
 
@@ -317,10 +341,12 @@ export class Notification<E = any> extends Component<E> {
 }
 
 
+/** Class to manage a notification list. */
 export class QuickNotification {
 
 	protected noti: Notification | null = null
 
+	/** Returns a unique notification instance, all notification calls will share a unique notification item. */
 	unique() {
 		return new UniqueNotification(this)
 	}
@@ -333,6 +359,7 @@ export class QuickNotification {
 		return this.noti!.show(options)
 	}
 
+	/** Shows info type notification, returns it's id. */
 	info(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		options.type = 'info'
 		options.message = message
@@ -340,6 +367,7 @@ export class QuickNotification {
 		return this.showNotification(options)
 	}
 
+	/** Shows warn type notification, returns it's id. */
 	warn(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		options.type = 'warning'
 		options.message = message
@@ -347,6 +375,7 @@ export class QuickNotification {
 		return this.showNotification(options)
 	}
 
+	/** Shows error type notification, returns it's id. */
 	error(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		options.type = 'error'
 		options.message = message
@@ -354,6 +383,7 @@ export class QuickNotification {
 		return this.showNotification(options)
 	}
 
+	/** Shows success type notification, returns it's id. */
 	success(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		options.type = 'success'
 		options.message = message
@@ -361,20 +391,23 @@ export class QuickNotification {
 		return this.showNotification(options)
 	}
 
+	/** Hide notification by it's id. */
 	hide(id: number) {
 		return this.noti!.hide(id)
 	}
 
+	/** Hide all notifications. */
 	hideAll() {
-		return this.noti!.hideAll()
+		this.noti!.hideAll()
 	}
 }
 
 
+/** All notification calls will share a unique notification item. */
 export class UniqueNotification {
 
-	raw: QuickNotification
-	id: number | null = null
+	protected readonly raw: QuickNotification
+	protected id: number | null = null
 
 	constructor(raw: QuickNotification) {
 		this.raw = raw
@@ -385,27 +418,32 @@ export class UniqueNotification {
 			options.id = this.id
 		}
 	}
-
+	
+	/** Shows info type notification, returns it's id. */
 	info(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		this.overwriteNotificationId(options)
 		return this.id = this.raw.info(message, options)
 	}
 
+	/** Shows warn type notification, returns it's id. */
 	warn(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		this.overwriteNotificationId(options)
 		return this.id = this.raw.warn(message, options)
 	}
 
+	/** Shows error type notification, returns it's id. */
 	error(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		this.overwriteNotificationId(options)
 		return this.id = this.raw.error(message, options)
 	}
 
+	/** Shows success type notification, returns it's id. */
 	success(message: string | TemplateResult, options: NotificationOptions = {}): number {
 		this.overwriteNotificationId(options)
 		return this.id = this.raw.success(message, options)
 	}
 
+	/** Hide current notification. */
 	hide() {
 		if (this.id) {
 			return this.raw.hide(this.id)
@@ -416,4 +454,5 @@ export class UniqueNotification {
 	}
 }
 
+/** A quick global API to show notifications. */
 export const notification = new QuickNotification()

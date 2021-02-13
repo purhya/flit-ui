@@ -3,6 +3,7 @@ import {theme} from '../style/theme'
 import {Popup} from '../components/popup'
 
 
+/** `<f-contextmenu>` is used for render a context menu after right clicking. */
 @define('f-contextmenu')
 export class ContextMenu<E = any> extends Popup<E> {
 

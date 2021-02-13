@@ -1,15 +1,23 @@
 import {define, Component, css, html, getClosestComponentOfType} from '@pucelle/flit'
+import {tooltip} from '../bindings/tooltip'
 import {theme} from '../style/theme'
 import {Form} from './form'
 
 
 interface InputEvents {
-	/** Not validate and set value. */
-	input: (value: string) => void
-	change: (value: string, valid: boolean) => void
+
+	/** Triggers after input every new characters. */
+	input: (value: string | number) => void
+
+	/** Triggers after value changed. */
+	change: (value: string | number, valid: boolean) => void
 }
 
 
+/** 
+ * `<f-input>` works just like a `<input type="text">`,
+ * you can also set validator to validate it's value, or set customized error message.
+ */
 @define('f-input')
 export class Input<E = any> extends Component<InputEvents & E> {
 
@@ -84,48 +92,88 @@ export class Input<E = any> extends Component<InputEvents & E> {
 			position: absolute;
 			left: 0;
 			top: 100%;
-			margin-bottom: -${adjust(28)}px;
 			font-size: ${adjustFontSize(13)}px;
+			line-height: ${adjust(22)}px;
 			color: ${errorColor};
 		}
 		`
 	}
 
-	type: string = 'text'
+	/** Input type, same with `<input type=...>`. */
+	type: 'text' | 'password' = 'text'
+
+	/** Whether input was touched, error messages only appear after touched. */
 	touched: boolean = false
+
+	/** Whether current input is valid, be `null` if not validated yet. */
 	valid: boolean | null = null
+
+	/** Placeholder when input is empty. */
 	placeholder: string = ''
+
+	/** Current value. */
 	value: string = ''
-	validator: ((value: string | number) => string) | null = null
+
+	/** To validate current value, returns an error message or `null` if passes. */
+	validator: ((value: string) => string) | null = null
+
+	/** Custom error message. */
 	error: string = ''
 
+	/** Whether show error on a tooltip, so it doesn't need to leave a space for error message. */
+	errorInTooltip: boolean = false
+
+	protected onCreated() {
+		this.validate()
+
+		let form = getClosestComponentOfType(this.el, Form)
+		if (form) {
+			form.register(this)
+		}
+	}
+
 	protected render() {
+		let errorTip = this.errorInTooltip && this.error && this.touched
+			? tooltip(this.error, {type: 'error'})
+			: null
+
 		return html`
 		<template
-			:class.valid=${this.touched && this.valid === true}
+			:class.valid=${this.touched && this.valid}
 			:class.invalid=${this.touched && this.valid === false}
 		>
 			<input type=${this.type}
-				placeholder=${this.placeholder || ''}
+				.placeholder=${this.placeholder || ''}
 				.value=${this.value}
 				:ref="input"
+				${errorTip}
 				@blur=${this.onBlur}
 				@input=${(e: InputEvent) => this.onInput(e)}
 				@change=${(e: InputEvent) => this.onChange(e)}
 			/>
-			${this.touched && this.valid === true ? html`<f-icon class="valid-icon" .type="checked" />` : ''}
-			${this.touched && this.error ? html`<div class="error">${this.error}</div>` : ''}
+			${this.touched && this.valid ? html`<f-icon class="valid-icon" .type="checked" />` : ''}
+			${this.touched && this.error && !this.errorInTooltip ? html`<div class="error">${this.error}</div>` : ''}
 		</template>
 		`
 	}
 
 	protected onBlur() {
 		this.touched = true
+
+		// Validate after change event is not enough.
+		// We clear error message after input,
+		// So may still not valid even though not changed.
+		this.validate()
 	}
 
 	protected onInput(e: InputEvent) {
 		let input = e.target as HTMLInputElement
 		let value = input.value
+
+		if (this.validator) {
+			this.valid = null
+			this.error = ''
+		}
 
 		this.emit('input', value)
 	}
@@ -138,15 +186,6 @@ export class Input<E = any> extends Component<InputEvents & E> {
 		this.emit('change', value, this.valid)
 	}
 
-	protected onCreated() {
-		this.validate()
-
-		let form = getClosestComponentOfType(this.el, Form)
-		if (form) {
-			form.register(this)
-		}
-	}
-
 	protected validate() {
 		if (this.validator) {
 			this.error = this.validator(this.value)
@@ -154,13 +193,17 @@ export class Input<E = any> extends Component<InputEvents & E> {
 		}
 	}
 
+	/** Set `touched` property. */
 	setTouched(touched: boolean) {
 		this.touched = touched
 	}
 }
 
 
-
+/** 
+ * `<f-textarea>` works just like a `<textarea>`,
+ * you can also set validator to validate it's value, or set customized error message.
+ */
 @define('f-textarea')
 export class Textarea extends Input {
 

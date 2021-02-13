@@ -4,28 +4,53 @@ import {Color} from './color'
 
 
 export interface ThemeOptions {
+
+	/** Main hightlight color. */
 	mainColor: string
+
+	/** Background color. */
 	backgroundColor: string
+
+	/** Text color. */
 	textColor: string
 	
+	/** Color for success message. */
 	successColor: string
+
+	/** Color for error message. */
 	errorColor: string
+
+	/** Color for warning message. */
 	warningColor: string
+
+	/** Color for info message. */
 	infoColor:string
 
+	/** Border color. */
 	borderColor: string
+
+	/** Border radius in pixels. */
 	borderRadius: number
 
+	/** Color of popup backgound. */
 	popupBackgroundColor: string
+
+	/** Popup border radius in pixels. */
 	popupBorderRadius: number
+
+	/** Color of popup shadow. */
 	popupShadowColor: string
+
+	/** Popup shadow blur radius in pixels. */
 	popupShadowBlurRadius: number
 
+	/** Blur radius in pixels for focus elements. */
 	focusBlurRadius: number
 
+	/** Font size. */
 	fontSize: number
 
-	/** Note that the `lineHeight` is the height of normal one line components, not the `lineHeight` of multiple lines. */
+	/** Height of normal one line components, not the `lineHeight` of multiple lines. */
 	lineHeight: number
 }
 
@@ -56,9 +81,10 @@ export class Theme implements ColorOptions, NotColorOptions {
 	mode: 'dark' | 'light' = 'light'
 
 	constructor() {
-		this.options = Object.assign({}, defaultLightThemeOptions, defaultMediumThemeOptions) as ThemeOptions
+		this.options = {...defaultLightThemeOptions, ...defaultMediumThemeOptions} as ThemeOptions
 	}
 
+	/** Define a new theme from overwritten options. */
 	defineTheme(name: string, options: Partial<ThemeOptions>) {
 		this.themeMap.set(name, options)
 	}
@@ -80,8 +106,11 @@ export class Theme implements ColorOptions, NotColorOptions {
 		return 'light'
 	}
 
-	/** Assigns theme options to current options, so it may keep options of last theme. */
-	changeTheme(...names: string[]) {
+	/** 
+	 * Assigns more theme options to current options, so it may keep options of last theme.
+	 * Default themes includes: dark, light, small, medium, large, touch.
+	 */
+	assignTheme(...names: string[]) {
 		for (let name of names) {
 			if (!this.themeMap.has(name)) {
 				throw new Error(`"${name}" is not a defined theme`)
@@ -94,6 +123,7 @@ export class Theme implements ColorOptions, NotColorOptions {
 		this.update()
 	}
 
+	/** Set single options. */
 	set<K extends keyof ThemeOptions>(key: K, value: ThemeOptions[K]) {
 		this.options[key] = value
 		this.update()
@@ -115,7 +145,7 @@ export class Theme implements ColorOptions, NotColorOptions {
 	}
 
 	/** 
-	 * Pass the px value for `font-size` on default theme settings, returns the size in current theme settings.
+	 * Convert `font-size` on default theme settings, to the size in current theme settings.
 	 * Returns value will be at least 11.
 	 */
 	get adjustFontSize() {
@@ -124,77 +154,89 @@ export class Theme implements ColorOptions, NotColorOptions {
 		}
 	}
 
-	/** Pass the px value for `line-height` on default theme settings, returns the line height in current theme settings. */
+	/** Convert `line-height` on default theme settings, to the line height in current theme settings. */
 	get adjust() {
 		return (size: number): number => {
 			return Math.round(size * this.lineHeight / defaultMediumThemeOptions.lineHeight!)
 		}
 	}
 
+	/** Main hightlight color. */
 	get mainColor(): Color {
 		return new Color(this.getOption('mainColor'))
 	}
 
+	/** Background color. */
 	get backgroundColor(): Color {
 		return new Color(this.getOption('backgroundColor'))
 	}
 
+	/** Text color. */
 	get textColor(): Color {
 		return new Color(this.getOption('textColor'))
 	}
 
-	
+	/** Color for success message. */
 	get successColor(): Color {
 		return new Color(this.getOption('successColor'))
 	}
 
+	/** Color for error message. */
 	get errorColor(): Color {
 		return new Color(this.getOption('errorColor'))
 	}
 
+	/** Color for warning message. */
 	get warningColor(): Color {
 		return new Color(this.getOption('warningColor'))
 	}
 
+	/** Color for info message. */
 	get infoColor(): Color {
 		return new Color(this.getOption('infoColor'))
 	}
 
-
+	/** Border color. */
 	get borderColor(): Color {
 		return new Color(this.getOption('borderColor'))
 	}
 
+	/** Border radius in pixels. */
 	get borderRadius() {
 		return this.getOption('borderRadius')
 	}
 
-
+	/** Color of popup backgound. */
 	get popupBackgroundColor(): Color {
 		return new Color(this.getOption('popupBackgroundColor'))
 	}
 
+	/** Popup border radius in pixels. */
 	get popupBorderRadius() {
 		return this.getOption('popupBorderRadius')
 	}
 
+	/** Popup shadow blur radius in pixels. */
 	get popupShadowBlurRadius() {
 		return this.getOption('popupShadowBlurRadius')
 	}
 
+	/** Color of popup shadow. */
 	get popupShadowColor() {
 		return new Color(this.getOption('popupShadowColor'))
 	}
 
-
+	/** Blur radius in pixels for focus elements. */
 	get focusBlurRadius() {
 		return this.getOption('focusBlurRadius')
 	}
 
+	/** Font size. */
 	get fontSize() {
 		return this.getOption('fontSize')
 	}
 
+	/** Height of normal one line components, not the `lineHeight` of multiple lines. */
 	get lineHeight() {
 		return this.getOption('lineHeight')
 	}
@@ -205,14 +247,11 @@ const defaultLightThemeOptions: Partial<ThemeOptions> = {
 	mainColor: '#3a6cf6',
 	backgroundColor: '#fff',
 	textColor: '#000',
-
 	infoColor: '#3369fa',
 	successColor: '#29bc04',
 	errorColor: '#e10000',
 	warningColor: '#f3b907',
-
 	borderColor: '#9b9b9b',
-
 	popupBackgroundColor: '#fff',
 	popupShadowColor: 'rgba(0, 0, 0, 0.4)',
 }

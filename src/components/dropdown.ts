@@ -1,14 +1,14 @@
-import {css, html, Component, refBinding, TransitionOptions} from '@pucelle/flit'
+import {css, html, Component, refBinding, TransitionOptions, Binding} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {popup, PopupBinding} from '../bindings/popup'
 import {AlignPosition} from '@pucelle/ff'
 
 
 /** 
- * Contains trigger element and popup content.
+ * `Dropdown` is abstract class for any component having popup content to show.
  * You should extend it to implement some dropdown type components, like `Select`.
   */
-export class Dropdown<E = any> extends Component<E> {
+export abstract class Dropdown<E = any> extends Component<E> {
 
 	static style() {
 		let {mainColor} = theme
@@ -37,25 +37,53 @@ export class Dropdown<E = any> extends Component<E> {
 		`
 	}
 
+	protected popupBinding: PopupBinding | null = null
+
+	/** Whether dropdown content is opened. */
 	opened: boolean = false
 
+	/** Trigger event type. Default value is `click`. */
 	trigger: 'hover' | 'click' | 'focus' | 'contextmenu' = 'click'
-	triangle: boolean = true
-	alignPosition: AlignPosition = 'b'
-	alignMargin: number | number[] = 3
-	transition: TransitionOptions = {name: 'fade'}
-	showDelay: number = 100
-	hideDelay: number = 100
 
-	protected popupBinding: PopupBinding | null = null
+	/** Whether shows triangle. Default value is `true`. */
+	triangle: boolean = true
+
+	/** 
+	 * Align position with trigger element.
+	 * Default value is 'b', means bottom position.
+	 */
+	alignPosition: AlignPosition = 'b'
+
+	/** 
+	 * Align margin betweens trigger element and popup content.
+	 * Default value is '3' in pixels.
+	 */
+	alignMargin: number | number[] = 3
+
+	/** 
+	 * Transition to play when begin to show or hide popup content.
+	 * Default value is fade css transition.
+	 */
+	transition: TransitionOptions = {name: 'fade'}
+
+	/** 
+	 * Delay in milliseconds before showing popup content.
+	 * Default value is `100`.
+	 */
+	showDelay: number = 100
+
+	/** 
+	 * Delay in milliseconds before hiding popup content.
+	 * Default value is `100`.
+	 */
+	hideDelay: number = 100
 
 	protected render() {
 		let {trigger, triangle, alignPosition, alignMargin, transition, showDelay, hideDelay} = this
-		let onOpenedChanged = this.setOpened.bind(this)
-		
+
 		let toPopup = refBinding(
-			popup(() => this.renderPopup(), {trigger, triangle, alignPosition, alignMargin, transition, showDelay, hideDelay, onOpenedChanged}),
-			(v: any) => {this.popupBinding = v}
+			popup(this.renderPopup.bind(this), {trigger, triangle, alignPosition, alignMargin, transition, showDelay, hideDelay}),
+			this.refBinding.bind(this)
 		)
 		
 		return html`
@@ -75,6 +103,11 @@ export class Dropdown<E = any> extends Component<E> {
 		`
 	}
 
+	protected refBinding(binding: Binding) {
+		this.popupBinding = binding as PopupBinding
+		this.popupBinding.on('openedStateChange', this.setOpened, this)
+	}
+
 	protected setOpened(opened: boolean) {
 		this.opened = opened
 
@@ -85,9 +118,9 @@ export class Dropdown<E = any> extends Component<E> {
 
 	protected onPopupOpened() {}
 
-	protected async showPopup() {
+	protected showPopup() {
 		if (this.popupBinding) {
-			await this.popupBinding.showPopupLater()
+			this.popupBinding.showPopupLater()
 		}
 	}
 

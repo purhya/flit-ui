@@ -2,8 +2,8 @@ import {define, Component, css, getComponent} from '@pucelle/flit'
 
 
 /** 
- * Note these components only used to align, not for responsive layout.
- * Will extend later when needed.
+ * `<f-row>` used to do grid layout, can contain several `<f-col>`.
+ * If available width changes, count of `<f-col>` in one line may be adjusted.
  */
 @define('f-row')
 export class RowLayout extends Component {
@@ -17,21 +17,35 @@ export class RowLayout extends Component {
 		`
 	}
 
+	protected readonly cols: ColLayout[] = []
+
+	/** Column count in one line. */
 	columnCount: number = 24
+
+	/** Gutter betweens columns in pixels. */
 	gutter: number = 0
+
+	/** Column alignment starts from. */
 	justify: 'start' | 'end' = 'start'
 
-	protected cols: ColLayout[] = []
-
-	protected onUpdated() {
-		this.el.style.justifyContent = this.justify === 'start' ? '' : this.justify === 'end' ? 'flex-end' : this.justify
+	protected onReady() {
+		this.watchImmediately(() => this.justify, (justify) => {
+			this.el.style.justifyContent = justify === 'start' ? '' : justify === 'end' ? 'flex-end' : justify
+		})
 	}
 
+	/** Register child `<f-col>`. */
 	register(col: ColLayout) {
 		this.cols.push(col)
 	}
+	
+	/** Returns whether `col` is the first column. */
+	isFirstCol(col: ColLayout) {
+		return col === this.cols[0]
+	}
 
-	getLeftColCount(col: ColLayout) {
+	/** Get column count in left. */
+	getLeftColumnCount(col: ColLayout) {
 		let {columnCount} = this
 		let count = 0
 
@@ -48,16 +62,14 @@ export class RowLayout extends Component {
 
 		return count
 	}
-
-	isFirstCol(col: ColLayout) {
-		return col === this.cols[0]
-	}
 }
 
 
+/** `<f-col>` will be contained inside a `<f-row>` to do grid layout. */
 @define('f-col')
 export class ColLayout extends Component {
 
+	/** Column span, default value is  */
 	span: number = 1
 	offset: number = 0
 	row!: RowLayout
@@ -78,7 +90,7 @@ export class ColLayout extends Component {
 	}
 
 	protected getMarginLeft() {
-		let leftColCount = this.row.getLeftColCount(this)
+		let leftColCount = this.row.getLeftColumnCount(this)
 		let {columnCount, gutter} = this.row
 		let offset = this.offset % columnCount
 		let isFirstCol = (leftColCount + offset) % columnCount === 0

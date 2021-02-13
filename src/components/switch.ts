@@ -3,9 +3,13 @@ import {theme} from '../style/theme'
 
 
 export interface SwitchEvents {
+
+	/** Triggers after switch on or off state changed. */
 	change: (value: boolean) => void
 }
 
+
+/** `<f-switch>` work just like `<f-checkbox>` but easier to interact with. */
 @define('f-switch')
 export class Switch<E = any> extends Component<E & SwitchEvents> {
 
@@ -59,13 +63,14 @@ export class Switch<E = any> extends Component<E & SwitchEvents> {
 		`
 	}
 
-	checked: boolean = false
+	/** Whether the switch is in on state. */
+	value: boolean = false
 
 	protected render() {
 		return html`
 		<template
 			tabindex="0"
-			:class.on=${this.checked}
+			:class.on=${this.value}
 			@click=${this.onClick}
 			@focus=${this.onFocus}
 			@blur=${this.onBlur}
@@ -75,9 +80,13 @@ export class Switch<E = any> extends Component<E & SwitchEvents> {
 		`
 	}
 
-	protected onClick () {
-		this.checked = !this.checked
-		this.emit('change', this.checked)
+	protected onClick() {
+		this.toggleState()
+	}
+
+	protected toggleState() {
+		this.value = !this.value
+		this.emit('change', this.value)
 	}
 
 	protected onFocus() {
@@ -87,18 +96,18 @@ export class Switch<E = any> extends Component<E & SwitchEvents> {
 	protected onKeyDown(e: KeyboardEvent) {
 		if (e.key === 'Enter') {
 			e.preventDefault()
-			this.onClick()
+			this.toggleState()
 		}
 		else if (e.key === 'ArrowLeft') {
-			if (this.checked) {
+			if (this.value) {
 				e.preventDefault()
-				this.onClick()
+				this.toggleState()
 			}
 		}
 		else if (e.key === 'ArrowRight') {
-			if (!this.checked) {
+			if (!this.value) {
 				e.preventDefault()
-				this.onClick()
+				this.toggleState()
 			}
 		}
 	}

@@ -234,6 +234,20 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 	protected cachedTotalWidth: number = 0
 	protected repeatDir: LiveRepeatDirective<T> | LiveAsyncRepeatDirective<T> | null = null
 
+	protected onCreated() {
+		if (this.store instanceof AsyncStore) {
+			for (let column of this.columns) {
+				if (column.orderBy && typeof column.orderBy !== 'string') {
+					throw new Error(`"orderBy" in "columns" configuration must be string type when using "liveStore"`)
+				}
+			}
+		}
+
+		this.orderColumnName = this.store.orderName
+		this.orderDirection = this.store.orderDirection
+		this.store.on('orderchanged', this.onOrderChanged, this)
+	}
+
 	render(): TemplateResult {
 		return html`
 		<div class="head" :ref="head">
@@ -355,20 +369,6 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		}
 
 		return 'order-default'
-	}
-
-	onCreated() {
-		if (this.store instanceof AsyncStore) {
-			for (let column of this.columns) {
-				if (column.orderBy && typeof column.orderBy !== 'string') {
-					throw new Error(`"orderBy" in "columns" configuration must be string type when using "liveStore"`)
-				}
-			}
-		}
-
-		this.orderColumnName = this.store.orderName
-		this.orderDirection = this.store.orderDirection
-		this.store.on('orderchanged', this.onOrderChanged, this)
 	}
 
 	onReady() {

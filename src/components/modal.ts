@@ -4,6 +4,11 @@ import {debounce, align} from '@pucelle/ff'
 import {appendTo} from '../utils/element'
 
 
+/** 
+ * `<f-modal>` shows content and help to complete a child task in a popup modal.
+ * 
+ * `:slot="action"` - Add action buttons and show them at head.
+ */
 @define('f-modal')
 export class Modal<E = any> extends Component<E> {
 
@@ -90,8 +95,13 @@ export class Modal<E = any> extends Component<E> {
 		}
 	`}
 
+	/** Modal title. */
 	title: string = ''
+
+	/** Whether modal opened. */
 	opened: boolean = true
+
+	/** Where to append current dialog. */
 	appendTo: string | HTMLElement | null = 'body'
 
 	//extensions may make win wrapped by a mask, so we need a win el

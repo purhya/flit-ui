@@ -2,13 +2,9 @@ import {define, Component, css} from '@pucelle/flit'
 import {Input, Textarea} from './input'
 
 
-interface FormEvents {
-	change: (value: string) => void
-}
-
-
+/** `<f-form>` can contain `<f-input>` or `<f-textarea>` and check their valid state in bundle. */
 @define('f-form')
-export class Form<E = any> extends Component<FormEvents & E> {
+export class Form<E = any> extends Component<E> {
 
 	static style() {
 		return css`
@@ -18,9 +14,13 @@ export class Form<E = any> extends Component<FormEvents & E> {
 		`
 	}
 
-	valid: boolean = true
-	inputs: (Input | Textarea)[] = []
+	/** All child `<f-input>` or `<f-textarea>`. */
+	readonly inputs: (Input | Textarea)[] = []
 
+	/** Whether all input or textare are valid. */
+	valid: boolean = true
+
+	/** Register a child `<f-input>` or `<f-textarea>`. */
 	register(input: Input | Textarea) {
 		this.inputs.push(input)
 		this.valid = this.valid && input.valid !== false
@@ -38,12 +38,14 @@ export class Form<E = any> extends Component<FormEvents & E> {
 		}
 	}
 
+	/** Validate all child inputs or textareas. */
 	validate() {
 		for (let input of this.inputs) {
 			input.setTouched(true)
 		}
 	}
 
+	/** Reset valid state for all child inputs or textareas. */
 	reset() {
 		for (let input of this.inputs) {
 			input.setTouched(false)

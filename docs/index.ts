@@ -1,17 +1,32 @@
 import * as ff from '@pucelle/ff'
 import * as flit from '@pucelle/flit'
 import * as flitUI from '../src'
+import {html, Component, define, repeat, observe, getComponent, getRenderedAsComponent, render, getComponentAsync} from '@pucelle/flit'
+import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, Column, Select, AsyncStore, Popover, icons, Form, Input} from '../src'
 
-import {html, Component, define, repeat, observe, getComponent, getRenderedAsComponent, render} from '@pucelle/flit'
-import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, Column, Select, ListItem, AsyncStore, Popover} from '../src'
+
+declare global {
+    interface Window {
+		ff: typeof ff
+		flit: typeof flit
+		flitUI: typeof flitUI
+	}
+}
 
 
-;(window as any).ff = ff
-;(window as any).flit = flit
-;(window as any).flitUI = flitUI
+window.ff = ff
+window.flit = flit
+window.flitUI = flitUI
 
 
 define('flit-preview', class extends Component {
+
+	checkboxValue: string[] = ['2']
+	checkboxInterminated = true
+	switch1On = true
+	switch2On = false
+	tagClosed = false
+
 	render() {
 		let {lineHeight} = theme
 
@@ -23,7 +38,7 @@ define('flit-preview', class extends Component {
 				<f-row style="margin: 8px 0;">
 					<f-col .span="4">Mode</f-col>
 					<f-col .span="20">
-						<f-radiogroup .value="light" @@change=${(name: string) => theme.changeTheme(name)}>
+						<f-radiogroup .value="light" @@change=${(name: string) => theme.assignTheme(name)}>
 							<f-radio .value="light" style="margin-right: 20px;">Light</f-radio>
 							<f-radio .value="dark" style="margin-right: 20px;">Dark</f-radio>
 						</f-radiogroup>
@@ -33,7 +48,7 @@ define('flit-preview', class extends Component {
 				<f-row style="margin: 8px 0;">
 					<f-col .span="4">Size</f-col>
 					<f-col .span="20">
-						<f-radiogroup .value="medium" @@change=${(name: string) => theme.changeTheme(name)}>
+						<f-radiogroup .value="medium" @@change=${(name: string) => theme.assignTheme(name)}>
 							<f-radio .value="small" style="margin-right: 20px;">Small</f-radio>
 							<f-radio .value="medium" style="margin-right: 20px;">Medium</f-radio>
 							<f-radio .value="large" style="margin-right: 20px;">Large</f-radio>
@@ -50,7 +65,7 @@ define('flit-preview', class extends Component {
 				</f-row>
 			</section>
 
-<!-- 
+
 			<h2>Basic Elements</h2>
 
 			<section class="basic">
@@ -107,7 +122,7 @@ define('flit-preview', class extends Component {
 						<header>With Info</header>
 						<label>
 							Last Name
-							<f-icon .type="tips" :tooltip="Tips about this field" />
+							<f-icon .type="tips" :tooltip="Tips to show guide" />
 						</label>
 					</f-col>
 				</f-row>
@@ -134,58 +149,68 @@ define('flit-preview', class extends Component {
 
 
 			<section>
-				<h3>Inputs</h3>
+				<f-row style="margin: 8px 0;" .gutter="24">
+					<f-col .span="6">
+						<h3>Checkboxes</h3>
+						<f-checkboxgroup .value=${this.checkboxValue}>
+							<f-checkbox .value="1">${this.checkboxValue.includes('1') ? 'Checked' : 'Unchecked'}</f-checkbox><br>
+							<f-checkbox .value="2">${this.checkboxValue.includes('2') ? 'Checked' : 'Unchecked'}</f-checkbox><br>
+							<f-checkbox .value="3" .indeterminate=${this.checkboxInterminated} @@change=${() => this.checkboxInterminated = false}>${
+								this.checkboxInterminated ? 'Indeterminate' : this.checkboxValue.includes('3') ? 'Checked' : 'Unchecked'
+							}</f-checkbox><br>
+						</f-checkboxgroup>
+					</f-col>
 
-				<f-row style="margin: 8px 0 16px 0;" .gutter="24">
 					<f-col .span="6">
-						<label>With Label</label><br>
-						<f-input .type="text" style="width: 100%;" />
+						<h3>Radios</h3>
+						<f-radiogroup .value="1">
+							<f-radio .value="1">Radio 1</f-radio><br>
+							<f-radio .value="2">Radio 2</f-radio><br>
+						</f-radiogroup>
 					</f-col>
+
 					<f-col .span="6">
-						<label>&nbsp;</label><br>
-						<f-input .type="text" style="width: 100%;" .placeholder="With Placeholder" />
+						<h3>Switchs</h3>
+						<f-switch style="margin-right: 8px;" :model="switch1On" />Switch 1 ${this.switch1On ? 'On' : 'Off'}<br>
+						<f-switch style="margin-right: 8px;" :model="switch2On" />Switch 2 ${this.switch2On ? 'On' : 'Off'}<br>
 					</f-col>
+
 					<f-col .span="6">
-						<label>&nbsp;</label><br>
-						<f-input .type="text" style="width: 100%;" .touched .valid=${true} .placeholder="Valid Input" />
-					</f-col>
-					<f-col .span="6">
-						<label>&nbsp;</label><br>
-						<f-input .type="text" style="width: 100%;" .touched .valid=${false} .placeholder="Invalid Input" .error="Error Message" />
+						<h3>Tags</h3>
+						<f-tag>Normal Tag</f-tag><br>
+						<f-tag .closable :hide=${this.tagClosed} @@close=${() => this.tagClosed = true}>Closable Tag</f-tag><br>
 					</f-col>
 				</f-row>
 			</section>
 
 
 			<section>
-				<f-row style="margin: 8px 0;" .gutter="24">
-					<f-col .span="6">
-						<h3>Checkboxes</h3>
-						<f-checkboxgroup .value=${['2']}>
-							<f-checkbox .value="1">Unchecked</f-checkbox><br>
-							<f-checkbox .value="2">Checked</f-checkbox><br>
-							<f-checkbox .value="3" .indeterminate>Indeterminate</f-checkbox><br>
-						</f-checkboxgroup>
-					</f-col>
+				<h3>Inputs</h3>
 
+				<f-row style="margin: 8px 0 16px 0;" .gutter="24">
 					<f-col .span="6">
-						<h3>Radios</h3>
-						<f-radiogroup .value="2">
-							<f-radio .value="1">Radio Off</f-radio><br>
-							<f-radio .value="2" .checked>Radio On</f-radio><br>
-						</f-radiogroup>
+						<label>Text Input</label><br>
+						<f-input .type="text" style="width: 100%;" />
 					</f-col>
-
 					<f-col .span="6">
-						<h3>Switchs</h3>
-						<f-switch style="margin-right: 8px;" />Switch Off<br>
-						<f-switch style="margin-right: 8px;" .checked />Switch On<br>
+						<label>With Placeholder</label><br>
+						<f-input .type="text" style="width: 100%;" .placeholder="With Placeholder" />
 					</f-col>
+					</f-col>
+				</f-row>
 
+				<f-row style="margin: 8px 0 16px 0;" .gutter="24">
 					<f-col .span="6">
-						<h3>Tags</h3>
-						<f-tag .closable>Closable Tag</f-tag><br>
-						<f-tag>Normal Tag</f-tag><br>
+						<label>Valid Input</label><br>
+						<f-input .type="text" style="width: 100%;" .touched .valid=${true} .placeholder="Valid Input" />
+					</f-col>
+					<f-col .span="6">
+						<label>Invalid Input</label><br>
+						<f-input .type="text" style="width: 100%;" .touched .valid=${false} .placeholder="Invalid Input" .error="Error Message" />
+					</f-col>
+					<f-col .span="6">
+						<label>Error message in tooltip</label><br>
+						<f-input .type="text" style="width: 100%;" .errorInTooltip .touched .valid=${false} .placeholder="Invalid Input" .error="Error Message" />
 					</f-col>
 				</f-row>
 			</section>
@@ -194,23 +219,30 @@ define('flit-preview', class extends Component {
 			<section>
 				<h3>Form</h3>
 
-				<f-form>
-					<f-row style="margin: 8px 0;" .gutter="24">
+				<f-form :ref="form">
+					<f-row style="margin: 8px 0 24px 0;" .gutter="24">
 						<f-col .span="12">
 							<label required>Name</label><br>
-							<f-input style="width: 100%;" />
+							<f-input style="width: 100%;" .validator=${(value: string) => {
+								if (value.length === 0) {
+									return `The name field is required!`
+								}
+								else if (value.length < 10) {
+									return `The name field should have at least 10 characters!`
+								}
+							}} />
 						</f-col>
 					</f-row>
 
 					<f-row style="margin: 8px 0;" .gutter="24">
 						<f-col .span="6">
 							<label>Country</label><br>
-							<f-input style="width: 100%;" />
+							<f-select style="width: 100%;" .searchable .data=${[{value: '1', text: 'Country 1'}, {value: '2', text: 'Country 2'}]} />
 						</f-col>
 
 						<f-col .span="6">
 							<label>City</label><br>
-							<f-select style="width: 100%;" />
+							<f-select style="width: 100%;" .searchable .data=${[{value: '1', text: 'City 1'}, {value: '2', text: 'City 2'}]} />
 						</f-col>
 					</f-row>
 
@@ -230,7 +262,7 @@ define('flit-preview', class extends Component {
 
 					<f-row style="margin: 16px 0 10px;" .gutter="24">
 						<f-col .span="12" style="text-align: right;">
-							<button primary>Save</button>
+							<button primary @click=${() => (getComponent(this.refs.form as any) as Form).validate()}>Save</button>
 						</f-col>
 					</f-row>
 				</f-form>
@@ -248,7 +280,7 @@ define('flit-preview', class extends Component {
 
 					<f-col .span="6">
 						<header>Multiple Select</header>
-						<f-select style="width: 100%; margin: 8px 0;" .multiple .data=${range(1, 10).map(value => ({value, text: 'Option ' + value}))} .value=${[1, 2]} />
+						<f-select style="width: 100%; margin: 8px 0;" .multipleSelect .data=${range(1, 10).map(value => ({value, text: 'Option ' + value}))} .value=${[1, 2]} />
 					</f-col>
 
 					<f-col .span="6">
@@ -277,6 +309,7 @@ define('flit-preview', class extends Component {
 					<f-col .span="6">
 						<f-progress style="width: 100%;" .value="0" />
 						<f-progress style="width: 100%;" .value="0.5" />
+						<f-progress style="width: 100%;" .value="1" />
 					</f-col>
 				</f-row>
 			</section>
@@ -287,6 +320,7 @@ define('flit-preview', class extends Component {
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<f-slider style="width: 100%;" .value="0" />
+						<f-slider style="height: 100px; margin-top: 20px;" .value="50" .vertical />
 					</f-col>
 				</f-row>
 			</section>
@@ -319,7 +353,7 @@ define('flit-preview', class extends Component {
 				
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
-						<header style="margin-bottom: 8px;">Default</header>
+						<header style="margin-bottom: 8px;">Selection type</header>
 						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} />
 					</f-col>
 
@@ -334,7 +368,7 @@ define('flit-preview', class extends Component {
 					</f-col>
 
 					<f-col .span="6">
-						<header style="margin-bottom: 8px;">Navigation</header>
+						<header style="margin-bottom: 8px;">Navigation Type</header>
 						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .type="navigation" .active=${1} />
 					</f-col>
 				</f-row>
@@ -430,7 +464,7 @@ define('flit-preview', class extends Component {
 							popup(
 								() => html`
 								<f-popover .title="Popover title">
-									Here is the Popover content.
+									This is Popover content.
 								</f-popover>
 								`,
 								{trigger: 'click'}
@@ -444,7 +478,7 @@ define('flit-preview', class extends Component {
 							popup(
 								() => html`
 								<f-popover .title="Popover title" .closable>
-									Here is the Popover content.
+									This is Popover content.
 								</f-popover>
 								`,
 								{trigger: 'click'}
@@ -458,7 +492,7 @@ define('flit-preview', class extends Component {
 							popup(
 								() => html`
 								<f-popover>
-									Here is the Popover content.
+									This is Popover content.
 								</f-popover>
 								`,
 								{trigger: 'click'}
@@ -475,9 +509,9 @@ define('flit-preview', class extends Component {
 									:ref="popupWithActions"
 									.title="Popover title" 
 								>
-									Here is the Popover content.
-									<button slot="action" @click=${() => (getComponent(this.refs.popupWithActions as HTMLElement) as Popover).close()}>Cancel</button>
-									<button slot="action" primary @click=${() => (getComponent(this.refs.popupWithActions as HTMLElement) as Popover).close()}>Save</button>
+									This is Popover content.
+									<button :slot="action" @click=${() => (getComponent(this.refs.popupWithActions as HTMLElement) as Popover).close()}>Cancel</button>
+									<button :slot="action" primary @click=${() => (getComponent(this.refs.popupWithActions as HTMLElement) as Popover).close()}>Save</button>
 								</f-popover>
 								`,
 								{trigger: 'click'}
@@ -500,12 +534,10 @@ define('flit-preview', class extends Component {
 									<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} />
 								</f-menu>
 								`,
-								{
-									trigger: 'click'
-								}
+								{trigger: 'click'}
 							)
 						}>
-							<span>Open Menu</span>
+							<span>Click to Open Menu</span>
 							<f-icon .type="down" />
 						</button>
 					</f-col>
@@ -518,9 +550,7 @@ define('flit-preview', class extends Component {
 									<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .selectable .selected=${[1]} />
 								</f-menu>
 								`,
-								{
-									trigger: 'click'
-								}
+								{trigger: 'click'}
 							)
 						}>
 							<span>Menu with Title</span>
@@ -570,7 +600,7 @@ define('flit-preview', class extends Component {
 						<button @click=${
 							() => notification.info('Info notification content', {title: 'Info Notification'})
 						}>
-							Click to Trigger Notification
+							Show Info Notification
 						</button>
 					</f-col>
 
@@ -579,7 +609,7 @@ define('flit-preview', class extends Component {
 						<button @click=${
 							() => notification.warn('Warning notification content', {title: 'Warning Notification'})
 						}>
-							Click to Trigger Notification
+							Show Warn Notification
 						</button>
 					</f-col>
 					
@@ -588,7 +618,7 @@ define('flit-preview', class extends Component {
 						<button @click=${
 							() => notification.error('Error notification content', {title: 'Error Notification'})
 						}>
-							Click to Trigger Notification
+							Show Error Notification
 						</button>
 					</f-col>
 
@@ -597,7 +627,7 @@ define('flit-preview', class extends Component {
 						<button @click=${
 							() => notification.success('Success notification content', {title: 'Success Notification'})
 						}>
-							Click to Trigger Notification
+							Show Success Notification
 						</button>
 					</f-col>
 				</f-row>
@@ -606,9 +636,11 @@ define('flit-preview', class extends Component {
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Without Title</header>
 						<button @click=${
-							() => notification.success('Success notification content')
+							() => notification.success('Success notification content', {
+								title: 'Success Notification',
+							})
 						}>
-							Click to Trigger Notification
+							Show Notification with title
 						</button>
 					</f-col>
 
@@ -620,7 +652,7 @@ define('flit-preview', class extends Component {
 								list: ['List Item 1', 'List Item 2']
 							})
 						}>
-							Click to Trigger Notification
+							Show Notification with List
 						</button>
 					</f-col>
 
@@ -632,7 +664,7 @@ define('flit-preview', class extends Component {
 								actions: [{text: 'Try Again'}]
 							})
 						}>
-							Click to Trigger Notification
+							Show Notification with Actions
 						</button>
 					</f-col>
 
@@ -641,7 +673,7 @@ define('flit-preview', class extends Component {
 
 
 			<section>
-				<h3>Dialog</h3>
+				<h3>Dialogs</h3>
 
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
@@ -649,7 +681,7 @@ define('flit-preview', class extends Component {
 						<button @click=${
 							() => dialog.show('This is dialog message.')
 						}>
-							Click to Open Dialog
+							Open Default Dialog
 						</button>
 					</f-col>
 
@@ -658,7 +690,7 @@ define('flit-preview', class extends Component {
 						<button @click=${
 							() => dialog.show('This is dialog message.', {title: 'Dialog Title'})
 						}>
-							Click to Open Dialog
+							Open Dialog with Title
 						</button>
 					</f-col>
 
@@ -667,23 +699,27 @@ define('flit-preview', class extends Component {
 						<button @click=${
 							() => dialog.confirm('Are you sure you want to delete these items?', {title: 'Dialog Title'})
 						}>
-							Click to Open Dialog
+							Open Confirm Dialog
 						</button>
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Prompt</header>
 						<button @click=${
-							() => dialog.prompt('Please input the name of your account:', {title: 'Dialog Title', placeholder: "Name of your account"})
+							() => dialog.prompt('Please input the name of your account:', {
+								title: 'Dialog Title',
+								placeholder: 'Name of your account',
+								validator: (value: string) => {if (!value) {return 'Name is required'} else {return null}}
+							})
 						}>
-							Click to Open Dialog
+							Open Prompt Dialog
 						</button>
 					</f-col>
 				</f-row>
 				
 				<f-row style="margin: 32px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
-						<header style="margin-bottom: 8px;">With Third actions</header>
+						<header style="margin-bottom: 8px;">With Third action</header>
 						<button @click=${
 							() => dialog.confirm('You have unsaved data, are you sure you want to save your changes?', {
 								title: 'Dialog Title',
@@ -694,7 +730,7 @@ define('flit-preview', class extends Component {
 								]
 							})
 						}>
-							Click to Open Dialog
+							Open Dialog with Third Action
 						</button>
 					</f-col>
 					
@@ -702,26 +738,32 @@ define('flit-preview', class extends Component {
 						<header style="margin-bottom: 8px;">Customize</header>
 						<button @click=${
 							() => {
+								let input: Input
 
 								dialog.show(
 									html`
 										Please input the name of your account:
-										<f-input style="margin-top: 8px; width: 100%;" .placeholder="Name of your account"
-											.validator=${(v: string) => v ? '' : 'Name is required'}
+										<f-input style="margin-top: 8px; width: 100%;"
+											.placeholder="Name of your account"
+											.validator=${(v: string) => v ? '' : 'Name field is required'}
+											.errorInTooltip
+											:ref=${async (el: HTMLElement) => input = await getComponentAsync(el) as Input}
 										/>
-										<f-checkbox .checked style="margin-top: 16px;">Remember Me</f-checkbox>
+										<f-checkbox .checked style="margin-top: 8px;">Remember Me</f-checkbox>
 									`,
-									{title: 'Dialog Title'}
+									{
+										title: 'Dialog Title',
+										interruptAction: () => !input.valid
+									}
 								)
 							}
 						}>
-							Click to Open Dialog
+							Open Custom Dialog
 						</button>
 					</f-col>
 				</f-row>
 
 			</section>
-
 
 
 			<section>
@@ -734,13 +776,13 @@ define('flit-preview', class extends Component {
 						<button @click="${() => {
 							let modal = getRenderedAsComponent(render(html`
 								<f-modal style="width: ${theme.adjust(360)}px;" .title="Modal Title">
-									Here is the modal content
+									This is modal content
 								</f-modal>
 							`)) as Modal
 
 							modal.show()
 						}}">
-							Click to Open Modal
+							Open Modal
 						</button>
 					</f-col>
 
@@ -750,22 +792,22 @@ define('flit-preview', class extends Component {
 						<button @click="${() => {
 							let modal = getRenderedAsComponent(render(html`
 								<f-modal style="width: ${theme.adjust(360)}px;" .title="Modal Title">
-									Here is the modal content
-									<button slot="action" @click=${() => modal.hide()}>Cancel</button>
-									<button slot="action" primary @click=${() => modal.hide()}>Save</button>
+									This is modal content
+									<button :slot="action" @click=${() => modal.hide()}>Cancel</button>
+									<button :slot="action" primary @click=${() => modal.hide()}>Save</button>
 								</f-modal>
 							`)) as Modal
 
 							modal.show()
 						}}">
-							Click to Open Modal
+							Open Modal with Actions
 						</button>
 					</f-col>
 				</f-row>
 
 			</section>
-
-
+			
+			<!--
 			<section>
 				<h3>Table</h3>
 
@@ -836,7 +878,7 @@ define('flit-preview', class extends Component {
 						}
 					] as Column[]}
 				/>
-			</section>
+			</section> -->
 
 
 			<section>
@@ -877,7 +919,7 @@ define('flit-preview', class extends Component {
 						<div style="width: 100px; margin: 4px;" :style.background=${theme.backgroundColor.toMiddle(15)} ${draggable(data, index)}>${data}</div>
 					`)}
 				</div>
-			</section> -->
+			</section>
 
 		</div>
 	`}
@@ -904,6 +946,7 @@ define('f-main-color-select', class extends Select<string> {
 		{value: '#f67d51', text: html`<div style="color: #f67d51;">Orange</div>`},
 		{value: '#15af78', text: html`<div style="color: #15af78;">Green</div>`},
 		{value: '#888888', text: html`<div style="color: #888888;">Grey</div>`},
+		{value: '#000000', text: html`<div style="color: #000000;">Black</div>`},
 	]
 
 	onReady() {

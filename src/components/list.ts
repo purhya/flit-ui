@@ -5,31 +5,50 @@ import {tooltip} from '../bindings/tooltip'
 
 
 export interface ListItem<T = any> {
+
+	/** Unique value to identify current item. */
 	value?: T
 
-	/** Should not set background-color if is a TemplateResult. */
-	text: string | number | TemplateResult
+	/** List item content, can be a template result. */
+	text: string | TemplateResult
 
-	/** Set pop-up tooltip when hover. */
+	/** 
+	 * Text for searching, especially when `text` is a `TemplateResult` and can't do searching.
+	 * Should be in lowercase type.
+	 */
+	searchText?: string
+
+	/** Shows as tooltip content when mouse hover. */
 	tip?: string | TemplateResult
 
+	/** List item icon type. */
 	icon?: string
 
-	/** To render subsection. */
+	/** To render subsection list. */
 	children?: ListItem<T>[]
 
-	/** Note that the List component will change this property just in this object. */
+	/** Whether current list is opened. */
 	opened?: boolean
 }
 
 export interface ListEvents<T> {
+
+	/** Triggers after selected items changed. */
 	select: (selected: T[]) => void
+
+	/** Triggers after nagivated item changed. */
 	navigate: (navigated: T) => void
+
+	/** Triggers after clicking list item. */
 	click: (clicked: T) => void
 }
 
 
-/** List shouldn't have many levels, it doesn't have overflow setting like Tree. */
+/** 
+ * `<f-list>` will render data items to a list,
+ * and provide single or multiple selection.
+ * It shouldn't include too many levels, since it doesn't have overflow setting like `f-tree`.
+ */
 @define('f-list')
 export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
@@ -116,26 +135,65 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 			.subsection{
 				padding-top: 0;
+			}
+
+			.subsection:not(:last-child){
 				padding-bottom: ${adjust(3)}px;
 				margin-bottom: ${adjust(3)}px;
 				border-bottom: 1px solid ${borderColor.alpha(0.4)};
+			}
+
+			.subsection:last-child{
+				padding-bottom: 0;
+				margin-bottom: 0;
 			}
 		}
 		`
 	}
 
+	/** List type:
+	 * `selection`: provide single item or multiple items selection with a checkbox icon.
+	 * `navigation`: provide single item navigation with a vertical line icon.
+	 * Default value is `selection`.
+	 */
 	type: 'selection' | 'navigation' = 'selection'
+
+	/** 
+	 * Whether each items selectable, only for type `selection`.
+	 * Default value is `false`.
+	 */
 	selectable: boolean = false
+
+	/** 
+	 * Whether can select multiple items, only for type `selection`.
+	 * Default value is `false`.
+	 */
 	multipleSelect: boolean = false
+
+	/** Input data list. */
 	data: ListItem<T>[] = []
+
+	/** Indicates current select values. */
 	selected: T[] = []
+
+	/** 
+	 * Unique active value for `navigation` type.
+	 * If this value set when initializing, will make the associated item visible.
+	 * Otherwise you can call `ensureActiveItemVisible()` to do same thing.
+	 */
 	active: T | null = null
 
-	protected render() {
-		return html`${this.renderDataOrChildren(this.data)}`
+	protected onCreated() {
+		if (this.active) {
+			this.ensureActiveItemVisible()
+		}
 	}
 
-	protected renderDataOrChildren(items: ListItem<T>[]): DirectiveResult {
+	protected render() {
+		return html`${this.renderOptions(this.data)}`
+	}
+
+	protected renderOptions(items: ListItem<T>[]): DirectiveResult {
 		let siblingsHaveIcon = items.some(item => item.icon)
 		let siblingsHaveChildren = items.some(item => item.children)
 		let options = repeat(items, item => this.renderOption(item, siblingsHaveIcon, siblingsHaveChildren))
@@ -145,7 +203,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 	protected renderOption(item: ListItem<T>, siblingsHaveIcon: boolean, siblingsHaveChildren: boolean) {
 		let subsection = item.children && item.opened ? html`
-			<div class="subsection">${this.renderDataOrChildren(item.children)}</div>
+			<div class="subsection">${this.renderOptions(item.children)}</div>
 		` : null
 
 		let tip = item.tip ? tooltip(item.tip) : null
@@ -159,7 +217,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 		>
 			${item.children ? html`
-				<div class='toggle' @click.stop=${() => this.toggle(item)}>
+				<div class='toggle' @click.stop=${() => this.toggleOpened(item)}>
 					<f-icon .type=${item.opened ? 'triangle-down' : 'triangle-right'} />
 				</div>
 			` : siblingsHaveChildren ? html`
@@ -179,7 +237,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 			${this.isSelected(item) ? html`<f-icon class="selected-icon" .type="checked" />` : ''}
 		</div>
 
-		${toggle(subsection, {properties: ['height', 'opacity']})}
+		${toggle(subsection, {properties: ['height', 'marginBottom', 'paddingBottom', 'opacity']})}
 		`
 	}
 
@@ -227,15 +285,9 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		}
 	}
 
-	protected toggle(item: ListItem<T>) {
+	protected toggleOpened(item: ListItem<T>) {
 		if (item.children) {
 			item.opened = !item.opened
-		}
-	}
-
-	protected onCreated() {
-		if (this.active) {
-			this.ensureActiveItemVisible()
 		}
 	}
 

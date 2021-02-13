@@ -3,22 +3,32 @@ import {LoaderSize} from '../components/loader'
 
 
 export interface LoadingOptions {
+
+	/** Loader size, 'small' | 'medium' | 'large'. */
 	size?: LoaderSize
+
+	/** Transition when begin to show or hide loading cover. */
 	transition?: TransitionOptions
 }
 
 
-const defaultLoadingOptions: LoadingOptions = {
+const DefaultLoadingOptions: Required<LoadingOptions> = {
 	size: 'medium',
 	transition: {name: 'fade'},
 }
 
 
+/** 
+ * A `:loading` binding will show a loader and cover current element.
+ * 
+ * `:loading=${isLoading}`
+ */
 export class LoadingBinging implements Binding<boolean> {
 
-	protected el: Element
+	protected readonly el: Element
+	protected readonly options: UpdatableOptions<LoadingOptions> = new UpdatableOptions(DefaultLoadingOptions)
+
 	protected value: boolean = false
-	protected options: UpdatableOptions<LoadingOptions> = new UpdatableOptions(defaultLoadingOptions)
 	protected cover: HTMLElement | null = null
 
 	constructor(el: Element) {
@@ -66,4 +76,9 @@ export class LoadingBinging implements Binding<boolean> {
 	}
 }
 
+/** 
+ * Shows a loader and cover current element.
+ * @param value Whether shows loader.
+ * @param options Options, `{size: small | medium | large, transition: {...}}`.
+ */
 export const loading = defineBinding('loading', LoadingBinging) as (value: boolean, options?: LoadingOptions) => void

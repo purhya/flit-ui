@@ -3,16 +3,21 @@ import {theme} from '../style/theme'
 
 
 interface SearchEvents {
+
+	/** Triggers after search value changed. */
 	change: (value: string) => void
 }
 
 
-/** Now only a input, will extend to list suggestted local or remote data in future. */
+/** 
+ * `<f-search>` can be inputted text to do searching.
+ * Now only a input, will extend to list suggestted local or remote data in future.
+ */
 @define('f-search')
 export class Search<E = any> extends Component<SearchEvents & E> {
 
 	static style() {
-		let {adjust, borderColor, borderRadius, mainColor, focusBlurRadius} = theme
+		let {adjust, borderColor, borderRadius, mainColor, focusBlurRadius, lineHeight} = theme
 
 		return css`
 		:host{
@@ -26,7 +31,8 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 			border: none;
 			background: none;
 			height: ${adjust(28)}px;
-			padding: 0 ${adjust(26)}px 0 ${adjust(26)}px;
+			padding: 0 ${adjust(lineHeight - 2)}px 0 ${adjust(lineHeight - 2)}px;
+			line-height: ${lineHeight - 2}px;
 			border: 1px solid ${borderColor};
 			border-radius: ${borderRadius}px;
 			
@@ -69,10 +75,20 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 		`
 	}
 
-	placeholder: string = ''
-	value: string = ''
+	refs!: {
 
+		/** Search input element. */
+		input: HTMLElement
+	}
+
+	/** Whether search input get focus. */
 	protected focused: boolean = false
+
+	/** Search input placeholder. */
+	placeholder: string = ''
+
+	/** Current inputted value. */
+	value: string = ''
 
 	protected render() {
 		return html`
@@ -86,10 +102,14 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 				@change=${(e: InputEvent) => this.onChange(e)}
 			/>
 
-			${this.value && !this.focused ? html`
-			<div class="clear" @click=${this.clear}>
-				<f-icon class="close-icon" .type="close" />
-			</div>` : ''}
+			${
+				this.value && !this.focused
+				? html`
+				<div class="clear" @click=${this.clear}>
+					<f-icon class="close-icon" .type="close" />
+				</div>`
+				: ''
+			}
 		`
 	}
 

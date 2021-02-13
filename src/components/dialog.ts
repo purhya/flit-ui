@@ -1,45 +1,76 @@
-import {css, define, html, renderComplete, show, Component, TemplateResult, on, off, render, getRenderedAsComponent} from '@pucelle/flit'
+import {css, define, html, renderComplete, show, Component, TemplateResult, on, off, render, getRenderedAsComponent, getComponentAsync} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {align, debounce} from '@pucelle/ff'
 import {appendTo} from '../utils/element'
+import {translations} from '../translations/translations'
+import {Input} from './input'
 
 
 export interface DialogOptions {
+
+	/** Dialog icon in left side. */
 	icon?: string
+
+	/** Dialog title. */
 	title?: string
+
+	/** Dialog message. */
 	message?: string | TemplateResult
+
+	/** Dialog actions. */
 	actions?: DialogAction[]
+
+	/** Dialog list. */
 	list?: string[]
+
+	/** Returns `true` to interrupt action. */
+	interruptAction?: (button: string) => boolean
 }
 
 export interface DialogAction {
-	/** Used at Dialog to know which action button clicked */
+
+	/** Indicates current action and to know which action button clicked. */
 	value?: string
 
 	/** Button text. */
 	text: string
 
-	/** Button of action becomes primary if set this to true. */
+	/** Button of action becomes primary if set to `true`. */
 	primary?: boolean
 
 	/** Button of third action will be put left, only one third action is allowed. */
 	third?: boolean
 
-	/** To process after clicked the action button. */
+	/** Calls after clicked the action button. */
 	handler?: () => void
 }
 
 interface DialogItem {
+
+	/** Current dialog options. */
 	options: DialogOptions
+
+	/** Resolved after any action button clicked. */
 	resolve: (value: string | undefined) => void
 }
 
 export interface PromptDialogOptions extends DialogOptions {
+
+	/** Prompt input placeholder. */
 	placeholder?: string
-	value?: string | number
+
+	/** Default input value. */
+	defaultValue?: string | number
+
+	/** Input type, same with `<input type=...>`. */
+	inputType?: 'text' | 'password'
+
+	/** To validate current value, returns an error message or `null` if passes. */
+	validator?: (value: string) => string | undefined
 }
 
 
+/** `<f-dialog>` shows critical content and in a overlay modal, you must interact with it before continue. */
 @define('f-dialog')
 export class Dialog<E = any> extends Component<E> {
 	
@@ -48,7 +79,7 @@ export class Dialog<E = any> extends Component<E> {
 
 		return css`
 		:host{
-			z-index: 1100;	// Higher that modal, popup, tooltip
+			z-index: 1000;
 			width: ${adjust(360)}px;
 			position: fixed;
 			border-radius: ${popupBorderRadius}px;
@@ -127,24 +158,30 @@ export class Dialog<E = any> extends Component<E> {
 		}
 
 		.input{
-			margin-top: 8px;
+			margin-top: ${adjust(8)}px;
+			margin-bottom: ${adjust(22)}px;
 			width: 100%;
 		}
 		`
 	}
 
-	appendTo: string | Element | null = 'body'
-
-	protected options: DialogOptions | null = null
+	/** Options for current dialog. */
+	protected currentOptions: DialogOptions | null = null
 
 	/** Also as a marker to know if current options are expired. */
 	protected resolve: ((value: string | undefined) => void) | null = null
 
+	/** Dialog stack, will show one by one. */
 	protected stack: DialogItem[] = []
+
+	/** Whether any dialog opened. */
 	protected opened: boolean = true
 
+	/** Where to append current dialog. */
+	appendTo: string | Element | null = 'body'
+
 	protected render() {
-		let options = this.options
+		let options = this.currentOptions
 		if (!options) {
 			return ''
 		}
@@ -207,6 +244,11 @@ export class Dialog<E = any> extends Component<E> {
 	}
 
 	protected onClickActionButton(action: DialogAction) {
+		// Interrupted.
+		if (this.currentOptions?.interruptAction?.(action.value ?? '')) {
+			return
+		}
+
 		if (this.resolve) {
 			this.resolve(action.value)
 			this.resolve = null
@@ -214,21 +256,10 @@ export class Dialog<E = any> extends Component<E> {
 
 		if (this.stack.length > 0) {
 			let item = this.stack.shift()!
-			this.assignOptions(item.options, item.resolve)
+			this.applyOptions(item.options, item.resolve)
 		}
 		else {
 			this.hide()
-		}
-	}
-
-	triggerAction(value: string) {
-		if (!this.options || !this.options.actions) {
-			return
-		}
-
-		let action = this.options.actions.find(action => action.value === value)
-		if (action) {
-			this.onClickActionButton(action)
 		}
 	}
 
@@ -277,23 +308,13 @@ export class Dialog<E = any> extends Component<E> {
 		align(this.el, document.documentElement, 'c')
 	}
 
-	show() {
-		this.opened = true
-
-		if (this.appendTo) {
-			appendTo(this.el, this.appendTo)
-		}
-	}
-
-	hide() {
-		this.opened = false
-	}
-
-	protected assignOptions(options: DialogOptions, resolve: (value: string | undefined) => void) {
-		this.options = options
+	/** Apply options as current options. */
+	protected applyOptions(options: DialogOptions, resolve: (value: string | undefined) => void) {
+		this.currentOptions = options
 		this.resolve = resolve
 	}
 
+	/** Add an option to stack. */
 	async addOptions(options: DialogOptions): Promise<string | undefined> {
 		let resolve: (value: string | undefined) => void
 
@@ -308,11 +329,37 @@ export class Dialog<E = any> extends Component<E> {
 			})
 		}
 		else {
-			this.assignOptions(options, resolve!)
+			this.applyOptions(options, resolve!)
 			this.show()
 		}
 
 		return promise 
+	}
+
+	/** Show current dialog. */
+	show() {
+		this.opened = true
+
+		if (this.appendTo) {
+			appendTo(this.el, this.appendTo)
+		}
+	}
+
+	/** Hide current dialog. */
+	hide() {
+		this.opened = false
+	}
+
+	/** Trigger specified action manually. */
+	triggerAction(value: string) {
+		if (!this.currentOptions || !this.currentOptions.actions) {
+			return
+		}
+
+		let action = this.currentOptions.actions.find(action => action.value === value)
+		if (action) {
+			this.onClickActionButton(action)
+		}
 	}
 }
 
@@ -320,13 +367,6 @@ export class Dialog<E = any> extends Component<E> {
 export class QuickDialog {
 
 	protected dialogComponent: Dialog | null = null
-
-	protected actionLabels: Record<string, string> = {
-		ok: 'OK',
-		cancel: 'Cancel',
-		yes: 'Yes',
-		no: 'No'
-	}
 
 	protected addOptions(options: DialogOptions) {
 		if (!this.dialogComponent) {
@@ -336,50 +376,57 @@ export class QuickDialog {
 		return this.dialogComponent.addOptions(options)
 	}
 
-	setLabels(labels: Record<string, string>) {
-		Object.assign(this.actionLabels, labels)
-	}
-	
 	/** Show default type dialog or add it to dialog stack. */
 	show(message: string | TemplateResult, options: DialogOptions = {}): Promise<string | undefined> {
-		return this.addOptions(Object.assign({
+		return this.addOptions({
 			message,
-			actions: [{value: 'ok', text: this.actionLabels.ok}],
-		}, options))
+			actions: [{value: 'ok', text: translations.get('ok')}],
+			...options,
+		})
 	}
 
 	/** Show confirm type dialog or add it to dialog stack. */
 	confirm(message: string | TemplateResult, options: DialogOptions = {}): Promise<string | undefined> {
-		return this.addOptions(Object.assign({
+		return this.addOptions({
 			icon: 'confirm',
 			message,
 			actions: [
-				{value: 'cancel', text: this.actionLabels.cancel},
-				{value: 'ok', text: this.actionLabels.ok, primary: true},
+				{value: 'cancel', text: translations.get('cancel')},
+				{value: 'ok', text: translations.get('ok'), primary: true},
 			],
-		}, options))
+			... options,
+		})
 	}
 
 	/** Show prompt type dialog or add it to dialog stack. */
 	async prompt(message: string | TemplateResult, options: PromptDialogOptions = {}): Promise<string | undefined> {
-		let value = options.value ? String(options.value) : ''
+		let value = options.defaultValue ? String(options.defaultValue) : ''
+		let input: Input
+		let originalInterruptAction = options.interruptAction
 
 		let messageWithInput = html`
 			${message}
 			<f-input class="input" 
 				.placeholder=${options.placeholder}
+				.validator=${options.validator}
+				.type=${options.inputType || 'text'}
+				:ref=${async (i: HTMLElement) => input = await getComponentAsync(i) as Input}
 				@@input=${(v: string) => value = v}
 				@keydown.enter=${() => this.dialogComponent!.triggerAction('ok')}
 			/>
 		`
 
-		let btn = await this.addOptions(Object.assign({
+		let btn = await this.addOptions({
 			message: messageWithInput,
 			actions: [
-				{value: 'cancel', text: this.actionLabels.cancel},
-				{value: 'ok', text: this.actionLabels.ok, primary: true},
+				{value: 'cancel', text: translations.get('cancel')},
+				{value: 'ok', text: translations.get('ok'), primary: true},
 			],
-		}, options))
+			...options,
+			interruptAction: (button: string) => {
+				return originalInterruptAction?.(button) || button === 'ok' && !input.valid
+			},
+		})
 
 		if (btn === 'ok') {
 			return value
@@ -390,4 +437,5 @@ export class QuickDialog {
 }
 
 
+/** A quick global API to show dialogs. */
 export const dialog = new QuickDialog()

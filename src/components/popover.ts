@@ -2,9 +2,13 @@ import {css, define, html} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Popup} from './popup'
 import {PopupOptions} from '../bindings/popup'
-HTMLMediaElement
 
-// Compare to `<popup>`, it can set title and actions.
+
+/** 
+ * `<f-popover>` shows content message in a popup beside it's trigger element.
+ * 
+ * `:slot=action` - Add action buttons and show them at head.
+ */
 @define('f-popover')
 export class Popover<E = any> extends Popup<E> {
 
@@ -69,25 +73,31 @@ export class Popover<E = any> extends Popup<E> {
 			}
 		}
 
-		.content{}
+		.content{
+			line-height: ${adjust(20)}px;
+			padding: ${adjust(4)}px 0;
+		}
 		`.extends(super.style())
 	}
 
+	/** Popover title. */
 	title: string = ''
+
+	/** Whether shows a close icon to quickly close current popover. */
 	closable: boolean = false
 
 	defaultPopupOptions: PopupOptions = {
-		// `trigger` not work here because when handle it, current component is not created.
+		// `trigger` not work here because when need to handle trigger, current component is not created.
 		alignPosition: 'bc',
 		fixTriangle: true,
 	}
 
 	protected render() {
 		return html`
-		<f-popup>	
+		<template>	
 			${this.renderHead()}
 			<div class="content"><slot /></div>
-		</f-popup>
+		</template>
 		`.extends(super.render())
 	}
 

@@ -4,6 +4,7 @@ import {toPower} from '@pucelle/ff'
 /** Class to process colors. */
 export class Color {
 
+	/** Color from rgba values. */
 	static fromRGBA(r: number, g: number, b: number, a: number): Color {
 		r = Math.max(Math.min(r, 1), 0)
 		g = Math.max(Math.min(g, 1), 0)
@@ -29,12 +30,15 @@ export class Color {
 		}
 	}
 
+	/** Color from rgb values. */
 	static fromRGB(r: number, g: number, b: number): Color {
 		return Color.fromRGBA(r, g, b, 1)
 	}
 
-	private value: string
+	/** Current css color values. */
+	private readonly value: string
 
+	/** `value` is a css color values. */
 	constructor(value: string) {
 		this.value = value.trim()
 	}
@@ -43,7 +47,7 @@ export class Color {
 		return this.value
 	}
 
-	/** Get [r, g, b, a], all betweens 0 ~ 1. */
+	/** Get [r, g, b, a] values, all betweens 0 ~ 1. */
 	getRGBA(): [number, number, number, number] {
 		if (/^#[0-9a-fA-F]{3,6}$/.test(this.value)) {
 			return [...this.parseNormalColor(this.value), 1] as [number, number, number, number]
@@ -77,7 +81,7 @@ export class Color {
 		throw new Error(`"${this.value}" is not a valid RGB color`)
 	}
 
-	/** Get [r, g, b], all betweens 0 ~ 1. */
+	/** Get [r, g, b] values, all betweens 0 ~ 1. */
 	getRGB(): [number, number, number] {
 		return this.getRGBA().slice(0, 3) as [number, number, number]
 	}
@@ -116,10 +120,7 @@ export class Color {
 		return Color.fromRGBA(r, g, b, a)
 	}
 
-	/** 
-	 * Darken if is a light color, otherwise lighten.
-	 * Which also means move color to middle.
-	 */
+	/** Move color to middle color, darken if is a light color, otherwise lighten. */
 	toMiddle(percentage: number) {
 		if (this.getLightness() < 0.5) {
 			return this.lighten(percentage)
@@ -129,13 +130,22 @@ export class Color {
 		}
 	}
 
-	/** Returns lightless value of current color, betweens 0 ~ 1. */
+	/** Returns lightness value of current color, betweens 0 ~ 1. */
 	getLightness() {
 		let [r, g, b] = this.getRGBA()
 		return r * 0.299 + g * 0.587 + b * 0.114
 	}
 
-	/** Change alpha channel of current color to value betweens 0-1. */
+	/** Returns average rgb value of current color, betweens 0 ~ 1. */
+	getAverage() {
+		let [r, g, b] = this.getRGBA()
+		return (r + g + b) / 3
+	}
+
+	/** 
+	 * Change alpha channel of current color and returns a new color.
+	 * alpha value `a` is betweens 0-1.
+	 */
 	alpha(a: number): Color {
 		let [r, g, b] = this.getRGBA()
 		return Color.fromRGBA(r, g, b, a)

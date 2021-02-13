@@ -4,9 +4,17 @@ import {Popup} from '../components/popup'
 import {Color} from '../style/color'
 
 
+/** 
+ * Tooltip type:
+ * 
+ * `default`: when mouse hover to trigger.
+ * `prompt`: shows be default and can be closed.
+ * `error`: always show if having error.
+ */
 export type TooltipType = 'default' | 'prompt' | 'error'
 
 
+/** `<f-tooltip>` shows a short text message beside it's trigger element. */
 @define('f-tooltip')
 export class Tooltip<E = any> extends Popup<E> {
 
@@ -79,6 +87,13 @@ export class Tooltip<E = any> extends Popup<E> {
 		`.extends(super.style())
 	}
 
+	/** 
+	 * Tooltip type:
+	 * 
+	 * `default`: when mouse hover to trigger.
+	 * `prompt`: shows be default and can be closed.
+	 * `error`: always show if having error.
+	 */
 	type: TooltipType = 'default'
 
 	protected render() {

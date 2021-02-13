@@ -4,7 +4,7 @@ import {Popup} from './popup'
 import {PopupOptions} from '../bindings/popup'
 
 
-// Compare to `<popover>`, it can set title too,but contains a List.
+/** `<f-menu>` shows a menu with a list beside it's trigger element. */
 @define('f-menu')
 export class Menu<E = any> extends Popup<E> {
 
@@ -49,10 +49,11 @@ export class Menu<E = any> extends Popup<E> {
 		`.extends(super.style())
 	}
 
+	/** Menu title. */
 	title: string = ''
 
 	defaultPopupOptions: PopupOptions = {
-		// `trigger` not work here because when handle it, current component is not created.
+		// `trigger` not work here because when need to handle trigger, current component is not created.
 		alignPosition: 'bc',
 		fixTriangle: true,
 	}

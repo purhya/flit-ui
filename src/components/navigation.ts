@@ -3,6 +3,7 @@ import {List} from './list'
 import {theme} from '../style/theme'
 
 
+/** `<f-navigation>` can navigate to different pages within a navigation tree. */
 @define('f-navigation')
 export class Navigation<T> extends List<T> {
 
@@ -27,7 +28,10 @@ export class Navigation<T> extends List<T> {
 		`.extends(super.style())
 	}
 
+	/** Type, always be `navigation`. */
 	type: 'selection' | 'navigation' = 'navigation'
+
+	/** Navigation title. */
 	title: string = ''
 
 	render() {
@@ -38,7 +42,7 @@ export class Navigation<T> extends List<T> {
 				${this.title}
 			</div>` : ''}
 
-			${this.renderDataOrChildren(this.data)}
+			${this.renderOptions(this.data)}
 		</tempalte>`
 	}
 }

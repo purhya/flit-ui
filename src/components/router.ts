@@ -1,14 +1,15 @@
 import {define, Component, TemplateResult, on, off} from '@pucelle/flit'
 
 
-export type RouteRenderResult = (match: RouteMatch) => (string | TemplateResult)
+/** Match parameters by matching current path with router. */
+export interface RouteMatchResult {
 
-export interface RouteMatch {
-	params: RouteParams
+	/** Router parameters, router `/user/:id` match `/user:12345` will get `{id: 12345}`. */
+	params: Record<string, string>
+
+	/** Router catprues, router `/\/user\/(\d+)/` match `/user:12345` will get `[12345]`. */
 	captures: string[]
 }
-
-export type RouteParams = Record<string, string>
 
 export interface RouteOptions {
 	title?: string
@@ -19,6 +20,18 @@ export interface RouterEvents {
 }
 
 
+/** 
+ * `<f-router>` can be used as a top container to contains everything that should be routed, 
+ * Which means choose to be rendered depends on whether current path match.
+ * 
+ * ```ts
+ * render() {
+ *     this.route('/user:id', ({id}) => {
+ *         return html`User Id: ${id}`
+ *     })
+ * }
+ * ```
+ */
 @define('f-router')
 export class Router<E = any> extends Component<RouterEvents & E> {
 
@@ -54,46 +67,63 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 		}
 	}
 
-	route(routePath: string | RegExp, renderFn: RouteRenderResult, options: RouteOptions = {}): TemplateResult | string {
+	/** 
+	 * Used in a `render()` function, render it if route path match.
+	 * `renderFn` recvives `{id: 12345}` for router path `/user/:id`.
+	 */
+	route(routePath: string, renderFn: (params: Record<string, string>) => string | TemplateResult, options?: RouteOptions): string | TemplateResult
+	
+	/** 
+	 * Used in a `render()` function, render it if route path match.
+	 * `renderFn` recvives `[12345]` for router path `/\/user\/(\d+)/`.
+	 */
+	route(routePath: RegExp, renderFn: (captures: string[]) => string | TemplateResult, options?: RouteOptions): string | TemplateResult
+
+	route(routePath: string | RegExp, renderFn: any, options: RouteOptions = {}): string | TemplateResult {
 		if (this.isMatch(routePath)) {
 			if (options.title) {
 				document.title = options.title
 			}
 
-			let params = this.match(routePath)
+			let result = this.matchPath(routePath)
 
-			let match: RouteMatch = {
-				params: params?.params || {},
-				captures: params?.captures || []
+			if (routePath instanceof RegExp) {
+				return renderFn(result?.captures)
 			}
-
-			return renderFn(match)
+			else {
+				return renderFn(result?.params)
+			}
 		}
 		else {
 			return ''
 		}
 	}
 
+	/** Returns whether current path matches router path. */
 	isMatch(routePath: string | RegExp): boolean {
 		return PathParser.isMatch(this.path, routePath)
 	}
 
-	match(routePath: string | RegExp) {
+	/** Match current path with router path, returns match parameters and captures. */
+	protected matchPath(routePath: string | RegExp) {
 		return PathParser.matchPath(this.path, routePath)
 	}
 
+	/** Goto a new path and update render result, add a history state. */
 	goto(path: string) {
 		this.path = path
 		let uri = this.getURIFromPath(path)
 		history.pushState({path}, '', uri)
 	}
 
+	/** Redirect to a new path and update render result, replace current history state. */
 	redirectTo(path: string) {
 		this.path = path
 		let uri = this.getURIFromPath(path)
 		history.replaceState({path}, '', uri)
 	}
 
+	/** Get whole url. */
 	private getURIFromPath(path: string): string {
 		if (!path) {
 			path = '/'
@@ -134,7 +164,7 @@ namespace PathParser {
 	}
 
 	export function matchPath(path: string, routePath: string | RegExp) {
-		let params: RouteParams = {}
+		let params: Record<string, string> = {}
 		let captures: string[] = []
 
 		if (typeof routePath === 'string') {
@@ -162,7 +192,7 @@ namespace PathParser {
 
 		return {
 			params,
-			captures
+			captures,
 		}
 	}
 
