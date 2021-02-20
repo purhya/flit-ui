@@ -2,7 +2,7 @@ import {css, define, html, on, once, Component, off, render} from '@pucelle/flit
 import {constrain, getStyleValue} from '@pucelle/ff'
 
 
-export interface ResizerEvents {
+interface ResizerEvents {
 
 	/** Triggers after every time resizing. */
 	resize: (size: number) => void
@@ -97,7 +97,7 @@ export class Resizer<E = any> extends Component<E & ResizerEvents> {
 		<template
 			:class=${this.position}
 			@mousedown=${this.onStartResize}
-		/>
+		></template>
 		`
 	}
 
@@ -125,8 +125,8 @@ export class Resizer<E = any> extends Component<E & ResizerEvents> {
 		}
 
 		let cursorMask = render(html`
-			<div class="resizing-mask" class="${this.position === 'left' || this.position === 'right' ? 'herizontal' : 'vertical'}"
-		/>`, this).getFirstElement() as HTMLElement
+			<div class="resizing-mask" class="${this.position === 'left' || this.position === 'right' ? 'herizontal' : 'vertical'}" />
+		`, this).getFirstElement() as HTMLElement
 
 		document.body.append(cursorMask)
 

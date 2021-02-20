@@ -1,0 +1,136 @@
+import {CanSortKeys, EventEmitter} from '@pucelle/ff'
+import {LiveAsyncRepeatDataOptions} from '@pucelle/flit'
+import {PageDataCacher} from './helpers/page-data-cacher'
+
+
+export interface RemoteStoreEvents {
+
+	/** Triggers after data changed. */
+	dataChange: () => void
+}
+
+
+export interface RemoteStoreOptions {
+
+	/** Data item count in one page, dedided by backend interface */
+	pageSize?: number
+
+	/** How many pages of data to be preloaded. */
+	preloadPageCount?: number
+}
+
+
+/**
+ * Compare to `Store`, `RemoteStore` loads data for one page each time.
+ * And every time after data changed, it refreshs to reload data from server.
+ * 
+ * You should extends this class and overwrite abstract methods,
+ * and should support like column ordering and filtering or searching in backend.
+ */
+export abstract class RemoteStore<T = any> extends EventEmitter<RemoteStoreEvents> {
+
+	protected readonly cacher: PageDataCacher<T>
+
+	/** Main key property. */
+	protected readonly key: keyof T | null = null
+
+	/** Current ordered key. */
+	protected orderKey: CanSortKeys<T> | null = null
+
+	/** Current ordered direction. */
+	protected orderDirection: 'asc' | 'desc' | '' = ''
+
+	constructor(options: RemoteStoreOptions = {}) {
+		super()
+
+		let pageSize = options.pageSize ?? 50
+		let preloadPageCount = options.preloadPageCount ?? 0
+		this.cacher = new PageDataCacher(pageSize, this.dataCount.bind(this), this.dataGetter.bind(this), preloadPageCount)
+	}
+
+	/** Get total data count. */
+	protected abstract dataCount(): Promise<number> | number
+
+	/** Get page data from start and end indices. */
+	protected abstract dataGetter(startIndex: number, endIndex: number): Promise<Iterable<T>> | Iterable<T>
+
+	/** Set ordering key and apply it to backend. */
+	setOrder(key: CanSortKeys<T>, direction: 'asc' | 'desc' | '') {
+		this.orderKey = key
+		this.orderDirection = direction
+		this.reloadLater()
+		this.setRemoteOrder(key, direction)
+	}
+
+	/** Clear ordering and apply it to backend. */
+	clearOrder() {
+		this.orderKey = null
+		this.orderDirection = ''
+		this.reloadLater()
+		this.setRemoteOrder(null, '')
+	}
+
+	/** Overwrite to set remote order in backend. */
+	protected setRemoteOrder(_key: CanSortKeys<T> | null, _direction: 'asc' | 'desc' | '') {}
+
+	/** Set filter key to filter data items and apply it to backend. */
+	setFilter(filterWord: string) {
+		this.reloadLater()
+		this.setRemoteFilter(filterWord)
+	}
+
+	/** Clears filter and shows all data and apply it to backend. */
+	clearFilter() {
+		this.reloadLater()
+		this.setRemoteFilter('')
+	}
+
+	/** Overwrite to set remote filtering or searching in backend. */
+	protected setRemoteFilter(_filterWord: string) {}
+
+	/** Whether will reload. */
+	protected willReload: boolean = false
+
+	/** Clear cache data later. */
+	protected reloadLater() {
+		if (!this.willReload) {
+			Promise.resolve().then(() => {
+				this.reloadImmediately()
+				this.emit('dataChange')
+				this.willReload = false
+			})
+
+			this.willReload = true
+		}
+	}
+
+	/** Clear cache data immediately. */
+	protected reloadImmediately() {
+		this.cacher.clear()
+	}
+
+	/** Get data items immediately. */
+	async getDataCount(): Promise<number> {
+		return await this.cacher.getDataCount()
+	}
+
+	/** Get data items immediately. */
+	getImmediateData(startIndex: number, endIndex: number): (T | null)[] {
+		return this.cacher.getImmediateData(startIndex, endIndex)
+	}
+
+	/** Get fresh data items. */
+	async getFreshData(startIndex: number, endIndex: number): Promise<T[]> {
+		return this.cacher.getFreshData(startIndex, endIndex)
+	}
+
+	/** Get options for `liveAsyncRepeatDirective`. */
+	getLiveAsyncRepeatDirectiveOptions(): LiveAsyncRepeatDataOptions<T> {
+		return {
+			key: this.key || undefined,
+			dataCount: this.getDataCount.bind(this),
+			immediateDataGetter: this.getImmediateData.bind(this),
+			asyncDataGetter: this.getFreshData.bind(this),
+		}
+	}
+}

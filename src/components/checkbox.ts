@@ -39,7 +39,7 @@ export class CheckboxGroup<Events = any> extends Component<Events & CheckboxGrou
 }
 
 
-export interface CheckboxEvents {
+interface CheckboxEvents {
 
 	/** Triggers change event after checkbox get checked or unchecked. */
 	change: (checked: boolean) => void

@@ -1,4 +1,4 @@
-import {getMainAlignDirection, ensureWindowLoaded, AlignOptions} from '@pucelle/ff'
+import {getMainAlignDirection, ensureWindowLoaded, AlignOptions, isVisibleInViewport} from '@pucelle/ff'
 import {html, defineBinding, BindingResult, TemplateResult} from '@pucelle/flit'
 import {PopupBinding, PopupOptions} from './popup'
 import {TooltipType} from '../components/tooltip'
@@ -54,11 +54,11 @@ export class TooltipBinding extends PopupBinding {
 		`
 	}
 
-	protected getPopupOptions(options: PopupOptions = {}) {
+	protected getPopupOptions(options: PopupOptions = {}): PopupOptions {
 		return {...defaultTooltipOptions, ...options}
 	}
 
-	protected isHerizontal() {
+	protected isHerizontal(): boolean {
 		let direction = getMainAlignDirection(this.options.get('alignPosition'))
 		return direction === 'l' || direction === 'r'
 	}
@@ -86,7 +86,7 @@ export class TooltipBinding extends PopupBinding {
 	}
 
 	/** Whether the tooltip should always visible. */
-	protected shouldAlwaysKeepVisible() {
+	protected shouldAlwaysKeepVisible(): boolean {
 		return ['prompt', 'error'].includes(this.getOption<any>('type'))
 	}
 
@@ -96,13 +96,19 @@ export class TooltipBinding extends PopupBinding {
 		}
 	}
 
-	protected onNotInViewport() {
-		if (!this.shouldAlwaysKeepVisible()) {
-			super.onNotInViewport()
+	/** After trigger element position changed. */
+	protected onTriggerRectChanged() {
+		if (this.shouldAlwaysKeepVisible() || isVisibleInViewport(this.el, 0.1, this.popup!.el)) {
+			if (this.popup) {
+				this.alignPopup()
+			}
+		}
+		else {
+			this.hidePopupLater()
 		}
 	}
 
-	protected getAlignOptions() {
+	protected getAlignOptions(): AlignOptions {
 		let triangle = this.popup!.refs.triangle
 
 		return {
@@ -111,7 +117,7 @@ export class TooltipBinding extends PopupBinding {
 			canShrinkInY: true,
 			triangle,
 			fixTriangle: this.getOption('fixTriangle'), 
-		} as AlignOptions
+		}
 	}
 }
 

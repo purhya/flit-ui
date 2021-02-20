@@ -2,7 +2,7 @@ import {define, Component, html, css} from '@pucelle/flit'
 import {theme} from '../style/theme'
 
 
-export interface TagEvents {
+interface TagEvents {
 
 	/** Triggers after closed tag. */
 	close: (value: string | number | null) => void

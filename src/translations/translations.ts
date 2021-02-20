@@ -12,13 +12,20 @@ export class Translations {
 		return this.language
 	}
 
-	/** Set current language and update all components. */
+	/** 
+	 * Set current language and update all components.
+	 * @language Language to set, like `en-us`, `zh-cn`.
+	 */
 	setLanguage(language: string) {
 		this.language = language
 		updateAllComponents()
 	}
 
-	/** Add a translation pieces in `{key: value}` format. */
+	/** 
+	 * Add a translation pieces in `{key: value}` format.
+	 * @language Language to add translation pieces to.
+	 * @pieces Translation pieces, in `{key: translation, ...}` format.
+	 */
 	add(language: string, pieces: Record<string, string>) {
 		let data = this.data.get(language)
 		if (!data) {
@@ -28,8 +35,12 @@ export class Translations {
 		Object.assign(data, pieces)
 	}
 
-	/** Get value from key and may format with arguments. */
-	get(key: string, ...args: (string | number)[]) {
+	/** 
+	 * Get translation value from key and may format with arguments.
+	 * @param key Translation key.
+	 * @param args Parameters format translation value.
+	 */
+	get(key: string, ...args: (string | number)[]): string {
 		let data = this.data.get(this.language)
 		
 		if (!data) {
@@ -45,8 +56,12 @@ export class Translations {
 		return value
 	}
 	
-	/** Translate string like `DefaultValue@@key`. */
-	translate(key: string, ...args: (string | number)[]) {
+	/** 
+	 * Translate string like `DefaultValue@@key`.
+	 * @param key Translation key.
+	 * @param args Parameters format translation value.
+	 */
+	translate(key: string, ...args: (string | number)[]): string {
 		let [defaultValue, id] = key.split('@@')
 		let data = this.data.get(this.language)
 		let value: string = ''
@@ -66,8 +81,12 @@ export class Translations {
 		return value
 	}
 
-	/** Translate `"xxx"` to `<b>xxx</b>`. */
-	translateQuoteToBold(key: string, ...args: (string | number)[]) {
+	/** 
+	 * Translate `"xxx"` to `<b>xxx</b>`.
+	 * @param key Translation key.
+	 * @param args Parameters format translation value.
+	 */
+	translateQuoteToBold(key: string, ...args: (string | number)[]): string {
 		let value = this.translate(key, ...args.map(arg => encodeHTML(String(arg))))
 		return value.replace(/"(.+?)"/g, '<b>$1</b>')
 	}
@@ -83,5 +102,5 @@ translations.add('en-us', {
 	ok: 'OK',
 	cancel: 'Cancel',
 	yes: 'Yes',
-	no: 'No'
+	no: 'No',
 })

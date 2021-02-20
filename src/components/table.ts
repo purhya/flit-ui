@@ -1,45 +1,76 @@
-import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, off, render, on, once, liveAsyncRepeat, LiveRepeatDirective, LiveAsyncRepeatDirective, DirectiveResult, renderComplete, refDirective, Directive, ContextualTransitionOptions, observeGetting} from '@pucelle/flit'
+import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, LiveRepeatDirective, DirectiveResult, renderComplete, refDirective, Directive, ContextualTransitionOptions, observeGetting, liveAsyncRepeat, LiveAsyncRepeatDirective} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Store} from '../store/store'
-import {getScrollbarWidth, watchLayout, getStyleValueAsNumber, sum, repeatTimes, scrollToTop, scrollToView} from '@pucelle/ff'
-import {AsyncStore} from '../store/async-store'
+import {getScrollbarWidth, watchLayout, scrollToTop, scrollToView, locateFirstVisibleIndex} from '@pucelle/ff'
+import {ColumnWidthResizer} from './helpers/column-width-resizer'
+import {RemoteStore} from '../store/remote-store'
 
 
-interface GridEvents<Item> {
-	livedataupdated: (data: Item[], index: number) => void
+interface GridEvents<T> {
+
+	/** After column order changed. */
+	orderChange: (columnName: string, orderDirection: 'asc' | 'desc' | '') => void
+
+	/** After column width resized. */
+	columnResize: (columnWidths: number[]) => void
+
+	/** Triggers after live data updated in live mode. */
+	liveDataUpdated: (data: T[], index: number, scrollDirection: 'up' | 'down') => void
+
+	/** Triggers after live data rendered in live mode. */
+	liveDataRendered: (data: T[], index: number, scrollDirection: 'up' | 'down') => void
 }
 
-export type RowRenderer<T extends object> = (this: Table<T>, item: T | null, index: number) => TemplateResult
 
+export interface TableColumn<T = any> {
 
-export interface Column<T = any> {
 	/** 
-	 * If you want to remember last ordered columns after columns changed,
-	 * or want to restore last ordered column from storage,
-	 * You should set name.
+	 * Give name to each column can help to remember last ordered columns, and restore it from storage.
+	 * If not provided, uses `orderBy` instead.
 	 */
-	name: string
+	name?: string
 
+	/** Column title. */
 	title: string
-	width?: number
-	flex?: number | string
 
-	/** Must be specified as string when using `liveStore`. */
+	/** Column basis width. */
+	width?: number
+
+	/** 
+	 * Column flex width, just like flex grow and shrink.
+	 * Can be a number, or a pair of number values [extendFlex, shrinkFlex].
+	 */
+	flex?: number | number[]
+
+	/** 
+	 * Returns the value used for ordering, must be specified as a string type key when using `RemoteStore`.
+	 * Implies column is not orderable if not configured.
+	 */
 	orderBy?: ((item: T) => string | number) | string
 
-	/** If specified as `true`, will using desc ordering firstly, then asc ordering */
+	/** If specified as `true`, will using `desc` ordering as default. */
 	descFirst?: boolean
 
-	/** Returns cell content or `<td>...</td>`. */
-	render?: (item: T, index: number) => TemplateResult | string | number
+	/** Returns cell text content string or html`<td>...</td>`. */
+	render?: (this: Table<T>, item: T, index: number) => TemplateResult | string | number
 
-	/** If you choose to overwrite `renderRow`, you must specify `text-align` for cells. */
+	/** 
+	 * Specifies cell content alignment.
+	 * Note if you choose to overwrite `renderRow`, this option gona not work any more,
+	 * you must specify `text-align` for cells manually.
+	 */
 	align?: 'left' | 'right' | 'center'
 }
 
 
+/** 
+ * `<f-table>` works just like a `<table>`, it provides data view and per row or per column operation.
+ * `store` provides data service and also data filtering and data ordering.
+ * `columns` can config data column mode for table view.
+ */
 @define('f-table')
-export class Table<T extends object, E = any> extends Component<GridEvents<T> & E> {
+export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> extends Component<GridEvents<T> & E> {
+
 	static style() {
 		let {adjustFontSize, adjust, mainColor, textColor, backgroundColor} = theme
 		let scrollbarWidth = getScrollbarWidth()
@@ -97,7 +128,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		}
 
 		.column-ordered{
-			border-bottom-color: ${backgroundColor.toMiddle(40)};
+			border-bottom-color: #888;
 		}
 
 		.resizable .column-title{
@@ -125,7 +156,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 			z-index: 1;
 			width: 17px;
 			margin-left: auto;
-			margin-right: ${adjust(-16)}px;
+			margin-right: ${adjust(-17)}px;
 			cursor: e-resize;
 
 			&::before{
@@ -153,7 +184,7 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 			border-bottom: 1px solid ${backgroundColor.toMiddle(13)};
 		}
 
-		.rows{
+		.table{
 			table-layout: fixed;
 			position: absolute;
 			width: 100%;
@@ -204,60 +235,79 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		`
 	}
 
-
-	/** If `true`, will only render the rows that in viewport. */
+	/** 
+	 * If `true`, will only render the rows that in viewport.
+	 * Default value is `false`.
+	 * Implies to be `true` when uses `RemoteStore`.
+	 */
 	live: boolean = false
 
-	/** 
-	 * Works only when `live` is `true`
-	 * You can understand this as how many items to render.
+	/**
+	 * Item count in one page that should be rendered each time.
+	 * Works only when `live` is `true`.
+	 * Default value is `50`, set it smaller if don't need to render so much.
+	 * Suggested to be large enough to cover table height, but not covers more than 2x of table height.
+	 * Otherwise it should provide more than 120px scrolling buffer height more than table height.
 	 */
-	pageSize: number = 50
+	renderCount: number = 50
 
-	/** The index of the first item to be visible, to reflect last scrolling position. */
-	startIndex: number = 0
-
-	/** If what you rendered is very complex and can't complete in an animation frame, set this to true. */
+	/** If what you are rendering is very complex and can't complete in one animation frame, set this to `true`. */
 	preRendering: boolean = false
 
+	/** 
+	 * Whether each column is resizeable.
+	 * Default value is `false`.
+	 */
 	resizable: boolean = false
-	columns!: Column<T>[]
-	minColumnWidth: number = 64
-	store!: Store<T> | AsyncStore<T>
-	transition: ContextualTransitionOptions | undefined
 
-	protected orderColumnName: string | null = null
+	/** Store to cache data. */
+	store!: S
+
+	/** Column configuration, you must set this! */
+	columns!: TableColumn<T>[]
+
+	/** Minimum column width in pixels. */
+	minColumnWidth: number = 64
+
+	/** Transition for each row after created or removed. */
+	transition: ContextualTransitionOptions | undefined = undefined
+
+	/** Column name to indicate which column is in order. */
+	protected orderColumnName: string = ''
+
+	/** Current column order direction. */
 	protected orderDirection: 'asc' | 'desc' | '' = ''
-	protected columnWidths: number[] | null = null
-	protected resizingColumnWidths: number[] | null = null
-	protected columnResized: boolean = false
-	protected cachedTotalWidth: number = 0
+
+	/** Repeat directive inside, only available when `live`. */
 	protected repeatDir: LiveRepeatDirective<T> | LiveAsyncRepeatDirective<T> | null = null
 
-	protected onCreated() {
-		if (this.store instanceof AsyncStore) {
-			for (let column of this.columns) {
-				if (column.orderBy && typeof column.orderBy !== 'string') {
-					throw new Error(`"orderBy" in "columns" configuration must be string type when using "liveStore"`)
-				}
-			}
-		}
+	/** Resize column widths when `resizable` is `true`. */
+	protected resizer: ColumnWidthResizer | null = null
 
-		this.orderColumnName = this.store.orderName
-		this.orderDirection = this.store.orderDirection
-		this.store.on('orderchanged', this.onOrderChanged, this)
+	refs!: {
+		/** Head container. */
+		head: HTMLTableSectionElement
+
+		/** Column container inside head. */
+		columnContainer: HTMLElement
+
+		/** Table element. */
+		table: HTMLTableElement
+
+		/** Colgroup inside table. */
+		colgroup: HTMLTableColElement
 	}
 
 	render(): TemplateResult {
 		return html`
 		<div class="head" :ref="head">
-			<div class="columns" :ref="columns">
+			<div class="columns" :ref="columnContainer">
 				${this.renderColumns()}
 			</div>
 		</div>
 
 		<div class="body">
-			<table class="rows" :ref="table">
+			<table class="table" :ref="table">
 				<colgroup :ref="colgroup">
 					${this.columns.map(column => html`
 						<col :style.text-align=${column.align || ''} />
@@ -269,9 +319,10 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		`
 	}
 
-	protected renderColumns() {
+	protected renderColumns(): TemplateResult[] {
 		return this.columns.map((column, index) => {
-			let isOrdered = this.orderColumnName === column.name
+			let orderName = column.name || String(column.orderBy)
+			let isOrdered = this.orderColumnName === orderName
 			let flexAlign = column.align === 'right' ? 'flex-end' : column.align === 'center' ? 'center' : ''
 
 			return html`
@@ -283,83 +334,83 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 					<div class="column-title">${column.title}</div>
 					${column.orderBy ? html`
 						<div class="order" :class.current=${isOrdered && this.orderDirection !== ''}>
-							<f-icon .type=${this.getOrderIcon(column.name)} />
+							<f-icon .type=${this.getOrderDirectionIcon(orderName)} />
 						</div>`
 					: ''}
 				</div>
 
 				${this.resizable && index < this.columns.length - 1 ? html`
-					<div class="resizer" @mousedown=${(e: MouseEvent) => this.onStartResize(e, index)} />`
+					<div class="resizer" @mousedown=${(e: MouseEvent) => this.resizer?.onStartResize(e, index)} />`
 				: ''}
 			</div>`
 		})
 	}
 
 	protected renderRows(): DirectiveResult {
-		if (this.store instanceof AsyncStore) {
+		if (this.store instanceof RemoteStore) {
 			return refDirective(liveAsyncRepeat(
+				this.store.getLiveAsyncRepeatDirectiveOptions(),
+				this.renderRow.bind(this),
 				{
-					key: this.store.key,
-					dataCount: this.store.dataCount.bind(this.store),
-					dataGetter: this.store.dataGetter.bind(this.store) as any,
-				},
-				this.renderRow.bind(this as any) as any,
-				{
-					pageSize: this.pageSize,
+					renderCount: this.renderCount,
 					preRendering: this.preRendering,
 				},
-				this.transition
-			), this.setRepeatDirective.bind(this))
+				this.transition,
+			), this.refDirective.bind(this))
 		}
 		else if (this.live) {
 			return refDirective(liveRepeat(
-				this.store.currentData,
-				this.renderRow.bind(this as any),
+				(this.store as Store).currentData,
+				this.renderRow.bind(this),
 				{
-					pageSize: this.pageSize,
+					renderCount: this.renderCount,
 					preRendering: this.preRendering,
 				},
 				this.transition
-			), this.setRepeatDirective.bind(this))
+			), this.refDirective.bind(this))
 		}
 		else {
 			return repeat(
-				this.store.currentData,
-				this.renderRow.bind(this as any),
+				(this.store as Store).currentData,
+				this.renderRow.bind(this),
 				this.transition
 			)
 		}
 	}
 
 	/** 
-	 * Although you can specify this method,
-	 * I would suggest to define a sub class and overwrite `renderRow`.
+	 * How to render each row.
+	 * You should define a new component and overwrite this method if want to do more customized rendering.
 	 */
 	renderRow(item: T | null, index: number) {
 		let tds = this.columns.map((column) => {
-			let result = item && column.render ? column.render(item, index) : '\xa0'
+			let result = item && column.render ? column.render.call(this, item, index) : '\xa0'
 			return html`<td :style.text-align=${column.align || ''}>${result}</td>`
 		})
 
 		return html`<tr>${tds}</tr>`
 	}
 
-	protected setRepeatDirective(dir: Directive) {
-		this.repeatDir = dir as LiveRepeatDirective<T> | LiveAsyncRepeatDirective<T>
-
-		if (this.store instanceof AsyncStore) {
-			this.store.setRepeatDirective(dir as LiveAsyncRepeatDirective<T>)
-		}
-
-		(dir as any).on('liveDataUpdated', this.onRepeatDataUpdated, this)
+	/** Reference repeat directive, only for once. */
+	protected refDirective(dir: Directive) {
+		this.repeatDir = dir as LiveRepeatDirective<T>
+		this.repeatDir.on('liveDataUpdated', this.onLiveDataUpdated, this)
+		this.repeatDir.on('liveDataRendered', this.onLiveDataRendered, this)
 	}
 
-	protected onRepeatDataUpdated(data: T[], index: number) {
-		this.emit('livedataupdated', data, index)
+	/** Triggers `liveDataUpdated` event. */
+	protected onLiveDataUpdated(data: T[], index: number, scrollDirection: 'up' | 'down') {
+		this.emit('liveDataUpdated', data, index, scrollDirection)
 	}
 
-	protected getOrderIcon(name: string): string {
-		if (name === this.orderColumnName) {
+	/** Triggers `liveDataRendered` event. */
+	protected onLiveDataRendered(data: T[], index: number, scrollDirection: 'up' | 'down') {
+		this.emit('liveDataRendered', data, index, scrollDirection)
+	}
+
+	/** Get order icon to indicate order direction. */
+	protected getOrderDirectionIcon(orderName: string): string {
+		if (orderName === this.orderColumnName) {
 			if (this.orderDirection === 'asc') {
 				return 'order-asc'
 			}
@@ -371,34 +422,17 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 		return 'order-default'
 	}
 
-	onReady() {
-		onRenderComplete(() => {
-			this.updatColumnWidths()
-		})
-	}
-
-	onConnected() {
-		this.watch(() => observeGetting(this, 'columns'), async () => {
-			this.restoreOrderedColumn()
-
-			// Here we need it render new `<col>`s.
-			await renderComplete()
-			this.updatColumnWidthsRoughly()
-		})
-
-		onRenderComplete(() => {
-			let unwatchSize = watchLayout(this.el, 'size', () => this.updatColumnWidths())
-			this.once('disconnected', unwatchSize)
-		})
-	}
-
+	/** Do column ordering for column with specified index. */
 	protected doOrdering(e: MouseEvent, index: number) {
+		// Clicked column resizer.
 		if ((e.target as HTMLElement).closest(this.scopeClassName('.resizer'))) {
 			return
 		}
 
 		let columns = this.columns
 		let column = columns[index]
+
+		// Column is not orderable.
 		let canOrder = column.orderBy
 		if (!canOrder) {
 			return
@@ -406,273 +440,165 @@ export class Table<T extends object, E = any> extends Component<GridEvents<T> & 
 
 		let direction: 'asc' | 'desc' | '' = ''
 		let descFirst = column.descFirst
+		let orderName = column.name || String(column.orderBy)
 
-		if (column.name === this.orderColumnName) {
+		if (orderName === this.orderColumnName) {
 			if (descFirst) {
-				direction = this.orderDirection === '' ? 'desc' : this.orderDirection === 'desc' ? 'asc' : 'desc'
+				direction = this.orderDirection === '' ? 'desc' : this.orderDirection === 'desc' ? 'asc' : ''
 			}
 			else {
-				direction = this.orderDirection === '' ? 'asc' : this.orderDirection === 'asc' ? 'desc' : 'asc'
+				direction = this.orderDirection === '' ? 'asc' : this.orderDirection === 'asc' ? 'desc' : ''
 			}
 		}
 		else {
 			direction = descFirst ? 'desc' : 'asc'
 		}
 
-		this.orderStore(column, direction)
+		this.orderColumn(column, direction)
 	}
 
-	private orderStore(column: Column, direction: 'asc' | 'desc' | '') {
+	/** Order specified column by column name. */
+	orderColumnByName(name: string, direction: 'asc' | 'desc' | '' = '') {
+		let columns = this.columns
+		let column = columns.find(col => col.name === name)
+
+		if (!column) {
+			throw new Error(`Can't find column with name "${name}"!`)
+		}
+
+		this.orderColumn(column, direction)
+	}
+
+	/** Order specified column with specified direction by column name. */
+	protected orderColumn(column: TableColumn, direction: 'asc' | 'desc' | '' = '') {
+		let orderName = column.name || String(column.orderBy)
+		this.orderColumnName = orderName
+		this.orderDirection = direction
+
 		if (direction === '') {
 			this.store.clearOrder()
 		}
 		else {
-			this.store.setNamedOrder(column.name, column.orderBy || column.render as any, direction)
+			this.store.setOrder(column.orderBy as any, direction)
 		}
 
-		this.store.reload()
+		this.emit('orderChange', orderName, direction)
 	}
 
-	private onOrderChanged(name: string, direction: 'asc' | 'desc' | '' = '') {
-		let columns = this.columns
-		let index = -1
+	onReady() {
+		if (this.resizable) {
+			this.resizer = new ColumnWidthResizer(
+				this.refs.head,
+				this.refs.columnContainer,
+				this.refs.colgroup,
+				this.columns,
+				this.minColumnWidth,
+				this.scopeClassName('resizing-mask')
+			)
 
-		for (let i = 0; i < columns.length; i++) {
-			if (columns[i].name === name) {
-				index = i
-				break
-			}
-		}
-
-		if (index > -1) {
-			this.orderColumnName = columns[index].name
-			this.orderDirection = direction
-		}
-		else {
-			this.orderColumnName = ''
-			this.orderDirection = ''
-		}
-	}
-
-	private restoreOrderedColumn() {
-		if (this.orderColumnName) {
-			let index = this.columns.findIndex(column => column.name === this.orderColumnName)
-			if (index === -1) {
-				this.orderColumnName = ''
-				this.orderDirection = ''
-			}
+			this.watch(() => observeGetting(this, 'columns'), async (columns: TableColumn[]) => {
+				this.resizer?.setColumns(columns)
+	
+				// Here we need it render new `<col>`s.
+				await renderComplete()
+				this.resizer?.updatColumnWidthsPrecisely()
+			})
+			
+			onRenderComplete(() => {
+				this.resizer?.updatColumnWidthsPrecisely()
+			})
 		}
 	}
 
-	// Resizing part
-	protected updatColumnWidths() {
-		let totalWidth = this.refs.head.clientWidth - getStyleValueAsNumber(this.refs.head, 'paddingLeft') - getStyleValueAsNumber(this.refs.head, 'paddingRight')
-		this.cachedTotalWidth = totalWidth
-		this.updatColumnWidthsWithTotalWidth(totalWidth)
+	onConnected() {
+		onRenderComplete(() => {
+			let unwatchSize = watchLayout(this.el, 'size', () => this.resizer?.updatColumnWidthsPrecisely())
+			this.once('disconnected', unwatchSize)
+		})
 	}
 
-	// Used to adjust column widths after columns changed.
-	// Many elements will be relayout after columns changed, 
-	// And `updatColumnWidths` will cause force relayout.
-	protected updatColumnWidthsRoughly() {
-		this.updatColumnWidthsWithTotalWidth(this.cachedTotalWidth)
+	/** Get start index of live data in live mode, otherwise returns `0`. */
+	getStartIndex() {
+		return this.repeatDir?.getStartIndex() ?? 0
 	}
 
-	protected updatColumnWidthsWithTotalWidth(totalWidth: number) {
-		let widthAndFlexArray = this.columns.map(({flex, width}, index) => {
-			let baseWidthInColumnConfig = Math.max(width || 0, this.minColumnWidth)
-
-			// If column resized, we use the column width percentage to calculate new column width.
-			let baseWidth = this.columnResized ? this.columnWidths![index] : baseWidthInColumnConfig
-			let extendFlex = 0
-			let shrinkFlex = 0
-
-			if (typeof flex === 'string') {
-				let flexs = flex.split(/\s+/).map(Number)
-				extendFlex = flexs[0] >= 0 ? flexs[0] : 0
-				shrinkFlex = flexs[1] >= 0 ? flexs[1] : extendFlex
-			}
-			else if (typeof flex === 'number' && flex >= 0) {
-				extendFlex = shrinkFlex = flex
-			}
-
-			return [baseWidth, extendFlex, shrinkFlex]
-		}) as [number, number, number][]
-		
-		let widths = columnWidthCalculator(widthAndFlexArray, totalWidth, this.minColumnWidth)
-		this.columnWidths = widths
-		this.setColumnWidths(widths)
+	/** Get end index of live data in live mode, otherwise returns data length. */
+	getEndIndex() {
+		return this.repeatDir?.getEndIndex() ?? (this.store as Store).fullData.length
 	}
 
-	protected setColumnWidths(widths: number[]) {
-		let totalWidth = sum(widths)
-		
-		for (let index = 0; index < widths.length; index++) {
-			let isLastColumn = index === widths.length - 1
-			let percent = widths[index] / totalWidth
-			let col = this.refs.colgroup.children[index] as HTMLElement
-
-			col.style.width = percent * 100 + '%'
-
-			if (!isLastColumn) {
-				let col = this.refs.columns.children[index] as HTMLElement
-				col.style.width = percent * 100 + '%'
-			}
-		}
-	}
-
-	protected onStartResize(e: MouseEvent, index: number) {
-		let startX = e.clientX
-
-		let onMouseMove = (e: MouseEvent) => {
-			e.preventDefault()
-			this.resizeColumnByMovementX(e.clientX - startX, index)
-		}
-
-		let onMouseUp = () => {
-			if (this.resizingColumnWidths) {
-				this.columnWidths = this.resizingColumnWidths
-				this.resizingColumnWidths = null
-			}
-
-			off(document, 'mousemove', onMouseMove as (e: Event) => void)
-			cursorMask.remove()
-			this.columnResized = true
-		}
-
-		let cursorMask = render(html`<div class="resizing-mask" />`, this).getFirstElement() as HTMLElement
-		document.body.append(cursorMask)
-
-		on(document, 'mousemove', onMouseMove as (e: Event) => void)
-		once(document, 'mouseup', onMouseUp)
-	}
-
-	protected resizeColumnByMovementX(movementX: number, index: number) {
-		let widths = [...this.columnWidths!]
-		let needShrink = Math.abs(movementX)
-		let moveLeft = movementX < 0
-		let expandIndex = moveLeft ? index + 1 : index
-		let firstShrinkIndex = moveLeft ? index : index + 1
-
-		// When move to left, we reduce the width of current and previous columns until the `minWidth`,
-		// then we add the reduced width to next column.
-
-		// When move to right, we reduce the width of next columns until the `minWidth`,
-		// then we add the reduced width to current column.
-		for (let i = firstShrinkIndex; (moveLeft ? i >= 0 : i < this.columns.length) && needShrink > 0; moveLeft ? i-- : i++) {
-			let width = widths[i]
-			let shrink = needShrink
-
-			if (width - shrink < this.minColumnWidth) {
-				shrink = width - this.minColumnWidth
-			}
-
-			widths[i] -= shrink
-			widths[expandIndex] += shrink	// index <= column count - 2
-			needShrink -= shrink
-		}
-
-		this.resizingColumnWidths = widths
-		this.setColumnWidths(widths)
-	}
-
+	/** Set `startIndex`, and the item in this index will be at the top start position of the viewport. */
 	setStartIndex(index: number) {
-		let isLive = this.live || this.store instanceof AsyncStore
-
-		if (this.repeatDir) {
+		if (!this.__updated) {
+			this.once('updated', () => {
+				this.setStartIndex(index)
+			})
+		}
+		else if (this.repeatDir) {
 			this.repeatDir.setStartIndex(index)
 		}
-		else if (!isLive) {
-			index = Math.min(index, (this.store as Store<T>).data.length - 1)
-			let row = (this.refs.table as HTMLTableElement).rows[index]
+		else {
+			index = Math.min(index, (this.store as Store).fullData.length - 1)
+			let row = this.refs.table.rows[index]
 			if (row) {
 				scrollToTop(row)
 			}
 		}
 	}
 
+	/** Adjust `startIndex` and scroll position to make item in the specified index becomes visible if it's not. */
 	scrollToViewIndex(index: number) {
-		let isLive = this.live || this.store instanceof AsyncStore
-
-		if (this.repeatDir) {
+		if (!this.__updated) {
+			this.once('updated', () => {
+				this.setStartIndex(index)
+			})
+		}
+		else if (this.repeatDir) {
 			this.repeatDir.scrollToViewIndex(index)
 		}
-		else if (!isLive) {
-			index = Math.min(index, (this.store as Store<T>).data.length - 1)
-			let row = (this.refs.table as HTMLTableElement).rows[index]
+		else {
+			index = Math.min(index, (this.store as Store).fullData.length - 1)
+			let row = this.refs.table.rows[index]
 			if (row) {
 				scrollToView(row)
 			}
 		}
 	}
-}
 
-
-/**
-	Calculate column widths from `{width, minWidth, flex}` values in column config.
-	The algorithm is nearly same with the flex layout,
-	except that the total column widths will always equal the available client width,
-	and no column width should less than `minColumnWidth`.
-*/
-function columnWidthCalculator(widthAndFlexArray: [number, number, number][], clientWidth: number, minColumnWidth: number): number[] {
-	// Not enough space for even `minColumnWidth`, then average `clientWidth` to each column.
-	if (clientWidth < minColumnWidth * widthAndFlexArray.length) {
-		return repeatTimes(clientWidth / widthAndFlexArray.length, widthAndFlexArray.length)
+	/** 
+	 * Get the first visible index of element.
+	 * Must after first time rendered.
+	 */
+	getFirstVisibleIndex() {
+		if (this.repeatDir) {
+			return this.repeatDir.getFirstVisibleIndex()
+		}
+		else {
+			return locateFirstVisibleIndex(this.refs.table, this.refs.table.rows)
+		}
 	}
-
-	let totalBaseWidth = 0
-	let totalExtendFlex = 0
-	let totalShrinkFlex = 0
-	let widths = repeatTimes(minColumnWidth, widthAndFlexArray.length)
-	let excludedIndexSet: Set<number> = new Set()
-
-	for (let [baseWidth, extendFlex, shrinkFlex] of widthAndFlexArray) {
-		totalBaseWidth += baseWidth
-		totalExtendFlex += extendFlex
-		totalShrinkFlex += shrinkFlex
-	}
-
-	// If no `flex` set for any column, set `flex` to `1` for all the columns.
-	if (totalExtendFlex === 0) {
-		totalExtendFlex = widthAndFlexArray.length
-		widthAndFlexArray.forEach(a => a[1] = 1)
-	}
-
-	if (totalShrinkFlex === 0) {
-		totalShrinkFlex = widthAndFlexArray.length
-		widthAndFlexArray.forEach(a => a[2] = 1)
-	}
-
-	while (true) {
-		let totalFlex = clientWidth >= totalBaseWidth ? totalExtendFlex : totalShrinkFlex
-		let widthPerFlex = (clientWidth - totalBaseWidth) / totalFlex
-		let moreColumnExcluded = false
-
-		for (let index = 0; index < widthAndFlexArray.length; index++) {
-			if (excludedIndexSet.has(index)) {
-				continue
-			}
-
-			let [baseWidth, extendFlex, shrinkFlex] = widthAndFlexArray[index]
-			let flex = widthPerFlex >= 0 ? extendFlex : shrinkFlex
-			let width = flex * widthPerFlex + baseWidth
-
-			if (width < minColumnWidth) {
-				clientWidth -= minColumnWidth
-				totalBaseWidth -= minColumnWidth
-				totalExtendFlex -= flex
-				excludedIndexSet.add(index)
-				moreColumnExcluded = true
+	
+	/** Get currently rendered data item at specified index. */
+	getRenderedItem(index: number): T | null {
+		let isRendered = index >= this.getStartIndex() && index < this.getEndIndex()
+		if (isRendered) {
+			if (this.store instanceof RemoteStore) {
+				return this.store.getImmediateData(index, index + 1)[0]
 			}
 			else {
-				widths[index] = width
+				return (this.store as Store).currentData[index]
 			}
 		}
-
-		if (!moreColumnExcluded) {
-			break
+		else {
+			return null
 		}
 	}
 
-	return widths
+	/** 
+	 * Get rendered row at specified index.
+	 * Please makesure rendering is completed.
+	 */
+	getRenderedRow(index: number): HTMLTableRowElement | null {
+		return this.refs.table.rows[index - this.getStartIndex()] || null
+	}
 }

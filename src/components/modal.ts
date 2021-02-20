@@ -1,6 +1,6 @@
 import {css, define, html, on, renderComplete, off, Component, show} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {debounce, align} from '@pucelle/ff'
+import {align} from '@pucelle/ff'
 import {appendTo} from '../utils/element'
 
 
@@ -157,7 +157,7 @@ export class Modal<E = any> extends Component<E> {
 
 		this.toCenter()
 
-		on(window, 'resize', debounce(this.onWindowResize, 200).wrapped, this)
+		on(window, 'resize', this.onWindowResize, this)
 	}
 
 	protected onDisconnected() {

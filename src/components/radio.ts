@@ -2,7 +2,7 @@ import {define, Component, html, css, off, once, getClosestComponentOfType} from
 import {theme} from '../style/theme'
 
 
-export interface RadioGroupEvents {
+interface RadioGroupEvents {
 
 	/** 
 	 * If a child `<f-radio>` was checked and have `value` property specified,
@@ -41,8 +41,7 @@ export class RadioGroup extends Component<RadioGroupEvents> {
 }
 
 
-
-export interface RadioEvents {
+interface RadioEvents {
 
 	/** Triggers change event only when a radio checked. */
 	change: (checked: boolean) => void

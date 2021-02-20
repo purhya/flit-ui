@@ -1,131 +1,103 @@
 import {EventEmitter, Order, OrderFunction, CanSortKeys} from '@pucelle/ff'
+import {KeyMap} from './helpers/key-map'
 
 
 export interface StoreEvents {
-	change: () => void
-	orderchanged: (name: string, direction: 'asc' | 'desc' | '') => void
+
+	/** Triggers after current data changed. */
+	dataChange: () => void
 }
 
 export interface StoreOptions<T> {
+	
+	/** If provided, different data items with same key will be treated as same. */
+	key?: keyof T
+
+	/** Data array for initialize. */
 	data?: T[] | null
-	key?: string | number
+
+	/** Filter for initialize. */
 	filter?: ((item: T) => boolean)
+
+	/** Start order, can include several column keys and direction. */
 	order?: Order<T>
 }
 
 
-/** Used to replace same key items in `Store`. */
-class KeyMap<T extends object> {
-
-	private key: string | number
-	private map: Map<string | number, T>
-
-	constructor(key: string | number) {
-		if (!key) {
-			throw new Error('"key" must be provided when instantiate "KeyMap"!')
-		}
-
-		this.key = key
-		this.map = new Map()
-	}
-
-	has(item: T): boolean {
-		return this.map.has((item as any)[this.key])
-	}
-
-	get(item: T): T | undefined{
-		return this.map.get((item as any)[this.key])
-	}
-
-	add (item: T) {
-		this.map.set((item as any)[this.key], item)
-	}
-
-	delete(item: T) {
-		this.map.delete((item as any)[this.key])
-	}
-
-	clear() {
-		this.map = new Map()
-	}
-}
-
-
 /* Used to cache object type data and support selection, ordering and filtering. */
-export class Store<T extends object = object> extends EventEmitter<StoreEvents> {
-
-	/** The whole data. */
-	data: T[] = []
-
-	/** Current data after been sorted and filtered. */
-	currentData: T[] = []
+export class Store<T = any> extends EventEmitter<StoreEvents> {
 
 	/** If `key` specified, when different but same key items added, it covers the old one. */
-	key: string | number | null = null
+	protected readonly key: keyof T | null = null
 
-	/** Used to search data items. */
-	filter: ((item: T) => boolean) | null = null
+	/** All data keys and mapped data items. */
+	protected readonly dataMap: KeyMap<T> | null = null
 
-	/** Used to sort items, see `ff.orderBy` */
-	order: Order<T> | null = null
+	/** All selected data keys and mapped data items. */
+	protected readonly selectedMap: KeyMap<T> | null = null
 
-	/** The readable name relatated to current ordered state. */
-	orderName: string = ''
+	/** Last clicked item, used to select range items start from it by clicking `shift + click`. */
+	protected lastTouchedItem: T | null = null
 
-	/** Current ordered direction. */
-	orderDirection: 'asc' | 'desc' | '' = ''
+	/** A filter function to filter data items. */
+	protected filter: ((item: T) => boolean) | null = null
 
-	/** Used to select range items by `shift + click`. */
-	private lastTouchItem: T | null = null
+	/** Order instance, can include several column keys and direction. */
+	protected order: Order<T> | null = null
 
-	private selected: T[] = []
-	private map: KeyMap<T> | null = null
-	private selectedMap: KeyMap<T> | null = null
+	/** Current order direction. */
+	protected orderDirection: 'asc' | 'desc' | '' = ''
+
+	/** Full data before filtering or ordering. */
+	fullData: T[] = []
+
+	/** Current data after been filtered and sorted. */
+	currentData: T[] = []
+
+	/** All selected data items. */
+	selected: T[] = []
 
 	constructor(options: StoreOptions<T> = {}) {
 		super()
 
 		if (options.key) {
-			this.map = new KeyMap(options.key)
+			this.key = options.key
+			this.dataMap = new KeyMap(options.key)
 			this.selectedMap = new KeyMap(options.key)
 		}
 
-		let data = options.data
-		delete options.data
-		Object.assign(this, options)
-		this.initData(data)
-	}
+		this.filter = options.filter || null
+		this.order = options.order || null
 
-	private initData(data: T[] | null | undefined) {
-		if (data) {
-			this.addItems(data)
+		if (options.data) {
+			this.addItems(options.data)
 		}
 	}
 
-	private addItems(items: T[], atStart: boolean = false) {
+	protected addItems(items: T[], toStart: boolean = false) {
 		if (items.length > 0) {
-			if (this.map) {
+			if (this.dataMap) {
 				for (let item of items) {
-					this.map.add(item)
+					this.dataMap.add(item)
 				}
 			}
 
-			if (atStart) {
-				this.data.unshift(...items)
+			if (toStart) {
+				this.fullData.unshift(...items)
 			}
 			else {
-				this.data.push(...items)
+				this.fullData.push(...items)
 			}
 
 			let filteredItems = this.filter ? items.filter(this.filter) : items
-			this.addItemsToCurrentData(filteredItems, atStart)
+			this.addItemsToCurrentData(filteredItems, toStart)
 		}
 	}
 
-	private addItemsToCurrentData(items: T[], atStart: boolean = false) {
+	protected addItemsToCurrentData(items: T[], toStart: boolean = false) {
 		if (this.order) {
 			if (items.length > 1) {
-				let newData = this.currentData.length > 0 ? [...this.currentData, ...items] : items
+				let newData = [...this.currentData, ...items]
 				this.order.sortArray(newData)
 				this.currentData = newData
 			}
@@ -136,7 +108,7 @@ export class Store<T extends object = object> extends EventEmitter<StoreEvents> 
 			}
 		}
 		else {
-			if (atStart) {
+			if (toStart) {
 				this.currentData.unshift(...items)
 			}
 			else {
@@ -145,71 +117,104 @@ export class Store<T extends object = object> extends EventEmitter<StoreEvents> 
 		}
 	}
 
-	setNamedOrder(name: string, by: CanSortKeys<T> | OrderFunction<T>, direction: 'asc' | 'desc' | '') {
+	/** 
+	 * Set ordering rule.
+	 * Note it doesn't trigger `dataChange` immediately.
+	 */
+	setOrder(by: CanSortKeys<T> | OrderFunction<T>, direction: 'asc' | 'desc' | '') {
 		this.order = new Order([by, direction || 'asc'])
-		this.orderName = name
 		this.orderDirection = direction
-		this.emit('orderchanged', name, direction)
+		this.updateCurrentDataLater()
 	}
 
-	setOrder(key: CanSortKeys<T>, direction: 'asc' | 'desc' | '') {
-		this.setNamedOrder(String(key), key, direction)
-	}
-
+	/** 
+	 * Clear ordering rule.
+	 * Note it doesn't trigger `dataChange` immediately.
+	 */
 	clearOrder() {
 		this.order = null
-		this.emit('orderchanged', '', '')
+		this.updateCurrentDataLater()
 	}
 
+	/** 
+	 * Set filter to filter data items.
+	 * Note it doesn't trigger `dataChange` immediately.
+	 */
 	setFilter(filter: ((item: T) => boolean) | null) {
 		this.filter = filter
-		this.updateCurrentData()
 		this.deselectAll()
-		this.emit('change')
+		this.updateCurrentDataLater()
 	}
 
+	/** 
+	 * Clears filter and shows all data.
+	 * Note it doesn't trigger `dataChange` immediately.
+	 */
 	clearFilter() {
 		this.setFilter(null)
 	}
 
-	private updateCurrentData() {
-		this.clearCurrentData()
-		this.addItemsToCurrentData(this.filter ? this.data.filter(this.filter) : this.data)
+	/** Whether will update current data. */
+	protected willUpdateCurrentData: boolean = false
+
+	/** Update current data later after filter or order changed. */
+	protected updateCurrentDataLater() {
+		if (!this.willUpdateCurrentData) {
+			Promise.resolve().then(() => {
+				this.updateCurrentDataImmediately()
+				this.emit('dataChange')
+				this.willUpdateCurrentData = false
+			})
+
+			this.willUpdateCurrentData = true
+		}
 	}
 
-	private clearCurrentData() {
-		this.currentData = []
+	/** Update current data immediately after filter or order changed. */
+	protected updateCurrentDataImmediately() {
+		let currentData = this.filter ? this.fullData.filter(this.filter) : [...this.fullData]
+
+		if (this.order) {
+			this.order.sortArray(currentData)
+		}
+
+		this.currentData = currentData
 	}
 
+	/** Add data items to the end position, removes repeative items firstly. */
 	add(...items: T[]) {
 		this.remove(...items)
 		this.addItems(items)
-		this.emit('change')
+		this.emit('dataChange')
 	}
 
+	/** Add data items to the start position, removes repeative items firstly. */
 	addToStart(...items: T[]) {
 		this.remove(...items)
 		this.addItems(items, true)
-		this.emit('change')
+		this.emit('dataChange')
 	}
 
+	/** Push data items to the end position. */
 	push(...items: T[]) {
 		this.addItems(items)
-		this.emit('change')
+		this.emit('dataChange')
 	}
 
+	/** Unshift data items to the start position. */
 	unshift(...items: T[]) {
 		this.addItems(items, true)
-		this.emit('change')
+		this.emit('dataChange')
 	}
 
+	/** Insert data items to specified position. */
 	insert(index: number, ...items: T[]) {
 		if (items.length > 0) {
-			this.data.splice(index, 0, ...items)
+			this.fullData.splice(index, 0, ...items)
 
-			if (this.map) {
+			if (this.dataMap) {
 				for (let item of items) {
-					this.map.add(item)
+					this.dataMap.add(item)
 				}
 			}
 
@@ -217,67 +222,84 @@ export class Store<T extends object = object> extends EventEmitter<StoreEvents> 
 				this.addItemsToCurrentData(this.filter ? items.filter(this.filter) : items)
 			}
 			else {
-				this.updateCurrentData()
+				this.updateCurrentDataImmediately()
 			}
 		}
 
-		this.emit('change')
+		this.emit('dataChange')
 	}
 
+	/** Chech whether having specified item in full data. */
 	has(item: T): boolean {
-		if (this.map) {
-			return this.map.has(item)
+		if (this.dataMap) {
+			return this.dataMap.has(item)
 		}
 		else {
-			return this.data.includes(item)
+			return this.fullData.includes(item)
 		}
 	}
 
+	/** Chech whether having specified item in current data. */
+	hasCurrent(item: T): boolean {
+		if (!this.has(item)) {
+			return false
+		}
+
+		if (this.filter && !this.filter(item)) {
+			return false
+		}
+
+		return true
+	}
+
+	/** Get a cached item from the not pricise item that having same key. */
 	get(item: T): T | undefined {
-		if (this.map) {
-			return this.map.get(item)
+		if (this.dataMap) {
+			return this.dataMap.get(item)
 		}
 		else {
 			return item
 		}
 	}
 
+	/** Removes items. */
 	remove(...items: T[]): T[] {
-		let toRemoveSet: Set<T> = new Set()
+		let toRemove: Set<T> = new Set()
 
-		if (this.map) {
+		if (this.dataMap) {
 			for (let item of items) {
-				if (this.map.has(item)) {
-					toRemoveSet.add(this.map.get(item)!)
-					this.map.delete(item)
+				if (this.dataMap.has(item)) {
+					toRemove.add(this.dataMap.get(item)!)
+					this.dataMap.delete(item)
 				}
 			}
 		}
 		else {
 			for (let item of items) {
-				if (this.data.includes(item)) {
-					toRemoveSet.add(item)
+				if (this.fullData.includes(item)) {
+					toRemove.add(item)
 				}
 			}
 		}
 
-		if (toRemoveSet.size > 0) {
-			this.data = this.data.filter(item => !toRemoveSet.has(item))
+		if (toRemove.size > 0) {
+			this.fullData = this.fullData.filter(item => !toRemove.has(item))
 
-			if (this.map) {
-				this.currentData = this.currentData.filter(item => this.map!.has(item))
+			if (this.dataMap) {
+				this.currentData = this.currentData.filter(item => this.dataMap!.has(item))
 			}
 			else {
-				this.currentData = this.currentData.filter(item => !toRemoveSet.has(item))
+				this.currentData = this.currentData.filter(item => !toRemove.has(item))
 			}
 			
-			this.deselect(...toRemoveSet)
-			this.emit('change')
+			this.deselect(...toRemove)
+			this.emit('dataChange')
 		}
 
-		return [...toRemoveSet]
+		return [...toRemove]
 	}
 
+	/** Returns whether an item is selected. */
 	isSelected(item: T): boolean {
 		if (this.selectedMap) {
 			return this.selectedMap.has(item)
@@ -287,20 +309,24 @@ export class Store<T extends object = object> extends EventEmitter<StoreEvents> 
 		}
 	}
 
+	/** Whether selected at least one, but not all. */
 	isPartlySelected(): boolean {
 		let selectedCount = this.selected.length
 		return selectedCount > 0 && selectedCount < this.currentData.length
 	}
 
+	/** Whether selected all items. */
 	isSelectedAll(): boolean {
 		let selectedCount = this.selected.length
 		return selectedCount > 0 && selectedCount === this.currentData.length
 	}
 
+	/** Get selected count. */
 	getSelectedCount(): number {
 		return this.selected.length
 	}
 
+	/** Selected items. */
 	select(...items: T[]) {
 		if (this.selectedMap) {
 			for (let item of items) {
@@ -318,20 +344,21 @@ export class Store<T extends object = object> extends EventEmitter<StoreEvents> 
 			}
 		}
 
-		this.lastTouchItem = items[0]
+		this.lastTouchedItem = items[0]
 	}
 
+	/** Deselect items. */
 	deselect(...items: T[]) {
 		if (items === this.selected) {
 			this.deselectAll()
 		}
 		else {
-			let toRemoveSet = new Set()
+			let toRemove = new Set()
 
 			if (this.selectedMap) {
 				for (let item of items) {
 					if (this.selectedMap.has(item)) {
-						toRemoveSet.add(this.selectedMap.get(item))
+						toRemove.add(this.selectedMap.get(item))
 						this.selectedMap.delete(item)
 					}
 				}
@@ -339,19 +366,20 @@ export class Store<T extends object = object> extends EventEmitter<StoreEvents> 
 			else {
 				for (let item of items) {
 					if (this.selected.includes(item)) {
-						toRemoveSet.add(item)
+						toRemove.add(item)
 					}
 				}
 			}
 
-			if (toRemoveSet.size > 0) {
-				this.selected = this.selected.filter(item => !toRemoveSet.has(item))
+			if (toRemove.size > 0) {
+				this.selected = this.selected.filter(item => !toRemove.has(item))
 			}
 		}
 
-		this.lastTouchItem = items[0]
+		this.lastTouchedItem = items[0]
 	}
 
+	/** Toggle select state of item. */
 	toggleSelect(item: T) {
 		if (this.isSelected(item)) {
 			this.deselect(item)
@@ -360,10 +388,11 @@ export class Store<T extends object = object> extends EventEmitter<StoreEvents> 
 			this.select(item)
 		}
 
-		this.lastTouchItem = item
+		this.lastTouchedItem = item
 	}
 
-	selectByKeyboardEvent(item: T, event: KeyboardEvent) {
+	/** Select or deselect a range if pressed shify key, otherwise select or deselect one. */
+	selectByKeyEvent(item: T, event: KeyboardEvent) {
 		if (event.shiftKey) {
 			this.shiftSelect(item)
 		}
@@ -372,8 +401,9 @@ export class Store<T extends object = object> extends EventEmitter<StoreEvents> 
 		}
 	}
 
+	/** Select or deselect a range, from last touched item to current item. */
 	shiftSelect(item: T) {
-		let startIndex = Math.max(this.lastTouchItem ? this.getIndex(this.lastTouchItem) : 0, 0)
+		let startIndex = Math.max(this.lastTouchedItem ? this.getIndex(this.lastTouchedItem) : 0, 0)
 		let endIndex = this.getIndex(item)
 
 		if (endIndex >= 0) {
@@ -392,18 +422,30 @@ export class Store<T extends object = object> extends EventEmitter<StoreEvents> 
 		}
 	}
 
+	/** Get item index in full data. */
 	getIndex(item: T): number {
-		if (this.map && !this.map.has(item)) {
+		if (this.dataMap && !this.dataMap.has(item)) {
 			return -1
 		}
 
-		return this.data.indexOf(this.get(item)!)
+		return this.fullData.indexOf(this.get(item)!)
 	}
 
+	/** Get item index in current data. */
+	getCurrentIndex(item: T): number {
+		if (this.dataMap && !this.dataMap.has(item)) {
+			return -1
+		}
+
+		return this.currentData.indexOf(this.get(item)!)
+	}
+
+	/** Select all items. */
 	selectAll() {
 		this.select(...this.currentData)
 	}
 
+	/** Deselect all items. */
 	deselectAll() {
 		this.selected = []
 
@@ -412,6 +454,7 @@ export class Store<T extends object = object> extends EventEmitter<StoreEvents> 
 		}
 	}
 
+	/** Select all items if not, otherwise deselect all. */
 	toggleSelectAll() {
 		if (this.isSelectedAll()) {
 			this.deselectAll()
@@ -421,20 +464,16 @@ export class Store<T extends object = object> extends EventEmitter<StoreEvents> 
 		}
 	}
 
-	reload() {
-		this.updateCurrentData()
-		this.emit('change')
-	}
-
+	/** Clears all data. */
 	clear() {
-		this.data = []
-		this.clearCurrentData()
+		this.fullData = []
+		this.currentData = []
 		this.deselectAll()
 
-		if (this.map) {
-			this.map.clear()
+		if (this.dataMap) {
+			this.dataMap.clear()
 		}
 		
-		this.emit('change')
+		this.emit('dataChange')
 	}
 }

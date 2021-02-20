@@ -4,7 +4,7 @@ import {constrain, getRect, Rect, toDecimal, MouseLeave} from '@pucelle/ff'
 import {tooltip} from '../bindings/tooltip'
 
 
-export interface SliderEvents {
+interface SliderEvents {
 
 	/** Triggers after user slide and make slider value changed. */
 	change: (value: number) => void

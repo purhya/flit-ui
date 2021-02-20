@@ -2,7 +2,7 @@ import * as ff from '@pucelle/ff'
 import * as flit from '@pucelle/flit'
 import * as flitUI from '../src'
 import {html, Component, define, repeat, observe, getComponent, getRenderedAsComponent, render, getComponentAsync} from '@pucelle/flit'
-import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, Column, Select, AsyncStore, Popover, icons, Form, Input} from '../src'
+import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, TableColumn, Select, RemoteStore, Popover, Form, Input} from '../src'
 
 
 declare global {
@@ -26,6 +26,8 @@ define('flit-preview', class extends Component {
 	switch1On = true
 	switch2On = false
 	tagClosed = false
+	leftData = observe([1, 2, 3])
+	rightData = observe([4, 5, 6])
 
 	render() {
 		let {lineHeight} = theme
@@ -275,17 +277,17 @@ define('flit-preview', class extends Component {
 				<f-row style="margin: 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header>Single Select</header>
-						<f-select style="width: 100%; margin: 8px 0;" .data=${range(1, 10).map(value => ({value, text: 'Option ' + value}))} .value=${1}  />
+						<f-select style="width: 100%; margin: 8px 0;" .data=${range(1, 11).map(value => ({value, text: 'Option ' + value}))} .value=${1}  />
 					</f-col>
 
 					<f-col .span="6">
 						<header>Multiple Select</header>
-						<f-select style="width: 100%; margin: 8px 0;" .multipleSelect .data=${range(1, 10).map(value => ({value, text: 'Option ' + value}))} .value=${[1, 2]} />
+						<f-select style="width: 100%; margin: 8px 0;" .multipleSelect .data=${range(1, 11).map(value => ({value, text: 'Option ' + value}))} .value=${[1, 2]} />
 					</f-col>
 
 					<f-col .span="6">
 						<header>Searchable Select</header>
-						<f-select style="width: 100%; margin: 8px 0;" .searchable .data=${range(1, 10).map(value => ({value, text: 'Option ' + value}))} .value=${1} />
+						<f-select style="width: 100%; margin: 8px 0;" .searchable .data=${range(1, 11).map(value => ({value, text: 'Option ' + value}))} .value=${1} />
 					</f-col>
 				</f-row>
 			</section>
@@ -332,17 +334,17 @@ define('flit-preview', class extends Component {
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="4">
 						<header style="margin-bottom: 8px;">Small</header>
-						<f-loader .size="small" />
+						<f-loader .size="small" .speed="0.7" />
 					</f-col>
 
 					<f-col .span="4">
 						<header style="margin-bottom: 8px;">Medium</header>
-						<f-loader .size="medium" />
+						<f-loader .size="medium" .speed="0.6" />
 					</f-col>
 
 					<f-col .span="4">
 						<header style="margin-bottom: 8px;">Large</header>
-						<f-loader .size="large" />
+						<f-loader .size="large" .speed="0.5" />
 					</f-col>
 				</f-row>
 			</section>
@@ -354,29 +356,29 @@ define('flit-preview', class extends Component {
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Selection type</header>
-						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} />
+						<f-list .data=${range(1, 6).map(value => ({value, text: 'Option ' + value}))} />
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Single Selection</header>
-						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .selectable .selected=${[2]} />
+						<f-list .data=${range(1, 6).map(value => ({value, text: 'Option ' + value}))} .selectable .selected=${[2]} />
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Multiple Selection</header>
-						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .selectable .multipleSelect .selected=${[1, 2]} />
+						<f-list .data=${range(1, 6).map(value => ({value, text: 'Option ' + value}))} .selectable .multipleSelect .selected=${[1, 2]} />
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Navigation Type</header>
-						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .type="navigation" .active=${1} />
+						<f-list .data=${range(1, 6).map(value => ({value, text: 'Option ' + value}))} .type="navigation" .active=${1} />
 					</f-col>
 				</f-row>
 
 				<f-row style="margin: 32px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">With Icon</header>
-						<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value, icon: 'love'}))} />
+						<f-list .data=${range(1, 6).map(value => ({value, text: 'Option ' + value, icon: 'love'}))} />
 					</f-col>
 
 					<f-col .span="6">
@@ -531,7 +533,7 @@ define('flit-preview', class extends Component {
 							popup(
 								() => html`
 								<f-menu>
-									<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} />
+									<f-list .data=${range(1, 6).map(value => ({value, text: 'Option ' + value}))} />
 								</f-menu>
 								`,
 								{trigger: 'click'}
@@ -547,7 +549,7 @@ define('flit-preview', class extends Component {
 							popup(
 								() => html`
 								<f-menu .title="Menu title">
-									<f-list .data=${range(1, 5).map(value => ({value, text: 'Option ' + value}))} .selectable .selected=${[1]} />
+									<f-list .data=${range(1, 6).map(value => ({value, text: 'Option ' + value}))} .selectable .selected=${[1]} />
 								</f-menu>
 								`,
 								{trigger: 'click'}
@@ -806,17 +808,15 @@ define('flit-preview', class extends Component {
 				</f-row>
 
 			</section>
-			
-			<!--
+
+
 			<section>
 				<h3>Table</h3>
 
 				<f-table
 					.resizable
-					.live
-					.pageSize="10"
 					.store=${new Store({
-						data: range(1, 1000).map(n => ({id: n, value: Math.round(Math.random() * 100)})),
+						data: range(1, 101).map(n => ({id: n, value: Math.round(Math.random() * 100)})),
 						key: 'id',
 					})}
 					.columns=${[
@@ -827,33 +827,37 @@ define('flit-preview', class extends Component {
 							},
 						},
 						{
-							title: 'Date',
-							render: () => '2019/10/19',
-						},
-						{
 							title: 'ID',
 							orderBy: 'id',
 							render: (item) => item.id,
 						},
 						{
-							title: 'Value',
+							title: 'Name',
+							render: (item) => `Name ${item.id}`,
+						},
+						{
+							title: 'Random Value',
 							orderBy: 'value',
 							render: (item) => item.value,
 							align: 'right',
 						}
-					] as Column[]}
+					] as TableColumn[]}
 				/>
 			</section>
 
-
+			
 			<section>
-				<h3>Table with Async Data</h3>
+				<h3>Table in Live Rendering Mode</h3>
 
 				<f-table
+					style="height: 204px;"
 					.resizable
 					.live
-					.pageSize="10"
-					.store=${new ExampleAsyncStore()}
+					.renderCount="20"
+					.store=${new Store({
+						data: range(1, 1001).map(n => ({id: n, value: Math.round(Math.random() * 100)})),
+						key: 'id',
+					})}
 					.columns=${[
 						{
 							title: 'Index',
@@ -862,72 +866,123 @@ define('flit-preview', class extends Component {
 							},
 						},
 						{
-							title: 'Date',
-							render: () => '2019/10/19',
-						},
-						{
 							title: 'ID',
 							orderBy: 'id',
 							render: (item) => item.id,
 						},
 						{
-							title: 'Value',
+							title: 'Name',
+							render: (item) => `Name ${item.id}`,
+						},
+						{
+							title: 'Random Value',
 							orderBy: 'value',
 							render: (item) => item.value,
 							align: 'right',
 						}
-					] as Column[]}
+					] as TableColumn[]}
 				/>
-			</section> -->
+			</section>
+
+			
+			<section>
+				<h3>Table with Remote Data</h3>
+
+				<f-table
+					.resizable
+					.renderCount="20"
+					.store=${new ExampleRemoteStore()}
+					.columns=${[
+						{
+							title: 'Index',
+							render: (_item: {id: number, value: number}, index: number) => {
+								return index
+							},
+						},
+						{
+							title: 'ID',
+							orderBy: 'id',
+							render: (item) => item?.id ?? '--',
+						},
+						{
+							title: 'Name',
+							render: (item) => item ? `Name ${item.id}` : '--',
+						},
+						{
+							title: 'Random Value',
+							orderBy: 'value',
+							render: (item) => item?.value ?? '--',
+							align: 'right',
+						}
+					] as TableColumn[]}
+				/>
+			</section>
 
 
 			<section>
 				<h3>Drag & Drop</h3>
 
-				<div style="display: inline-flex; padding: 4px; background: ${theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center;"
+				<div style="display: inline-flex; padding: 4px; background: ${theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center; height: 116px;"
 					${droppable((value: number, index: number) => {
-						ff.remove(leftData, value)
-						ff.remove(rightData, value)
+						ff.remove(this.leftData, value)
+						ff.remove(this.rightData, value)
 
 						if (index === -1) {
-							leftData.push(value)
+							this.leftData.push(value)
 						}
 						else {
-							leftData.splice(index, 0, value)
+							this.leftData.splice(index, 0, value)
 						}
 					})}
 				>
-					${repeat(leftData, (data: number, index: number) => html`
-						<div style="width: 100px; margin: 4px;" :style.background=${theme.backgroundColor.toMiddle(15)} ${draggable(data, index)}>${data}</div>
+					${repeat(this.leftData, (data: number, index: number) => html`
+						<div style="width: 100px; margin: 4px;"
+							:style.background=${theme.backgroundColor.toMiddle(15).toString()}
+							${draggable(data, index)}
+						>${data}</div>
 					`)}
 				</div>
 				<br>
-				<div style="display: inline-flex; padding: 4px; margin-top: -8px; background: ${theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center;"
+
+				<div style="display: inline-flex; padding: 4px; margin-top: -8px; background: ${theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center; height: 116px;"
 					${droppable((value: number, index: number) => {
-						ff.remove(leftData, value)
-						ff.remove(rightData, value)
+						ff.remove(this.leftData, value)
+						ff.remove(this.rightData, value)
 
 						if (index === -1) {
-							rightData.push(value)
+							this.rightData.push(value)
 						}
 						else {
-							rightData.splice(index, 0, value)
+							this.rightData.splice(index, 0, value)
 						}
 					})}
 				>
-					${repeat(rightData, (data: number, index: number) => html`
-						<div style="width: 100px; margin: 4px;" :style.background=${theme.backgroundColor.toMiddle(15)} ${draggable(data, index)}>${data}</div>
+					${repeat(this.rightData, (data: number, index: number) => html`
+						<div style="width: 100px; margin: 4px;"
+							:style.background=${theme.backgroundColor.toMiddle(15).toString()}
+							${draggable(data, index)}
+						>${data}</div>
 					`)}
 				</div>
+			</section>
+
+
+			<section>
+				<h3>Resizer</h3>
+
+				<div style="position: relative; display: inline-flex; justify-content: center; line-height: 100px; font-size: 14px; text-align: center; width: 200px; height: 100px;"
+					:style.background=${theme.backgroundColor.toMiddle(5).toString()}
+				>
+					Resizer on the Right
+					<f-resizer .position="right" .min=${200} .max=${600} style="background: ${theme.backgroundColor.toMiddle(15)}"></f-resizer>
+				</div>
+				<br>
 			</section>
 
 		</div>
 	`}
 })
 
-
-let leftData = observe([1, 2, 3])
-let rightData = observe([4, 5, 6])
 
 
 define('f-main-color-select', class extends Select<string> {
@@ -961,20 +1016,30 @@ define('f-main-color-select', class extends Select<string> {
 
 function range(start: number, end: number) {
 	let data: number[] = []
-	for (let i = start; i <= end; i++) {
+	for (let i = start; i < end; i++) {
 		data.push(i)
 	}
 	return data
 }
 
 
-class ExampleAsyncStore extends AsyncStore {
+class ExampleRemoteStore extends RemoteStore {
 
-	key = 'id'
-	dataCount = () => 1000
+	protected key = 'id'
+	
+	constructor() {
+		super({
+			pageSize: 20,
+			preloadPageCount: 0,
+		})
+	}
 
-	async dataGetter(start: number, count: number) {
+	protected dataCount() {
+		return 1000
+	}
+
+	async dataGetter(start: number, end: number) {
 		await ff.sleep(500)
-		return range(start, start + count - 1).map(v => ({id: v, value: Math.round(Math.random() * 100)}))
+		return range(start, end).map(v => ({id: v + 1, value: Math.round(Math.random() * 100)}))
 	}
 }

@@ -74,6 +74,9 @@ export class Loader<E = any> extends Component<E> {
 	 */
 	asCover: boolean = false
 
+	/** How many round per second. */
+	speed: number = 0.6
+
 	protected render() {
 		let strokeWidth = this.getStrokeWidth()
 		let halfWidth = strokeWidth / 2
@@ -114,7 +117,7 @@ export class Loader<E = any> extends Component<E> {
 			}
 		], 
 		{
-			duration: 1500,
+			duration: 1000 / this.speed,
 			iterations: Infinity
 		})
 	}

@@ -1,6 +1,6 @@
 import {css, define, html, renderComplete, show, Component, TemplateResult, on, off, render, getRenderedAsComponent, getComponentAsync} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {align, debounce} from '@pucelle/ff'
+import {align} from '@pucelle/ff'
 import {appendTo} from '../utils/element'
 import {translations} from '../translations/translations'
 import {Input} from './input'
@@ -291,7 +291,7 @@ export class Dialog<E = any> extends Component<E> {
 			this.el.focus()
 		}
 
-		on(window, 'resize', debounce(this.onWindowResize, 200).wrapped, this)
+		on(window, 'resize', this.onWindowResize, this)
 	}
 
 	protected onDisconnected() {

@@ -12,10 +12,14 @@ export interface RouteMatchResult {
 }
 
 export interface RouteOptions {
+
+	/** If provided, will update `document.title` if associated route path matcher. */
 	title?: string
 }
 
-export interface RouterEvents {
+interface RouterEvents {
+
+	/** Triggers after path of current router updated. */
 	goto: (path: string) => void
 }
 
@@ -40,10 +44,11 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 
 	protected onCreated() {
 		this.path = this.getPathFromUri(location.href)
-		on(window, 'popstate', this.onStateChange as (e: Event) => void, this)
+		on(window, 'popstate', this.onWindowStateChange as (e: Event) => void, this)
 	}
 
-	getPathFromUri(uri: string): string {
+	/** Get relative path for router from a uri. */
+	protected getPathFromUri(uri: string): string {
 		let path = new URL(uri).pathname
 
 		if (this.prefix && path.startsWith(this.prefix)) {
@@ -58,10 +63,10 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	}
 
 	protected onDisconnected() {
-		off(window, 'popstate', this.onStateChange as (e: Event) => void, this)
+		off(window, 'popstate', this.onWindowStateChange as (e: Event) => void, this)
 	}
 
-	private onStateChange(e: PopStateEvent) {
+	private onWindowStateChange(e: PopStateEvent) {
 		if (e.state) {
 			this.redirectTo(e.state.path)
 		}
@@ -105,7 +110,7 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	}
 
 	/** Match current path with router path, returns match parameters and captures. */
-	protected matchPath(routePath: string | RegExp) {
+	protected matchPath(routePath: string | RegExp): {params: Record<string, string>, captures: string[]} | null {
 		return PathParser.matchPath(this.path, routePath)
 	}
 
@@ -163,7 +168,7 @@ namespace PathParser {
 		}
 	}
 
-	export function matchPath(path: string, routePath: string | RegExp) {
+	export function matchPath(path: string, routePath: string | RegExp): {params: Record<string, string>, captures: string[]} | null {
 		let params: Record<string, string> = {}
 		let captures: string[] = []
 

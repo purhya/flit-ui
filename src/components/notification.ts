@@ -1,6 +1,6 @@
 import {css, define, html, Component, repeat, TemplateResult, getRenderedAsComponent, render} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {remove, Timeout, timeout} from '@pucelle/ff'
+import {remove, Timeout} from '@pucelle/ff'
 import {Color} from '../style/color'
 import {appendTo} from '../utils/element'
 
@@ -309,7 +309,7 @@ export class Notification<E = any> extends Component<E> {
 			item.timeout.cancel()
 		}
 
-		item.timeout = timeout(() => {
+		item.timeout = new Timeout(() => {
 			item.timeout = null
 
 			if (!item.hover) {

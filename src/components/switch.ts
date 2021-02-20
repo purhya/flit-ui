@@ -2,7 +2,7 @@ import {define, Component, html, css, getCSSEasingValue, on, off} from '@pucelle
 import {theme} from '../style/theme'
 
 
-export interface SwitchEvents {
+interface SwitchEvents {
 
 	/** Triggers after switch on or off state changed. */
 	change: (value: boolean) => void

@@ -5,7 +5,7 @@ import {Dropdown} from './dropdown'
 import {ListItem} from './list'
 
 
-export interface SelectEvents<T> {
+interface SelectEvents<T> {
 
 	/** 
 	 * Trigger after selected value changed.
@@ -295,11 +295,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	protected onPopupOpened() {
 		onRenderComplete(() => {
 			this.mayFocusInput()
-			this.setPopupListWidth()
-
-			onRenderComplete(() => {
-				this.scrollToViewSelectedOption()
-			})
+			this.scrollToViewSelectedOption()
 		})
 	}
 
@@ -308,8 +304,12 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			this.refs.input.focus()
 		}
 	}
+	
+	protected onWillAlign() {
+		this.syncPopupWidth()
+	}
 
-	protected setPopupListWidth() {
+	protected syncPopupWidth() {
 		if (this.refs.popup) {
 			this.refs.popup.style.minWidth = String(this.el.offsetWidth) + 'px'
 		}

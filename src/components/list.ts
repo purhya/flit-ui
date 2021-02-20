@@ -31,7 +31,7 @@ export interface ListItem<T = any> {
 	opened?: boolean
 }
 
-export interface ListEvents<T> {
+interface ListEvents<T> {
 
 	/** Triggers after selected items changed. */
 	select: (selected: T[]) => void

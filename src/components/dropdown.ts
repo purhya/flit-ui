@@ -106,6 +106,7 @@ export abstract class Dropdown<E = any> extends Component<E> {
 	protected refBinding(binding: Binding) {
 		this.popupBinding = binding as PopupBinding
 		this.popupBinding.on('openedStateChange', this.setOpened, this)
+		this.popupBinding.on('willAlign', this.onWillAlign, this)
 	}
 
 	protected setOpened(opened: boolean) {
@@ -117,6 +118,8 @@ export abstract class Dropdown<E = any> extends Component<E> {
 	}
 
 	protected onPopupOpened() {}
+
+	protected onWillAlign() {}
 
 	protected showPopup() {
 		if (this.popupBinding) {

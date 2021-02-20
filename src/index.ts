@@ -5,7 +5,7 @@ export * from './style/theme'
 export * from './style/color'
 
 export * from './store/store'
-export * from './store/async-store'
+export * from './store/remote-store'
 
 export * from './components/buttongroup'
 export * from './components/icon'

@@ -1,5 +1,5 @@
 import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, Context, Transition, Template, UpdatableOptions, html, onRenderComplete, render, getRenderedAsComponent, enqueueUpdatable} from '@pucelle/flit'
-import {Timeout, timeout, MouseLeave, watchLayout, align, isVisibleInViewport, AlignPosition, EventEmitter, AlignOptions} from '@pucelle/ff'
+import {Timeout, MouseLeave, watchLayout, align, isVisibleInViewport, AlignPosition, EventEmitter, AlignOptions} from '@pucelle/ff'
 import {Popup} from '../components/popup'
 import {RenderFn} from '../types'
 
@@ -55,8 +55,11 @@ export interface PopupOptions {
 
 interface PopupBindingEvents {
 	
-	/** To trigger when `opened` state of popup binding changed. */
+	/** Triggers when `opened` state of popup binding changed. */
 	openedStateChange?: (opened: boolean) => void
+
+	/** Triggers before align popup to current element. */
+	willAlign?: () => void
 }
 
 
@@ -155,7 +158,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			this.bindTrigger()
 		}
 		else {
-			enqueueUpdatable(this)
+			enqueueUpdatable(this, this.context)
 		}
 	}
 
@@ -204,7 +207,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			showDelay = 0
 		}
 
-		this.showTimeout = timeout(() => {
+		this.showTimeout = new Timeout(() => {
 			this.showTimeout = null
 			this.showPopup()
 		}, showDelay)
@@ -257,7 +260,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 		let hideDelay = this.getOption('hideDelay')
 
-		this.hideTimeout = timeout(() => {
+		this.hideTimeout = new Timeout(() => {
 			this.hideTimeout = null
 			this.hidePopup()
 		}, hideDelay)
@@ -279,7 +282,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 		this.unbindLeavingTriggerEvents()		
 		this.setOpened(true)
-		enqueueUpdatable(this)
+		enqueueUpdatable(this, this.context)
 	}
 	
 	__updateImmediately() {
@@ -318,7 +321,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	}
 
 	/** Get a cached popup component, or create a new one. */
-	protected createPopup() {
+	protected createPopup(): Popup {
 		let result = this.renderFn()
 		let key = this.getOption('key')
 		let popup: Popup | null = null
@@ -430,11 +433,13 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		let alignToFn = this.getOption('alignTo')
 		let alignTo = alignToFn ? alignToFn(this.el) : this.el
 
+		this.emit('willAlign')
+
 		align(popup.el, alignTo, this.getOption('alignPosition'), this.getAlignOptions())
 	}
 
 	/** Get align options. */
-	protected getAlignOptions() {
+	protected getAlignOptions(): AlignOptions {
 		let triangle = this.popup!.refs.triangle
 
 		return {
@@ -442,7 +447,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			canShrinkInY: true,
 			triangle,
 			fixTriangle: this.getOption('fixTriangle'), 
-		} as AlignOptions
+		}
 	}
 
 	/** Make element of popup component get focus if possible. */
@@ -531,19 +536,14 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	/** After trigger element position changed. */
 	protected onTriggerRectChanged() {
-		if (isVisibleInViewport(this.el, 0.5, this.popup!.el)) {
+		if (isVisibleInViewport(this.el, 0.1, this.popup!.el)) {
 			if (this.popup) {
 				this.alignPopup()
 			}
 		}
 		else {
-			this.onNotInViewport()
+			this.hidePopupLater()
 		}
-	}
-
-	/** After trigger not in viewport. */
-	protected onNotInViewport() {
-		this.hidePopupLater()
 	}
 
 	remove() {

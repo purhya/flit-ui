@@ -13,8 +13,7 @@ export class GotoBinding implements Binding<string>{
 	
 	protected readonly el: HTMLElement
 	protected router: Router | null = null
-
-	value: string = ''
+	protected value: string = ''
 
 	constructor(el: Element) {
 		this.el = el as HTMLElement
