@@ -80,6 +80,11 @@ export class Popover<E = any> extends Popup<E> {
 		`.extends(super.style())
 	}
 
+	slots!: {
+		/** As action buttons. */
+		action: HTMLElement[]
+	}
+
 	/** Popover title. */
 	title: string = ''
 

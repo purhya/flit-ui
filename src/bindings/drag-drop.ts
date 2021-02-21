@@ -6,13 +6,13 @@ import {theme} from '../style/theme'
 export interface DraggableOptions {
 
 	/** `name` for dragabble, can drop to droppable only when name match. */
-	name?: string
+	readonly name?: string
 }
 
 export interface DroppableOptions<T> {
 
 	/** `name` for droppable, can drop draggable to droppable only when name match. */
-	name?: string
+	readonly name?: string
 
 	/** Called after mouse enter. */
 	onenter?: (data: T, index: number) => void

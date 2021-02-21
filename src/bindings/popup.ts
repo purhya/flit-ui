@@ -1,5 +1,5 @@
 import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, Context, Transition, Template, UpdatableOptions, html, onRenderComplete, render, getRenderedAsComponent, enqueueUpdatable} from '@pucelle/flit'
-import {Timeout, MouseLeave, watchLayout, align, isVisibleInViewport, AlignPosition, EventEmitter, AlignOptions} from '@pucelle/ff'
+import {Timeout, MouseLeave, watchLayout, isVisibleInViewport, AlignPosition, EventEmitter, AlignOptions, Aligner} from '@pucelle/ff'
 import {Popup} from '../components/popup'
 import {RenderFn} from '../types'
 
@@ -10,13 +10,13 @@ export interface PopupOptions {
 	 * If specified, all the `:popup` binding with same key will share and reuse one popup component.
 	 * It's very useful when many same type popup contents exist.
 	 */
-	key?: string
+	readonly key?: string
 
 	/** 
 	 * How to trigger the popup.
 	 * You should not change it after set.
 	 */
-	trigger?: 'hover' | 'click' | 'focus' | 'contextmenu'
+	readonly trigger?: 'hover' | 'click' | 'focus' | 'contextmenu'
 
 	/** Element to align to, use current element if not specified. */
 	alignTo?: (trigger: Element) => Element
@@ -120,6 +120,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	protected unwatchLeave: (() => void) | null = null
 	protected popupTemplate: Template | null = null
 	protected popup: Popup | null = null
+	protected aligner: Aligner | null = null
 
 	constructor(el: Element, context: Context) {
 		super()
@@ -435,7 +436,12 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 		this.emit('willAlign')
 
-		align(popup.el, alignTo, this.getOption('alignPosition'), this.getAlignOptions())
+		// Create a aligner since align too much times for a tooltip.
+		if (!this.aligner) {
+			this.aligner = new Aligner(popup.el, alignTo, this.getOption('alignPosition'), this.getAlignOptions())
+		}
+
+		this.aligner.align()
 	}
 
 	/** Get align options. */
@@ -523,6 +529,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		this.setOpened(false)
 		this.popup = null
 		this.popupTemplate = null
+		this.aligner = null
 	}
 
 	/** Trigger when mouse down on document. */

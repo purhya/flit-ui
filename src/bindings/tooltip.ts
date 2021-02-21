@@ -7,12 +7,11 @@ import {TooltipType} from '../components/tooltip'
 export interface TooltipOptions extends PopupOptions{
 
 	/** Tooltip type, `default | prompt | error`. */
-	type?: TooltipType
+	readonly type?: TooltipType
 }
 
 
 const defaultTooltipOptions: TooltipOptions = {
-	key: 'tooltip',
 	alignPosition: 'r',
 	alignMargin: 3,
 	showDelay: 0,
@@ -35,11 +34,6 @@ export class TooltipBinding extends PopupBinding {
 
 	update(title: string | TemplateResult | any, options: TooltipOptions = {}) {
 		this.title = title
-
-		if (options.type && ['prompt', 'error'].includes(options.type) && options.key === undefined) {
-			options.key = ''
-		}
-
 		super.update(this.getRenderFn.bind(this) as any, this.getPopupOptions(options))
 	}
 
@@ -54,8 +48,15 @@ export class TooltipBinding extends PopupBinding {
 		`
 	}
 
-	protected getPopupOptions(options: PopupOptions = {}): PopupOptions {
-		return {...defaultTooltipOptions, ...options}
+	protected getPopupOptions(options: TooltipOptions = {}): TooltipOptions {
+		return {
+			...defaultTooltipOptions,
+
+			// Default key is `tooltip` for default type.
+			key: options.type === 'default' ? 'tooltip' : '',
+			
+			...options,
+		}
 	}
 
 	protected isHerizontal(): boolean {

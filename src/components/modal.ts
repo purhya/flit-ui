@@ -94,6 +94,11 @@ export class Modal<E = any> extends Component<E> {
 			padding-right: ${adjust(16)}px;
 		}
 	`}
+	
+	slots!: {
+		/** As action buttons. */
+		action: HTMLElement[]
+	}
 
 	/** Modal title. */
 	title: string = ''
