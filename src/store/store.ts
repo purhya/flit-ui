@@ -1,4 +1,4 @@
-import {EventEmitter, Order, OrderFunction, CanSortKeys} from '@pucelle/ff'
+import {Emitter, Order, OrderFunction, CanSortKeys} from '@pucelle/ff'
 import {KeyMap} from './helpers/key-map'
 
 
@@ -25,7 +25,7 @@ export interface StoreOptions<T> {
 
 
 /* Used to cache object type data and support selection, ordering and filtering. */
-export class Store<T = any> extends EventEmitter<StoreEvents> {
+export class Store<T = any> extends Emitter<StoreEvents> {
 
 	/** If `key` specified, when different but same key items added, it covers the old one. */
 	protected readonly key: keyof T | null = null
@@ -121,18 +121,9 @@ export class Store<T = any> extends EventEmitter<StoreEvents> {
 	 * Set ordering rule.
 	 * Note it doesn't trigger `dataChange` immediately.
 	 */
-	setOrder(by: CanSortKeys<T> | OrderFunction<T>, direction: 'asc' | 'desc' | '') {
-		this.order = new Order([by, direction || 'asc'])
+	setOrder(by: CanSortKeys<T> | OrderFunction<T> | null, direction: 'asc' | 'desc' | '' = '') {
+		this.order = by === null ? null : new Order([by, direction || 'asc'])
 		this.orderDirection = direction
-		this.updateCurrentDataLater()
-	}
-
-	/** 
-	 * Clear ordering rule.
-	 * Note it doesn't trigger `dataChange` immediately.
-	 */
-	clearOrder() {
-		this.order = null
 		this.updateCurrentDataLater()
 	}
 
@@ -144,14 +135,6 @@ export class Store<T = any> extends EventEmitter<StoreEvents> {
 		this.filter = filter
 		this.deselectAll()
 		this.updateCurrentDataLater()
-	}
-
-	/** 
-	 * Clears filter and shows all data.
-	 * Note it doesn't trigger `dataChange` immediately.
-	 */
-	clearFilter() {
-		this.setFilter(null)
 	}
 
 	/** Whether will update current data. */

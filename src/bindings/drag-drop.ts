@@ -64,8 +64,8 @@ export class DraggableBinding<T> implements Binding<T> {
 
 		let onMouseMove = (e: MouseEvent) => {
 			if (!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) {
-				isDragging = true
 				manager.startDragging(this)
+				isDragging = true
 			}
 			
 			if (isDragging) {
@@ -77,7 +77,10 @@ export class DraggableBinding<T> implements Binding<T> {
 
 		let onMouseUp = async () => {
 			off(document, 'mousemove', onMouseMove as (e: Event) => void)
-			manager.endDragging()
+
+			if (isDragging) {
+				manager.endDragging()
+			}
 		}
 
 		on(document, 'mousemove', onMouseMove as (e: Event) => void)
@@ -609,7 +612,6 @@ class Mover {
 
 	/** Play drag end end transition. */
 	async playEndDraggingAnimation() {
-
 		// Animate dragging elemenet to drop area.
 		if (this.willSwapElements()) {
 			await this.animateDraggingElementToDropArea()

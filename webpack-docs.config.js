@@ -26,7 +26,7 @@ module.exports = {
 		publicPath: '/js/',
 	},
 	
-	devtool : 'cheap-source-map',
+	devtool: 'cheap-source-map',
 
 	resolve: {
 		extensions: ['.tsx', '.ts', '.js']
@@ -52,7 +52,6 @@ module.exports = {
 					options: {},
 				}],
 			},
-			
 		],
 	},
 

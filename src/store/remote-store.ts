@@ -1,4 +1,4 @@
-import {CanSortKeys, EventEmitter} from '@pucelle/ff'
+import {CanSortKeys, Emitter} from '@pucelle/ff'
 import {LiveAsyncRepeatDataOptions} from '@pucelle/flit'
 import {PageDataCacher} from './helpers/page-data-cacher'
 
@@ -27,7 +27,7 @@ export interface RemoteStoreOptions {
  * You should extends this class and overwrite abstract methods,
  * and should support like column ordering and filtering or searching in backend.
  */
-export abstract class RemoteStore<T = any> extends EventEmitter<RemoteStoreEvents> {
+export abstract class RemoteStore<T = any> extends Emitter<RemoteStoreEvents> {
 
 	protected readonly cacher: PageDataCacher<T>
 
@@ -39,6 +39,9 @@ export abstract class RemoteStore<T = any> extends EventEmitter<RemoteStoreEvent
 
 	/** Current ordered direction. */
 	protected orderDirection: 'asc' | 'desc' | '' = ''
+
+	/** Word to filter results. */
+	protected filterWord: string = ''
 
 	constructor(options: RemoteStoreOptions = {}) {
 		super()
@@ -55,38 +58,17 @@ export abstract class RemoteStore<T = any> extends EventEmitter<RemoteStoreEvent
 	protected abstract dataGetter(startIndex: number, endIndex: number): Promise<Iterable<T>> | Iterable<T>
 
 	/** Set ordering key and apply it to backend. */
-	setOrder(key: CanSortKeys<T>, direction: 'asc' | 'desc' | '') {
+	setOrder(key: CanSortKeys<T> | null, direction: 'asc' | 'desc' | '' = '') {
 		this.orderKey = key
 		this.orderDirection = direction
 		this.reloadLater()
-		this.setRemoteOrder(key, direction)
 	}
 
-	/** Clear ordering and apply it to backend. */
-	clearOrder() {
-		this.orderKey = null
-		this.orderDirection = ''
-		this.reloadLater()
-		this.setRemoteOrder(null, '')
-	}
-
-	/** Overwrite to set remote order in backend. */
-	protected setRemoteOrder(_key: CanSortKeys<T> | null, _direction: 'asc' | 'desc' | '') {}
-
-	/** Set filter key to filter data items and apply it to backend. */
+	/** Set filter word to filter data items and apply it to backend. */
 	setFilter(filterWord: string) {
+		this.filterWord = filterWord
 		this.reloadLater()
-		this.setRemoteFilter(filterWord)
 	}
-
-	/** Clears filter and shows all data and apply it to backend. */
-	clearFilter() {
-		this.reloadLater()
-		this.setRemoteFilter('')
-	}
-
-	/** Overwrite to set remote filtering or searching in backend. */
-	protected setRemoteFilter(_filterWord: string) {}
 
 	/** Whether will reload. */
 	protected willReload: boolean = false
@@ -107,6 +89,11 @@ export abstract class RemoteStore<T = any> extends EventEmitter<RemoteStoreEvent
 	/** Clear cache data immediately. */
 	protected reloadImmediately() {
 		this.cacher.clear()
+	}
+
+	/** Reload all data. */
+	reload() {
+		this.reloadLater()
 	}
 
 	/** Get data items immediately. */

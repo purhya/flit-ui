@@ -6,7 +6,7 @@ import {ColumnWidthResizer} from './helpers/column-width-resizer'
 import {RemoteStore} from '../store/remote-store'
 
 
-interface GridEvents<T> {
+interface TableEvents<T> {
 
 	/** After column order changed. */
 	orderChange: (columnName: string, orderDirection: 'asc' | 'desc' | '') => void
@@ -38,7 +38,7 @@ export interface TableColumn<T = any> {
 
 	/** 
 	 * Column flex width, just like flex grow and shrink.
-	 * Can be a number, or a pair of number values [extendFlex, shrinkFlex].
+	 * Can be a number, or a pair of number values `[extendFlex, shrinkFlex]`.
 	 */
 	flex?: number | number[]
 
@@ -69,7 +69,7 @@ export interface TableColumn<T = any> {
  * `columns` can config data column mode for table view.
  */
 @define('f-table')
-export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> extends Component<GridEvents<T> & E> {
+export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> extends Component<TableEvents<T> & E> {
 
 	static style() {
 		let {adjustFontSize, adjust, mainColor, textColor, backgroundColor} = theme
@@ -273,10 +273,10 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	transition: ContextualTransitionOptions | undefined = undefined
 
 	/** Column name to indicate which column is in order. */
-	protected orderColumnName: string = ''
+	orderColumnName: string = ''
 
 	/** Current column order direction. */
-	protected orderDirection: 'asc' | 'desc' | '' = ''
+	orderDirection: 'asc' | 'desc' | '' = ''
 
 	/** Repeat directive inside, only available when `live`. */
 	protected repeatDir: LiveRepeatDirective<T> | LiveAsyncRepeatDirective<T> | null = null
@@ -296,6 +296,16 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 
 		/** Colgroup inside table. */
 		colgroup: HTMLTableColElement
+	}
+
+	protected onCreated() {
+		this.store.on('dataChange', this.onStoreDataChange, this)
+	}
+
+	protected onStoreDataChange() {
+		if (this.repeatDir instanceof LiveAsyncRepeatDirective) {
+			this.repeatDir.reload()
+		}
 	}
 
 	render(): TemplateResult {
@@ -469,6 +479,13 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		this.orderColumn(column, direction)
 	}
 
+	/** Clear column order. */
+	clearOrder() {
+		this.orderColumnName = ''
+		this.orderDirection = ''
+		this.store.setOrder(null)
+	}
+
 	/** Order specified column with specified direction by column name. */
 	protected orderColumn(column: TableColumn, direction: 'asc' | 'desc' | '' = '') {
 		let orderName = column.name || String(column.orderBy)
@@ -476,7 +493,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		this.orderDirection = direction
 
 		if (direction === '') {
-			this.store.clearOrder()
+			this.store.setOrder(null)
 		}
 		else {
 			this.store.setOrder(column.orderBy as any, direction)
