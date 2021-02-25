@@ -273,10 +273,10 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	transition: ContextualTransitionOptions | undefined = undefined
 
 	/** Column name to indicate which column is in order. */
-	orderColumnName: string = ''
+	protected orderName: string | null = null
 
 	/** Current column order direction. */
-	orderDirection: 'asc' | 'desc' | '' = ''
+	protected orderDirection: 'asc' | 'desc' | '' = ''
 
 	/** Repeat directive inside, only available when `live`. */
 	protected repeatDir: LiveRepeatDirective<T> | LiveAsyncRepeatDirective<T> | null = null
@@ -332,7 +332,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	protected renderColumns(): TemplateResult[] {
 		return this.columns.map((column, index) => {
 			let orderName = column.name || String(column.orderBy)
-			let isOrdered = this.orderColumnName === orderName
+			let isOrdered = this.orderName === orderName
 			let flexAlign = column.align === 'right' ? 'flex-end' : column.align === 'center' ? 'center' : ''
 
 			return html`
@@ -420,7 +420,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 
 	/** Get order icon to indicate order direction. */
 	protected getOrderDirectionIcon(orderName: string): string {
-		if (orderName === this.orderColumnName) {
+		if (orderName === this.orderName) {
 			if (this.orderDirection === 'asc') {
 				return 'order-asc'
 			}
@@ -452,7 +452,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		let descFirst = column.descFirst
 		let orderName = column.name || String(column.orderBy)
 
-		if (orderName === this.orderColumnName) {
+		if (orderName === this.orderName) {
 			if (descFirst) {
 				direction = this.orderDirection === '' ? 'desc' : this.orderDirection === 'desc' ? 'asc' : ''
 			}
@@ -464,42 +464,8 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 			direction = descFirst ? 'desc' : 'asc'
 		}
 
-		this.orderColumn(column, direction)
-	}
-
-	/** Order specified column by column name. */
-	orderColumnByName(name: string, direction: 'asc' | 'desc' | '' = '') {
-		let columns = this.columns
-		let column = columns.find(col => col.name === name)
-
-		if (!column) {
-			throw new Error(`Can't find column with name "${name}"!`)
-		}
-
-		this.orderColumn(column, direction)
-	}
-
-	/** Clear column order. */
-	clearOrder() {
-		this.orderColumnName = ''
-		this.orderDirection = ''
-		this.store.setOrder(null)
-	}
-
-	/** Order specified column with specified direction by column name. */
-	protected orderColumn(column: TableColumn, direction: 'asc' | 'desc' | '' = '') {
-		let orderName = column.name || String(column.orderBy)
-		this.orderColumnName = orderName
-		this.orderDirection = direction
-
-		if (direction === '') {
-			this.store.setOrder(null)
-		}
-		else {
-			this.store.setOrder(column.orderBy as any, direction)
-		}
-
-		this.emit('orderChange', orderName, direction)
+		let columnName = column.name || (typeof column.orderBy === 'string' ? column.orderBy : null)
+		this.setOrder(columnName, direction)
 	}
 
 	onReady() {
@@ -532,6 +498,54 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 			let unwatchSize = watchLayout(this.el, 'size', () => this.resizer?.updatColumnWidthsPrecisely())
 			this.once('disconnected', unwatchSize)
 		})
+	}
+
+	/** Order specified column by column name. */
+	setOrder(columnName: string | null, direction: 'asc' | 'desc' | '' = '') {
+		this.orderName = columnName
+		this.orderDirection = direction
+
+		let column = this.columns?.find(col => col.name === columnName)
+		if (column) {
+			this.applyOrder(column, direction)
+		} 
+		else {
+			this.watchOnce(() => this.columns, columns => {
+				let column = columns.find(col => col.name === columnName)
+				if (column) {
+					this.applyOrder(column, direction)
+				}
+			})
+		}
+	}
+
+	/** Clear column order. */
+	clearOrder() {
+		this.orderName = null
+		this.orderDirection = ''
+		this.store.setOrder(null)
+	}
+
+	/** Order specified column with specified direction by column name. */
+	protected applyOrder(column: TableColumn, direction: 'asc' | 'desc' | '' = '') {
+		if (direction === '') {
+			this.store.setOrder(null)
+		}
+		else {
+			this.store.setOrder(column.orderBy as any, direction)
+		}
+
+		this.emit('orderChange', this.orderName, direction)
+	}
+
+	/** Column name to indicate which column is in order. */
+	getOrderName(): string | null {
+		return this.orderName
+	}
+
+	/** Current column order direction. */
+	getOrderDirection(): '' | 'asc' | 'desc' {
+		return this.orderDirection
 	}
 
 	/** Get start index of live data in live mode, otherwise returns `0`. */
