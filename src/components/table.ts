@@ -4,6 +4,7 @@ import {Store} from '../store/store'
 import {getScrollbarWidth, watchLayout, scrollToTop, scrollToView, locateFirstVisibleIndex} from '@pucelle/ff'
 import {ColumnWidthResizer} from './helpers/column-width-resizer'
 import {RemoteStore} from '../store/remote-store'
+import {TableStateCacher, TableStateOptions} from './helpers/table-state'
 
 
 interface TableEvents<T> {
@@ -284,6 +285,9 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	/** Resize column widths when `resizable` is `true`. */
 	protected resizer: ColumnWidthResizer | null = null
 
+	/** To cache and restore table state. */
+	protected stateCacher!: TableStateCacher
+
 	refs!: {
 		/** Head container. */
 		head: HTMLTableSectionElement
@@ -299,6 +303,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	}
 
 	protected onCreated() {
+		this.stateCacher = new TableStateCacher(this)
 		this.store.on('dataChange', this.onStoreDataChange, this)
 	}
 
@@ -370,7 +375,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		}
 		else if (this.live) {
 			return refDirective(liveRepeat(
-				(this.store as Store).currentData,
+				(this.store as Store).getCurrentData(),
 				this.renderRow.bind(this),
 				{
 					renderCount: this.renderCount,
@@ -381,7 +386,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		}
 		else {
 			return repeat(
-				(this.store as Store).currentData,
+				(this.store as Store).getCurrentData(),
 				this.renderRow.bind(this),
 				this.transition
 			)
@@ -555,7 +560,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 
 	/** Get end index of live data in live mode, otherwise returns data length. */
 	getEndIndex() {
-		return this.repeatDir?.getEndIndex() ?? (this.store as Store).fullData.length
+		return this.repeatDir?.getEndIndex() ?? (this.store as Store).getFullData().length
 	}
 
 	/** Set `startIndex`, and the item in this index will be at the top start position of the viewport. */
@@ -569,7 +574,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 			this.repeatDir.setStartIndex(index)
 		}
 		else {
-			index = Math.min(index, (this.store as Store).fullData.length - 1)
+			index = Math.min(index, (this.store as Store).getFullData().length - 1)
 			let row = this.refs.table.rows[index]
 			if (row) {
 				scrollToTop(row)
@@ -588,7 +593,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 			this.repeatDir.scrollToViewIndex(index)
 		}
 		else {
-			index = Math.min(index, (this.store as Store).fullData.length - 1)
+			index = Math.min(index, (this.store as Store).getFullData().length - 1)
 			let row = this.refs.table.rows[index]
 			if (row) {
 				scrollToView(row)
@@ -617,7 +622,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 				return this.store.getImmediateData(index, index + 1)[0]
 			}
 			else {
-				return (this.store as Store).currentData[index]
+				return (this.store as Store).getCurrentData()[index]
 			}
 		}
 		else {
@@ -631,5 +636,20 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	 */
 	getRenderedRow(index: number): HTMLTableRowElement | null {
 		return this.refs.table.rows[index - this.getStartIndex()] || null
+	}
+
+	/** Caches a state includes order, filter, startIndex... */
+	cacheState(name: string, options: TableStateOptions = {}) {
+		this.stateCacher.cache(name, options)
+	}
+
+	/** Restore last cached state. */
+	restoreState(name: string): boolean {
+		return this.stateCacher.restore(name)
+	}
+
+	/** Clear cached state with specified name. */
+	clearState(name: string) {
+		this.stateCacher.clear(name)
 	}
 }

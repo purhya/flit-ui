@@ -49,11 +49,13 @@ export class TooltipBinding extends PopupBinding {
 	}
 
 	protected getPopupOptions(options: TooltipOptions = {}): TooltipOptions {
+		let optionType = options.type ?? defaultTooltipOptions.type
+
 		return {
 			...defaultTooltipOptions,
 
 			// Default key is `tooltip` for default type.
-			key: options.type === 'default' ? 'tooltip' : '',
+			key: optionType === 'default' ? 'tooltip' : '',
 			
 			...options,
 		}

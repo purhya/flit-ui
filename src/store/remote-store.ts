@@ -41,7 +41,7 @@ export abstract class RemoteStore<T = any> extends Emitter<RemoteStoreEvents> {
 	protected orderDirection: 'asc' | 'desc' | '' = ''
 
 	/** Word to filter results. */
-	protected filterWord: string = ''
+	protected filterWord: string | null = null
 
 	constructor(options: RemoteStoreOptions = {}) {
 		super()
@@ -64,10 +64,33 @@ export abstract class RemoteStore<T = any> extends Emitter<RemoteStoreEvents> {
 		this.reloadLater()
 	}
 
+	/** Get order rule. */
+	getOrder(): {order: string | null, orderDirection: "" | "asc" | "desc"} {
+		return {
+			order: this.orderKey as string,
+			orderDirection: this.orderDirection,
+		}
+	}
+
 	/** Set filter word to filter data items and apply it to backend. */
-	setFilter(filterWord: string) {
+	setFilter(filterWord: string | null) {
 		this.filterWord = filterWord
 		this.reloadLater()
+	}
+
+	/** Get current filter word. */
+	getFilter(): string | null {
+		return this.filterWord
+	}
+
+	/** Get cache map. */
+	getCache() {
+		return this.cacher.getCache()
+	}
+
+	/** Set cache map. */
+	setCache(cacheMap: Map<number, (T | null)[]>) {
+		this.cacher.setCache(cacheMap)
 	}
 
 	/** Whether will reload. */

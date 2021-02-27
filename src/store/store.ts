@@ -49,13 +49,13 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 	protected orderDirection: 'asc' | 'desc' | '' = ''
 
 	/** Full data before filtering or ordering. */
-	fullData: T[] = []
+	protected fullData: T[] = []
 
 	/** Current data after been filtered and sorted. */
-	currentData: T[] = []
+	protected currentData: T[] = []
 
 	/** All selected data items. */
-	selected: T[] = []
+	protected selected: T[] = []
 
 	constructor(options: StoreOptions<T> = {}) {
 		super()
@@ -117,9 +117,25 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 		}
 	}
 
+	/** Get all the data. */
+	getFullData(): T[] {
+		return this.fullData
+	}
+
+	/** Set all the data, will update `currentData` later. */
+	setFullData(data: T[]) {
+		this.fullData = data
+		this.updateCurrentDataLater()
+	}
+
+	/** Get current data. */
+	getCurrentData(): T[] {
+		return this.currentData
+	}
+
 	/** 
 	 * Set ordering rule.
-	 * Note it doesn't trigger `dataChange` immediately.
+	 * Note it triggers `dataChange` event later.
 	 */
 	setOrder(by: CanSortKeys<T> | OrderFunction<T> | null, direction: 'asc' | 'desc' | '' = '') {
 		this.order = by === null ? null : new Order([by, direction || 'asc'])
@@ -127,14 +143,27 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 		this.updateCurrentDataLater()
 	}
 
+	/** Get current ordering rule. */
+	getOrder(): {order: Order<T> | null, orderDirection: "" | "asc" | "desc"} {
+		return {
+			order: this.order,
+			orderDirection: this.orderDirection,
+		}
+	}
+
 	/** 
 	 * Set filter to filter data items.
-	 * Note it doesn't trigger `dataChange` immediately.
+	 * Note it triggers `dataChange` event later.
 	 */
 	setFilter(filter: ((item: T) => boolean) | null) {
 		this.filter = filter
 		this.deselectAll()
 		this.updateCurrentDataLater()
+	}
+
+	/** Get current filter. */
+	getFilter(): ((item: T) => boolean) | null {
+		return this.filter
 	}
 
 	/** Whether will update current data. */
@@ -282,6 +311,16 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 		return [...toRemove]
 	}
 
+	/** Get selected data. */
+	getSelected(): T[] {
+		return this.selected
+	}
+
+	/** Get selected data. */
+	setSelected(items: T[]) {
+		this.selected = items
+	}
+
 	/** Returns whether an item is selected. */
 	isSelected(item: T): boolean {
 		if (this.selectedMap) {
@@ -386,8 +425,8 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 
 	/** Select or deselect a range, from last touched item to current item. */
 	shiftSelect(item: T) {
-		let startIndex = Math.max(this.lastTouchedItem ? this.getIndex(this.lastTouchedItem) : 0, 0)
-		let endIndex = this.getIndex(item)
+		let startIndex = Math.max(this.lastTouchedItem ? this.getIndexOf(this.lastTouchedItem) : 0, 0)
+		let endIndex = this.getIndexOf(item)
 
 		if (endIndex >= 0) {
 			if (startIndex > endIndex) {
@@ -406,7 +445,7 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 	}
 
 	/** Get item index in full data. */
-	getIndex(item: T): number {
+	getIndexOf(item: T): number {
 		if (this.dataMap && !this.dataMap.has(item)) {
 			return -1
 		}
@@ -415,7 +454,7 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 	}
 
 	/** Get item index in current data. */
-	getCurrentIndex(item: T): number {
+	getCurrentIndexOf(item: T): number {
 		if (this.dataMap && !this.dataMap.has(item)) {
 			return -1
 		}

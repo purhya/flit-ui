@@ -12,7 +12,7 @@ export class PageDataCacher<T> {
 	private readonly dataGetter: PageDataGetter<T>
 	private readonly preloadPageCount: number
 
-	private cache: Map<number, (T | null)[]> = new Map()
+	private cacheMap: Map<number, (T | null)[]> = new Map()
 	private requests: Map<number, Promise<void>> = new Map()
 	private totalDataCount: number | null = null
 
@@ -21,6 +21,16 @@ export class PageDataCacher<T> {
 		this.dataCount = dataCount
 		this.dataGetter = dataGetter
 		this.preloadPageCount = preloadPageCount
+	}
+
+	/** Get cache map. */
+	getCache(): Map<number, (T | null)[]> {
+		return this.cacheMap
+	}
+
+	/** Restore cache map. */
+	setCache(cacheMap: Map<number, (T | null)[]>) {
+		this.cacheMap = cacheMap
 	}
 
 	/** Get data count and also caches it. */
@@ -52,7 +62,6 @@ export class PageDataCacher<T> {
 		return knownDataCount
 	}
 
-
 	/** Get data items immediately. */
 	getImmediateData(startIndex: number, endIndex: number): (T | null)[] {
 		let startPageIndex = Math.floor(startIndex / this.pageSize)		// 49 -> 0, 50 -> 1
@@ -60,7 +69,7 @@ export class PageDataCacher<T> {
 		let items: (T | null)[] = []
 
 		for (let i = startPageIndex; i <= endPageIndex; i++) {
-			let cacheItems = this.cache.get(i)
+			let cacheItems = this.cacheMap.get(i)
 			let pageItems = cacheItems
 			
 			if (!pageItems) {
@@ -115,7 +124,7 @@ export class PageDataCacher<T> {
 
 	/** Load page data if needed. */
 	private async ensurePageData(pageIndex: number) {
-		if (!this.cache.has(pageIndex)) {
+		if (!this.cacheMap.has(pageIndex)) {
 			await this.loadPageData(pageIndex)
 		}
 	}
@@ -142,7 +151,7 @@ export class PageDataCacher<T> {
 				let fresh = this.requests.has(pageIndex)
 
 				if (fresh) {
-					this.cache.set(pageIndex, [...items])
+					this.cacheMap.set(pageIndex, [...items])
 					this.requests.delete(pageIndex)
 				}
 			})
@@ -152,7 +161,7 @@ export class PageDataCacher<T> {
 			return promise
 		}
 		else {
-			this.cache.set(pageIndex, [...requestPromise])
+			this.cacheMap.set(pageIndex, [...requestPromise])
 			return Promise.resolve()
 		}
 	}
@@ -170,8 +179,8 @@ export class PageDataCacher<T> {
 			[startPageIndex, endPageIndex] = [endPageIndex, startPageIndex]
 		}
 
-		let maxPageIndex = Math.max(...this.cache.keys())
-		let maxIndex = this.cache.get(maxPageIndex)!.length + maxPageIndex * this.pageSize
+		let maxPageIndex = Math.max(...this.cacheMap.keys())
+		let maxIndex = this.cacheMap.get(maxPageIndex)!.length + maxPageIndex * this.pageSize
 		let maxNewIndex = maxIndex + moveCount
 		let maxNewPageIndex = Math.ceil(maxNewIndex / this.pageSize)
 
@@ -203,12 +212,12 @@ export class PageDataCacher<T> {
 
 		// Removes the affected pages.
 		for (let pageIndex = startPageIndex; pageIndex <= endPageIndex; pageIndex++) {
-			this.cache.delete(pageIndex)
+			this.cacheMap.delete(pageIndex)
 		}
 
 		// Removes the rest pages.
 		for (let pageIndex = maxNewPageIndex + 1; pageIndex <= maxPageIndex; pageIndex++) {
-			this.cache.delete(pageIndex)
+			this.cacheMap.delete(pageIndex)
 		}
 
 		// Removes the requests that affected.
@@ -229,7 +238,7 @@ export class PageDataCacher<T> {
 		let hasAnyItem = items.some(item => item !== null)
 
 		if (hasAnyItem) {
-			this.cache.set(pageIndex, items)
+			this.cacheMap.set(pageIndex, items)
 			return true
 		}
 
@@ -238,7 +247,8 @@ export class PageDataCacher<T> {
 
 	/** Clear all data cache. */
 	clear() {
-		this.cache = new Map()
+		this.cacheMap = new Map()
+		this.requests = new Map()
 		this.totalDataCount = null
 	}
 }
