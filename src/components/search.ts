@@ -103,11 +103,11 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 			/>
 
 			${
-				this.value && !this.focused
+				this.value
 				? html`
-				<div class="clear" @click=${this.clear}>
-					<f-icon class="close-icon" .type="close" />
-				</div>`
+					<div class="clear" @click=${this.clear}>
+						<f-icon class="close-icon" .type="close" />
+					</div>`
 				: ''
 			}
 		`
