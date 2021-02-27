@@ -643,8 +643,13 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		this.stateCacher.cache(name, options)
 	}
 
-	/** Restore last cached state. */
-	restoreState(name: string): boolean {
+	/** 
+	 * Restore table state by it's cached name.
+	 * Returns customized data with `{}` as default value if restored successfully,
+	 * Returns `undefined` if have no cache to restore.
+	 * Will clear the cache after restored.
+	 */
+	restoreState(name: string): object | undefined {
 		return this.stateCacher.restore(name)
 	}
 

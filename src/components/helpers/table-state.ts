@@ -29,6 +29,12 @@ export interface TableStateOptions {
 	 * Default value is `false`.
 	 */
 	store?: boolean
+
+	/** 
+	 * Customized data is an object, it will be poped-up after restore.
+	 * Uses a `{}` as default if not specified.
+	 */
+	customized?: object
 }
 
 
@@ -41,6 +47,7 @@ interface TableState {
 	orderDirection?: '' | 'asc' | 'desc'
 	data?: Map<any, any> | any[]
 	store?: Store | RemoteStore
+	customized?: object | undefined
 }
 
 
@@ -50,6 +57,7 @@ const DefaultTableStateOptions: TableStateOptions = {
 	startIndex: true,
 	data: false,
 	store: false,
+	customized: {},
 }
 
 
@@ -62,7 +70,7 @@ export class TableStateCacher {
 		this.table = table
 	}
 
-	/** Cache current table and store state. */
+	/** Cache current table state. */
 	cache(name: string, options: TableStateOptions) {
 		let state = this.getState(options)
 		this.cacheMap.set(name, state)
@@ -97,17 +105,24 @@ export class TableStateCacher {
 			state.store = store
 		}
 
+		state.customized = options.customized
+
 		return state
 	}
 
-	/** Restore table and store state. */
-	restore(name: string): boolean {
+	/** 
+	 * Restore table state by it's cached name.
+	 * Returns customized data with `{}` as default value if restored successfully,
+	 * Returns `undefined` if have no cache to restore.
+	 * Will clear the cache after restored.
+	 */
+	restore(name: string): object | undefined {
 		let table = this.table
 		let store = this.table.store as Store | RemoteStore
 
 		let state = this.cacheMap.get(name)
 		if (!state) {
-			return false
+			return undefined
 		}
 
 		if (state.storeFilter !== undefined) {
@@ -139,7 +154,9 @@ export class TableStateCacher {
 			table.store = store
 		}
 
-		return true
+		this.clear(name)
+
+		return state.customized
 	}
 
 	/** Clear cache with specified name. */
