@@ -410,6 +410,7 @@ export class QuickDialog {
 				.placeholder=${options.placeholder}
 				.validator=${options.validator}
 				.type=${options.inputType || 'text'}
+				.value=${value}
 				:ref=${async (i: HTMLElement) => input = await getComponentAsync(i) as Input}
 				@@input=${(v: string) => value = v}
 				@keydown.enter=${() => this.dialogComponent!.triggerAction('ok')}
@@ -424,7 +425,7 @@ export class QuickDialog {
 			],
 			...options,
 			interruptAction: (button: string) => {
-				return originalInterruptAction?.(button) || button === 'ok' && !input.valid
+				return originalInterruptAction?.(button) || button === 'ok' && input.valid === false
 			},
 		})
 
