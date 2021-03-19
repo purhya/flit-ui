@@ -34,6 +34,7 @@ export class Tooltip<E = any> extends Popup<E> {
 			max-width: ${adjust(220)}px;
 			padding: ${adjust(4)}px ${adjust(8)}px;
 			line-height: ${adjust(20)}px;
+			pointer-events: none;
 		}
 
 		.text{
@@ -97,17 +98,17 @@ export class Tooltip<E = any> extends Popup<E> {
 
 	protected render() {
 		return html`
-		<template class="type-${this.type}">
-			<div class="text">
-				<slot />
-			</div>
-
-			${this.type === 'prompt' ? html`
-				<div class="close" @click=${this.close}>
-					<f-icon .type="close" />
+			<template class="type-${this.type}">
+				<div class="text">
+					<slot />
 				</div>
-			` : ''}
-		</template>
+
+				${this.type === 'prompt' ? html`
+					<div class="close" @click=${this.close}>
+						<f-icon .type="close" />
+					</div>
+				` : ''}
+			</template>
 		`.extends(super.render())
 	}
 }

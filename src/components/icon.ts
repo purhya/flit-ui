@@ -40,14 +40,14 @@ export class Icon<Events = any> extends Component<Events> {
 		let height = theme.adjust(Number(h))
 
 		return html`
-		<template>
-			<svg
-				viewBox=${viewBox}
-				width=${width}
-				height=${height}
-				:html=${inner}
-			></svg>
-		</template>
+			<template>
+				<svg
+					viewBox=${viewBox}
+					width=${width}
+					height=${height}
+					:html=${inner}
+				></svg>
+			</template>
 		`
 	}
 }

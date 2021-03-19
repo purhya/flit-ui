@@ -209,35 +209,35 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		let tip = item.tip ? tooltip(item.tip) : null
 
 		return html`
-		<div
-			class="option"
-			:class=${this.renderClassName(item)}
-			@click.prevent=${() => this.onClickOption(item)}
-			${tip}
+			<div
+				class="option"
+				:class=${this.renderClassName(item)}
+				@click.prevent=${() => this.onClickOption(item)}
+				${tip}
 
-		>
-			${item.children ? html`
-				<div class='toggle' @click.stop=${() => this.toggleOpened(item)}>
-					<f-icon .type=${item.opened ? 'triangle-down' : 'triangle-right'} />
-				</div>
-			` : siblingsHaveChildren ? html`
-				<div class='toggle' />
-			` : ''}
+			>
+				${item.children ? html`
+					<div class='toggle' @click.stop=${() => this.toggleOpened(item)}>
+						<f-icon .type=${item.opened ? 'triangle-down' : 'triangle-right'} />
+					</div>
+				` : siblingsHaveChildren ? html`
+					<div class='toggle' />
+				` : ''}
 
-			${siblingsHaveIcon ? html`
-				<div class='icon'>
-					<f-icon .type=${item.icon} />
+				${siblingsHaveIcon ? html`
+					<div class='icon'>
+						<f-icon .type=${item.icon} />
+					</div>
+				` : ''}
+		
+				<div class="text">
+					${item.text}
 				</div>
-			` : ''}
-	
-			<div class="text">
-				${item.text}
+
+				${this.isSelected(item) ? html`<f-icon class="selected-icon" .type="checked" />` : ''}
 			</div>
 
-			${this.isSelected(item) ? html`<f-icon class="selected-icon" .type="checked" />` : ''}
-		</div>
-
-		${toggle(subsection, {properties: ['height', 'marginBottom', 'paddingBottom', 'opacity']})}
+			${toggle(subsection, {properties: ['height', 'marginBottom', 'paddingBottom', 'opacity']})}
 		`
 	}
 

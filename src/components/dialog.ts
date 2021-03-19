@@ -187,42 +187,42 @@ export class Dialog<E = any> extends Component<E> {
 		}
 
 		return html`
-		<template
-			tabindex="0"
-			${show(this.opened, {name: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
-		>
-			<div class="mask"
-				:ref="mask"
-				${show(this.opened, {name: 'fade', enterAtStart: true})}
-			/>
+			<template
+				tabindex="0"
+				${show(this.opened, {name: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
+			>
+				<div class="mask"
+					:ref="mask"
+					${show(this.opened, {name: 'fade', enterAtStart: true})}
+				/>
 
-			${options.title ? html`
-				<div class="header">
-					<div class="title">
-						${options.title}
+				${options.title ? html`
+					<div class="header">
+						<div class="title">
+							${options.title}
+						</div>
 					</div>
+				` : ''}
+
+				<div class="content">
+
+					${options.icon ? html`<div class="icon">
+						<f-icon .type="${options.icon}" />
+					</div>` : ''}
+
+					<div class="message">
+						${options.message}
+					</div>
+
+					${options.list && options.list.length > 0 ? html`
+						<ul class="list">
+							${options.list.map(text => html`<li>${text}</li>`)}
+						</ul>
+					`: ''}
 				</div>
-			` : ''}
 
-			<div class="content">
-
-				${options.icon ? html`<div class="icon">
-					<f-icon .type="${options.icon}" />
-				</div>` : ''}
-
-				<div class="message">
-					${options.message}
-				</div>
-
-				${options.list && options.list.length > 0 ? html`
-					<ul class="list">
-						${options.list.map(text => html`<li>${text}</li>`)}
-					</ul>
-				`: ''}
-			</div>
-
-			${this.renderActions(options.actions)}
-		</template>
+				${this.renderActions(options.actions)}
+			</template>
 		`
 	}
 

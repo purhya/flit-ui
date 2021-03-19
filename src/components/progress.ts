@@ -62,11 +62,11 @@ export class Progress<E = any> extends Component<E> {
 		})
 
 		return html`
-		<template ${tip}>
-			<div class="groove">
-				<div class="progress" :ref="progress" :style.width.percent=${Math.min(this.value, 1) * 100}></div>
-			</div>
-		</template>
+			<template ${tip}>
+				<div class="groove">
+					<div class="progress" :ref="progress" :style.width.percent=${Math.min(this.value, 1) * 100}></div>
+				</div>
+			</template>
 		`
 	}
 

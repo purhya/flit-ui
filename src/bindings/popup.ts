@@ -1,4 +1,4 @@
-import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, once, Context, Transition, Template, UpdatableOptions, html, onRenderComplete, render, getRenderedAsComponent, enqueueUpdatable} from '@pucelle/flit'
+import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, Context, Transition, Template, UpdatableOptions, html, onRenderComplete, render, getRenderedAsComponent, enqueueUpdatableInOrder, UpdatableUpdateOrder} from '@pucelle/flit'
 import {Timeout, MouseLeave, watchLayout, isVisibleInViewport, AlignPosition, Emitter, AlignOptions, Aligner} from '@pucelle/ff'
 import {Popup} from '../components/popup'
 import {RenderFn} from '../types'
@@ -76,20 +76,20 @@ export const DefaultPopupOptions: PopupOptions = {
 }
 
 
-/** Cache shared popup component. */
+/** Cache last created popup component with specified `key` option. */
 const SharedPopupCache: Map<string, {template: Template, popup: Popup}> = new Map()
 
-/** Cache popup component usage. */
+/** Cache last created popup component usage with specified `key` option. */
 const SharedPopupsInUse: Map<Popup, PopupBinding> = new Map()
 
 /** Get a shared popup component by key. */
-function getSharedPopupByKey(key: string) {
+function getSharedPopupCacheByKey(key: string) {
 	let cache = SharedPopupCache.get(key)
 	if (cache) {
 		let popup = cache.popup
 
 		// If current popup is in use, not reuse it
-		if (MouseLeave.inUse(popup.el)) {
+		if (MouseLeave.beLocked(popup.el)) {
 			return null
 		}
 
@@ -113,13 +113,32 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 	protected readonly options: UpdatableOptions<PopupOptions>
 
 	protected renderFn!: RenderFn
+
+	/** When decided to open or opened. */
+	protected willOpen: boolean = false
+
+	/** Be `true` after opened popup. */
 	protected opened: boolean = false
+
+	/** Be a `Timeout` after decided to open popup but not yet. */
 	protected showTimeout: Timeout | null = null
+
+	/** Be a `Timeout` after decided to close popup but not yet. */
 	protected hideTimeout: Timeout | null = null
+
+	/** Used to watch rect change after popup opened. */
 	protected unwatchRect: (() => void) | null = null
+
+	/** Used to watch mouse leaves trigger or popup element after popup opened. */
 	protected unwatchLeave: (() => void) | null = null
-	protected popupTemplate: Template | null = null
+
+	/** Current popup. */
 	protected popup: Popup | null = null
+
+	/** Controls current popup. */
+	protected popupTemplate: Template | null = null
+
+	/** Align to current popup. */
 	protected aligner: Aligner | null = null
 
 	constructor(el: Element, context: Context) {
@@ -159,7 +178,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 			this.bindTrigger()
 		}
 		else {
-			enqueueUpdatable(this, this.context)
+			enqueueUpdatableInOrder(this, this.context, UpdatableUpdateOrder.Directive)
 		}
 	}
 
@@ -181,39 +200,43 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 	/** Toggle opened state and show or hide popup component immediately. */
 	protected togglePopupOpened() {
 		if (this.opened) {
+			this.willOpen = false
 			this.hidePopup()
 		}
 		else {
+			this.willOpen = true
 			this.showPopup()
 		}
 	}
 
 	/** Show popup component after a short time out. */
 	showPopupLater() {
-		if (this.showTimeout) {
-			return
-		}
-
-		this.clearHideTimeout()
-
-		if (this.opened) {
-			return
-		}
-
 		let trigger = this.getOption('trigger')
 		let showDelay = this.getOption('showDelay')
 
 		// If give a delay for `click` type trigger, it will feel like a stuck or slow responsive.
-		if (trigger === 'hover' || trigger === 'focus') {
+		if (trigger === 'click' || trigger === 'focus') {
 			showDelay = 0
 		}
 
 		this.showTimeout = new Timeout(() => {
 			this.showTimeout = null
-			this.showPopup()
+
+			if (this.willOpen) {
+				this.showPopup()
+			}
 		}, showDelay)
 
 		this.bindLeavingTriggerEvents()
+		this.willOpen = true
+	}
+
+	/** Clear timeout for showing popup component. */
+	protected clearShowTimeout() {
+		if (this.showTimeout) {
+			this.showTimeout.cancel()
+			this.showTimeout = null
+		}
 	}
 
 	/** Clear timeout for hiding popup component. */
@@ -229,10 +252,10 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		let trigger = this.getOption('trigger')
 
 		if (trigger === 'hover') {
-			once(this.el, 'mouseleave', this.hidePopupLater, this)
+			on(this.el, 'mouseleave', this.cancelShowingPopup, this)
 		}
 		else if (trigger === 'focus') {
-			once(this.el, 'blur', this.hidePopupLater, this)
+			on(this.el, 'blur', this.cancelShowingPopup, this)
 		}
 	}
 
@@ -240,59 +263,31 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 	protected unbindLeavingTriggerEvents() {
 		let trigger = this.getOption('trigger')
 		if (trigger === 'hover') {
-			off(this.el, 'mouseleave', this.hidePopupLater, this)
+			off(this.el, 'mouseleave', this.cancelShowingPopup, this)
 		}
 		else if (trigger === 'focus') {
-			off(this.el, 'blur', this.hidePopupLater, this)
+			off(this.el, 'blur', this.cancelShowingPopup, this)
 		}
 	}
 
-	/** Hide popup component after a short time out. */
-	hidePopupLater() {
-		if (this.hideTimeout) {
-			return
-		}
-
+	/** Cancel showing popup. */
+	protected cancelShowingPopup() {
+		this.willOpen = false
+		this.unbindLeavingTriggerEvents()
 		this.clearShowTimeout()
-
-		if (!this.opened) {
-			return
-		}
-
-		let hideDelay = this.getOption('hideDelay')
-
-		this.hideTimeout = new Timeout(() => {
-			this.hideTimeout = null
-			this.hidePopup()
-		}, hideDelay)
-	}
-
-	/** Clear timeout for showing popup component. */
-	protected clearShowTimeout() {
-		if (this.showTimeout) {
-			this.showTimeout.cancel()
-			this.showTimeout = null
-		}
 	}
 
 	/** Show popup component. */
 	showPopup() {
-		if (this.opened) {
-			return
-		}
-
-		this.unbindLeavingTriggerEvents()		
-		this.setOpened(true)
-		enqueueUpdatable(this, this.context)
+		enqueueUpdatableInOrder(this, this.context, UpdatableUpdateOrder.Directive)
 	}
 	
 	__updateImmediately() {
-
 		// Why must enqueue updating?
 		// There are 2 entries: trigger here, and update from parent component.
 		// We should merge them into one.
 
-		if (!this.opened) {
+		if (!this.willOpen) {
 			return
 		}
 
@@ -300,29 +295,35 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 			this.updatePopup()
 		}
 		else {
-			let popup = this.createPopup()
-			popup.el.style.visibility = 'hidden'
+			let alreadyInUse = this.ensurePopupAndCheckInUse()
+			this.popup!.el.style.visibility = 'hidden'
+			
+			this.unbindLeavingTriggerEvents()
+			this.bindLeaveEvents()
+
+			this.setOpened(true)
 
 			// May do something in handlers of `openedStateChange` event.
 			onRenderComplete(() => {
-				if (!this.isPopupInControl() || !this.opened) {
+				if (!this.willOpen || !this.popup) {
 					return
 				}
 
 				this.alignPopup()
-				popup.el.style.visibility = ''
+				this.popup.el.style.visibility = ''
 				this.mayGetFocus()
 
-				new Transition(popup.el, this.getOption('transition')).enter()
+				if (!alreadyInUse) {
+					new Transition(this.popup.el, this.getOption('transition')).enter()
+				}
 
-				this.bindLeaveEvents()
 				this.unwatchRect = watchLayout(this.el, 'rect', this.onTriggerRectChanged.bind(this))
 			})
 		}
 	}
 
 	/** Get a cached popup component, or create a new one. */
-	protected createPopup(): Popup {
+	protected ensurePopupAndCheckInUse(): boolean {
 		let result = this.renderFn()
 		let key = this.getOption('key')
 		let popup: Popup | null = null
@@ -333,13 +334,23 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		}
 
 		if (key) {
-			let cache = getSharedPopupByKey(key)
+			let cache = getSharedPopupCacheByKey(key)
 			if (cache) {
 				({popup, template} = cache)
 
-				if (template.canMergeWith(result)) {
+				let currentTriggerInsideCachedPopup = popup.el.contains(this.el)
+
+				// Can't reuse since trigger element inside it.
+				if (!currentTriggerInsideCachedPopup && template.canMergeWith(result)) {
 					template.merge(result)
 				}
+
+				// Leave it and will not reuse.
+				else if (currentTriggerInsideCachedPopup) {
+					popup = null
+				}
+
+				// Destroy same name old one immediately.
 				else {
 					popup.el.remove()
 					popup = null
@@ -357,6 +368,13 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 			}
 		}
 
+		// Whether use by other popup binding, such that no need to play transition.
+		let alreadyInUse = SharedPopupsInUse.get(popup)
+
+		if (alreadyInUse && alreadyInUse !== this) {
+			alreadyInUse.losePopupControl()
+		}
+
 		if (key) {
 			SharedPopupsInUse.set(popup, this)
 		}
@@ -367,15 +385,32 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		popup.setBinding(this as PopupBinding)
 		popup.applyAppendTo()
 
-		return popup
+		return !!alreadyInUse
 	}
 
-	/** Update popup component. */
-	protected updatePopup() {
-		if (!this.isPopupInControl()) {
-			return
-		}
+	losePopupControl() {
+		this.clean()
+	}
 
+	/** Clean all popup properties. */
+	protected clean() {
+		if (this.opened) {
+			this.unbindLeaveEvents()
+
+			if (this.unwatchRect) {
+				this.unwatchRect()
+				this.unwatchRect = null
+			}
+
+			this.setOpened(false)
+			this.popup = null
+			this.popupTemplate = null
+			this.aligner = null
+		}
+	}
+
+	/** Update popup component, calls when updating an outer component. */
+	protected updatePopup() {
 		let result = this.renderFn()
 		let key = this.getOption('key')
 		let popup = this.popup!
@@ -400,11 +435,9 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		}
 
 		onRenderComplete(() => {
-			if (!this.isPopupInControl() || !this.opened) {
-				return
+			if (this.popup) {
+				this.alignPopup()
 			}
-
-			this.alignPopup()
 		})
 	}
 
@@ -412,20 +445,6 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 	protected setOpened(opened: boolean) {
 		this.opened = opened
 		this.emit('openedStateChange', opened)
-	}
-
-	/** Whether current popup component is not been used by another binding. */
-	protected isPopupInControl(): boolean {
-		if (!this.popup) {
-			return false
-		}
-
-		let key = this.getOption('key')
-		if (!key) {
-			return true
-		}
-
-		return SharedPopupsInUse.get(this.popup) === this
 	}
 
 	/** Align popup component. */
@@ -469,7 +488,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		let trigger = this.getOption('trigger')
 		if (trigger === 'hover') {
 			// Should not use `MouseLeave.once`, because `hidePopupLater` may be canceled, it needs trigger again.
-			this.unwatchLeave = MouseLeave.on([this.el, this.popup!.el], this.hidePopupLater.bind(this), {
+			this.unwatchLeave = MouseLeave.on(this.el, this.popup!.el, this.hidePopupLater.bind(this), {
 				delay: this.getOption('hideDelay'),
 				mouseIn: true,
 			})
@@ -488,6 +507,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		if (trigger === 'hover') {
 			if (this.unwatchLeave) {
 				this.unwatchLeave()
+				this.unwatchLeave = null
 			}
 		}
 		else if (trigger === 'click' || trigger === 'contextmenu') {
@@ -498,38 +518,38 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		}
 	}
 
+	/** Hide popup component after a short time out. */
+	hidePopupLater() {
+		let hideDelay = this.getOption('hideDelay')
+
+		this.hideTimeout = new Timeout(() => {
+			this.hideTimeout = null
+
+			if (this.opened) {
+				this.hidePopup()
+			}
+		}, hideDelay)
+
+		this.willOpen = false
+	}
+
 	/** Hide popup component. */
 	protected hidePopup() {
-		if (!this.opened) {
-			return
+		let key = this.getOption('key')
+		let popup = this.popup!
+		let popupEl = popup.el
+
+		if (key) {
+			SharedPopupsInUse.delete(popup)
 		}
 
-		this.unbindLeaveEvents()
-
-		if (this.unwatchRect) {
-			this.unwatchRect()
-			this.unwatchRect = null
-		}
-
-		if (this.isPopupInControl()) {
-			let key = this.getOption('key')
-			let popupEl = this.popup!.el
-
-			if (key) {
-				SharedPopupsInUse.delete(this.popup!)
+		new Transition(popupEl, this.getOption('transition')).leave().then(finish => {
+			if (finish) {
+				popupEl.remove()
 			}
+		})
 
-			new Transition(popupEl, this.getOption('transition')).leave().then(finish => {
-				if (finish) {
-					popupEl.remove()
-				}
-			})
-		}
-
-		this.setOpened(false)
-		this.popup = null
-		this.popupTemplate = null
-		this.aligner = null
+		this.clean()
 	}
 
 	/** Trigger when mouse down on document. */
@@ -559,6 +579,8 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		if (this.popup) {
 			this.popup.el.remove()
 		}
+
+		this.clean()
 	}
 }
 

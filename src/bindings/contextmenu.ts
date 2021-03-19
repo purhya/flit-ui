@@ -17,7 +17,7 @@ export class ContextMenuBinding implements Binding<RenderFn> {
 	protected renderFn!: RenderFn
 	protected popup: ContextMenu | null = null
 	protected unwatchRect: (() => void) | null = null
-	protected unkeepEl: (() => void) | null = null
+	protected unlockEl: (() => void) | null = null
 
 	constructor(el: Element, context: Context) {
 		this.el = el as HTMLElement
@@ -40,7 +40,7 @@ export class ContextMenuBinding implements Binding<RenderFn> {
 		popup.el.focus()
 
 		// Makesure mouse enter to submenu doesn't cause current contextmenu hidden.
-		this.unkeepEl = MouseLeave.keep(this.el)
+		this.unlockEl = MouseLeave.lock(this.el)
 
 		// Play enter transition.
 		new Transition(popup.el, {name: 'fade'}).enter()
@@ -83,9 +83,9 @@ export class ContextMenuBinding implements Binding<RenderFn> {
 		}
 
 		// Not keep visible, may hide immediately.
-		if (this.unkeepEl) {
-			this.unkeepEl()
-			this.unkeepEl = null
+		if (this.unlockEl) {
+			this.unlockEl()
+			this.unlockEl = null
 		}
 
 		if (this.unwatchRect) {

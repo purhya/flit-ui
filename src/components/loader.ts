@@ -85,18 +85,18 @@ export class Loader<E = any> extends Component<E> {
 		let dashArray = `${size - strokeWidth} ${(size - strokeWidth) * 3}`
 
 		return html`
-		<template
-			:class="size-${this.size}"
-			:class.as-cover=${this.asCover}
-			:style.width.px=${size}
-			:style.height.px=${size}
-			:style.animation="loader-snake-${this.size} 2s linear infinite"
-		>
-			<svg viewBox="0 0 ${size} ${size}" width=${size} height=${size}>
-				<path class="bg" d=${d} style="stroke-width: ${strokeWidth}" />
-				<path :ref="snake" d=${d} style="stroke-width: ${strokeWidth}; stroke-dasharray: ${dashArray};" />
-			</svg>
-		</template>
+			<template
+				:class="size-${this.size}"
+				:class.as-cover=${this.asCover}
+				:style.width.px=${size}
+				:style.height.px=${size}
+				:style.animation="loader-snake-${this.size} 2s linear infinite"
+			>
+				<svg viewBox="0 0 ${size} ${size}" width=${size} height=${size}>
+					<path class="bg" d=${d} style="stroke-width: ${strokeWidth}" />
+					<path :ref="snake" d=${d} style="stroke-width: ${strokeWidth}; stroke-dasharray: ${dashArray};" />
+				</svg>
+			</template>
 		`
 	}
 

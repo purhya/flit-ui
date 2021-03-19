@@ -94,10 +94,10 @@ export class Resizer<E = any> extends Component<E & ResizerEvents> {
 
 	protected render() {
 		return html`
-		<template
-			:class=${this.position}
-			@mousedown=${this.onStartResize}
-		></template>
+			<template
+				:class=${this.position}
+				@mousedown=${this.onStartResize}
+			></template>
 		`
 	}
 

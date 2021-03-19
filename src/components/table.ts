@@ -47,7 +47,7 @@ export interface TableColumn<T = any> {
 	 * Returns the value used for ordering, must be specified as a string type key when using `RemoteStore`.
 	 * Implies column is not orderable if not configured.
 	 */
-	orderBy?: ((item: T) => string | number) | string
+	orderBy?: ((item: T) => string | number | null | undefined) | string
 
 	/** If specified as `true`, will using `desc` ordering as default. */
 	descFirst?: boolean
@@ -302,9 +302,20 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		colgroup: HTMLTableColElement
 	}
 
+	/** If specified, it's returned result will be used to overwrite `column`. */
+	protected getColumns(): TableColumn[] | null {
+		return null
+	}
+
 	protected onCreated() {
 		this.stateCacher = new TableStateCacher(this)
 		this.store.on('dataChange', this.onStoreDataChange, this)
+
+		this.watchImmediately(() => this.getColumns(), columns => {
+			if (columns) {
+				this.columns = columns
+			}
+		})
 	}
 
 	protected onStoreDataChange() {
@@ -313,24 +324,24 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		}
 	}
 
-	render(): TemplateResult {
+	protected render(): TemplateResult {
 		return html`
-		<div class="head" :ref="head">
-			<div class="columns" :ref="columnContainer">
-				${this.renderColumns()}
+			<div class="head" :ref="head">
+				<div class="columns" :ref="columnContainer">
+					${this.renderColumns()}
+				</div>
 			</div>
-		</div>
 
-		<div class="body">
-			<table class="table" :ref="table">
-				<colgroup :ref="colgroup">
-					${this.columns.map(column => html`
-						<col :style.text-align=${column.align || ''} />
-					`)}
-				</colgroup>
-				${this.renderRows()}
-			</table>
-		</div>
+			<div class="body">
+				<table class="table" :ref="table">
+					<colgroup :ref="colgroup">
+						${this.columns.map(column => html`
+							<col :style.text-align=${column.align || ''} />
+						`)}
+					</colgroup>
+					${this.renderRows()}
+				</table>
+			</div>
 		`
 	}
 
@@ -397,7 +408,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	 * How to render each row.
 	 * You should define a new component and overwrite this method if want to do more customized rendering.
 	 */
-	renderRow(item: T | null, index: number) {
+	protected renderRow(item: T | null, index: number) {
 		let tds = this.columns.map((column) => {
 			let result = item && column.render ? column.render.call(this, item, index) : '\xa0'
 			return html`<td :style.text-align=${column.align || ''}>${result}</td>`
@@ -473,7 +484,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		this.setOrder(columnName, direction)
 	}
 
-	onReady() {
+	protected onReady() {
 		if (this.resizable) {
 			this.resizer = new ColumnWidthResizer(
 				this.refs.head,
@@ -498,7 +509,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		}
 	}
 
-	onConnected() {
+	protected onConnected() {
 		onRenderComplete(() => {
 			let unwatchSize = watchLayout(this.el, 'size', () => this.resizer?.updatColumnWidthsPrecisely())
 			this.once('disconnected', unwatchSize)

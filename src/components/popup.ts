@@ -71,12 +71,12 @@ export class Popup<E = any> extends Component<E> {
 
 	protected render() {
 		return html`
-		<template tabindex="0">
-			${this.triangle ? html`
-				<div class="triangle" :ref="triangle" :class.triangle-herizontal=${this.herizontal} />
-			` : ''}
-			<slot />
-		</template>
+			<template tabindex="0">
+				${this.triangle ? html`
+					<div class="triangle" :ref="triangle" :class.triangle-herizontal=${this.herizontal} />
+				` : ''}
+				<slot />
+			</template>
 		`
 	}
 	

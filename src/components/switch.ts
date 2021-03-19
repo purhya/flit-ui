@@ -68,15 +68,15 @@ export class Switch<E = any> extends Component<E & SwitchEvents> {
 
 	protected render() {
 		return html`
-		<template
-			tabindex="0"
-			:class.on=${this.value}
-			@click=${this.onClick}
-			@focus=${this.onFocus}
-			@blur=${this.onBlur}
-		>
-			<div class="ball"></div>
-		</template>
+			<template
+				tabindex="0"
+				:class.on=${this.value}
+				@click=${this.onClick}
+				@focus=${this.onFocus}
+				@blur=${this.onBlur}
+			>
+				<div class="ball"></div>
+			</template>
 		`
 	}
 

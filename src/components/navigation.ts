@@ -36,13 +36,14 @@ export class Navigation<T> extends List<T> {
 
 	render() {
 		return html`
-		<tempalte>
-			${this.title ? html`
-			<div class="title">
-				${this.title}
-			</div>` : ''}
+			<tempalte>
+				${this.title ? html`
+				<div class="title">
+					${this.title}
+				</div>` : ''}
 
-			${this.renderOptions(this.data)}
-		</tempalte>`
+				${this.renderOptions(this.data)}
+			</tempalte>
+		`
 	}
 }

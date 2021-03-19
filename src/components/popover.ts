@@ -99,10 +99,10 @@ export class Popover<E = any> extends Popup<E> {
 
 	protected render() {
 		return html`
-		<template>	
-			${this.renderHead()}
-			<div class="content"><slot /></div>
-		</template>
+			<template>	
+				${this.renderHead()}
+				<div class="content"><slot /></div>
+			</template>
 		`.extends(super.render())
 	}
 

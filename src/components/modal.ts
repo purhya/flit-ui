@@ -109,38 +109,37 @@ export class Modal<E = any> extends Component<E> {
 	/** Where to append current dialog. */
 	appendTo: string | HTMLElement | null = 'body'
 
-	//extensions may make win wrapped by a mask, so we need a win el
 	protected render() {
 		let shouldRenderClose = !this.slots.action
 
 		return html`
-		<template
-			tabindex="0"
-			${show(this.opened, {name: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
-		>
-			<div class="mask"
-				:ref="mask"
-				${show(this.opened, {name: 'fade', enterAtStart: true})}
-			/>
+			<template
+				tabindex="0"
+				${show(this.opened, {name: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
+			>
+				<div class="mask"
+					:ref="mask"
+					${show(this.opened, {name: 'fade', enterAtStart: true})}
+				/>
 
-			<div class="header">
-				<div class="title">${this.title}</div>
+				<div class="header">
+					<div class="title">${this.title}</div>
 
-				<div class="actions" :show=${this.slots.action}>
-					<slot name="action" />
+					<div class="actions" :show=${this.slots.action}>
+						<slot name="action" />
+					</div>
+
+					${shouldRenderClose ? html`
+						<div class="close" @click=${this.hide}>
+							<f-icon .type="close" />
+						</div>
+					` : ''}
 				</div>
 
-				${shouldRenderClose ? html`
-					<div class="close" @click=${this.hide}>
-						<f-icon .type="close" />
-					</div>
-				` : ''}
-			</div>
-
-			<div class="content">
-				<slot />
-			</div>
-		</template>
+				<div class="content">
+					<slot />
+				</div>
+			</template>
 		`
 	}
 

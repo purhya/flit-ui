@@ -1,6 +1,6 @@
 {
 	"name": "@pucelle/flit-ui",
-	"version": "1.2.3",
+	"version": "1.3.0",
 	"description": "A foundational Web UI base on Flit & FF, it can be easily customized.",
 	"author": "pucelle",
 	"license": "MIT",
@@ -19,8 +19,8 @@
 		"start": "webpack-dev-server --open"
 	},
 	"dependencies": {
-		"@pucelle/ff": "^1.2.3",
-		"@pucelle/flit": "^1.2.3"
+		"@pucelle/ff": "^1.3.0",
+		"@pucelle/flit": "^1.3.0"
 	},
 	"devDependencies": {
 		"@pucelle/webpack-svg-loader": "^1.0.0",

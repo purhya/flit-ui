@@ -60,10 +60,10 @@ export class Menu<E = any> extends Popup<E> {
 
 	protected render() {
 		return html`
-		<f-popup>	
-			${this.renderHead()}
-			<slot />
-		</f-popup>
+			<f-popup>	
+				${this.renderHead()}
+				<slot />
+			</f-popup>
 		`.extends(super.render())
 	}
 

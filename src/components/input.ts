@@ -138,22 +138,22 @@ export class Input<E = any> extends Component<InputEvents & E> {
 			: null
 
 		return html`
-		<template
-			:class.valid=${this.touched && this.valid}
-			:class.invalid=${this.touched && this.valid === false}
-		>
-			<input type=${this.type}
-				.placeholder=${this.placeholder || ''}
-				.value=${this.value}
-				:ref="input"
-				${errorTip}
-				@blur=${this.onBlur}
-				@input=${(e: InputEvent) => this.onInput(e)}
-				@change=${(e: InputEvent) => this.onChange(e)}
-			/>
-			${this.touched && this.valid ? html`<f-icon class="valid-icon" .type="checked" />` : ''}
-			${this.touched && this.error && !this.errorInTooltip ? html`<div class="error">${this.error}</div>` : ''}
-		</template>
+			<template
+				:class.valid=${this.touched && this.valid}
+				:class.invalid=${this.touched && this.valid === false}
+			>
+				<input type=${this.type}
+					.placeholder=${this.placeholder || ''}
+					.value=${this.value}
+					:ref="input"
+					${errorTip}
+					@blur=${this.onBlur}
+					@input=${(e: InputEvent) => this.onInput(e)}
+					@change=${(e: InputEvent) => this.onChange(e)}
+				/>
+				${this.touched && this.valid ? html`<f-icon class="valid-icon" .type="checked" />` : ''}
+				${this.touched && this.error && !this.errorInTooltip ? html`<div class="error">${this.error}</div>` : ''}
+			</template>
 		`
 	}
 
@@ -217,16 +217,16 @@ export class Textarea extends Input {
 
 	protected render() {
 		return html`
-		<textarea
-			placeholder=${this.placeholder}
-			.value=${this.value}
-			:ref="input"
-			:class.valid=${this.touched && this.valid === true}
-			:class.invalid=${this.touched && this.valid === false}
-			@focus=${this.onBlur}
-			@input=${(e: InputEvent) => this.onInput(e)}
-			@change=${(e: InputEvent) => this.onChange(e)}
-		/>
+			<textarea
+				placeholder=${this.placeholder}
+				.value=${this.value}
+				:ref="input"
+				:class.valid=${this.touched && this.valid === true}
+				:class.invalid=${this.touched && this.valid === false}
+				@focus=${this.onBlur}
+				@input=${(e: InputEvent) => this.onInput(e)}
+				@change=${(e: InputEvent) => this.onChange(e)}
+			/>
 		`
 	}
 }

@@ -1,5 +1,5 @@
 import {getMainAlignDirection, ensureWindowLoaded, AlignOptions, isVisibleInViewport} from '@pucelle/ff'
-import {html, defineBinding, BindingResult, TemplateResult} from '@pucelle/flit'
+import {html, defineBinding, BindingResult, TemplateResult, UpdatableOptions} from '@pucelle/flit'
 import {PopupBinding, PopupOptions} from './popup'
 import {TooltipType} from '../components/tooltip'
 
@@ -8,6 +8,9 @@ export interface TooltipOptions extends PopupOptions{
 
 	/** Tooltip type, `default | prompt | error`. */
 	readonly type?: TooltipType
+
+	/** Whether mouse can pointer tooltip popup. */
+	canPointer?: boolean
 }
 
 
@@ -31,6 +34,7 @@ const defaultTooltipOptions: TooltipOptions = {
 export class TooltipBinding extends PopupBinding {
 
 	protected title: string | TemplateResult = ''
+	protected readonly options!: UpdatableOptions<TooltipOptions>
 
 	update(title: string | TemplateResult | any, options: TooltipOptions = {}) {
 		this.title = title

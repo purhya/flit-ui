@@ -87,19 +87,19 @@ export abstract class Dropdown<E = any> extends Component<E> {
 		)
 		
 		return html`
-		<template :class.opened=${this.opened} ${toPopup}>
-			<slot />
-			<f-icon class="down-icon" .type="down" />
-		</template>
+			<template :class.opened=${this.opened} ${toPopup}>
+				<slot />
+				<f-icon class="down-icon" .type="down" />
+			</template>
 		`
 	}
 
 	protected renderPopup() {
 		return html`
-		<f-popup
-			class="popup"
-			.triangle=${this.triangle}
-		/>
+			<f-popup
+				class="popup"
+				.triangle=${this.triangle}
+			/>
 		`
 	}
 

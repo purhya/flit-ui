@@ -164,9 +164,9 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 
 	protected render() {
 		return html`
-		<template :class.not-inputable=${!this.searchable}>
-			${this.renderDisplayOrInput()}
-		</template>
+			<template :class.not-inputable=${!this.searchable}>
+				${this.renderDisplayOrInput()}
+			</template>
 		`.extends(super.render())
 	}
 
@@ -203,21 +203,21 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 		let data = this.getDisplayData()
 
 		return html`
-		<f-popup
-			class="popup"
-			:ref="popup"
-			.triangle="false"
-		>
-			<f-list class="list"
-				:ref="list"
-				.type="selection"
-				.selectable
-				.data=${data}
-				.multipleSelect=${this.multipleSelect}
-				.selected=${this.multipleSelect ? this.value : [this.value]}
-				@@select=${this.onSelected}
-			/>
-		</f-popup>
+			<f-popup
+				class="popup"
+				:ref="popup"
+				.triangle="false"
+			>
+				<f-list class="list"
+					:ref="list"
+					.type="selection"
+					.selectable
+					.data=${data}
+					.multipleSelect=${this.multipleSelect}
+					.selected=${this.multipleSelect ? this.value : [this.value]}
+					@@select=${this.onSelected}
+				/>
+			</f-popup>
 		`
 	}
 
