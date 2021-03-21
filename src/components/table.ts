@@ -288,6 +288,11 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	/** To cache and restore table state. */
 	protected stateCacher!: TableStateCacher
 
+	constructor(el: HTMLElement) {
+		super(el)
+		this.stateCacher = new TableStateCacher(this)
+	}
+
 	refs!: {
 		/** Head container. */
 		head: HTMLTableSectionElement
@@ -308,7 +313,6 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	}
 
 	protected onCreated() {
-		this.stateCacher = new TableStateCacher(this)
 		this.store.on('dataChange', this.onStoreDataChange, this)
 
 		this.watchImmediately(() => this.getColumns(), columns => {
@@ -647,6 +651,11 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	 */
 	getRenderedRow(index: number): HTMLTableRowElement | null {
 		return this.refs.table.rows[index - this.getStartIndex()] || null
+	}
+
+	/** Checks whether have state cached in a specified name. */
+	hasState(name: string): boolean {
+		return this.stateCacher.has(name)
 	}
 
 	/** Caches a state includes order, filter, startIndex... */

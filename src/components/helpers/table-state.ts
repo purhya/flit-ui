@@ -1,4 +1,4 @@
-import {Order} from '@pucelle/ff'
+import {Order, storage} from '@pucelle/ff'
 import {RemoteStore} from '../../store/remote-store'
 import {Store} from '../../store/store'
 import {Table} from '../table'
@@ -7,13 +7,13 @@ import {Table} from '../table'
 /** Can get from a table, the result can be used to restore table state. */
 export interface TableStateOptions {
 
-	/** Caches filter. Default value is `true`. */
+	/** Caches filter. Default value is `false`. */
 	filter?: boolean
 
-	/** Caches order column and direction. Default value is `true`. */
+	/** Caches order column and direction. Default value is `false`. */
 	order?: boolean
 
-	/** Caches start index. Default value is `true`. */
+	/** Caches start index. Default value is `false`. */
 	startIndex?: boolean
 
 	/** 
@@ -35,6 +35,12 @@ export interface TableStateOptions {
 	 * Uses a `{}` as default if not specified.
 	 */
 	customized?: object
+
+	/** 
+	 * If specifies as `true`, will cache state into local storage.
+	 * Only available when all the properties can be serialized to JSON.
+	 */
+	toStorage?: boolean
 }
 
 
@@ -52,9 +58,9 @@ interface TableState {
 
 
 const DefaultTableStateOptions: TableStateOptions = {
-	filter: true,
-	order: true,
-	startIndex: true,
+	filter: false,
+	order: false,
+	startIndex: false,
 	data: false,
 	store: false,
 	customized: {},
@@ -63,6 +69,7 @@ const DefaultTableStateOptions: TableStateOptions = {
 
 export class TableStateCacher {
 
+	private readonly storagePrefix: string = '_table_state_'
 	private readonly table: Table
 	private readonly cacheMap: Map<string, TableState> = new Map()
 
@@ -70,9 +77,24 @@ export class TableStateCacher {
 		this.table = table
 	}
 
+	/** Checks whether caches table state in specified name. */
+	has(name: string) {
+		return this.cacheMap.has(name) || storage.get(this.storagePrefix + name)
+	}
+
 	/** Cache current table state. */
 	cache(name: string, options: TableStateOptions) {
 		let state = this.getState(options)
+		
+		if (options.toStorage) {
+			try {
+				storage.set(this.storagePrefix + name, state)
+			}
+			catch (err) {
+				console.error(`Can't serialize table cache data!`, state, err)
+			}
+		}
+
 		this.cacheMap.set(name, state)
 	}
 
@@ -122,7 +144,10 @@ export class TableStateCacher {
 
 		let state = this.cacheMap.get(name)
 		if (!state) {
-			return undefined
+			state = storage.get(this.storagePrefix + name)
+			if (!state) {
+				return undefined
+			}
 		}
 
 		if (state.storeFilter !== undefined) {
@@ -162,5 +187,6 @@ export class TableStateCacher {
 	/** Clear cache with specified name. */
 	clear(name: string) {
 		this.cacheMap.delete(name)
+		storage.delete(this.storagePrefix + name)
 	}
 }
