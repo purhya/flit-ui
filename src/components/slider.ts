@@ -201,7 +201,10 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 
 	protected onMouseDown(e: MouseEvent) {
 		let rect = getRect(this.refs.groove)
-		let unlock = MouseLeave.lock(this.el)
+
+		// Avoid mouse leave to cause it hide.
+		MouseLeave.lock(this.el)
+
 		this.draging = true
 
 		// If clicked the ball, not move; only move when clicked the groove.
@@ -218,8 +221,10 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		on(document, 'mousemove', onMouseMove as (e: Event) => void)
 
 		once(document, 'mouseup', () => {
+			MouseLeave.unlock(this.el)
+
 			off(document, 'mousemove', onMouseMove as (e: Event) => void)
-			unlock()
+
 			this.draging = false
 			this.emit('dragend')
 		})

@@ -40,7 +40,7 @@ export class ContextMenuBinding implements Binding<RenderFn> {
 		popup.el.focus()
 
 		// Makesure mouse enter to submenu doesn't cause current contextmenu hidden.
-		this.unlockEl = MouseLeave.lock(this.el)
+		MouseLeave.lock(this.el, popup.el)
 
 		// Play enter transition.
 		new Transition(popup.el, {name: 'fade'}).enter()
@@ -72,6 +72,8 @@ export class ContextMenuBinding implements Binding<RenderFn> {
 
 	protected hideContextMenu() {
 		if (this.popup) {
+			MouseLeave.unlock(this.el, this.popup.el)
+
 			off(document, 'mousedown', this.onDocMouseDown, this)
 			off(this.popup.el, 'click', this.hideContextMenu, this)
 
