@@ -1,7 +1,8 @@
-import {css, define, Component, html, repeat, DirectiveResult, TemplateResult, toggle} from '@pucelle/flit'
+import {css, define, Component, html, repeat, DirectiveResult, TemplateResult, toggle, on, off} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {add, remove} from '@pucelle/ff'
 import {tooltip} from '../bindings/tooltip'
+import {TreeDataNavigator} from './helpers/tree-data-navigator'
 
 
 export interface ListItem<T = any> {
@@ -94,6 +95,10 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 					background: ${mainColor.alpha(0.8)};
 				}
 			}
+
+			&.arrow-selected{
+				background-color: ${mainColor.alpha(0.1)};
+			}
 		}
 
 		.toggle{
@@ -151,6 +156,12 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		`
 	}
 
+	/** Selected indices by keyboard navigation. */
+	protected treeNavigationIndices: number[] = []
+
+	/** Whether watching keyboard navigation events. */
+	protected watchingKeyBoardNavigation: boolean = false
+
 	/** List type:
 	 * `selection`: provide single item or multiple items selection with a checkbox icon.
 	 * `navigation`: provide single item navigation with a vertical line icon.
@@ -183,27 +194,28 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 	 */
 	active: T | null = null
 
-	protected onCreated() {
-		if (this.active) {
-			this.ensureActiveItemVisible()
-		}
-	}
+	/** If specified, when the element get focus, you can use keyboard arrow keys to navigate inside current list. */
+	navigateFrom: HTMLInputElement | HTMLTextAreaElement | null | (() => HTMLInputElement | HTMLTextAreaElement | null) = null
 
 	protected render() {
-		return html`${this.renderOptions(this.data)}`
+		return html`${this.renderOptions(this.data, this.treeNavigationIndices)}`
 	}
 
-	protected renderOptions(items: ListItem<T>[]): DirectiveResult {
+	protected renderOptions(items: ListItem<T>[], indices: number[] | null): DirectiveResult {
 		let siblingsHaveIcon = items.some(item => item.icon)
 		let siblingsHaveChildren = items.some(item => item.children)
-		let options = repeat(items, item => this.renderOption(item, siblingsHaveIcon, siblingsHaveChildren))
+
+		let options = repeat(items, (item, index) => {
+			let childIndices = indices?.[0] === index ? indices.slice(1) : null
+			return this.renderOption(item, siblingsHaveIcon, siblingsHaveChildren, childIndices)
+		})
 
 		return options
 	}
 
-	protected renderOption(item: ListItem<T>, siblingsHaveIcon: boolean, siblingsHaveChildren: boolean) {
+	protected renderOption(item: ListItem<T>, siblingsHaveIcon: boolean, siblingsHaveChildren: boolean, indices: number[] | null) {
 		let subsection = item.children && item.opened ? html`
-			<div class="subsection">${this.renderOptions(item.children)}</div>
+			<div class="subsection">${this.renderOptions(item.children, indices)}</div>
 		` : null
 
 		let tip = item.tip ? tooltip(item.tip) : null
@@ -212,6 +224,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 			<div
 				class="option"
 				:class=${this.renderClassName(item)}
+				:class.arrow-selected=${indices?.length === 0}
 				@click.prevent=${() => this.onClickOption(item)}
 				${tip}
 
@@ -239,6 +252,81 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 
 			${toggle(subsection, {properties: ['height', 'marginBottom', 'paddingBottom', 'opacity']})}
 		`
+	}
+
+	protected onCreated() {
+		if (this.active) {
+			this.ensureActiveItemVisible()
+		}
+	}
+
+	protected onReady() {
+		if (this.navigateFrom) {
+			let lastElement: HTMLElement | null = null
+
+			this.watchImmediately(() => {
+				if (typeof this.navigateFrom === 'function') {
+					return this.navigateFrom()
+				}
+				else {
+					return this.navigateFrom
+				}
+			}, navigateFrom => {
+				if (navigateFrom) {
+					on(navigateFrom, 'keydown', this.moveArrowSelectedByEvent as any, this)
+					on(navigateFrom, 'blur', this.onNavigateFromElementBlur as any, this)
+				}
+				else if (lastElement) {
+					off(lastElement, 'keydown', this.moveArrowSelectedByEvent as any, this)
+					on(lastElement, 'blur', this.onNavigateFromElementBlur as any, this)
+				}
+
+				lastElement = navigateFrom
+			})
+		}
+	}
+
+	/** Moves arrow selected by a keyboard event. */
+	protected moveArrowSelectedByEvent(event: KeyboardEvent) {
+		if (event.key === 'ArrowUp') {
+			this.watchingKeyBoardNavigation = true
+			this.treeNavigationIndices = TreeDataNavigator.moveArrowUp(this.data, this.treeNavigationIndices)
+		}
+		else if (event.key === 'ArrowDown') {
+			this.watchingKeyBoardNavigation = true
+			this.treeNavigationIndices = TreeDataNavigator.moveArrowDown(this.data, this.treeNavigationIndices)
+		}
+		else if (event.key === 'ArrowLeft') {
+			if (this.watchingKeyBoardNavigation) {
+				this.treeNavigationIndices = TreeDataNavigator.moveArrowLeft(this.data, this.treeNavigationIndices)
+			}
+		}
+		else if (event.key === 'ArrowRight') {
+			if (this.watchingKeyBoardNavigation && this.treeNavigationIndices) {
+				let item = TreeDataNavigator.getItemByIndices(this.data, this.treeNavigationIndices)
+				if (item && !item.opened && item.children) {
+					this.toggleOpened(item)
+					this.treeNavigationIndices = TreeDataNavigator.moveArrowRight(this.data, this.treeNavigationIndices)
+				}
+			}
+		}
+		else if (event.key === 'Enter') {
+			if (this.watchingKeyBoardNavigation && this.treeNavigationIndices) {
+				let item = TreeDataNavigator.getItemByIndices(this.data, this.treeNavigationIndices)
+				if (item) {
+					this.onClickOption(item)
+				}
+			}
+		}
+		else {
+			this.watchingKeyBoardNavigation = false
+			this.treeNavigationIndices = []
+		}
+	}
+
+	protected onNavigateFromElementBlur() {
+		this.watchingKeyBoardNavigation = false
+		this.treeNavigationIndices = []
 	}
 
 	protected renderClassName(item: ListItem<T>) {

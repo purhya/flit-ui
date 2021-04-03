@@ -42,7 +42,7 @@ export class Navigation<T> extends List<T> {
 					${this.title}
 				</div>` : ''}
 
-				${this.renderOptions(this.data)}
+				${this.renderOptions(this.data, this.treeNavigationIndices)}
 			</tempalte>
 		`
 	}

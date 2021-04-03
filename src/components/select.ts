@@ -173,28 +173,28 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	protected renderDisplayOrInput(): TemplateResult | string | number {
 		if (this.editing) {
 			return html`
-			<input type="text"
-				class="input"
-				:ref="input"
-				.value=${this.inputted}
-				.placeholder=${this.placeholder}
-				?readonly=${!this.editing}
-				@click=${this.onClick}
-				@input=${this.onInput}
-			>
+				<input type="text"
+					class="input"
+					:ref="input"
+					.value=${this.inputted}
+					.placeholder=${this.placeholder}
+					?readonly=${!this.editing}
+					@click=${this.onClick}
+					@input=${this.onInput}
+				>
 			`
 		}
 		else {
 			let text = this.renderCurrentDisplay()
 
 			return html`
-			<div
-				class="input"
-				:class.placeholder=${!text}
-				@click=${this.onClick}
-			>
-				${text || this.placeholder}
-			</div>
+				<div
+					class="input"
+					:class.placeholder=${!text}
+					@click=${this.onClick}
+				>
+					${text || this.placeholder}
+				</div>
 			`
 		}
 	}
@@ -215,6 +215,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 					.data=${data}
 					.multipleSelect=${this.multipleSelect}
 					.selected=${this.multipleSelect ? this.value : [this.value]}
+					.navigateFrom=${() => this.refs.input}
 					@@select=${this.onSelected}
 				/>
 			</f-popup>

@@ -2,7 +2,7 @@ import * as ff from '@pucelle/ff'
 import * as flit from '@pucelle/flit'
 import * as flitUI from '../src'
 import {html, Component, define, repeat, observe, getComponent, getRenderedAsComponent, render, getComponentAsync} from '@pucelle/flit'
-import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, TableColumn, Select, RemoteStore, Popover, Form, Input} from '../src'
+import {dialog, notification, theme, Store, draggable, droppable, popup, tooltip, Modal, TableColumn, Select, RemoteStore, Popover, Form, Input} from '../src/index'
 
 
 declare global {

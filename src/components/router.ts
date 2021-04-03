@@ -43,7 +43,7 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	path: string = ''
 
 	protected onCreated() {
-		this.path = this.getPathFromUri(location.href)
+		this.goto(location.pathname)
 		on(window, 'popstate', this.onWindowStateChange as (e: Event) => void, this)
 	}
 
@@ -144,6 +144,7 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 
 
 namespace PathParser {
+
 	const pathParsedResultMap: Map<string, {re: RegExp, keys: string[]}> = new Map()
 
 	export function isMatch(path: string, routePath: string | RegExp): boolean {
