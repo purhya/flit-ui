@@ -29,7 +29,7 @@ export interface PopupOptions {
 
 	/** 
 	 * Delay showing in millseconds, such that mouse hover unexpected will not cause layer popup.
-	 * Only for `hover` and `focus` trigger.
+	 * Only for `hover` and `focus` trigger types.
 	 * Default value is `100`.
 	 */
 	showDelay?: number
@@ -44,13 +44,22 @@ export interface PopupOptions {
 	triangle?: boolean
 
 	/** 
-	 * Should align triangle in a fixed position.
-	 * Default value is `false`, means triangle will be adjusted to be in the center of the edge of el or target.
+	 * Whether should align triangle in a fixed relative position.
+	 * Default value is `false`, triangle element will be adjusted to be in the center of the intersect part of align element and target.
 	 */
 	fixTriangle?: boolean
 
 	/** Transition options to play transition when popup hiding and showing. */
 	transition?: TransitionOptions
+
+	/** 
+	 * If specified as `true`, will show popup immediately.
+	 * Only works when initializing.
+	 */
+	showImmediately?: boolean
+
+	/** If specified as `true`, popup element will get focus after poped-up if it can get focus. */
+	autoFocus?: boolean
 }
 
 interface PopupBindingEvents {
@@ -73,6 +82,8 @@ export const DefaultPopupOptions: PopupOptions = {
 	triangle: true,
 	fixTriangle: false,
 	transition: {name: 'fade'},
+	showImmediately: false,
+	autoFocus: false,
 }
 
 
@@ -97,6 +108,12 @@ function getSharedPopupCacheByKey(key: string): {template: Template, popup: Popu
 	}
 
 	return null
+}
+
+/** Get a shared popup component by key. */
+function isSharedPopupKeyInUse(key: string): boolean {
+	let cache = getSharedPopupCacheByKey(key)
+	return cache ? SharedPopupsThatsInUse.has(cache.popup) : false
 }
 
 
@@ -185,15 +202,36 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 	protected bindTrigger() {
 		let trigger = this.getOption('trigger')
 
-		// Clicking to trigger must have no delay.
 		if (trigger === 'click') {
 			on(this.el, 'click', this.togglePopupOpened, this)
 		}
 		else if (trigger === 'hover') {
 			on(this.el, 'mouseenter', this.showPopupLater, this)
 		}
-		else {
-			on(this.el, trigger, this.showPopupLater, this)
+		else if (trigger === 'focus') {
+			on(this.el, 'focus', this.showPopupLater, this)
+
+			if (this.el.contains(document.activeElement)) {
+				this.showPopupLater()
+			}
+		}
+
+		if (this.getOption('showImmediately')) {
+			this.showPopupLater()
+		}
+	}
+
+	protected unbindTrigger() {
+		let trigger = this.getOption('trigger')
+
+		if (trigger === 'click') {
+			off(this.el, 'click', this.togglePopupOpened, this)
+		}
+		else if (trigger === 'hover') {
+			off(this.el, 'mouseenter', this.showPopupLater, this)
+		}
+		else if (trigger === 'focus') {
+			off(this.el, 'focus', this.showPopupLater, this)
 		}
 	}
 
@@ -216,7 +254,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		let key = this.getOption('key')
 
 		// If can reuse exist, show without delay.
-		if (getSharedPopupCacheByKey(key)) {
+		if (isSharedPopupKeyInUse(key)) {
 			showDelay = 0
 		}
 
@@ -490,7 +528,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 	/** Make element of popup component get focus if possible. */
 	protected mayGetFocus() {
 		let trigger = this.getOption('trigger')
-		if ((trigger !== 'hover' && trigger !== 'focus') && this.popup && this.popup.el.tabIndex >= 0) {
+		if (this.getOption('autoFocus') && (trigger !== 'hover' && trigger !== 'focus') && this.popup && this.popup.el.tabIndex >= 0) {
 			this.popup.el.focus()
 		}
 	}
@@ -590,11 +628,14 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 	remove() {
 		off(this.el, 'mouseenter', this.showPopupLater, this)
 
-		if (this.popup) {
-			this.popup.el.remove()
+		if (this.opened) {
+			this.hidePopup()
+		}
+		else {
+			this.clean()
 		}
 
-		this.clean()
+		this.unbindTrigger()
 	}
 }
 
