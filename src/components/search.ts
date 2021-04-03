@@ -1,4 +1,4 @@
-import {define, Component, css, html, once} from '@pucelle/flit'
+import {define, Component, css, html, once, on} from '@pucelle/flit'
 import {theme} from '../style/theme'
 
 
@@ -78,11 +78,20 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 	refs!: {
 
 		/** Search input element. */
-		input: HTMLElement
+		input: HTMLInputElement
 	}
 
 	/** Whether search input get focus. */
 	protected focused: boolean = false
+
+	/** When in composition inputting. */
+	protected inCompositionInputting: boolean = false
+
+	/** 
+	 * Whether update value after change event.
+	 * If is `false`, update value after input event.
+	 */
+	readonly lazy: boolean = true
 
 	/** Search input placeholder. */
 	placeholder: string = ''
@@ -99,7 +108,6 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 				.value=${this.value}
 				:ref="input"
 				@focus=${this.onFocus}
-				@change=${(e: InputEvent) => this.onChange(e)}
 			/>
 
 			${
@@ -113,16 +121,38 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 		`
 	}
 
+	protected onReady() {
+		if (this.lazy) {
+			on(this.refs.input, 'change', this.updateValue, this)
+		}
+		else {
+			on(this.refs.input, 'compositionstart', this.onCompositionStart, this)
+			on(this.refs.input, 'compositionend', this.onCompositionEnd, this)
+			on(this.refs.input, 'input', this.updateValue, this)
+		}
+	}
+
 	protected onFocus() {
 		this.focused = true
 		once(this.refs.input, 'blur', () => this.focused = false)
 	}
 
-	protected onChange(e: InputEvent) {
-		let input = e.target as HTMLInputElement
-		let value = this.value = input.value
+	protected onCompositionStart() {
+		this.inCompositionInputting = true
+	}
 
-		this.emit('change', value)
+	protected onCompositionEnd() {
+		this.inCompositionInputting = false
+		this.updateValue()
+	}
+
+	protected updateValue() {
+		if (this.inCompositionInputting) {
+			return
+		}
+
+		this.value = this.refs.input.value
+		this.emit('change', this.value)
 	}
 
 	protected clear() {

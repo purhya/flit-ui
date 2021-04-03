@@ -99,6 +99,13 @@ export class Input<E = any> extends Component<InputEvents & E> {
 		`
 	}
 
+	/** When in composition inputting. */
+	protected inCompositionInputting: boolean = false
+
+	readonly refs!: {
+		input: HTMLInputElement
+	}
+
 	/** Input type, same with `<input type=...>`. */
 	type: 'text' | 'password' = 'text'
 
@@ -148,8 +155,10 @@ export class Input<E = any> extends Component<InputEvents & E> {
 					:ref="input"
 					${errorTip}
 					@blur=${this.onBlur}
-					@input=${(e: InputEvent) => this.onInput(e)}
-					@change=${(e: InputEvent) => this.onChange(e)}
+					@compositionstart=${this.onCompositionStart}
+					@compositionend=${this.onCompositionEnd}
+					@input=${this.onInput}
+					@change=${this.onChange}
 				/>
 				${this.touched && this.valid ? html`<f-icon class="valid-icon" .type="checked" />` : ''}
 				${this.touched && this.error && !this.errorInTooltip ? html`<div class="error">${this.error}</div>` : ''}
@@ -166,9 +175,21 @@ export class Input<E = any> extends Component<InputEvents & E> {
 		this.validate()
 	}
 
-	protected onInput(e: InputEvent) {
-		let input = e.target as HTMLInputElement
-		let value = input.value
+	protected onCompositionStart() {
+		this.inCompositionInputting = true
+	}
+
+	protected onCompositionEnd() {
+		this.inCompositionInputting = false
+		this.onInput()
+	}
+
+	protected onInput() {
+		if (this.inCompositionInputting) {
+			return
+		}
+
+		let value = this.refs.input.value
 
 		if (this.validator) {
 			this.valid = null
@@ -178,8 +199,8 @@ export class Input<E = any> extends Component<InputEvents & E> {
 		this.emit('input', value)
 	}
 
-	protected onChange(e: InputEvent) {
-		let input = e.target as HTMLInputElement
+	protected onChange() {
+		let input = this.refs.input
 		let value = this.value = input.value
 
 		this.validate()
@@ -224,8 +245,8 @@ export class Textarea extends Input {
 				:class.valid=${this.touched && this.valid === true}
 				:class.invalid=${this.touched && this.valid === false}
 				@focus=${this.onBlur}
-				@input=${(e: InputEvent) => this.onInput(e)}
-				@change=${(e: InputEvent) => this.onChange(e)}
+				@input=${this.onInput}
+				@change=${this.onChange}
 			/>
 		`
 	}
