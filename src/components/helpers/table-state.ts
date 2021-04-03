@@ -1,4 +1,4 @@
-import {Order, storage} from '@pucelle/ff'
+import {storage} from '@pucelle/ff'
 import {RemoteStore} from '../../store/remote-store'
 import {Store} from '../../store/store'
 import {Table} from '../table'
@@ -47,7 +47,6 @@ export interface TableStateOptions {
 /** Can get from a table, the result can be used to restore table state. */
 interface TableState {
 	storeFilter?: ((item: any) => boolean) | string | null
-	storeOrder?: {order: Order<any> | string | null, orderDirection: "" | "asc" | "desc"}
 	startIndex?: number
 	orderName?: string | null
 	orderDirection?: '' | 'asc' | 'desc'
@@ -110,7 +109,6 @@ export class TableStateCacher {
 		}
 
 		if (options.order) {
-			state.storeOrder = store.getOrder()
 			state.orderName = table.getOrderName()
 			state.orderDirection = table.getOrderDirection()
 		}
@@ -154,16 +152,12 @@ export class TableStateCacher {
 			store.setFilter(state.storeFilter as any)
 		}
 
-		if (state.storeOrder !== undefined) {
-			store.setOrder(state.storeOrder.order as any, state.storeOrder.orderDirection)
-		}
-
 		if (state.orderName !== undefined && state.orderDirection !== undefined) {
 			table.setOrder(state.orderName, state.orderDirection)
 		}
 
 		if (state.startIndex !== undefined) {
-			table.setStartIndex(state.startIndex)
+			table.setFirstVisibleIndex(state.startIndex)
 		}
 
 		if (state.data !== undefined) {
@@ -178,7 +172,8 @@ export class TableStateCacher {
 		if (state.store) {
 			table.store = store
 		}
-
+		
+		store.sync()
 		this.clear(name)
 
 		return state.customized

@@ -544,6 +544,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		this.orderName = null
 		this.orderDirection = ''
 		this.store.setOrder(null)
+		this.store.sync()
 	}
 
 	/** Order specified column with specified direction by column name. */
@@ -555,6 +556,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 			this.store.setOrder(column.orderBy as any, direction)
 		}
 
+		this.store.sync()
 		this.emit('orderChange', this.orderName, direction)
 	}
 
@@ -578,7 +580,10 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		return this.repeatDir?.getEndIndex() ?? (this.store as Store).getFullData().length
 	}
 
-	/** Set `startIndex`, and the item in this index will be at the top start position of the viewport. */
+	/** 
+	 * Set start index property, and scroll to make related element becomes visible.
+	 * Note the final `startIndex` property may be different.
+	 */
 	setStartIndex(index: number) {
 		if (!this.__updated) {
 			this.once('updated', () => {
@@ -601,7 +606,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	scrollToViewIndex(index: number) {
 		if (!this.__updated) {
 			this.once('updated', () => {
-				this.setStartIndex(index)
+				this.scrollToViewIndex(index)
 			})
 		}
 		else if (this.repeatDir) {
@@ -617,7 +622,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	}
 
 	/** 
-	 * Get the first visible index of element.
+	 * Get the index of the first visible element.
 	 * Must after first time rendered.
 	 */
 	getFirstVisibleIndex() {
@@ -628,7 +633,26 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 			return locateFirstVisibleIndex(this.refs.table, this.refs.table.rows)
 		}
 	}
-	
+
+	/** Set the index of the first visible element. */
+	setFirstVisibleIndex(index: number) {
+		if (!this.__updated) {
+			this.once('updated', () => {
+				this.setFirstVisibleIndex(index)
+			})
+		}
+		else if (this.repeatDir) {
+			this.repeatDir.scrollToMakeIndexAtTop(index)
+		}
+		else {
+			index = Math.min(index, (this.store as Store).getFullData().length - 1)
+			let row = this.refs.table.rows[index]
+			if (row) {
+				scrollToTop(row)
+			}
+		}
+	}
+
 	/** Get currently rendered data item at specified index. */
 	getRenderedItem(index: number): T | null {
 		let isRendered = index >= this.getStartIndex() && index < this.getEndIndex()
@@ -658,7 +682,10 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		return this.stateCacher.has(name)
 	}
 
-	/** Caches a state includes order, filter, startIndex... */
+	/** 
+	 * Caches a state includes order, filter, startIndex...
+	 * Remember the `name` must be unique for each table instance.
+	 */
 	cacheState(name: string, options: TableStateOptions = {}) {
 		this.stateCacher.cache(name, options)
 	}

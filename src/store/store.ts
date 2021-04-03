@@ -122,7 +122,10 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 		return this.fullData
 	}
 
-	/** Set all the data, will update `currentData` later. */
+	/** 
+	 * Set all the data.
+	 * will update `currentData` later, except you call `syncCurrentData`.
+	 */
 	setFullData(data: T[]) {
 		this.fullData = data
 		this.updateCurrentDataLater()
@@ -135,7 +138,7 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 
 	/** 
 	 * Set ordering rule.
-	 * Note it triggers `dataChange` event later.
+	 * will update `currentData` later, except you call `syncCurrentData`.
 	 */
 	setOrder(by: CanSortKeys<T> | OrderFunction<T> | null, direction: 'asc' | 'desc' | '' = '') {
 		this.order = by === null ? null : new Order([by, direction || 'asc'])
@@ -153,7 +156,7 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 
 	/** 
 	 * Set filter to filter data items.
-	 * Note it triggers `dataChange` event later.
+	 * will update `currentData` later, except you call `syncCurrentData`.
 	 */
 	setFilter(filter: ((item: T) => boolean) | null) {
 		this.filter = filter
@@ -172,13 +175,11 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 	/** Update current data later after filter or order changed. */
 	protected updateCurrentDataLater() {
 		if (!this.willUpdateCurrentData) {
-			Promise.resolve().then(() => {
-				this.updateCurrentDataImmediately()
-				this.emit('dataChange')
-				this.willUpdateCurrentData = false
-			})
-
 			this.willUpdateCurrentData = true
+
+			Promise.resolve().then(() => {
+				this.sync()
+			})
 		}
 	}
 
@@ -191,6 +192,18 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 		}
 
 		this.currentData = currentData
+	}
+
+	/** 
+	 * Normally when update `fullData`, setting filter or order will cause update current data in next micro task.
+	 * If you can ensure everything is ready, you may sync to update current data immediately.
+	 */
+	sync() {
+		if (this.willUpdateCurrentData) {
+			this.updateCurrentDataImmediately()
+			this.emit('dataChange')
+			this.willUpdateCurrentData = false
+		}
 	}
 
 	/** Add data items to the end position, removes repeative items firstly. */

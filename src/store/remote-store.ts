@@ -100,9 +100,7 @@ export abstract class RemoteStore<T = any> extends Emitter<RemoteStoreEvents> {
 	protected reloadLater() {
 		if (!this.willReload) {
 			Promise.resolve().then(() => {
-				this.reloadImmediately()
-				this.emit('dataChange')
-				this.willReload = false
+				this.sync()
 			})
 
 			this.willReload = true
@@ -112,6 +110,18 @@ export abstract class RemoteStore<T = any> extends Emitter<RemoteStoreEvents> {
 	/** Clear cache data immediately. */
 	protected reloadImmediately() {
 		this.cacher.clear()
+	}
+
+	/** 
+	 * Normally when calls `reload`, setting filter or order will cause update current data in next micro task.
+	 * If you can ensure everything is ready, you may sync to load new data immediately.
+	 */
+	sync() {
+		if (this.willReload) {
+			this.reloadImmediately()
+			this.emit('dataChange')
+			this.willReload = false
+		}
 	}
 
 	/** Reload all data. */
