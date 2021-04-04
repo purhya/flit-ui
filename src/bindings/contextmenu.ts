@@ -1,4 +1,4 @@
-import {defineBinding, Context, on, off, renderComplete, Transition, Binding, once, BindingResult, getRenderedAsComponent, renderUpdatable} from '@pucelle/flit'
+import {defineBinding, Context, on, off, untilRenderComplete, Transition, Binding, once, BindingResult, getRenderedAsComponent, renderUpdatable} from '@pucelle/flit'
 import {alignToEvent, watchLayout, MouseLeave} from '@pucelle/ff'
 import {ContextMenu} from '../components/contextmenu'
 import {RenderFn} from '../types'
@@ -33,7 +33,7 @@ export class ContextMenuBinding implements Binding<RenderFn> {
 		this.renderPopup()
 		let popup = this.popup!
 
-		await renderComplete()
+		await untilRenderComplete()
 
 		// Align and get focus.
 		alignToEvent(popup.el, e as MouseEvent)

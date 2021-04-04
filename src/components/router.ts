@@ -43,14 +43,18 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	path: string = ''
 
 	protected onCreated() {
-		this.goto(location.pathname)
+		this.goto(this.getUnPrefixedPath(location.pathname))
 		on(window, 'popstate', this.onWindowStateChange as (e: Event) => void, this)
 	}
 
 	/** Get relative path for router from a uri. */
 	protected getPathFromUri(uri: string): string {
 		let path = new URL(uri).pathname
+		return this.getUnPrefixedPath(path)
+	}
 
+	/** Get relative path for router from a uri. */
+	protected getUnPrefixedPath(path: string): string {
 		if (this.prefix && path.startsWith(this.prefix)) {
 			path = path.slice(this.prefix.length)
 		}
@@ -116,16 +120,20 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 
 	/** Goto a new path and update render result, add a history state. */
 	goto(path: string) {
-		this.path = path
-		let uri = this.getURIFromPath(path)
-		history.pushState({path}, '', uri)
+		if (path !== this.path) {
+			this.path = path
+			let uri = this.getURIFromPath(path)
+			history.pushState({path}, '', uri)
+		}
 	}
 
 	/** Redirect to a new path and update render result, replace current history state. */
 	redirectTo(path: string) {
-		this.path = path
-		let uri = this.getURIFromPath(path)
-		history.replaceState({path}, '', uri)
+		if (path !== this.path) {
+			this.path = path
+			let uri = this.getURIFromPath(path)
+			history.replaceState({path}, '', uri)
+		}
 	}
 
 	/** Get whole url. */

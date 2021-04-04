@@ -128,6 +128,15 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 	 */
 	setFullData(data: T[]) {
 		this.fullData = data
+
+		if (this.dataMap) {
+			this.dataMap.clear()
+
+			for (let item of data) {
+				this.dataMap.add(item)
+			}
+		}
+
 		this.updateCurrentDataLater()
 	}
 
@@ -438,8 +447,8 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 
 	/** Select or deselect a range, from last touched item to current item. */
 	shiftSelect(item: T) {
-		let startIndex = Math.max(this.lastTouchedItem ? this.getIndexOf(this.lastTouchedItem) : 0, 0)
-		let endIndex = this.getIndexOf(item)
+		let startIndex = Math.max(this.lastTouchedItem ? this.getFullIndexOf(this.lastTouchedItem) : 0, 0)
+		let endIndex = this.getFullIndexOf(item)
 
 		if (endIndex >= 0) {
 			if (startIndex > endIndex) {
@@ -458,7 +467,7 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 	}
 
 	/** Get item index in full data. */
-	getIndexOf(item: T): number {
+	getFullIndexOf(item: T): number {
 		if (this.dataMap && !this.dataMap.has(item)) {
 			return -1
 		}

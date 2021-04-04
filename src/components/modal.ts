@@ -1,4 +1,4 @@
-import {css, define, html, on, renderComplete, off, Component, show} from '@pucelle/flit'
+import {css, define, html, on, untilRenderComplete, off, Component, show} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {align} from '@pucelle/ff'
 import {appendTo} from '../utils/element'
@@ -153,7 +153,7 @@ export class Modal<E = any> extends Component<E> {
 	}
 
 	protected async onConnected() {
-		await renderComplete()
+		await untilRenderComplete()
 		
 		if (this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
 			this.el.before(this.refs.mask)

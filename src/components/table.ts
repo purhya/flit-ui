@@ -1,7 +1,7 @@
-import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, LiveRepeatDirective, DirectiveResult, renderComplete, refDirective, Directive, ContextualTransitionOptions, observeGetting, liveAsyncRepeat, LiveAsyncRepeatDirective} from '@pucelle/flit'
+import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, LiveRepeatDirective, DirectiveResult, untilRenderComplete, refDirective, Directive, ContextualTransitionOptions, observeGetting, liveAsyncRepeat, LiveAsyncRepeatDirective, RepeatDirective} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Store} from '../store/store'
-import {getScrollbarWidth, watchLayout, scrollToTop, scrollToView, locateFirstVisibleIndex} from '@pucelle/ff'
+import {getScrollbarWidth, watchLayout, locateFirstVisibleIndex} from '@pucelle/ff'
 import {ColumnWidthResizer} from './helpers/column-width-resizer'
 import {RemoteStore} from '../store/remote-store'
 import {TableStateCacher, TableStateOptions} from './helpers/table-state'
@@ -279,8 +279,11 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	/** Current column order direction. */
 	protected orderDirection: 'asc' | 'desc' | '' = ''
 
-	/** Repeat directive inside, only available when `live`. */
-	protected repeatDir: LiveRepeatDirective<T> | LiveAsyncRepeatDirective<T> | null = null
+	/** 
+	 * Repeat directive inside, only available when `live`.
+	 * Ready after `ready` event.
+	 */
+	protected repeatDir!: LiveRepeatDirective<T> | LiveAsyncRepeatDirective<T> | RepeatDirective<T>
 
 	/** Resize column widths when `resizable` is `true`. */
 	protected resizer: ColumnWidthResizer | null = null
@@ -400,11 +403,11 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 			), this.refDirective.bind(this))
 		}
 		else {
-			return repeat(
+			return refDirective(repeat(
 				(this.store as Store).getCurrentData(),
 				this.renderRow.bind(this),
 				this.transition
-			)
+			), this.refDirective.bind(this))
 		}
 	}
 
@@ -423,9 +426,12 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 
 	/** Reference repeat directive, only for once. */
 	protected refDirective(dir: Directive) {
-		this.repeatDir = dir as LiveRepeatDirective<T>
-		this.repeatDir.on('liveDataUpdated', this.onLiveDataUpdated, this)
-		this.repeatDir.on('liveDataRendered', this.onLiveDataRendered, this)
+		this.repeatDir = dir as (LiveRepeatDirective<T> | LiveAsyncRepeatDirective<T>)
+
+		if ((this.repeatDir instanceof LiveRepeatDirective) || (this.repeatDir as any instanceof LiveAsyncRepeatDirective)) {
+			this.repeatDir.on('liveDataUpdated', this.onLiveDataUpdated, this)
+			this.repeatDir.on('liveDataRendered', this.onLiveDataRendered, this)
+		}
 	}
 
 	/** Triggers `liveDataUpdated` event. */
@@ -503,7 +509,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 				this.resizer?.setColumns(columns)
 	
 				// Here we need it render new `<col>`s.
-				await renderComplete()
+				await untilRenderComplete()
 				this.resizer?.updatColumnWidthsPrecisely()
 			})
 			
@@ -571,54 +577,69 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	}
 
 	/** Get start index of live data in live mode, otherwise returns `0`. */
-	getStartIndex() {
-		return this.repeatDir?.getStartIndex() ?? 0
+	protected getStartIndex() {
+		if (this.repeatDir instanceof RepeatDirective) {
+			return 0
+		}
+		else {
+			return this.repeatDir?.getStartIndex() ?? 0
+		}
 	}
 
 	/** Get end index of live data in live mode, otherwise returns data length. */
-	getEndIndex() {
-		return this.repeatDir?.getEndIndex() ?? (this.store as Store).getFullData().length
+	protected getEndIndex() {
+		if (this.repeatDir instanceof RepeatDirective) {
+			return (this.store as Store).getCurrentData().length
+		}
+		else {
+			return this.repeatDir.getEndIndex() ?? (this.store as Store).getFullData().length
+		}
 	}
 
 	/** 
-	 * Set start index property, and scroll to make related element becomes visible.
-	 * Note the final `startIndex` property may be different.
+	 * Set start index property, and scroll to appropriate position.
+	 * You can safely call this before any thing rendered.
+	 * Note the final `startIndex` property may be different, 
+	 * and you can't ensure the element is this index is visible.
 	 */
-	setStartIndex(index: number) {
-		if (!this.__updated) {
-			this.once('updated', () => {
-				this.setStartIndex(index)
-			})
-		}
-		else if (this.repeatDir) {
+	async setStartIndex(index: number) {
+		await this.untilReady()
+
+		if (this.repeatDir instanceof LiveRepeatDirective || this.repeatDir instanceof LiveAsyncRepeatDirective) {
 			this.repeatDir.setStartIndex(index)
 		}
 		else {
-			index = Math.min(index, (this.store as Store).getFullData().length - 1)
-			let row = this.refs.table.rows[index]
-			if (row) {
-				scrollToTop(row)
-			}
+			this.repeatDir.setFirstVisibleIndex(index)
 		}
 	}
 
-	/** Adjust `startIndex` and scroll position to make item in the specified index becomes visible if it's not. */
-	scrollToViewIndex(index: number) {
-		if (!this.__updated) {
-			this.once('updated', () => {
-				this.scrollToViewIndex(index)
-			})
-		}
-		else if (this.repeatDir) {
-			this.repeatDir.scrollToViewIndex(index)
+	/** Whether specifies a start index. */
+	isStartIndexSpecified() {
+		if (this.repeatDir instanceof LiveRepeatDirective || this.repeatDir instanceof LiveAsyncRepeatDirective) {
+			return this.repeatDir.isStartIndexSpecified()
 		}
 		else {
-			index = Math.min(index, (this.store as Store).getFullData().length - 1)
-			let row = this.refs.table.rows[index]
-			if (row) {
-				scrollToView(row)
-			}
+			return false
 		}
+	}
+
+	/** 
+	 * Adjust `startIndex` and scroll position to make item in the specified index becomes visible if it's not.
+	 * Returns whether find the element in specified index.
+	 */
+	async makeIndexVisible(index: number): Promise<boolean> {
+		await this.untilReady()
+		return this.repeatDir.makeIndexVisible(index)
+	}
+
+	/** 
+	 * Make item in the specified index becomes visible at the top scroll position.
+	 * Returns whether find the element in specified index.
+	 * You can safely call this before any thing rendered.
+	 */
+	async setFirstVisibleIndex(index: number): Promise<boolean> {
+		await this.untilReady()
+		return this.repeatDir.setFirstVisibleIndex(index)
 	}
 
 	/** 
@@ -626,7 +647,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	 * Must after first time rendered.
 	 */
 	getFirstVisibleIndex() {
-		if (this.repeatDir) {
+		if (this.repeatDir instanceof LiveRepeatDirective || this.repeatDir instanceof LiveAsyncRepeatDirective) {
 			return this.repeatDir.getFirstVisibleIndex()
 		}
 		else {
@@ -634,26 +655,10 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		}
 	}
 
-	/** Set the index of the first visible element. */
-	setFirstVisibleIndex(index: number) {
-		if (!this.__updated) {
-			this.once('updated', () => {
-				this.setFirstVisibleIndex(index)
-			})
-		}
-		else if (this.repeatDir) {
-			this.repeatDir.scrollToMakeIndexAtTop(index)
-		}
-		else {
-			index = Math.min(index, (this.store as Store).getFullData().length - 1)
-			let row = this.refs.table.rows[index]
-			if (row) {
-				scrollToTop(row)
-			}
-		}
-	}
-
-	/** Get currently rendered data item at specified index. */
+	/** 
+	 * Get currently rendered data item at specified index.
+	 * Returns null if it's not rendered yet.
+	 */
 	getRenderedItem(index: number): T | null {
 		let isRendered = index >= this.getStartIndex() && index < this.getEndIndex()
 		if (isRendered) {

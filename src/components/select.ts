@@ -1,5 +1,5 @@
 import {scrollToTop, getScrollDirection} from '@pucelle/ff'
-import {css, html, renderComplete, define, TemplateResult, onRenderComplete} from '@pucelle/flit'
+import {css, html, untilRenderComplete, define, TemplateResult, onRenderComplete} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Dropdown} from './dropdown'
 import {ListItem} from './list'
@@ -284,7 +284,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 
 	protected async startEditing() {
 		this.editing = true
-		await renderComplete()
+		await untilRenderComplete()
 		this.refs.input.focus()
 	}
 

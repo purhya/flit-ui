@@ -14,7 +14,7 @@ export interface TableStateOptions {
 	order?: boolean
 
 	/** Caches start index. Default value is `false`. */
-	startIndex?: boolean
+	visibleIndex?: boolean
 
 	/** 
 	 * Caches data of store.
@@ -47,7 +47,7 @@ export interface TableStateOptions {
 /** Can get from a table, the result can be used to restore table state. */
 interface TableState {
 	storeFilter?: ((item: any) => boolean) | string | null
-	startIndex?: number
+	visibleIndex?: number
 	orderName?: string | null
 	orderDirection?: '' | 'asc' | 'desc'
 	data?: Map<any, any> | any[]
@@ -59,7 +59,7 @@ interface TableState {
 const DefaultTableStateOptions: TableStateOptions = {
 	filter: false,
 	order: false,
-	startIndex: false,
+	visibleIndex: false,
 	data: false,
 	store: false,
 	customized: {},
@@ -68,7 +68,7 @@ const DefaultTableStateOptions: TableStateOptions = {
 
 export class TableStateCacher {
 
-	private readonly storagePrefix: string = '_table_state_'
+	private readonly storagePrefix: string = 'table_state_'
 	private readonly table: Table
 	private readonly cacheMap: Map<string, TableState> = new Map()
 
@@ -113,8 +113,8 @@ export class TableStateCacher {
 			state.orderDirection = table.getOrderDirection()
 		}
 
-		if (options.startIndex) {
-			state.startIndex = table.getFirstVisibleIndex()
+		if (options.visibleIndex) {
+			state.visibleIndex = table.getFirstVisibleIndex()
 		}
 
 		if (options.data) {
@@ -156,8 +156,8 @@ export class TableStateCacher {
 			table.setOrder(state.orderName, state.orderDirection)
 		}
 
-		if (state.startIndex !== undefined) {
-			table.setFirstVisibleIndex(state.startIndex)
+		if (state.visibleIndex !== undefined) {
+			table.setFirstVisibleIndex(state.visibleIndex)
 		}
 
 		if (state.data !== undefined) {

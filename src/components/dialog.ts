@@ -1,4 +1,4 @@
-import {css, define, html, renderComplete, show, Component, TemplateResult, on, off, render, getRenderedAsComponent, getComponentAsync} from '@pucelle/flit'
+import {css, define, html, untilRenderComplete, show, Component, TemplateResult, on, off, render, getRenderedAsComponent, getComponentAsync} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {align} from '@pucelle/ff'
 import {appendTo} from '../utils/element'
@@ -279,7 +279,7 @@ export class Dialog<E = any> extends Component<E> {
 	}
 
 	protected async onConnected() {
-		await renderComplete()
+		await untilRenderComplete()
 		
 		if (this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
 			this.el.before(this.refs.mask)
