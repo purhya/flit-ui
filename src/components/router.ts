@@ -19,14 +19,18 @@ export interface RouteOptions {
 
 interface RouterEvents {
 
-	/** Triggers after path of current router updated. */
-	goto: (path: string) => void
+	/** Triggers after router changed and push new state. */
+	goto: (path: string, asPopup: boolean) => void
+
+	/** Triggers after router changed and replace current state. */
+	redirectTo: (path: string, asPopup: boolean) => void
 }
 
 
 /** 
  * `<f-router>` can be used as a top container to contains everything that should be routed, 
  * Which means choose to be rendered depends on whether current path match.
+ * You will need initialize start path by `this.goto(this.getUnPrefixedPath(location.pathname))`.
  * 
  * ```ts
  * render() {
@@ -39,11 +43,22 @@ interface RouterEvents {
 @define('f-router')
 export class Router<E = any> extends Component<RouterEvents & E> {
 
+	/** A prefix will be added to current location, but will be removed from router path. */
 	prefix: string = ''
+
+	/** Current path, no matter normal path or popup path. */
 	path: string = ''
 
+	/** Normal not popup type path. */
+	protected normalPath: string = ''
+
+	/** Popup path come from `goto(..., true)`. */
+	protected popupPath: string | null = null
+
+	/** Stacked popup count. */
+	protected stackedPopupCount: number = 0
+
 	protected onCreated() {
-		this.goto(this.getUnPrefixedPath(location.pathname))
 		on(window, 'popstate', this.onWindowStateChange as (e: Event) => void, this)
 	}
 
@@ -110,29 +125,90 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 
 	/** Returns whether current path matches router path. */
 	isMatch(routePath: string | RegExp): boolean {
-		return PathParser.isMatch(this.path, routePath)
+		return PathParser.isMatch(this.normalPath, routePath)
+			|| !!(this.popupPath && PathParser.isMatch(this.popupPath, routePath))
 	}
 
 	/** Match current path with router path, returns match parameters and captures. */
 	protected matchPath(routePath: string | RegExp): {params: Record<string, string>, captures: string[]} | null {
-		return PathParser.matchPath(this.path, routePath)
-	}
-
-	/** Goto a new path and update render result, add a history state. */
-	goto(path: string) {
-		if (path !== this.path) {
-			this.path = path
-			let uri = this.getURIFromPath(path)
-			history.pushState({path}, '', uri)
+		if (PathParser.isMatch(this.normalPath, routePath)) {
+			return PathParser.matchPath(this.normalPath, routePath)
+		}
+		else if (this.popupPath && PathParser.isMatch(this.popupPath, routePath)) {
+			return PathParser.matchPath(this.popupPath, routePath)
+		}
+		else {
+			return null
 		}
 	}
 
-	/** Redirect to a new path and update render result, replace current history state. */
-	redirectTo(path: string) {
-		if (path !== this.path) {
-			this.path = path
-			let uri = this.getURIFromPath(path)
-			history.replaceState({path}, '', uri)
+	/**
+	 * Goto a new path and update render result, add a history state.
+	 * If `asPopupPath` is `true`, can update current path and also keep last rendering.
+	 */
+	goto(path: string, asPopupPath: boolean = false) {
+		if (asPopupPath && path === this.popupPath) {
+			return
+		}
+
+		if (!asPopupPath && path === this.normalPath) {
+			return
+		}
+
+		if (asPopupPath) {
+			this.popupPath = path
+			this.stackedPopupCount++
+		}
+		else {
+			this.clearPopupStack()
+			this.normalPath = path
+		}
+
+		this.path = path
+		let uri = this.getURIFromPath(path)
+		history.pushState({path}, '', uri)
+
+		this.emit('goto', path, asPopupPath)
+	}
+
+	/** 
+	 * Redirect to a new path and update render result, replace current history state.
+	 * If `asPopupPath` is `true`, can update current path and also keep last rendering.
+	 */
+	redirectTo(path: string, asPopupPath: boolean = false) {
+		if (asPopupPath && path === this.popupPath) {
+			return
+		}
+
+		if (!asPopupPath && path === this.normalPath) {
+			return
+		}
+
+		if (asPopupPath) {
+			this.popupPath = path
+			this.stackedPopupCount++
+		}
+		else {
+			this.clearPopupStack()
+			this.normalPath = path
+		}
+
+		this.path = path
+		let uri = this.getURIFromPath(path)
+		history.replaceState({path}, '', uri)
+
+		this.emit('redirectTo', path, asPopupPath)
+	}
+
+	/** 
+	 * Clear all popup states and pop last non-popup state.
+	 * Must call before set current path.
+	 */
+	clearPopupStack() {
+		if (this.popupPath) {
+			history.go(-this.stackedPopupCount)
+			this.stackedPopupCount = 0
+			this.popupPath = null
 		}
 	}
 
@@ -217,11 +293,11 @@ namespace PathParser {
 			routePath
 			.replace(/\./g, '\\.')
 			.replace(/\*/g, '.*?')
-			.replace(/(\/?):(\w+)/g, function (_m0, slash, property) {
+			.replace(/(\/):(\w+)/g, function (_m0, slash, property) {
 				if (property) {
 					(keys as string[]).push(property)
 				}
-				return slash + '?([\\w-]*?)'
+				return slash + '([\\w-]+)'
 			})
 			.replace(/^/, '^')
 			.replace(/$/, '$'),

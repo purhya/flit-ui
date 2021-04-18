@@ -145,12 +145,12 @@ export class Modal<E = any> extends Component<E> {
 
 	protected onTransitionEnd(type: string, finish: boolean) {
 		if (type === 'leave' && finish) {
-			if (this.refs.mask) {
-				this.refs.mask.remove()
-			}
 			this.el.remove()
+			this.onTransitionLeaveEnd()
 		}
 	}
+
+	protected onTransitionLeaveEnd() {}
 
 	protected async onConnected() {
 		await untilRenderComplete()
@@ -165,6 +165,10 @@ export class Modal<E = any> extends Component<E> {
 	}
 
 	protected onDisconnected() {
+		if (this.refs.mask) {
+			this.refs.mask.remove()
+		}
+		
 		off(window, 'resize', this.onWindowResize, this)
 	}
 
@@ -179,7 +183,7 @@ export class Modal<E = any> extends Component<E> {
 	}
 
 	/**
-	 * To show the modal, you may `renderCoponent` and then call `show()` or append to `body`.
+	 * To show the modal, you may `renderComponent` and then call `show()` or append to `body`.
 	 * If you want render modal as a child element  and append into document automatically,
 	 * just call `show` in `onConnected`.
 	 */ 

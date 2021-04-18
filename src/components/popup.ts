@@ -129,4 +129,9 @@ export class Popup<E = any> extends Component<E> {
 			this.el.remove()
 		}
 	}
+
+	/** Get the trigger element. */
+	getTriggerElement() {
+		return this.binding?.getTriggerElement() || null
+	}
 }

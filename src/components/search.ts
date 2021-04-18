@@ -113,7 +113,7 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 			${
 				this.value
 				? html`
-					<div class="clear" @click=${this.clear}>
+					<div class="clear" @click.stop=${this.clear}>
 						<f-icon class="close-icon" .type="close" />
 					</div>`
 				: ''
@@ -123,12 +123,12 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 
 	protected onReady() {
 		if (this.lazy) {
-			on(this.refs.input, 'change', this.updateValue, this)
+			on(this.refs.input, 'change', this.onChange, this)
 		}
 		else {
 			on(this.refs.input, 'compositionstart', this.onCompositionStart, this)
 			on(this.refs.input, 'compositionend', this.onCompositionEnd, this)
-			on(this.refs.input, 'input', this.updateValue, this)
+			on(this.refs.input, 'input', this.onInput, this)
 		}
 	}
 
@@ -137,12 +137,20 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 		once(this.refs.input, 'blur', () => this.focused = false)
 	}
 
+	protected onChange() {
+		this.updateValue()
+	}
+
 	protected onCompositionStart() {
 		this.inCompositionInputting = true
 	}
 
 	protected onCompositionEnd() {
 		this.inCompositionInputting = false
+		this.onInput()
+	}
+
+	protected onInput() {
 		this.updateValue()
 	}
 

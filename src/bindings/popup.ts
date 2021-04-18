@@ -183,6 +183,11 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		return value!
 	}
 
+	/** Get the trigger element. */
+	getTriggerElement() {
+		return this.el
+	}
+
 	/** `renderFn` should never change. */
 	update(renderFn: RenderFn, options?: PopupOptions) {
 		let firstTimeUpdate = this.options.isNotUpdated()
@@ -249,6 +254,10 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 	/** Show popup component after a short time out. */
 	showPopupLater() {
+		if (this.willOpen) {
+			return
+		}
+
 		let trigger = this.getOption('trigger')
 		let showDelay = this.getOption('showDelay')
 		let key = this.getOption('key')
@@ -345,7 +354,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 			this.updatePopup()
 		}
 		else {
-			let alreadyInUse = this.ensurePopupAndCheckUsage()
+			let isOldInUse = this.ensurePopup()
 			this.popup!.el.style.visibility = 'hidden'
 			
 			this.unbindLeavingTriggerEvents()
@@ -363,7 +372,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 				this.popup.el.style.visibility = ''
 				this.mayGetFocus()
 
-				if (!alreadyInUse) {
+				if (!isOldInUse) {
 					new Transition(this.popup.el, this.getOption('transition')).enter()
 				}
 
@@ -372,12 +381,17 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		}
 	}
 
-	/** Get a cached popup component, or create a new one. */
-	protected ensurePopupAndCheckUsage(): boolean {
+	/** 
+	 * Get a cached popup component, or create a new one.
+	 * Returns whether old popup is in use.
+	 */
+	protected ensurePopup(): boolean {
 		let result = this.renderFn()
 		let key = this.getOption('key')
 		let popup: Popup | null = null
 		let template: Template | null = null
+		let canShareWithOld = true
+		let isOldInUse = false
 
 		if (!(result instanceof TemplateResult)) {
 			result = html`${result}`
@@ -390,21 +404,36 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 				let currentTriggerInsideCachedPopup = popup.el.contains(this.el)
 
-				// Can't reuse since trigger element inside it.
+				// Reuse and merge.
 				if (!currentTriggerInsideCachedPopup && template.canMergeWith(result)) {
 					template.merge(result)
 				}
 
-				// Leave it and will not reuse.
+				// Can't reuse since trigger element inside it.
 				else if (currentTriggerInsideCachedPopup) {
 					popup = null
 				}
 
 				// Destroy same name old one immediately.
 				else {
-					popup.el.remove()
-					popup = null
+					canShareWithOld = false
 				}
+			}
+		}
+		
+		if (popup) {
+			// Whether use by other popup binding, such that no need to play transition.
+			let inUseBinding = SharedPopupsThatsInUse.get(popup)
+
+			if (inUseBinding && inUseBinding !== this) {
+				inUseBinding.losePopupControl()
+			}
+
+			isOldInUse = !!inUseBinding
+
+			if (!canShareWithOld) {
+				popup.el.remove()
+				popup = null
 			}
 		}
 		
@@ -418,13 +447,6 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 			}
 		}
 
-		// Whether use by other popup binding, such that no need to play transition.
-		let alreadyInUse = SharedPopupsThatsInUse.get(popup)
-
-		if (alreadyInUse && alreadyInUse !== this) {
-			alreadyInUse.losePopupControl()
-		}
-
 		if (key) {
 			SharedPopupsThatsInUse.set(popup, this)
 		}
@@ -435,7 +457,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		popup.setBinding(this as PopupBinding)
 		popup.applyAppendTo()
 
-		return !!alreadyInUse
+		return isOldInUse
 	}
 
 	losePopupControl() {
@@ -452,6 +474,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 				this.unwatchRect = null
 			}
 
+			this.willOpen = false
 			this.setOpened(false)
 			this.popup = null
 			this.popupTemplate = null
@@ -572,6 +595,10 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 	/** Hide popup component after a short time out. */
 	hidePopupLater() {
+		if (!this.opened) {
+			return
+		}
+
 		let hideDelay = this.getOption('hideDelay')
 
 		this.hideTimeout = new Timeout(() => {
