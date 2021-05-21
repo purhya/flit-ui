@@ -3,6 +3,16 @@ import {Popup} from '../components/popup'
 import {Router} from '../components/router'
 
 
+export interface GoToOptions {
+
+	/** If `asPopupPath` is `true`, can update current path and also keep last rendering. */
+	asPopupPath?: boolean
+
+	/** Specifies router, if omit, will detect router in ancestor nodes. */
+	router?: Router
+}
+
+
 /** 
  * A `:goto` binding will goto a target location path after clicking binded element.
  * 
@@ -21,9 +31,10 @@ export class GotoBinding implements Binding<string>{
 		on(this.el, 'click', this.onClick, this)
 	}
 
-	update(value: string, asPopupPath: boolean = false) {
+	update(value: string, options: GoToOptions = {}) {
 		this.value = value
-		this.asPopupPath = asPopupPath
+		this.asPopupPath = options.asPopupPath ?? false
+		this.router = options.router ?? null
 	}
 
 	protected onClick() {
@@ -50,7 +61,7 @@ export class GotoBinding implements Binding<string>{
  * `goto(path)`
  * `goto(path, asPopupPath)`
  */
-export const goTo = defineBinding('goto', GotoBinding) as (path: string, asPopupPath?: boolean) => BindingResult
+export const goTo = defineBinding('goto', GotoBinding) as (path: string, options: GoToOptions) => BindingResult
 
 
 export class RedirectToBinding extends GotoBinding{
@@ -67,7 +78,7 @@ export class RedirectToBinding extends GotoBinding{
  * `recirectTo(path)`
  * `recirectTo(path, asPopupPath)`
  */
-export const recirectTo = defineBinding('redirectTo', GotoBinding) as (path: string, asPopupPath?: boolean) => BindingResult
+export const recirectTo = defineBinding('redirectTo', GotoBinding) as (path: string, options: GoToOptions) => BindingResult
 
 
 /** Get closest router by walking ancestor element. */

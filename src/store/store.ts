@@ -149,8 +149,8 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 	 * Set ordering rule.
 	 * will update `currentData` later, except you call `syncCurrentData`.
 	 */
-	setOrder(by: CanSortKeys<T> | OrderFunction<T> | null, direction: 'asc' | 'desc' | '' = '') {
-		this.order = by === null ? null : new Order([by, direction || 'asc'])
+	setOrder(by: CanSortKeys<T> | OrderFunction<T> | Order<T> | null, direction: 'asc' | 'desc' | '' = '') {
+		this.order = by instanceof Order ? by : by === null ? null : new Order(by)
 		this.orderDirection = direction
 		this.updateCurrentDataLater()
 	}
@@ -196,8 +196,8 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 	protected updateCurrentDataImmediately() {
 		let currentData = this.filter ? this.fullData.filter(this.filter) : [...this.fullData]
 
-		if (this.order) {
-			this.order.sortArray(currentData)
+		if (this.order && this.orderDirection) {
+			this.order.sortArray(currentData, this.orderDirection)
 		}
 
 		this.currentData = currentData
@@ -472,7 +472,13 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 			return -1
 		}
 
-		return this.fullData.indexOf(this.get(item)!)
+		if (this.key) {
+			let valueAtKey = item[this.key]
+			return this.fullData.findIndex(i => i[this.key!] === valueAtKey)
+		}
+		else {
+			return this.fullData.indexOf(this.get(item)!)
+		}
 	}
 
 	/** Get item index in current data. */
@@ -481,7 +487,13 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 			return -1
 		}
 
-		return this.currentData.indexOf(this.get(item)!)
+		if (this.key) {
+			let valueAtKey = item[this.key]
+			return this.currentData.findIndex(i => i[this.key!] === valueAtKey)
+		}
+		else {
+			return this.currentData.indexOf(this.get(item)!)
+		}
 	}
 
 	/** Select all items. */

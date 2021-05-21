@@ -1,7 +1,7 @@
 import {Component, css, define, html, TemplateResult, liveRepeat, repeat, onRenderComplete, LiveRepeatDirective, DirectiveResult, untilRenderComplete, refDirective, Directive, ContextualTransitionOptions, observeGetting, liveAsyncRepeat, LiveAsyncRepeatDirective, RepeatDirective} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Store} from '../store/store'
-import {getScrollbarWidth, watchLayout, locateFirstVisibleIndex} from '@pucelle/ff'
+import {getScrollbarWidth, watchLayout, locateFirstVisibleIndex, Order} from '@pucelle/ff'
 import {ColumnWidthResizer} from './helpers/column-width-resizer'
 import {RemoteStore} from '../store/remote-store'
 import {TableStateCacher, TableStateOptions} from './helpers/table-state'
@@ -29,7 +29,7 @@ export interface TableColumn<T = any> {
 	 * Give name to each column can help to remember last ordered columns, and restore it from storage.
 	 * If not provided, uses `orderBy` instead.
 	 */
-	name?: string
+	name: string
 
 	/** Column title. */
 	title: string
@@ -47,7 +47,7 @@ export interface TableColumn<T = any> {
 	 * Returns the value used for ordering, must be specified as a string type key when using `RemoteStore`.
 	 * Implies column is not orderable if not configured.
 	 */
-	orderBy?: ((item: T) => string | number | null | undefined) | string
+	orderBy?: ((item: T) => string | number | null | undefined) | string | Order<T>
 
 	/** If specified as `true`, will using `desc` ordering as default. */
 	descFirst?: boolean
@@ -354,7 +354,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 
 	protected renderColumns(): TemplateResult[] {
 		return this.columns.map((column, index) => {
-			let orderName = column.name || String(column.orderBy)
+			let orderName = column.name
 			let isOrdered = this.orderName === orderName
 			let flexAlign = column.align === 'right' ? 'flex-end' : column.align === 'center' ? 'center' : ''
 
@@ -469,16 +469,16 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		let column = columns[index]
 
 		// Column is not orderable.
-		let canOrder = column.orderBy
+		let canOrder = !!column.orderBy
 		if (!canOrder) {
 			return
 		}
 
 		let direction: 'asc' | 'desc' | '' = ''
 		let descFirst = column.descFirst
-		let orderName = column.name || String(column.orderBy)
+		let columnName = column.name
 
-		if (orderName === this.orderName) {
+		if (columnName === this.orderName) {
 			if (descFirst) {
 				direction = this.orderDirection === '' ? 'desc' : this.orderDirection === 'desc' ? 'asc' : ''
 			}
@@ -490,7 +490,6 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 			direction = descFirst ? 'desc' : 'asc'
 		}
 
-		let columnName = column.name || (typeof column.orderBy === 'string' ? column.orderBy : null)
 		this.setOrder(columnName, direction)
 	}
 

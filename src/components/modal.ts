@@ -1,6 +1,6 @@
 import {css, define, html, on, untilRenderComplete, off, Component, show} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {align} from '@pucelle/ff'
+import {align, watchLayout} from '@pucelle/ff'
 import {appendTo} from '../utils/element'
 
 
@@ -152,16 +152,18 @@ export class Modal<E = any> extends Component<E> {
 
 	protected onTransitionLeaveEnd() {}
 
-	protected async onConnected() {
-		await untilRenderComplete()
-		
-		if (this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
-			this.el.before(this.refs.mask)
-		}
+	protected onConnected() {
+		untilRenderComplete().then(() => {
+			if (this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
+				this.el.before(this.refs.mask)
+			}
 
-		this.toCenter()
+			this.align()
+			on(window, 'resize', this.onWindowResize, this)
 
-		on(window, 'resize', this.onWindowResize, this)
+			let unwatch = watchLayout(this.el, 'size', () => this.align())
+			this.once('disconnected', unwatch)
+		})
 	}
 
 	protected onDisconnected() {
@@ -174,11 +176,11 @@ export class Modal<E = any> extends Component<E> {
 
 	protected onWindowResize() {
 		if (this.opened) {
-			this.toCenter()
+			this.align()
 		}
 	}
 
-	protected toCenter() {
+	protected align() {
 		align(this.el, document.documentElement, 'c')
 	}
 

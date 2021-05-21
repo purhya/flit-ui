@@ -87,7 +87,7 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 
 	private onWindowStateChange(e: PopStateEvent) {
 		if (e.state) {
-			this.redirectTo(e.state.path)
+			this.redirectTo(e.state.path, e.state.asPopupPath)
 		}
 	}
 
@@ -166,7 +166,7 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 
 		this.path = path
 		let uri = this.getURIFromPath(path)
-		history.pushState({path}, '', uri)
+		history.pushState({path, asPopupPath}, '', uri)
 
 		this.emit('goto', path, asPopupPath)
 	}
@@ -195,7 +195,7 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 
 		this.path = path
 		let uri = this.getURIFromPath(path)
-		history.replaceState({path}, '', uri)
+		history.replaceState({path, asPopupPath}, '', uri)
 
 		this.emit('redirectTo', path, asPopupPath)
 	}
