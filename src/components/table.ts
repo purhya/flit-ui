@@ -494,28 +494,26 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	}
 
 	protected onReady() {
-		if (this.resizable) {
-			this.resizer = new ColumnWidthResizer(
-				this.refs.head,
-				this.refs.columnContainer,
-				this.refs.colgroup,
-				this.columns,
-				this.minColumnWidth,
-				this.scopeClassName('resizing-mask')
-			)
+		this.resizer = new ColumnWidthResizer(
+			this.refs.head,
+			this.refs.columnContainer,
+			this.refs.colgroup,
+			this.columns,
+			this.minColumnWidth,
+			this.scopeClassName('resizing-mask')
+		)
 
-			this.watch(() => observeGetting(this, 'columns'), async (columns: TableColumn[]) => {
-				this.resizer?.setColumns(columns)
-	
-				// Here we need it render new `<col>`s.
-				await untilRenderComplete()
-				this.resizer?.updatColumnWidthsPrecisely()
-			})
-			
-			onRenderComplete(() => {
-				this.resizer?.updatColumnWidthsPrecisely()
-			})
-		}
+		this.watch(() => observeGetting(this, 'columns'), async (columns: TableColumn[]) => {
+			this.resizer?.setColumns(columns)
+
+			// Here we need it render new `<col>`s.
+			await untilRenderComplete()
+			this.resizer?.updatColumnWidthsPrecisely()
+		})
+		
+		onRenderComplete(() => {
+			this.resizer?.updatColumnWidthsPrecisely()
+		})
 	}
 
 	protected onConnected() {
