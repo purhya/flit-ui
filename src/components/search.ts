@@ -17,7 +17,7 @@ interface SearchEvents {
 export class Search<E = any> extends Component<SearchEvents & E> {
 
 	static style() {
-		let {adjust, borderColor, borderRadius, mainColor, focusBlurRadius, lineHeight} = theme
+		let {adjust, borderColor, borderRadius, mainColor, focusBlurRadius, lineHeight, fieldBackgroundColor} = theme
 
 		return css`
 		:host{
@@ -29,7 +29,7 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 		input{
 			width: 100%;
 			border: none;
-			background: none;
+			background: ${fieldBackgroundColor};
 			height: ${adjust(28)}px;
 			padding: 0 ${adjust(lineHeight - 2)}px 0 ${adjust(lineHeight - 2)}px;
 			line-height: ${lineHeight - 2}px;

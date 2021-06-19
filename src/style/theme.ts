@@ -11,6 +11,9 @@ export interface ThemeOptions {
 	/** Background color. */
 	backgroundColor: string
 
+	/** Background color of fields. */
+	fieldBackgroundColor: string
+
 	/** Text color. */
 	textColor: string
 	
@@ -57,6 +60,7 @@ export interface ThemeOptions {
 type ColorOptions = {[key in
 	'mainColor' |
 	'backgroundColor' |
+	'fieldBackgroundColor' | 
 	'textColor' |
 
 	'borderColor' |
@@ -171,6 +175,11 @@ export class Theme implements ColorOptions, NotColorOptions {
 		return new Color(this.getOption('backgroundColor'))
 	}
 
+	/** Background color for fields. */
+	get fieldBackgroundColor(): Color {
+		return new Color(this.getOption('fieldBackgroundColor'))
+	}
+
 	/** Text color. */
 	get textColor(): Color {
 		return new Color(this.getOption('textColor'))
@@ -246,6 +255,7 @@ export class Theme implements ColorOptions, NotColorOptions {
 const defaultLightThemeOptions: Partial<ThemeOptions> = {
 	mainColor: '#3a6cf6',
 	backgroundColor: '#fff',
+	fieldBackgroundColor: '#e2e2e2',
 	textColor: '#000',
 	infoColor: '#3369fa',
 	successColor: '#29bc04',
@@ -273,6 +283,7 @@ theme.defineTheme('light', defaultLightThemeOptions)
 theme.defineTheme('dark', {
 	mainColor: '#3a6cf6',
 	backgroundColor: '#333',
+	fieldBackgroundColor: '#414141',
 	textColor: '#eee',
 	borderColor: '#888',
 	popupBackgroundColor: '#333',

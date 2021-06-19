@@ -93,6 +93,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 
 		.columns{
 			display: flex;
+			height: 100%;
 		}
 
 		.column{

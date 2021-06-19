@@ -19,10 +19,10 @@ export type TooltipType = 'default' | 'prompt' | 'error'
 export class Tooltip<E = any> extends Popup<E> {
 
 	static style() {
-		let {adjust, adjustFontSize, backgroundColor, textColor, errorColor} = theme
+		let {adjust, adjustFontSize, popupBackgroundColor, textColor, errorColor} = theme
 
 		let types = [
-			['default', backgroundColor.toMiddle(5)],
+			['default', popupBackgroundColor],
 			['prompt', textColor.toMiddle(30)],
 			['error', errorColor.toMiddle(5)]
 		] as [TooltipType, Color][]

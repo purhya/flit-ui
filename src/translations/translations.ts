@@ -4,8 +4,8 @@ import {updateAllComponents} from '@pucelle/flit'
 
 export class Translations {
 
-	protected language: string = 'en-us'
-	protected data: Map<string, Record<string, string>> = new Map([['en-us', {}]])
+	protected language: string = 'enus'
+	protected data: Map<string, Record<string, string>> = new Map([['enus', {}]])
 
 	/** Get current language. */
 	getLanguage() {
@@ -14,7 +14,7 @@ export class Translations {
 
 	/** 
 	 * Set current language and update all components.
-	 * @language Language to set, like `en-us`, `zh-cn`.
+	 * @language Language to set, like `enus`, `zhcn`.
 	 */
 	setLanguage(language: string) {
 		this.language = language
@@ -44,7 +44,7 @@ export class Translations {
 		let data = this.data.get(this.language)
 		
 		if (!data) {
-			data = this.data.get('en-us')!
+			data = this.data.get('enus')!
 		}
 
 		let value = data[key]
@@ -67,7 +67,7 @@ export class Translations {
 		let value: string = ''
 
 		if (!data) {
-			data = this.data.get('en-us')
+			data = this.data.get('enus')
 		}
 
 		if (id) {
@@ -98,7 +98,7 @@ export const translations = new Translations()
 
 
 /** Transitions for `<f-dialog>`. */
-translations.add('en-us', {
+translations.add('enus', {
 	ok: 'OK',
 	cancel: 'Cancel',
 	yes: 'Yes',

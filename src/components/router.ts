@@ -1,4 +1,4 @@
-import {define, Component, TemplateResult, on, off} from '@pucelle/flit'
+import {define, Component, TemplateResult, on, off, cache, DirectiveResult} from '@pucelle/flit'
 
 
 /** Match parameters by matching current path with router. */
@@ -15,15 +15,27 @@ export interface RouteOptions {
 
 	/** If provided, will update `document.title` if associated route path matcher. */
 	title?: string
+
+	/** If provided as `true`, Will cache the rendered components even not match router. */
+	cache?: boolean
 }
 
-interface RouterEvents {
+export interface RouterEvents {
 
-	/** Triggers after router changed and push new state. */
-	goto: (path: string, asPopup: boolean) => void
+	/** Triggers after router changed and pushed new state, components are not updated yet. */
+	goto: (newPath: string, oldPath: string, asPopup: boolean) => void
 
-	/** Triggers after router changed and replace current state. */
-	redirectTo: (path: string, asPopup: boolean) => void
+	/** Triggers after router changed and replace current state, components are not updated yet. */
+	redirectTo: (oldPpath: string, oldPath: string, asPopup: boolean) => void
+
+	/** Triggers after router changed and replace current state, components are not updated yet. */
+	goOrRedirectTo: (oldPpath: string, oldPath: string, asPopup: boolean) => void
+}
+
+/** Current history state. */
+interface RouterHistoryState {
+	path: string
+	asPopupPath: boolean
 }
 
 
@@ -54,6 +66,9 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 
 	/** Popup path come from `goto(..., true)`. */
 	protected popupPath: string | null = null
+
+	/** Current history state */
+	protected state: RouterHistoryState | null = null
 
 	/** Stacked popup count. */
 	protected stackedPopupCount: number = 0
@@ -87,6 +102,10 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 
 	private onWindowStateChange(e: PopStateEvent) {
 		if (e.state) {
+			if (this.state?.asPopupPath) {
+				this.stackedPopupCount--
+			}
+
 			this.redirectTo(e.state.path, e.state.asPopupPath)
 		}
 	}
@@ -95,31 +114,41 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	 * Used in a `render()` function, render it if route path match.
 	 * `renderFn` recvives `{id: 12345}` for router path `/user/:id`.
 	 */
-	route(routePath: string, renderFn: (params: Record<string, string>) => string | TemplateResult, options?: RouteOptions): string | TemplateResult
+	route(routePath: string, renderFn: (params: Record<string, string>) => '' | TemplateResult, options?: RouteOptions): '' | TemplateResult | DirectiveResult
 	
 	/** 
 	 * Used in a `render()` function, render it if route path match.
 	 * `renderFn` recvives `[12345]` for router path `/\/user\/(\d+)/`.
 	 */
-	route(routePath: RegExp, renderFn: (captures: string[]) => string | TemplateResult, options?: RouteOptions): string | TemplateResult
+	route(routePath: RegExp, renderFn: (captures: string[]) => '' | TemplateResult, options?: RouteOptions): '' | TemplateResult | DirectiveResult
 
-	route(routePath: string | RegExp, renderFn: any, options: RouteOptions = {}): string | TemplateResult {
+	route(routePath: string | RegExp, renderFn: any, options: RouteOptions = {}): '' | TemplateResult | DirectiveResult {
+		let result: '' | TemplateResult
+
 		if (this.isMatch(routePath)) {
 			if (options.title) {
 				document.title = options.title
 			}
 
-			let result = this.matchPath(routePath)
+			let matchResult = this.matchPath(routePath)
 
 			if (routePath instanceof RegExp) {
-				return renderFn(result?.captures)
+				result = renderFn(matchResult?.captures)
 			}
 			else {
-				return renderFn(result?.params)
+				result = renderFn(matchResult?.params)
 			}
+
 		}
 		else {
-			return ''
+			result = ''
+		}
+
+		if (options.cache) {
+			return cache(result)
+		}
+		else {
+			return result
 		}
 	}
 
@@ -127,6 +156,11 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	isMatch(routePath: string | RegExp): boolean {
 		return PathParser.isMatch(this.normalPath, routePath)
 			|| !!(this.popupPath && PathParser.isMatch(this.popupPath, routePath))
+	}
+
+	/** Returns whether specified path matches router path. */
+	isPathMatch(path: string, routePath: string | RegExp): boolean {
+		return PathParser.isMatch(path, routePath)
 	}
 
 	/** Match current path with router path, returns match parameters and captures. */
@@ -147,11 +181,7 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	 * If `asPopupPath` is `true`, can update current path and also keep last rendering.
 	 */
 	goto(path: string, asPopupPath: boolean = false) {
-		if (asPopupPath && path === this.popupPath) {
-			return
-		}
-
-		if (!asPopupPath && path === this.normalPath) {
+		if (path === this.path) {
 			return
 		}
 
@@ -164,11 +194,15 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 			this.normalPath = path
 		}
 
-		this.path = path
+		let oldPath = this.path
 		let uri = this.getURIFromPath(path)
-		history.pushState({path, asPopupPath}, '', uri)
 
-		this.emit('goto', path, asPopupPath)
+		this.path = path
+		this.state = {path, asPopupPath}
+		history.pushState(this.state, '', uri)
+
+		this.emit('goto', path, oldPath, asPopupPath)
+		this.emit('goOrRedirectTo', path, oldPath, asPopupPath)
 	}
 
 	/** 
@@ -176,28 +210,27 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	 * If `asPopupPath` is `true`, can update current path and also keep last rendering.
 	 */
 	redirectTo(path: string, asPopupPath: boolean = false) {
-		if (asPopupPath && path === this.popupPath) {
-			return
-		}
-
-		if (!asPopupPath && path === this.normalPath) {
+		if (path === this.path) {
 			return
 		}
 
 		if (asPopupPath) {
 			this.popupPath = path
-			this.stackedPopupCount++
 		}
 		else {
 			this.clearPopupStack()
 			this.normalPath = path
 		}
 
-		this.path = path
+		let oldPath = this.path
 		let uri = this.getURIFromPath(path)
-		history.replaceState({path, asPopupPath}, '', uri)
 
-		this.emit('redirectTo', path, asPopupPath)
+		this.path = path
+		this.state = {path, asPopupPath}
+		history.replaceState(this.state, '', uri)
+
+		this.emit('redirectTo', path, oldPath, asPopupPath)
+		this.emit('goOrRedirectTo', path, oldPath, asPopupPath)
 	}
 
 	/** 
@@ -205,11 +238,12 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	 * Must call before set current path.
 	 */
 	clearPopupStack() {
-		if (this.popupPath) {
+		if (this.stackedPopupCount > 0) {
 			history.go(-this.stackedPopupCount)
-			this.stackedPopupCount = 0
-			this.popupPath = null
 		}
+
+		this.stackedPopupCount = 0
+		this.popupPath = null
 	}
 
 	/** Get whole url. */

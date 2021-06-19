@@ -20,7 +20,7 @@ interface SelectEvents<T> {
 export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	
 	static style() {
-		let {mainColor, adjust, borderColor, popupShadowBlurRadius, backgroundColor, popupShadowColor} = theme
+		let {mainColor, adjust, borderColor, popupShadowBlurRadius, fieldBackgroundColor, popupShadowColor} = theme
 
 		return css`
 		:host{
@@ -28,7 +28,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			vertical-align: top;
 			width: ${adjust(200)}px;
 			height: ${adjust(28)}px;
-			background: ${backgroundColor.toMiddle(5)};
+			background: ${fieldBackgroundColor};
 			line-height: ${adjust(28)}px;
 			justify-content: space-between;
 			align-items: center;

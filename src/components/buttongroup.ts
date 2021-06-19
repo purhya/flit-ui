@@ -1,5 +1,4 @@
 import {define, Component, css} from '@pucelle/flit'
-import {theme} from '../style/theme'
 
 
 /** `<f-buttongroup>` can contains several `<button>` elements as a button group. */
@@ -7,8 +6,6 @@ import {theme} from '../style/theme'
 export class ButtonGroup<E = any> extends Component<E> {
 
 	static style() {
-		let {textColor, backgroundColor} = theme
-
 		return css`
 		:host{
 			display: inline-flex;
@@ -30,9 +27,6 @@ export class ButtonGroup<E = any> extends Component<E> {
 			&[primary]{
 				position: relative;
 				z-index: 1;
-				background: ${textColor};
-				border-color: ${textColor};
-				color: ${backgroundColor};
 			}
 
 			&:hover{

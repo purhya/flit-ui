@@ -22,7 +22,7 @@ interface InputEvents {
 export class Input<E = any> extends Component<InputEvents & E> {
 
 	static style() {
-		let {adjust, adjustFontSize, errorColor, borderColor, backgroundColor, mainColor, successColor, focusBlurRadius} = theme
+		let {adjust, adjustFontSize, errorColor, borderColor, mainColor, successColor, focusBlurRadius, fieldBackgroundColor} = theme
 
 		return css`
 		:host{
@@ -31,7 +31,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 			position: relative;
 			width: ${adjust(200)}px;
 			height: ${adjust(28)}px;
-			background: ${backgroundColor.toMiddle(5)};
+			background: ${fieldBackgroundColor};
 			box-shadow: inset 0 -1px 0 0 ${borderColor};
 		}
 
