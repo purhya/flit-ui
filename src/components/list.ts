@@ -35,7 +35,7 @@ export interface ListItem<T = any> {
 interface ListEvents<T> {
 
 	/** Triggers after selected items changed. */
-	select: (selected: T[]) => void
+	select: (selected: T | T[]) => void
 
 	/** Triggers after nagivated item changed. */
 	navigate: (navigated: T) => void
@@ -366,7 +366,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 				this.selected = [item.value!]
 			}
 
-			this.emit('select', this.selected)
+			this.emit('select', this.multipleSelect ? this.selected : this.selected[0])
 		}
 		else {
 			this.emit('click', item.value)

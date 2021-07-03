@@ -270,12 +270,12 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 		}
 	}
 
-	protected onSelected(values: T[]) {
+	protected onSelected(selected: T | T[]) {
 		if (this.multipleSelect) {
-			this.value = values
+			this.value = selected as T[]
 		}
 		else {
-			this.value = values[0]
+			this.value = selected as T
 			this.hidePopup()
 		}
 		

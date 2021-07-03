@@ -292,6 +292,9 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	/** To cache and restore table state. */
 	protected stateCacher!: TableStateCacher
 
+	/** Whether set a first visible index and not applied yet. */
+	protected firstVisibleIndexSpecified: boolean = false
+
 	constructor(el: HTMLElement) {
 		super(el)
 		this.stateCacher = new TableStateCacher(this)
@@ -636,8 +639,19 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	 * You can safely call this before any thing rendered.
 	 */
 	async setFirstVisibleIndex(index: number): Promise<boolean> {
+		this.firstVisibleIndexSpecified = true
+		
 		await this.untilReady()
-		return this.repeatDir.setFirstVisibleIndex(index)
+		let setResult = await this.repeatDir.setFirstVisibleIndex(index)
+
+		this.firstVisibleIndexSpecified = false
+
+		return setResult
+	}
+
+	/** Returns whether set a first visible index and not applied yet. */
+	isFirstVisibleIndexSpecified(): boolean {
+		return this.firstVisibleIndexSpecified
 	}
 
 	/** 

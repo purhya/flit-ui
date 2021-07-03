@@ -23,17 +23,17 @@ export interface RouteOptions {
 export interface RouterEvents {
 
 	/** Triggers after router changed and pushed new state, components are not updated yet. */
-	goto: (newPath: string, oldPath: string, asPopup: boolean) => void
+	goto: (newState: RouterHistoryState, oldState: RouterHistoryState) => void
 
 	/** Triggers after router changed and replace current state, components are not updated yet. */
-	redirectTo: (oldPpath: string, oldPath: string, asPopup: boolean) => void
+	redirectTo: (newState: RouterHistoryState, oldState: RouterHistoryState) => void
 
 	/** Triggers after router changed and replace current state, components are not updated yet. */
-	goOrRedirectTo: (oldPpath: string, oldPath: string, asPopup: boolean) => void
+	goOrRedirectTo: (newState: RouterHistoryState, oldState: RouterHistoryState) => void
 }
 
 /** Current history state. */
-interface RouterHistoryState {
+export interface RouterHistoryState {
 	path: string
 	asPopupPath: boolean
 }
@@ -55,20 +55,23 @@ interface RouterHistoryState {
 @define('f-router')
 export class Router<E = any> extends Component<RouterEvents & E> {
 
-	/** A prefix will be added to current location, but will be removed from router path. */
+	/** 
+	 * A prefix will be added to the front of current path as final path.
+	 * Otherwise it will be removed from location path to get current path.
+	 */
 	prefix: string = ''
 
 	/** Current path, no matter normal path or popup path. */
 	path: string = ''
+
+	/** Current history state */
+	state: RouterHistoryState | null = null
 
 	/** Normal not popup type path. */
 	protected normalPath: string = ''
 
 	/** Popup path come from `goto(..., true)`. */
 	protected popupPath: string | null = null
-
-	/** Current history state */
-	protected state: RouterHistoryState | null = null
 
 	/** Stacked popup count. */
 	protected stackedPopupCount: number = 0
@@ -194,15 +197,15 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 			this.normalPath = path
 		}
 
-		let oldPath = this.path
+		let oldState = this.state
 		let uri = this.getURIFromPath(path)
 
 		this.path = path
 		this.state = {path, asPopupPath}
 		history.pushState(this.state, '', uri)
 
-		this.emit('goto', path, oldPath, asPopupPath)
-		this.emit('goOrRedirectTo', path, oldPath, asPopupPath)
+		this.emit('goto', this.state, oldState)
+		this.emit('goOrRedirectTo', this.state, oldState)
 	}
 
 	/** 
@@ -222,15 +225,15 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 			this.normalPath = path
 		}
 
-		let oldPath = this.path
+		let oldState = this.state
 		let uri = this.getURIFromPath(path)
 
 		this.path = path
 		this.state = {path, asPopupPath}
 		history.replaceState(this.state, '', uri)
 
-		this.emit('redirectTo', path, oldPath, asPopupPath)
-		this.emit('goOrRedirectTo', path, oldPath, asPopupPath)
+		this.emit('redirectTo', this.state, oldState)
+		this.emit('goOrRedirectTo', this.state, oldState)
 	}
 
 	/** 

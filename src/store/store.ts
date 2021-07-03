@@ -122,6 +122,11 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 		return this.fullData
 	}
 
+	/** Get all the data. */
+	getFullDataCount(): number {
+		return this.fullData.length
+	}
+
 	/** 
 	 * Set all the data.
 	 * will update `currentData` later, except you call `syncCurrentData`.
@@ -143,6 +148,11 @@ export class Store<T = any> extends Emitter<StoreEvents> {
 	/** Get current data. */
 	getCurrentData(): T[] {
 		return this.currentData
+	}
+
+	/** Get count of current data. */
+	getCurrentDataCount(): number {
+		return this.currentData.length
 	}
 
 	/** 

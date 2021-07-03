@@ -98,16 +98,21 @@ function getSharedPopupCache(key: string): {template: Template, popup: Popup} | 
 	let caches = SharedPopupCache.get(key)
 
 	if (caches) {
+		// We want to match template result here.
+		// Then we found:
+		// Popup1 -> Popup2.
+		// Popup3 reuse Popup1.
+		// Popup2 still appears and follows Popup3 for a little while, then disappear.
+		// This is not what we want.
+
 		for (let i = caches.length - 1; i >= 0; i--) {
 			let cache = caches[i]
 			let popup = cache.popup
 
 			// If current popup is in use, not reuse it.
-			if (MouseLeave.checkLocked(popup.el)) {
-				return null
+			if (!MouseLeave.checkLocked(popup.el)) {
+				return cache
 			}
-
-			return cache
 		}
 	}
 
@@ -557,7 +562,10 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 			this.aligner = new Aligner(popup.el, alignTo, this.getOption('alignPosition'), this.getAlignOptions())
 		}
 
-		this.aligner.align()
+		let aligned = this.aligner.align()
+		if (!aligned) {
+			this.hidePopup()
+		}
 	}
 
 	/** Get align options. */

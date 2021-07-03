@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = "./docs/index.ts");
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -362,8 +362,11 @@ class Order {
      * Sort `array` inside by current order.
      * @param array The array to sort.
      */
-    sortArray(array) {
-        array.sort((a, b) => this.compare(a, b));
+    sortArray(array, direction = 1) {
+        let normalizedDirection = direction === 'asc' ? 1 : direction === 'desc' ? -1 : direction;
+        array.sort((a, b) => {
+            return this.compare(a, b) * normalizedDirection;
+        });
     }
     /**
      * Compare two items.
@@ -435,55 +438,56 @@ function orderBy(array, order, ...orders) {
 exports.orderBy = orderBy;
 // Compare with `new Map(...)`, object has same performance, and is more convinent to use, but will lose number key type.
 function indexBy(array, keyOrFn) {
-    let index = {};
+    let map = new Map();
     if (typeof keyOrFn === 'function') {
-        for (let i = 0, len = array.length; i < len; i++) {
-            let item = array[i];
-            let [key, value] = keyOrFn(item, i);
-            index[key] = value;
+        for (let item of array) {
+            let [key, value] = keyOrFn(item);
+            map.set(key, value);
         }
     }
     else {
         for (let item of array) {
             let key = item[keyOrFn];
-            index[key] = item;
+            map.set(key, item);
         }
     }
-    return index;
+    return map;
 }
 exports.indexBy = indexBy;
-/**
- * Creates an object from grouping by key results returned from running `keyOrFn` with each item of `items`.
- * @param array The array to group by.
- * @param keyOrFn The property name of each item, it's mapped value will be used for sorting. Or a function that accepts each item as parameter and returns a value for sorting.
- */
 function groupBy(array, keyOrFn) {
-    let index = {};
+    let map = new Map();
     for (let item of array) {
         let key;
+        let value = item;
         if (typeof keyOrFn === 'function') {
-            key = keyOrFn(item);
+            [key, value] = keyOrFn(item);
         }
         else {
             key = item[keyOrFn];
         }
-        let group = index[key] || (index[key] = []);
-        group.push(item);
+        let group = map.get(key);
+        if (!group) {
+            group = [];
+            map.set(key, group);
+        }
+        group.push(value);
     }
-    return index;
+    return map;
 }
 exports.groupBy = groupBy;
-/**
- * Group and aggregate items by group by function and aggregate function.
- * @param array The array to aggregate.
- * @param groupKeyOrFn The property name of each item, it's mapped value will be used for sorting. Or a function that accepts each item as parameter and returns a value for sorting.
- * @param aggregateFn The aggregate function, it accepts grouped items and each grouped `key` as parameters, and returns aggregated value.
- */
-function aggregate(array, groupKeyOrFn, aggregateFn) {
-    let index = groupBy(array, groupKeyOrFn);
-    return indexBy(Object.keys(index), (key) => {
-        return [key, aggregateFn(index[key], key)];
-    });
+function aggregate(array, keyOrFn, aggregateFn) {
+    let groupMap;
+    let aggregateMap = new Map();
+    if (typeof keyOrFn === 'function') {
+        groupMap = groupBy(array, item => [keyOrFn(item), item]);
+    }
+    else {
+        groupMap = groupBy(array, keyOrFn);
+    }
+    for (let [key, values] of groupMap.entries()) {
+        aggregateMap.set(key, aggregateFn(values, key));
+    }
+    return aggregateMap;
 }
 exports.aggregate = aggregate;
 /**
@@ -902,64 +906,10 @@ exports.formatSecondsToTime = formatSecondsToTime;
 
 /***/ }),
 
-/***/ "../ff/out/base/es-polyfill.js":
-/*!*************************************!*\
-  !*** ../ff/out/base/es-polyfill.js ***!
-  \*************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/* Polyfill for parts of ECMAScript 2017+, which is not widely supported by modern browsers. */
-if (!String.prototype.padStart) {
-    Object.defineProperty(String.prototype, 'padStart', {
-        value: function (length, fillString) {
-            let len = this.length;
-            let lenPad = fillString.length;
-            if (length < len || !lenPad) {
-                return String(this);
-            }
-            else {
-                let repeatCount = Math.floor((length - len) / lenPad);
-                let additionStr = fillString.slice(0, length - len - repeatCount * lenPad);
-                return fillString.repeat(repeatCount) + additionStr + this;
-            }
-        }
-    });
-}
-if (!String.prototype.padEnd) {
-    Object.defineProperty(String.prototype, 'padEnd', {
-        value: function (length, fillString) {
-            let len = this.length;
-            let lenPad = fillString.length;
-            if (length < len || !lenPad) {
-                return String(this);
-            }
-            else {
-                let repeatCount = Math.floor((length - len) / lenPad);
-                let additionStr = fillString.slice(0, length - len - repeatCount * lenPad);
-                return this + fillString.repeat(repeatCount) + additionStr;
-            }
-        }
-    });
-}
-// Still a proposal, but I love it.
-if (!RegExp.escape) {
-    Object.defineProperty(RegExp, 'escape', {
-        value: function (source) {
-            return source.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
-        }
-    });
-}
-
-
-/***/ }),
-
-/***/ "../ff/out/base/event-emitter.js":
-/*!***************************************!*\
-  !*** ../ff/out/base/event-emitter.js ***!
-  \***************************************/
+/***/ "../ff/out/base/emitter.js":
+/*!*********************************!*\
+  !*** ../ff/out/base/emitter.js ***!
+  \*********************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -969,12 +919,13 @@ if (!RegExp.escape) {
 // But then I meet a big problem when extending the class, described by:
 // https://stackoverflow.com/questions/55813041/problems-on-typescript-event-interface-extends
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EventEmitter = void 0;
+exports.Emitter = void 0;
 /**
  * Event emitter as super class to listen and emit custom events.
+ * It's name is Emitter to avoid conflicts with node API.
  * @typeparam E Event interface in `{eventName: (...args) => void}` format.
  */
-class EventEmitter {
+class Emitter {
     constructor() {
         /** Registered events. */
         this.__events = new Map();
@@ -1081,7 +1032,61 @@ class EventEmitter {
         this.__events = new Map();
     }
 }
-exports.EventEmitter = EventEmitter;
+exports.Emitter = Emitter;
+
+
+/***/ }),
+
+/***/ "../ff/out/base/es-polyfill.js":
+/*!*************************************!*\
+  !*** ../ff/out/base/es-polyfill.js ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/* Polyfill for parts of ECMAScript 2017+, which is not widely supported by modern browsers. */
+if (!String.prototype.padStart) {
+    Object.defineProperty(String.prototype, 'padStart', {
+        value: function (length, fillString) {
+            let len = this.length;
+            let lenPad = fillString.length;
+            if (length < len || !lenPad) {
+                return String(this);
+            }
+            else {
+                let repeatCount = Math.floor((length - len) / lenPad);
+                let additionStr = fillString.slice(0, length - len - repeatCount * lenPad);
+                return fillString.repeat(repeatCount) + additionStr + this;
+            }
+        }
+    });
+}
+if (!String.prototype.padEnd) {
+    Object.defineProperty(String.prototype, 'padEnd', {
+        value: function (length, fillString) {
+            let len = this.length;
+            let lenPad = fillString.length;
+            if (length < len || !lenPad) {
+                return String(this);
+            }
+            else {
+                let repeatCount = Math.floor((length - len) / lenPad);
+                let additionStr = fillString.slice(0, length - len - repeatCount * lenPad);
+                return this + fillString.repeat(repeatCount) + additionStr;
+            }
+        }
+    });
+}
+// Still a proposal, but I love it.
+if (!RegExp.escape) {
+    Object.defineProperty(RegExp, 'escape', {
+        value: function (source) {
+            return source.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+        }
+    });
+}
 
 
 /***/ }),
@@ -1473,7 +1478,7 @@ __exportStar(__webpack_require__(/*! ./function */ "../ff/out/base/function.js")
 __exportStar(__webpack_require__(/*! ./duration */ "../ff/out/base/duration.js"), exports);
 __exportStar(__webpack_require__(/*! ./date */ "../ff/out/base/date.js"), exports);
 __exportStar(__webpack_require__(/*! ./time */ "../ff/out/base/time.js"), exports);
-__exportStar(__webpack_require__(/*! ./event-emitter */ "../ff/out/base/event-emitter.js"), exports);
+__exportStar(__webpack_require__(/*! ./emitter */ "../ff/out/base/emitter.js"), exports);
 __exportStar(__webpack_require__(/*! ./queue */ "../ff/out/base/queue.js"), exports);
 
 
@@ -1702,7 +1707,7 @@ exports.deepEqual = deepEqual;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.queueEvery = exports.queueSome = exports.queueMap = exports.queueEach = exports.Queue = exports.QueueState = void 0;
 const object_1 = __webpack_require__(/*! ./object */ "../ff/out/base/object.js");
-const event_emitter_1 = __webpack_require__(/*! ./event-emitter */ "../ff/out/base/event-emitter.js");
+const emitter_1 = __webpack_require__(/*! ./emitter */ "../ff/out/base/emitter.js");
 /** Running state of queue. */
 var QueueState;
 (function (QueueState) {
@@ -1712,7 +1717,7 @@ var QueueState;
     QueueState[QueueState["Running"] = 1] = "Running";
     /** Been paused. */
     QueueState[QueueState["Paused"] = 2] = "Paused";
-    /** All tasks finshed. */
+    /** Queued tasks finshed, may still have failed tasks. */
     QueueState[QueueState["Finish"] = 3] = "Finish";
     /** Aborted because of error or by user. */
     QueueState[QueueState["Aborted"] = 4] = "Aborted";
@@ -1722,7 +1727,7 @@ var QueueState;
  * @typeparam T: Type of task.
  * @typeparam V: Type of returned values from handler. This can be inferred from `handler` option normally.
  */
-class Queue extends event_emitter_1.EventEmitter {
+class Queue extends emitter_1.Emitter {
     constructor(options) {
         super();
         /** If provided, can avoid adding duplicate tasks with same keys. */
@@ -1813,8 +1818,19 @@ class Queue extends event_emitter_1.EventEmitter {
         }
         return this.state === QueueState.Running;
     }
-    /** Returns a promise which will be resolved after all tasks finished, or be rejected if error happens. */
+    /** Returns a promise which will be resolved after all tasks finished. */
     untilFinish() {
+        if (this.getUnprocessedCount() > 0) {
+            return new Promise(resolve => {
+                this.once('finish', () => resolve());
+            });
+        }
+        else {
+            return Promise.resolve();
+        }
+    }
+    /** Returns a promise which will be resolved after all tasks finished, or be rejected if error happens. */
+    untilEnd() {
         if (this.getUnprocessedCount() > 0) {
             return new Promise((resolve, reject) => {
                 this.once('end', err => err ? reject(err) : resolve());
@@ -1981,7 +1997,7 @@ class Queue extends event_emitter_1.EventEmitter {
      * After aborted, queue can still be started manually by calling `start()`.
      * Returns `true` if queue was successfully aborted.
      */
-    abort(err = 'manually') {
+    abort(err = 'Manually') {
         if (!(this.state === QueueState.Running || this.state === QueueState.Paused)) {
             return false;
         }
@@ -2037,9 +2053,6 @@ class Queue extends event_emitter_1.EventEmitter {
             }
         }
         this.tasks.push(...tasks);
-        if (this.state === QueueState.Finish) {
-            this.start();
-        }
         this.tryHandleNextTask();
     }
     /** Unshift tasks to queue. */
@@ -2050,9 +2063,6 @@ class Queue extends event_emitter_1.EventEmitter {
             }
         }
         this.tasks.unshift(...tasks);
-        if (this.state === QueueState.Finish) {
-            this.start();
-        }
         this.tryHandleNextTask();
     }
     /**
@@ -2249,7 +2259,7 @@ exports.queueEvery = queueEvery;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toUnderscoreCase = exports.toDashCase = exports.toCamerCase = exports.capitalize = exports.afterLast = exports.beforeLast = exports.after = exports.before = exports.format = exports.subMatches = exports.subMatchesAt = exports.firstMatch = exports.subMatchAt = exports.selectAll = exports.select = void 0;
+exports.toUnderscoreCase = exports.toDashCase = exports.toCamerCase = exports.capitalize = exports.afterLast = exports.beforeLast = exports.after = exports.before = exports.format = exports.subMatches = exports.subMatchesAt = exports.firstMatches = exports.firstMatch = exports.subMatchAt = exports.selectAll = exports.select = void 0;
 /** Replace `$0` to `matches[0]`, `$1` to `matches[1]`... */
 function replaceMatchTags(template, match) {
     return template.replace(/\$(?:([$&\d])|<(\w+)>)/g, (_m0, m1, m2) => {
@@ -2325,6 +2335,15 @@ function firstMatch(string, re) {
     return subMatchAt(string, re, 1);
 }
 exports.firstMatch = firstMatch;
+/**
+ * Returns the array of first sub matches from executing `re` on `string`.
+ * @param string The string to select sub match.
+ * @param re The RegExp to execute on string.
+ */
+function firstMatches(string, re) {
+    return subMatchesAt(string, re, 1);
+}
+exports.firstMatches = firstMatches;
 /**
  * For each match result from executing `re` on `string`, picks specified `index` of sub matches.
  * Rreturns array of picked items.
@@ -2568,7 +2587,6 @@ class Aligner {
         // Still passed parameters although it's in current project,
         // So we can avoid calling order confuse us.
         this.alignPosition = parseAlignPosition(position);
-        this.directions = this.parseDirections(this.alignPosition);
         this.margins = this.parseMargin(options.margin || 0);
         // If target not affected by document scrolling, el should be same.
         // A potential problem here: once becomes fixed, can't be restored for reuseable popups.
@@ -2579,15 +2597,6 @@ class Aligner {
         else {
             this.isElInFixedPosition = getComputedStyle(this.el).position === 'fixed';
         }
-    }
-    /** Parse align direction. */
-    parseDirections(alignPosition) {
-        return {
-            top: alignPosition[0].includes('b') && alignPosition[1].includes('t'),
-            right: alignPosition[0].includes('l') && alignPosition[1].includes('r'),
-            bottom: alignPosition[0].includes('t') && alignPosition[1].includes('b'),
-            left: alignPosition[0].includes('r') && alignPosition[1].includes('l'),
-        };
     }
     /**
      * top [right] [bottom] [left] -> [t, r, b, l].
@@ -2621,12 +2630,13 @@ class Aligner {
      * Returns whether does alignment.
      */
     align() {
-        // `align` may be called for multiple times, so need to clear again.
-        if (this.triangle) {
-            this.triangle.style.transform = '';
-        }
-        let rect = element_1.getRect(this.el);
+        let directions = this.parseDirections();
         let targetRect = element_1.getRect(this.target);
+        if (!isRectVisible(targetRect)) {
+            return false;
+        }
+        this.clearLastAlignment();
+        let rect = element_1.getRect(this.el);
         let triangleRect = this.triangle ? element_1.getRect(this.triangle) : null;
         let targetInViewport = isRectIntersectWithViewport(targetRect);
         let willAlign = targetInViewport || !this.stickToEdges;
@@ -2634,26 +2644,48 @@ class Aligner {
             return false;
         }
         // If can shrink in y axis, try remove the height limitation and extend to natural height.
-        if (this.canShrinkInY && !this.triangle) {
+        if (this.canShrinkInY) {
             rect.height = this.getNaturalHeight(rect, triangleRect);
         }
         // If overflow in x axis, rect may change after position adjusted.
         let isOverflowHerizontalEdges = rect.left <= 0 || rect.right >= document.documentElement.clientWidth;
         // Do el alignment.
-        let position = this.doElAlignment(rect, targetRect, triangleRect);
+        let position = this.doAlignment(directions, rect, targetRect, triangleRect);
         // Re-align el if element size changed.
         if (isOverflowHerizontalEdges) {
             let newRect = element_1.getRect(this.el);
             if (newRect.width !== rect.width || newRect.height !== rect.height) {
+                // These two rects must be replaced both or neither.
+                rect = newRect;
                 triangleRect = this.triangle ? element_1.getRect(this.triangle) : null;
-                position = this.doElAlignment(newRect, targetRect, triangleRect);
+                position = this.doAlignment(directions, newRect, targetRect, triangleRect);
             }
         }
         // Handle triangle position.
         if (this.triangle) {
-            this.alignTriangle(position, rect, targetRect, triangleRect);
+            this.alignTriangle(position, directions, rect, targetRect, triangleRect);
         }
         return true;
+    }
+    /** Clear last alignment properties. */
+    clearLastAlignment() {
+        // Must reset, or el may be shrink into a small corner.
+        this.el.style.left = '0';
+        this.el.style.top = '0';
+        // `align` may be called for multiple times, so need to clear again.
+        if (this.triangle) {
+            this.triangle.style.transform = '';
+        }
+    }
+    /** Parse align direction to indicate which direction will align to. */
+    parseDirections() {
+        let alignPosition = this.alignPosition;
+        return {
+            top: alignPosition[0].includes('b') && alignPosition[1].includes('t'),
+            right: alignPosition[0].includes('l') && alignPosition[1].includes('r'),
+            bottom: alignPosition[0].includes('t') && alignPosition[1].includes('b'),
+            left: alignPosition[0].includes('r') && alignPosition[1].includes('l'),
+        };
     }
     /**
      * When el can be scrolled, if we just expend it to test its natural height, it's scrolled position will lost.
@@ -2678,8 +2710,8 @@ class Aligner {
         return h;
     }
     /** Do alignment from `el` to `target` for once. */
-    doElAlignment(rect, targetRect, triangleRect) {
-        let anchor1 = this.getElRelativeAnchor(rect, triangleRect);
+    doAlignment(directions, rect, targetRect, triangleRect) {
+        let anchor1 = this.getElRelativeAnchor(directions, rect, triangleRect);
         let anchor2 = this.getTargetAbsoluteAnchor(targetRect);
         // Fixed position coordinate.
         let position = {
@@ -2687,14 +2719,14 @@ class Aligner {
             y: anchor2[1] - anchor1[1],
         };
         // Handle vertical alignment.
-        let overflowYSet = this.alignVertical(position, rect, targetRect, triangleRect);
+        let overflowYSet = this.alignVertical(position, directions, rect, targetRect, triangleRect);
         // Reset el height.
         if (overflowYSet) {
             rect = element_1.getRect(this.el);
-            anchor1 = this.getElRelativeAnchor(rect, triangleRect);
+            anchor1 = this.getElRelativeAnchor(directions, rect, triangleRect);
         }
         // Handle herizontal alignment.
-        this.alignHerizontal(position, rect, targetRect, triangleRect);
+        this.alignHerizontal(position, directions, rect, targetRect, triangleRect);
         // Position for fixed or absolute layout.
         let mayAbsolutePosition = { ...position };
         // If is not fixed, minus coordinates relative to offsetParent.
@@ -2712,16 +2744,16 @@ class Aligner {
         return position;
     }
     /** Get relative anchor position of the axis of an element. */
-    getElRelativeAnchor(rect, triangleRect) {
+    getElRelativeAnchor(directions, rect, triangleRect) {
         let anchor = this.alignPosition[0];
         let x = anchor.includes('l') ? 0 : anchor.includes('r') ? rect.width : rect.width / 2;
         let y = anchor.includes('t') ? 0 : anchor.includes('b') ? rect.height : rect.height / 2;
         // Anchor at triangle position.
         if (this.fixTriangle && triangleRect) {
-            if ((this.directions.top || this.directions.bottom) && this.alignPosition[1][1] === 'c') {
+            if ((directions.top || directions.bottom) && this.alignPosition[1][1] === 'c') {
                 x = triangleRect.left + triangleRect.width / 2 - rect.left;
             }
-            else if ((this.directions.left || this.directions.right) && this.alignPosition[1][0] === 'c') {
+            else if ((directions.left || directions.right) && this.alignPosition[1][0] === 'c') {
                 y = triangleRect.top + triangleRect.height / 2 - rect.top;
             }
         }
@@ -2743,25 +2775,25 @@ class Aligner {
         return [x, y];
     }
     /** Do vertical alignment. */
-    alignVertical(position, rect, targetRect, triangleRect) {
+    alignVertical(position, directions, rect, targetRect, triangleRect) {
         let dh = document.documentElement.clientHeight;
         let spaceTop = targetRect.top - this.margins.top;
         let spaceBottom = dh - (targetRect.bottom + this.margins.bottom);
         let overflowYSet = false;
         let h = rect.height;
         let y = position.y;
-        if (this.directions.top || this.directions.bottom) {
+        if (directions.top || directions.bottom) {
             // Not enough space in top position, may switch to bottom.
-            if (this.directions.top && y < 0 && spaceTop < spaceBottom && this.canSwapPosition) {
+            if (directions.top && y < 0 && spaceTop < spaceBottom && this.canSwapPosition) {
                 y = targetRect.bottom + this.margins.bottom;
-                this.directions.top = false;
-                this.directions.bottom = true;
+                directions.top = false;
+                directions.bottom = true;
             }
             // Not enough space in bottom position, may switch to bottom.
             else if (y + h > dh && spaceTop > spaceBottom && this.canSwapPosition) {
                 y = targetRect.top - this.margins.top - h;
-                this.directions.top = true;
-                this.directions.bottom = false;
+                directions.top = true;
+                directions.bottom = false;
             }
         }
         else {
@@ -2780,16 +2812,16 @@ class Aligner {
         }
         if (this.canShrinkInY) {
             // Shrink element height if not enough space.
-            if (this.directions.top && y < 0 && this.stickToEdges) {
+            if (directions.top && y < 0 && this.stickToEdges) {
                 y = 0;
                 this.el.style.height = spaceTop + 'px';
                 overflowYSet = true;
             }
-            else if (this.directions.bottom && y + h > dh && this.stickToEdges) {
+            else if (directions.bottom && y + h > dh && this.stickToEdges) {
                 this.el.style.height = spaceBottom + 'px';
                 overflowYSet = true;
             }
-            else if (!this.directions.top && !this.directions.bottom && rect.height > dh) {
+            else if (!directions.top && !directions.bottom && rect.height > dh) {
                 y = 0;
                 this.el.style.height = dh + 'px';
                 overflowYSet = true;
@@ -2799,24 +2831,24 @@ class Aligner {
         return overflowYSet;
     }
     /** Do herizontal alignment. */
-    alignHerizontal(position, rect, targetRect, triangleRect) {
+    alignHerizontal(position, directions, rect, targetRect, triangleRect) {
         let dw = document.documentElement.clientWidth;
         let spaceLeft = targetRect.left - this.margins.left;
         let spaceRight = dw - (targetRect.right + this.margins.right);
         let w = rect.width;
         let x = position.x;
-        if (this.directions.left || this.directions.right) {
+        if (directions.left || directions.right) {
             // Not enough space in left position.
-            if (this.directions.left && x < 0 && spaceLeft < spaceRight && this.canSwapPosition) {
+            if (directions.left && x < 0 && spaceLeft < spaceRight && this.canSwapPosition) {
                 x = targetRect.right + this.margins.right;
-                this.directions.left = false;
-                this.directions.right = true;
+                directions.left = false;
+                directions.right = true;
             }
             // Not enough space in right position.
-            else if (this.directions.right && x > dw - w && spaceLeft > spaceRight && this.canSwapPosition) {
+            else if (directions.right && x > dw - w && spaceLeft > spaceRight && this.canSwapPosition) {
                 x = targetRect.left - this.margins.left - w;
-                this.directions.left = true;
-                this.directions.right = false;
+                directions.left = true;
+                directions.right = false;
             }
         }
         else {
@@ -2836,37 +2868,41 @@ class Aligner {
         position.x = x;
     }
     /** Align `triangle` relative to `el`. */
-    alignTriangle(position, rect, targetRect, triangleRect) {
+    alignTriangle(position, directions, rect, targetRect, triangleRect) {
         let triangle = this.triangle;
         let transforms = [];
         let w = rect.width;
         let h = rect.height;
-        if (this.directions.top) {
+        if (directions.top) {
             triangle.style.top = 'auto';
             triangle.style.bottom = -triangleRect.height + 'px';
             transforms.push('rotateX(180deg)');
         }
-        else if (this.directions.bottom) {
+        else if (directions.bottom) {
             triangle.style.top = -triangleRect.height + 'px';
             triangle.style.bottom = '';
         }
-        else if (this.directions.left) {
+        else if (directions.left) {
             triangle.style.left = 'auto';
             triangle.style.right = -triangleRect.width + 'px';
             transforms.push('rotateY(180deg)');
         }
-        else if (this.directions.right) {
+        else if (directions.right) {
             triangle.style.left = -triangleRect.width + 'px';
             triangle.style.right = '';
         }
-        if (this.directions.top || this.directions.bottom) {
+        if (directions.top || directions.bottom) {
             let halfTriangleWidth = triangleRect.width / 2;
-            let x;
-            // Triangle in the center of the edge of target.
+            let x = 0;
+            // Adjust triangle to the center of the target edge.
             if ((w >= targetRect.width || this.fixTriangle) && this.alignPosition[1][1] === 'c') {
                 x = targetRect.left + targetRect.width / 2 - position.x - halfTriangleWidth;
             }
-            // Triangle in the center of the edge of el.
+            // In fixed position.
+            else if (this.fixTriangle) {
+                x = triangleRect.left - rect.left;
+            }
+            // Adjust triangle to the center of the el edge.
             else {
                 x = w / 2 - halfTriangleWidth;
             }
@@ -2881,11 +2917,14 @@ class Aligner {
             }
             triangle.style.right = '';
         }
-        if (this.directions.left || this.directions.right) {
+        if (directions.left || directions.right) {
             let halfTriangleHeight = triangleRect.height / 2;
             let y;
             if ((h >= targetRect.height || this.fixTriangle) && this.alignPosition[1][0] === 'c') {
                 y = targetRect.top + targetRect.height / 2 - position.y - halfTriangleHeight;
+            }
+            else if (this.fixTriangle) {
+                y = triangleRect.top - rect.top;
             }
             else {
                 y = h / 2 - halfTriangleHeight;
@@ -2896,7 +2935,7 @@ class Aligner {
                 y -= triangleRect.top - rect.top;
                 transforms.push(`translateY(${y}px)`);
             }
-            else {
+            else if (!this.fixTriangle) {
                 triangle.style.top = y + 'px';
             }
             triangle.style.bottom = '';
@@ -2980,6 +3019,10 @@ function getMainAlignDirection(pos) {
     }
 }
 exports.getMainAlignDirection = getMainAlignDirection;
+/** Check if rect box intersect with viewport. */
+function isRectVisible(rect) {
+    return rect.width > 0 && rect.height > 0;
+}
 /** Check if rect box intersect with viewport. */
 function isRectIntersectWithViewport(rect) {
     let w = document.documentElement.clientWidth;
@@ -3553,7 +3596,7 @@ function getRect(el) {
             bottom: dh,
             left: 0,
             width: dw,
-            height: dh
+            height: dh,
         };
     }
     else {
@@ -3564,7 +3607,7 @@ function getRect(el) {
             bottom: rect.bottom,
             left: rect.left,
             width: rect.width,
-            height: rect.height
+            height: rect.height,
         };
     }
 }
@@ -3601,34 +3644,56 @@ exports.isVisibleInViewport = isVisibleInViewport;
  * Locate the first element in els that is is visible inside container.
  * @container Container to check visible inside.
  * @param els Element list to check.
+ * @param minimumVisibleRate If more than such rate of element in viewport, we consider it as visible.
  */
-function locateFirstVisibleIndex(container, els) {
-    return locateVisibleIndex(container, els, true);
+function locateFirstVisibleIndex(container, els, minimumVisibleRate = 0.5) {
+    return locateVisibleIndex(container, els, minimumVisibleRate, false);
 }
 exports.locateFirstVisibleIndex = locateFirstVisibleIndex;
 /**
  * Locate the last element in els that is is visible inside container.
  * @container Container to check visible inside.
  * @param els Element list to check.
+ * @param minimumVisibleRate If more than such rate of element in viewport, we consider it as visible.
  */
-function locateLastVisibleIndex(container, els) {
-    return locateVisibleIndex(container, els, false);
+function locateLastVisibleIndex(container, els, minimumVisibleRate = 0.5) {
+    return locateVisibleIndex(container, els, minimumVisibleRate, true);
 }
 exports.locateLastVisibleIndex = locateLastVisibleIndex;
-function locateVisibleIndex(container, els, isFirst) {
+function locateVisibleIndex(container, els, minimumVisibleRate, locateLast) {
     let containerRect = container.getBoundingClientRect();
-    return array_1.binaryFindIndex(els, (el) => {
+    let index = array_1.binaryFindIndexToInsert(els, (el) => {
         let rect = el.getBoundingClientRect();
-        if (rect.bottom <= containerRect.top) {
+        let yIntersect = Math.min(containerRect.bottom, rect.bottom) - Math.max(containerRect.top, rect.top);
+        let intersectRate = yIntersect / Math.min(containerRect.height, rect.height);
+        // Fully above.
+        if (rect.bottom < containerRect.top) {
             return 1;
         }
-        else if (rect.top >= containerRect.bottom) {
+        // Fully behind.
+        else if (rect.top > containerRect.bottom) {
             return -1;
         }
+        // Partly cross in top position.
+        else if (rect.top < containerRect.top && intersectRate < minimumVisibleRate) {
+            return 1;
+        }
+        // Partly cross in bottom position.
+        else if (rect.bottom < containerRect.bottom && intersectRate < minimumVisibleRate) {
+            return -1;
+        }
+        // Enough percentage that intersect with.
+        // If `preferLast` is true, prefer moving to right.
         else {
-            return isFirst ? -1 : 1;
+            return locateLast ? 1 : -1;
         }
     });
+    if (locateLast) {
+        if (index > 0) {
+            index -= 1;
+        }
+    }
+    return index;
 }
 
 
@@ -3845,7 +3910,7 @@ exports.decodeHTML = exports.encodeHTML = void 0;
  * @param code Text to be encoded.
  */
 function encodeHTML(code) {
-    return code.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    return code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 exports.encodeHTML = encodeHTML;
 /**
@@ -3919,61 +3984,68 @@ exports.MouseLeave = void 0;
  */
 var MouseLeave;
 (function (MouseLeave) {
-    /** Mouse leave controllers. */
+    /** Existed mouse leave controllers. */
     const Controllers = new Set();
+    /** Add one controller. */
+    function addControler(controller) {
+        Controllers.add(controller);
+    }
+    MouseLeave.addControler = addControler;
+    /** Delete one controller. */
+    function deleteControler(controller) {
+        Controllers.delete(controller);
+    }
+    MouseLeave.deleteControler = deleteControler;
     /**
-     * Make sure elements and all their ancestors can't trigger mouse leave callback and always visible.
+     * Make sure `trigger` and all their ancestors can't call mouse leave callback and always visible.
      * Normally used for contextmenu to keep parent popup visible.
-     * @param els Single element or array of elements to keep.
-     * @returns unkeep Stops keeping element, elements will hide after mouse leave, and will be hidden immediately if mouse is alread leaved.
+     * @param trigger Element to keep visible.
+     * @param popup Popup element that lock trigger element for preview. You should always provide this except there is no popup element.
      */
-    function keep(els) {
-        // 1. When popup2 generated, we check the trigger element if it was contained (not equal) in elements of existing popups.
+    function lock(trigger, popup = null) {
+        // 1. When popup2 generated, we check the trigger element if it was contained (not equal) in element of existing popups.
         // 2. If so, we lock the exist popup until popup2 disappeared.
-        let elArray = Array.isArray(els) ? els : [els];
-        let controller = getControllerWhichContains(elArray);
+        let controller = getControllerWhichPopupContains(trigger);
         if (controller) {
-            controller.lock();
+            controller.requestLock(trigger, popup);
         }
-        return () => {
-            if (controller) {
-                controller.unlock();
-                controller = null;
-            }
-        };
     }
-    MouseLeave.keep = keep;
-    /** Keep parent elements visible. */
-    function keepParents(els) {
-        let parents = els.map(el => el.parentElement).filter(el => el && el !== document.body);
-        return keep(parents);
+    MouseLeave.lock = lock;
+    /**
+     * Release locking `trigger` element.
+     * @param trigger Element don't want to keep anymore.
+     * @param popup Popup element that lock trigger element for preview. You should always provide this except there is no popup element.
+     */
+    function unlock(trigger, popup = null) {
+        let controller = getControllerWhichPopupContains(trigger);
+        if (controller) {
+            controller.releaseLock(trigger, popup);
+        }
     }
+    MouseLeave.unlock = unlock;
     /** Get Controller whose related elements contains and or equal one of specified elements. */
-    function getControllerWhichContains(els) {
+    function getControllerWhichPopupContains(trigger) {
         for (let controller of [...Controllers].reverse()) {
-            for (let el of els) {
-                if (controller.els.some(controllerEl => controllerEl.contains(el))) {
-                    return controller;
-                }
+            if (controller.popup.contains(trigger)) {
+                return controller;
             }
         }
         return null;
     }
     /**
-     * Check if element or any of it's ancestors was kept to be visible.
-     * If element is not kept, you can destroy or reuse it immediately.
-     * It also allows `el` equals to controller element.
-     * @param el Element to check.
+     * Checks whether element or any of it's ancestors was kept to be visible.
+     * If element is not locked, you can destroy or reuse it immediately.
+     * @param el Element to check, normally a popup element.
      */
-    function inUse(el) {
+    function checkLocked(el) {
         for (let controller of [...Controllers].reverse()) {
-            if (controller.els.some(controllerEl => controllerEl.contains(el))) {
-                return controller.mouseIn;
+            if (controller.popup.contains(el)) {
+                return controller.beLocked();
             }
         }
         return false;
     }
-    MouseLeave.inUse = inUse;
+    MouseLeave.checkLocked = checkLocked;
     /**
      * Call `callback` after mouse leaves all of the elements for `ms` milliseconds.
      * It's very usefull to handle mouse hover event in menu & submenu.
@@ -3981,9 +4053,8 @@ var MouseLeave;
      * @param callback The callback to call after mouse leaves all the elements.
      * @param options Leave control options.
      */
-    function on(els, callback, options) {
-        let elArray = Array.isArray(els) ? els : [els];
-        let controller = new MouseLeaveController(false, elArray, callback, options);
+    function on(trigger, popup, callback, options) {
+        let controller = new MouseLeaveController(trigger, popup, false, callback, options);
         return () => controller.cancel();
     }
     MouseLeave.on = on;
@@ -3994,104 +4065,145 @@ var MouseLeave;
      * @param callback The callback to call after mouse leaves all the elements.
      * @param options Leave control options.
      */
-    function once(els, callback, options) {
-        let elArray = Array.isArray(els) ? els : [els];
-        let controller = new MouseLeaveController(true, elArray, callback, options);
+    function once(trigger, popup, callback, options) {
+        let controller = new MouseLeaveController(trigger, popup, true, callback, options);
         return () => controller.cancel();
     }
     MouseLeave.once = once;
-    class MouseLeaveController {
-        constructor(isOnce, els, callback, options = {}) {
-            var _a, _b;
-            /**
-             * Count of been locked.
-             *
-             * Why not a boolean property?
-             * When a sub popup hide, it will trigger unlock on controller later, not immediately.
-             * But a new sub popup may trigger lock on controller, and then old sub popup trigger unlock.
-             * `old lock -> new lock -> old unlock`, cause controller to be canceled.
-             */
-            this.lockCount = 0;
-            /** Is the controller canceld. */
-            this.ended = false;
-            /** Timeout to countdown time delay for calling `callback` */
-            this.timeout = null;
-            this.isOnce = isOnce;
-            this.els = els;
-            this.callback = callback;
-            this.delay = (_a = options.delay) !== null && _a !== void 0 ? _a : 200;
-            this.mouseIn = (_b = options.mouseIn) !== null && _b !== void 0 ? _b : false;
-            this.onMouseEnter = this.onMouseEnter.bind(this);
-            this.onMouseLeave = this.onMouseLeave.bind(this);
-            for (let el of this.els) {
-                el.addEventListener('mouseenter', this.onMouseEnter, false);
-                el.addEventListener('mouseleave', this.onMouseLeave, false);
-            }
-            this.unkeep = keepParents(els);
-            Controllers.add(this);
+})(MouseLeave = exports.MouseLeave || (exports.MouseLeave = {}));
+class MouseLeaveController {
+    constructor(trigger, popup, isOnce, callback, options = {}) {
+        var _a;
+        /** Is mouse inside any of `els`. */
+        this.mouseIn = false;
+        /** Elements that locked current popup and make it to be visible. */
+        this.locks = new Map();
+        /** Is the controller canceld. */
+        this.ended = false;
+        /** Timeout to countdown time delay for calling `callback` */
+        this.timeout = null;
+        this.trigger = trigger;
+        this.popup = popup;
+        this.isOnce = isOnce;
+        this.callback = callback;
+        this.delay = (_a = options.delay) !== null && _a !== void 0 ? _a : 200;
+        if (options.mouseIn) {
+            this.onMouseEnter();
         }
-        onMouseEnter() {
-            this.mouseIn = true;
-            this.clearTimeout();
+        this.bindedOnMouseEnter = this.onMouseEnter.bind(this);
+        this.bindedOnMouseLeave = this.onMouseLeave.bind(this);
+        for (let el of [trigger, popup]) {
+            el.addEventListener('mouseenter', this.bindedOnMouseEnter, false);
+            el.addEventListener('mouseleave', this.bindedOnMouseLeave, false);
         }
-        onMouseLeave() {
-            this.mouseIn = false;
-            if (this.lockCount === 0) {
-                this.startTimeout();
-            }
-        }
-        startTimeout() {
-            this.clearTimeout();
-            this.timeout = setTimeout(() => this.onTimeout(), this.delay);
-        }
-        onTimeout() {
-            this.timeout = null;
-            if (!this.mouseIn) {
-                this.flush();
-            }
-        }
-        clearTimeout() {
-            if (this.timeout) {
-                clearTimeout(this.timeout);
-                this.timeout = null;
-            }
-        }
-        flush() {
-            if (this.ended) {
-                return;
-            }
-            if (this.isOnce) {
-                this.cancel();
-            }
-            this.callback();
-        }
-        cancel() {
-            if (this.ended) {
-                return;
-            }
-            this.clearTimeout();
-            for (let el of this.els) {
-                el.removeEventListener('mouseenter', this.onMouseEnter, false);
-                el.removeEventListener('mouseleave', this.onMouseLeave, false);
-            }
-            this.ended = true;
-            this.unkeep();
-            Controllers.delete(this);
-        }
-        lock() {
-            this.clearTimeout();
-            this.lockCount++;
-        }
-        unlock() {
-            this.lockCount--;
-            if (this.lockCount === 0) {
-                if (!this.mouseIn) {
-                    this.flush();
-                }
-            }
+        MouseLeave.addControler(this);
+    }
+    onMouseEnter() {
+        this.mouseIn = true;
+        MouseLeave.lock(this.trigger, this.popup);
+        this.clearTimeout();
+    }
+    onMouseLeave() {
+        this.mouseIn = false;
+        MouseLeave.unlock(this.trigger, this.popup);
+        if (!this.beLocked()) {
+            this.startTimeout();
         }
     }
-})(MouseLeave = exports.MouseLeave || (exports.MouseLeave = {}));
+    startTimeout() {
+        this.clearTimeout();
+        this.timeout = setTimeout(() => this.onTimeout(), this.delay);
+    }
+    startTimeoutIfNot() {
+        if (!this.timeout) {
+            this.startTimeout();
+        }
+    }
+    onTimeout() {
+        this.timeout = null;
+        if (!this.mouseIn) {
+            this.flush();
+        }
+    }
+    clearTimeout() {
+        if (this.timeout) {
+            clearTimeout(this.timeout);
+            this.timeout = null;
+        }
+    }
+    flush() {
+        if (this.ended) {
+            return;
+        }
+        if (this.isOnce) {
+            this.cancel();
+        }
+        else {
+            this.releaseAllLocks();
+        }
+        this.callback();
+    }
+    cancel() {
+        if (this.ended) {
+            return;
+        }
+        this.clearTimeout();
+        for (let el of [this.trigger, this.popup]) {
+            el.removeEventListener('mouseenter', this.bindedOnMouseEnter, false);
+            el.removeEventListener('mouseleave', this.bindedOnMouseLeave, false);
+        }
+        MouseLeave.unlock(this.trigger, this.popup);
+        this.releaseAllLocks();
+        this.ended = true;
+        MouseLeave.deleteControler(this);
+    }
+    /** Whether was locked to keep visible. */
+    beLocked() {
+        return this.locks.size > 0;
+    }
+    /** Lock because want to keep `el` visible, request comes from `popup`. */
+    requestLock(el, popup) {
+        this.clearTimeout();
+        let identifiers = this.locks.get(el);
+        if (!identifiers) {
+            identifiers = new Set();
+            this.locks.set(el, identifiers);
+        }
+        identifiers.add(popup);
+        // Mouse leave will cause unlock in sequence,
+        // So after mouse in, must relock in sequence.
+        MouseLeave.lock(this.trigger, popup);
+    }
+    /** Release a lock. */
+    releaseLock(el, popup) {
+        let identifiers = this.locks.get(el);
+        if (identifiers) {
+            identifiers.delete(popup);
+            if (identifiers.size === 0) {
+                this.locks.delete(el);
+            }
+        }
+        MouseLeave.unlock(this.trigger, popup);
+        // May already started timeout because of mouse leave.
+        if (!this.beLocked() && !this.mouseIn) {
+            MouseLeave.unlock(this.trigger, this.popup);
+            this.startTimeoutIfNot();
+        }
+    }
+    /**
+     * Release all locks that from outside.
+     * This method is not required if everything goes well.
+     * But implement it will make it stronger.
+     */
+    releaseAllLocks() {
+        for (let [el, popups] of this.locks) {
+            for (let popup of popups) {
+                MouseLeave.unlock(el, popup);
+            }
+        }
+        this.locks = new Map();
+    }
+}
 
 
 /***/ }),
@@ -4106,60 +4218,97 @@ var MouseLeave;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ResourceLoader = void 0;
-const string_1 = __webpack_require__(/*! ../base/string */ "../ff/out/base/string.js");
+exports.loader = exports.ResourceLoader = void 0;
 const base_1 = __webpack_require__(/*! ../base */ "../ff/out/base/index.js");
 /**
  * Preload resources from their urls, and get total progress notifications.
  * Please beware of the CORS settings at the server.
  * If you want the progress working, please makesure the `content-length` response header is available.
  */
-class ResourceLoader extends base_1.EventEmitter {
+class ResourceLoader extends base_1.Emitter {
     constructor(options = {}) {
-        var _a, _b;
+        var _a;
         super();
         /** URL base. */
         this.base = '';
-        this.blobMap = new Map();
+        this.loaded = 0;
+        this.loadedCount = 0;
+        this.totalCount = 0;
         this.base = (_a = options.base) !== null && _a !== void 0 ? _a : '';
-        this.continueOnError = (_b = options.continueOnError) !== null && _b !== void 0 ? _b : false;
+        this.on('finish', () => {
+            this.loaded = 0;
+            this.loadedCount = 0;
+            this.totalCount = 0;
+        });
     }
-    /** Load bunch of resources. */
-    async load(urls) {
-        let normalized = this.normalizeResources(urls);
-        let sizes = (await this.getURLSizes(normalized.map(v => v.url))).map(v => v || 0);
-        let totalSize = base_1.sum(sizes);
-        let completedSize = 0;
-        for (let { name, url, type } of normalized) {
+    /** Returns a promise which will be resolved after all loading resources loaded. */
+    untilFinish() {
+        return new Promise((resolve, reject) => {
+            this.once('finish', resolve);
+            this.once('error', reject);
+        });
+    }
+    /** Load one resource. */
+    async load(url, type) {
+        this.totalCount++;
+        let lastLoadedRate = 0;
+        return new Promise(async (resolve, reject) => {
             try {
-                let blob = await this.loadOne(name, url, (loaded) => {
-                    this.emit('progress', Math.min(completedSize + loaded, totalSize), totalSize);
+                let blob = await this.loadResourceBlob(url, (loaded, total) => {
+                    let newLoadedRate = loaded / total || 0;
+                    this.loaded += newLoadedRate - lastLoadedRate;
+                    lastLoadedRate = newLoadedRate;
+                    this.emit('progress', Math.min(this.loaded, this.totalCount), this.totalCount);
                 });
-                completedSize += sizes.shift();
-                if (blob) {
-                    await this.handleBlob(type, blob);
+                let response = blob ? await this.getFromBlob(blob, type || 'blob') : null;
+                this.loadedCount++;
+                this.emit('progress', this.loadedCount, this.totalCount);
+                if (this.loadedCount === this.totalCount) {
+                    this.emit('finish');
                 }
+                resolve(response);
             }
             catch (err) {
-                if (!this.continueOnError) {
-                    throw err;
-                }
+                reject(err);
+                this.emit('error', err);
             }
-        }
+        });
     }
-    /** Get sizes of all the resources. */
-    async getURLSizes(urls) {
-        let promises = [];
-        for (let url of urls) {
-            promises.push(this.getURLSize(url));
-        }
-        return await Promise.all(promises);
+    /** Load as text string. */
+    async loadText(url) {
+        return await this.load(url, 'text');
     }
-    /** Get size of one resource. */
-    async getURLSize(url) {
-        let res = await fetch(this.getAbsoluteURL(url), { method: 'HEAD' });
-        let length = res.headers.get('content-length');
-        return length === null ? null : Number(length) || null;
+    /** Load as json data. */
+    async loadJSON(url) {
+        return await this.load(url, 'json');
+    }
+    /** Load as blob. */
+    async loadBlob(url) {
+        return await this.load(url, 'blob');
+    }
+    /** Load as an array buffer. */
+    async loadBuffer(url) {
+        return await this.load(url, 'buffer');
+    }
+    /** Load css source and append into document. */
+    async loadCSS(url) {
+        return await this.load(url, 'css');
+    }
+    /** Load js source and append into document. */
+    async loadJS(url) {
+        return await this.load(url, 'js');
+    }
+    /** Load as an image element. */
+    async loadImage(url) {
+        return await this.load(url, 'image');
+    }
+    /** Load as an audio element. */
+    async loadAudio(url) {
+        return await this.load(url, 'audio');
+    }
+    /** Load as an video element. */
+    async loadVideo(url) {
+        return await this.load(url, 'video');
     }
     /** Convert relative URL to absolute type. */
     getAbsoluteURL(url) {
@@ -4168,41 +4317,8 @@ class ResourceLoader extends base_1.EventEmitter {
         }
         return this.base + url;
     }
-    /** Normalize to standard resource object. */
-    normalizeResources(resources) {
-        return resources.map(r => {
-            if (typeof r === 'string') {
-                return {
-                    name: this.getBaseNameFromURL(r),
-                    url: r,
-                    type: this.inferResourceTypeFromURL(r)
-                };
-            }
-            else {
-                return {
-                    name: r.name || this.getBaseNameFromURL(r.url),
-                    url: r.url,
-                    type: r.type || 'blob'
-                };
-            }
-        });
-    }
-    /** Get resource readable basename from url. */
-    getBaseNameFromURL(url) {
-        return string_1.firstMatch(url, /([^\/]+)$/).replace(/\.\w+$/, '');
-    }
-    /** Guess resource type from URL. */
-    inferResourceTypeFromURL(url) {
-        let ext = string_1.firstMatch(url, /\.(\w+)(?:\?.*?)?$/).toLowerCase();
-        if (['css', 'js'].includes(ext)) {
-            return ext;
-        }
-        else {
-            return 'blob';
-        }
-    }
     /** Load one resource. */
-    async loadOne(name, url, onprogress) {
+    async loadResourceBlob(url, onprogress) {
         let absloteURL = this.getAbsoluteURL(url);
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
@@ -4215,8 +4331,6 @@ class ResourceLoader extends base_1.EventEmitter {
             };
             xhr.onloadend = () => {
                 if (xhr.status >= 200 && xhr.status < 400) {
-                    this.blobMap.set(name, xhr.response);
-                    this.blobMap.set(url, xhr.response);
                     resolve(xhr.response);
                 }
                 else {
@@ -4227,13 +4341,36 @@ class ResourceLoader extends base_1.EventEmitter {
         });
     }
     /** Handle resource returned blob data. */
-    async handleBlob(type, blob) {
-        if (type === 'css') {
-            await this.loadStyle(blob);
+    async getFromBlob(blob, type) {
+        let response;
+        if (type === 'blob') {
+            response = blob;
+        }
+        else if (type === 'css') {
+            response = await this.loadStyle(blob);
         }
         else if (type === 'js') {
-            await this.loadScript(blob);
+            response = await this.loadScript(blob);
         }
+        else if (type === 'text') {
+            response = this.getAsText(blob);
+        }
+        else if (type === 'json') {
+            response = this.getAsJSON(blob);
+        }
+        else if (type === 'buffer') {
+            response = this.getAsBuffer(blob);
+        }
+        else if (type === 'image') {
+            response = this.getAsImage(blob);
+        }
+        else if (type === 'audio') {
+            response = this.getAsAudio(blob);
+        }
+        else if (type === 'video') {
+            response = this.getAsVideo(blob);
+        }
+        return response;
     }
     /** Load style resource as a style tag. */
     loadStyle(blob) {
@@ -4242,7 +4379,7 @@ class ResourceLoader extends base_1.EventEmitter {
             link.rel = 'stylesheet';
             link.href = URL.createObjectURL(blob);
             document.head.append(link);
-            link.addEventListener('load', () => resolve());
+            link.addEventListener('load', () => resolve(link));
             link.addEventListener('error', () => reject());
         });
     }
@@ -4253,31 +4390,13 @@ class ResourceLoader extends base_1.EventEmitter {
             script.async = false;
             script.src = URL.createObjectURL(blob);
             document.head.append(script);
-            script.addEventListener('load', () => resolve());
+            script.addEventListener('load', () => resolve(script));
             script.addEventListener('error', () => reject());
         });
     }
-    /**
-     * Get resource as blob URL.
-     * @param name The defined resource name or resource base name in the url.
-     */
-    getAsBlobURL(name) {
-        let blob = this.blobMap.get(name);
-        if (!blob) {
-            return null;
-        }
-        return URL.createObjectURL(blob);
-    }
-    /**
-     * Get resource as text.
-     * @param name The defined resource name or resource base name in the url.
-     */
-    getAsText(name) {
+    /** Get resource blob as text.*/
+    getAsText(blob) {
         return new Promise(resolve => {
-            let blob = this.blobMap.get(name);
-            if (!blob) {
-                return resolve(null);
-            }
             let reader = new FileReader();
             reader.onload = () => {
                 resolve(reader.result);
@@ -4285,38 +4404,17 @@ class ResourceLoader extends base_1.EventEmitter {
             reader.readAsText(blob);
         });
     }
-    /**
-     * Get resource as HTML document.
-     * @param name The defined resource name or resource base name in the url.
-     */
-    async getAsHTML(name) {
-        let text = await this.getAsText(name);
-        if (!text) {
-            return null;
-        }
-        return new DOMParser().parseFromString(text, 'text/html');
-    }
-    /**
-     * Get resource as JSON.
-     * @param name The defined resource name or resource base name in the url.
-     */
-    async getAsJSON(name) {
-        let text = await this.getAsText(name);
+    /** Get resource blob as JSON. */
+    async getAsJSON(blob) {
+        let text = await this.getAsText(blob);
         if (!text) {
             return null;
         }
         return JSON.parse(text);
     }
-    /**
-     * Get resource as array buffer.
-     * @param name The defined resource name or resource base name in the url.
-     */
-    async getAsBuffer(name) {
+    /** Get resource blob as array buffer. */
+    async getAsBuffer(blob) {
         return new Promise((resolve, reject) => {
-            let blob = this.blobMap.get(name);
-            if (!blob) {
-                return resolve(null);
-            }
             let reader = new FileReader();
             reader.onload = () => {
                 resolve(reader.result);
@@ -4329,14 +4427,11 @@ class ResourceLoader extends base_1.EventEmitter {
     }
     /**
      * Get resource as image.
-     * @param name The defined resource name or resource base name in the url.
+     * Never forget to detach blob url of the image after not use it anymore.
      */
-    async getAsImage(name) {
+    async getAsImage(blob) {
         return new Promise((resolve, reject) => {
-            let blobURL = this.getAsBlobURL(name);
-            if (!blobURL) {
-                return resolve(null);
-            }
+            let blobURL = URL.createObjectURL(blob);
             let img = new Image();
             img.src = blobURL;
             img.onload = () => resolve(img);
@@ -4344,36 +4439,12 @@ class ResourceLoader extends base_1.EventEmitter {
         });
     }
     /**
-     * Get resource as video element.
-     * @param name The defined resource name or resource base name in the url.
+     * Get resource blob as audio element.
+     * Never forget to detach blob url of the image after not use it anymore.
      */
-    async getAsVideo(name) {
+    async getAsAudio(blob) {
         return new Promise((resolve, reject) => {
-            let blobURL = this.getAsBlobURL(name);
-            if (!blobURL) {
-                return resolve(null);
-            }
-            let video = document.createElement('video');
-            video.preload = 'auto';
-            video.oncanplaythrough = () => {
-                resolve(video);
-            };
-            video.onerror = err => {
-                reject(err);
-            };
-            video.src = blobURL;
-        });
-    }
-    /**
-     * Get resource as audio element.
-     * @param name The defined resource name or resource base name in the url.
-     */
-    async getAsAudio(name) {
-        return new Promise((resolve, reject) => {
-            let blobURL = this.getAsBlobURL(name);
-            if (!blobURL) {
-                return resolve(null);
-            }
+            let blobURL = URL.createObjectURL(blob);
             let audio = document.createElement('audio');
             audio.preload = 'auto';
             audio.oncanplaythrough = () => {
@@ -4385,8 +4456,28 @@ class ResourceLoader extends base_1.EventEmitter {
             audio.src = blobURL;
         });
     }
+    /**
+     * Get resource blob as video element.
+     * Never forget to detach blob url of the image after not use it anymore.
+     */
+    async getAsVideo(blob) {
+        return new Promise((resolve, reject) => {
+            let blobURL = URL.createObjectURL(blob);
+            let video = document.createElement('video');
+            video.preload = 'auto';
+            video.oncanplaythrough = () => {
+                resolve(video);
+            };
+            video.onerror = err => {
+                reject(err);
+            };
+            video.src = blobURL;
+        });
+    }
 }
 exports.ResourceLoader = ResourceLoader;
+/** Default loader to load miscellaneous resources. */
+exports.loader = new ResourceLoader();
 
 
 /***/ }),
@@ -4650,7 +4741,8 @@ exports.scrollToTop = scrollToTop;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.storage = void 0;
+exports.Settings = exports.storage = void 0;
+const emitter_1 = __webpack_require__(/*! ../base/emitter */ "../ff/out/base/emitter.js");
 class JSONStorage {
     constructor(prefix) {
         /** Key prefix to identify self set local storage properties. */
@@ -4761,6 +4853,76 @@ class JSONStorage {
 }
 /** Like `LocalStorage` very much, except here it read and write JSON datas. */
 exports.storage = new JSONStorage('_ff_');
+/** Used to caches settings, can restore them after reload page. */
+class Settings extends emitter_1.Emitter {
+    constructor(storageKey, defaultData) {
+        super();
+        this.willSave = false;
+        this.storageKey = storageKey;
+        this.defaultData = defaultData;
+        this.initializeDate();
+    }
+    initializeDate() {
+        let defaultKeys = Object.keys(this.defaultData);
+        let storageData = this.getStorageData();
+        // Key must exist in default data.
+        if (storageData) {
+            for (let key of Object.keys(storageData)) {
+                if (!defaultKeys.includes(key)) {
+                    delete (storageData[key]);
+                }
+            }
+        }
+        this.storageData = storageData || {};
+    }
+    /** Returns whether have set this property. */
+    has(key) {
+        return this.storageData.hasOwnProperty(key);
+    }
+    /** Get setting value by key. */
+    get(key) {
+        if (this.has(key)) {
+            return this.storageData[key];
+        }
+        else {
+            return this.defaultData[key];
+        }
+    }
+    /** Set setting value by key. */
+    set(key, value) {
+        if (value !== this.storageData[key] || typeof value === 'object') {
+            this.storageData[key] = value;
+            this.saveStorageData();
+            this.emit('change', key);
+        }
+    }
+    /** Delete a storage value by it's key. */
+    delete(key) {
+        if (this.has(key)) {
+            delete this.storageData[key];
+            this.saveStorageData();
+        }
+    }
+    /** Get raw data from local storage. */
+    getStorageData() {
+        return exports.storage.get(this.storageKey);
+    }
+    /** Save data to local storage, note it doesn't save immediately. */
+    saveStorageData() {
+        if (!this.willSave) {
+            Promise.resolve().then(() => {
+                this.saveStorageDataImmediately();
+                this.willSave = false;
+            });
+            this.willSave = true;
+        }
+    }
+    /** Save data to local storage, note it doesn't save immediately. */
+    saveStorageDataImmediately() {
+        exports.storage.set(this.storageKey, this.storageData);
+    }
+}
+exports.Settings = Settings;
 
 
 /***/ }),
@@ -5020,7 +5182,7 @@ class LayoutWatcher {
     unwatch() {
         var _a, _b;
         if (this.observer) {
-            this.observer.unobserve(this.el);
+            this.observer.disconnect();
         }
         else if (this.options.intervalTime) {
             (_a = this.interval) === null || _a === void 0 ? void 0 : _a.cancel();
@@ -5128,6 +5290,7 @@ function unwatchDocumentChange(callback) {
     mutationObserverCallbacks = mutationObserverCallbacks.filter(v => v !== callback);
     if (mutationObserverCallbacks.length === 0 && mutationObserver) {
         mutationObserver.disconnect();
+        mutationObserver = null;
     }
     if (mutationObserverCallbacks.length === 0) {
         window.removeEventListener('resize', emitDocumentChangeLater);
@@ -5295,7 +5458,8 @@ exports.ClassNameBinding = ClassNameBinding;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.refBinding = exports.createBindingFromResult = exports.BindingResult = exports.defineBinding = void 0;
+exports.refBinding = exports.BindingReferences = exports.BindingResult = exports.defineBinding = void 0;
+const references_1 = __webpack_require__(/*! ../helpers/references */ "../flit/out/helpers/references.js");
 /** Cache all binding classes. */
 const DefinedBindingMap = new Map();
 function defineBinding(name, Binding) {
@@ -5327,26 +5491,38 @@ class BindingResult {
     }
 }
 exports.BindingResult = BindingResult;
-/** Create binding and add ref on element. */
-function createBindingFromResult(el, context, result, modifiers) {
-    let BindingConstructor = DefinedBindingMap.get(result.name);
-    if (!BindingConstructor) {
-        throw new Error(`":${result.name}" on "<${el.localName}>" is not a registered binding class!`);
+/** Class to help handle reference from binding result to it's binding class. */
+class BindingReferencesClass extends references_1.ResultReferences {
+    /** Calls reference callback when binging instance created. */
+    createFromResult(el, context, result, modifiers) {
+        let BindingConstructor = DefinedBindingMap.get(result.name);
+        if (!BindingConstructor) {
+            throw new Error(`":${result.name}" on "<${el.localName}>" is not a registered binding class!`);
+        }
+        let binding = new BindingConstructor(el, context, modifiers);
+        this.createReference(result, binding);
+        binding.update(...result.args);
+        return binding;
     }
-    let binding = new BindingConstructor(el, context, modifiers);
-    if (BindingReferences.has(result)) {
-        BindingReferences.get(result)(binding);
-        BindingReferences.delete(result);
-    }
-    binding.update(...result.args);
-    return binding;
 }
-exports.createBindingFromResult = createBindingFromResult;
-/** Caches referenced binding callback. */
-const BindingReferences = new WeakMap();
-/** Reference binding instance after it created and before updating. */
-function refBinding(result, ref) {
-    BindingReferences.set(result, ref);
+exports.BindingReferences = new BindingReferencesClass();
+/**
+ * Reference binding instance after it created and before updating.
+ * Use it like:
+ * ```ts
+ * <tag refBinding(show(...))>
+ * ```
+ *
+ * @param result The binding result like `show(...)`.
+ * @param ref Callback after binding instance was just created and not update yet.
+ * @param unref Callback after binding instance was removed directly, not calls when was contained in a removed template.
+ * @return The `result` parameter.
+ */
+function refBinding(result, ref, unref) {
+    exports.BindingReferences.addReference(result, ref);
+    if (unref) {
+        exports.BindingReferences.addUnReference(result, unref);
+    }
     return result;
 }
 exports.refBinding = refBinding;
@@ -5373,7 +5549,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DisabledBinding = exports.EnableBinding = void 0;
 const define_1 = __webpack_require__(/*! ./define */ "../flit/out/bindings/define.js");
 /**
- * `:enable` binding will set `disabled` state for element.
+ * `:enable` binding will set `disabled` state for element if it's binded value is `false`.
  *
  * `:enable=${booleanValue}`
  */
@@ -5398,7 +5574,7 @@ EnableBinding = __decorate([
 ], EnableBinding);
 exports.EnableBinding = EnableBinding;
 /**
- * `:disable` binding will set `disabled` state for element.
+ * `:disable` binding will set `disabled` state for element if it's binded value is `true`.
  *
  * `:disable=${booleanValue}`
  */
@@ -5491,13 +5667,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var define_1 = __webpack_require__(/*! ./define */ "../flit/out/bindings/define.js");
 Object.defineProperty(exports, "defineBinding", { enumerable: true, get: function () { return define_1.defineBinding; } });
 Object.defineProperty(exports, "BindingResult", { enumerable: true, get: function () { return define_1.BindingResult; } });
-Object.defineProperty(exports, "createBindingFromResult", { enumerable: true, get: function () { return define_1.createBindingFromResult; } });
+Object.defineProperty(exports, "BindingReferences", { enumerable: true, get: function () { return define_1.BindingReferences; } });
 Object.defineProperty(exports, "refBinding", { enumerable: true, get: function () { return define_1.refBinding; } });
 __exportStar(__webpack_require__(/*! ./show-hide */ "../flit/out/bindings/show-hide.js"), exports);
 __webpack_require__(/*! ./class */ "../flit/out/bindings/class.js");
 __webpack_require__(/*! ./style */ "../flit/out/bindings/style.js");
 __webpack_require__(/*! ./model */ "../flit/out/bindings/model.js");
 __webpack_require__(/*! ./ref */ "../flit/out/bindings/ref.js");
+__webpack_require__(/*! ./ref-component */ "../flit/out/bindings/ref-component.js");
 __webpack_require__(/*! ./html */ "../flit/out/bindings/html.js");
 __webpack_require__(/*! ./enable-disable */ "../flit/out/bindings/enable-disable.js");
 __webpack_require__(/*! ./src */ "../flit/out/bindings/src.js");
@@ -5727,6 +5904,62 @@ exports.ModelBinding = ModelBinding;
 
 /***/ }),
 
+/***/ "../flit/out/bindings/ref-component.js":
+/*!*********************************************!*\
+  !*** ../flit/out/bindings/ref-component.js ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RefComponentBinding = void 0;
+const component_1 = __webpack_require__(/*! ../component */ "../flit/out/component/index.js");
+const define_1 = __webpack_require__(/*! ./define */ "../flit/out/bindings/define.js");
+/**
+ * To reference current element as a `refs` property or captures component and passes to a handler as a parameter.
+ * Note when references the component may not applied properties and triggers `created`.
+ *
+ * `:refComponent="name"`- Reference as a property in current component at `.refs.refName`, note it will be updated everytime after element changed.
+ * `:refComponent=${this.onRef}` - Call reference function with the component as parameter, note it will be called everytime after element changed.
+ */
+let RefComponentBinding = class RefComponentBinding {
+    constructor(el, context) {
+        if (!context) {
+            throw new ReferenceError(`A context must be provided when using ":ref" binding!`);
+        }
+        this.el = el;
+        this.context = context;
+    }
+    update(value) {
+        component_1.getComponentEarly(this.el, (com) => {
+            if (com) {
+                if (typeof value === 'string') {
+                    this.context[value] = com;
+                }
+                else if (typeof value === 'function') {
+                    value.call(this.context, com);
+                }
+            }
+        });
+    }
+    remove() { }
+};
+RefComponentBinding = __decorate([
+    define_1.defineBinding('refComponent')
+], RefComponentBinding);
+exports.RefComponentBinding = RefComponentBinding;
+
+
+/***/ }),
+
 /***/ "../flit/out/bindings/ref.js":
 /*!***********************************!*\
   !*** ../flit/out/bindings/ref.js ***!
@@ -5791,7 +6024,7 @@ exports.hide = exports.HideBinding = exports.show = exports.ShowBinding = void 0
 const define_1 = __webpack_require__(/*! ./define */ "../flit/out/bindings/define.js");
 const contextual_transition_1 = __webpack_require__(/*! ../internals/contextual-transition */ "../flit/out/internals/contextual-transition.js");
 /**
- * `:show` binding will update element's visibility state.
+ * `:show` binding will keep element visible if it's binded value is `true`.
  *
  * `:show=${anyValue}`
  */
@@ -5832,7 +6065,7 @@ class ShowBinding {
 }
 exports.ShowBinding = ShowBinding;
 /**
- * `show(...)` binding will update element's visibility state.
+ * `show(...)` binding will keep element visible if it's binded value is `true`.
  * You may also use `:show` if no need to specify transition.
  *
  * `show(visible: any, transition: TransitionOptions)`
@@ -5840,7 +6073,7 @@ exports.ShowBinding = ShowBinding;
  */
 exports.show = define_1.defineBinding('show', ShowBinding);
 /**
- * `:hide` binding will update element's visibility state.
+ * `:hide` binding will keep element hideen if it's binded value is `true`.
  *
  * `:hide=${anyValue}`
  */
@@ -5851,7 +6084,7 @@ class HideBinding extends ShowBinding {
 }
 exports.HideBinding = HideBinding;
 /**
- * `hide()` binding will update element's visibility state.
+ * `hide()` binding will keep element hideen if it's binded value is `true`.
  *
  * `hide(hidden: any, transition: TransitionOptions)`
  * `hide(hidden: any, options: {transition: TransitionOptions, enterAtStart, leaveAtStart, onend})`
@@ -5887,13 +6120,18 @@ const define_1 = __webpack_require__(/*! ./define */ "../flit/out/bindings/defin
  * `:slot="slotName"` - Insert into the position specified by `<slot name="slotName">`.
  */
 let SlotBinding = class SlotBinding {
-    constructor(el) {
+    constructor(el, context) {
         this.el = el;
+        this.context = context;
     }
     update(slotName) {
         // Prepared `slots` properties before trigger `created` event.
         component_1.getClosestComponentEarly(this.el, com => {
-            this.updateComSlot(slotName, com);
+            // When extend super component and provide `:slot`, use current context as slot context.
+            com = com || this.context;
+            if (com) {
+                this.updateComSlot(slotName, com);
+            }
         });
     }
     updateComSlot(slotName, com) {
@@ -6154,7 +6392,7 @@ class Component extends internal_event_emitter_1.InternalEventEmitter {
         /** `WatcherGroup` instance to cache watchers binded with current component. */
         this.__watcherGroup = null;
         this.el = el;
-        this.__restNodeRange = new node_range_1.NodeRange(el);
+        this.__restNodeRange = new node_range_1.ContainerRange(el);
         return observer_1.observeComTarget(this);
     }
     /** Called after component created and properties assigned. */
@@ -6218,8 +6456,9 @@ class Component extends internal_event_emitter_1.InternalEventEmitter {
             console.warn(err);
         }
         if (!this.__updated) {
-            this.onReady();
             this.__updated = true;
+            this.onReady();
+            this.emit('ready');
         }
         this.onUpdated();
         this.emit('updated');
@@ -6242,7 +6481,7 @@ class Component extends internal_event_emitter_1.InternalEventEmitter {
      * Never overwrite this method until you know what you are doing.
      */
     update() {
-        queue_1.enqueueUpdatableInOrder(this, this, updatable_queue_1.UpdatableOrder.Component);
+        queue_1.enqueueUpdatableInOrder(this, this, updatable_queue_1.UpdatableUpdateOrder.Component);
     }
     /**
      * Called when component instance was just created and all properties assigned.
@@ -6254,7 +6493,7 @@ class Component extends internal_event_emitter_1.InternalEventEmitter {
     /**
      * Called after all the data, child nodes are prepared, but child components are not prepared.
      * Later it will keep updating other components, so don't check computed styles on child nodes.
-     * If need so, uses `onRenderComplete` or `renderComplete`.
+     * If need so, uses `onRenderComplete` or `untilRenderComplete`.
      * You may visit or adjust child nodes or register more events when `onReady`.
      */
     onReady() { }
@@ -6262,7 +6501,7 @@ class Component extends internal_event_emitter_1.InternalEventEmitter {
      * Called after every time all the data and child nodes updated.
      * Seam with `onReady`, child components may not been updated yet,
      * so don't check computed styles on child nodes.
-     * If need so, uses `onRenderComplete` or `renderComplete`.
+     * If need so, uses `onRenderComplete` or `untilRenderComplete`.
      * You may reset some properties or capture some nodes dynamically here,
      * but normally you don't need to.
      */
@@ -6284,6 +6523,17 @@ class Component extends internal_event_emitter_1.InternalEventEmitter {
      * If you register global listeners like `resize`, don't forget to unregister them here.
      */
     onDisconnected() { }
+    /** Returns promise which will be resolved after component is ready. */
+    async untilReady() {
+        if (this.__updated) {
+            return;
+        }
+        else {
+            return new Promise(resolve => {
+                this.once('ready', resolve);
+            });
+        }
+    }
     /**
      * Watchs returned value of `fn` and calls `callback` with this value as parameter after the value changed.
      * Will set callback scope as current component.
@@ -6579,6 +6829,7 @@ exports.setElementComponentMap = setElementComponentMap;
 /**
  * Get component instance from custom element.
  * @param el The element to get component instance at.
+ * @return The found component or `null` if no component registered on the element.
  */
 function getComponent(el) {
     return elementComponentMap.get(el) || null;
@@ -6588,6 +6839,7 @@ exports.getComponent = getComponent;
  * Get component instance from root element asynchronously.
  * Returns a promise which will be resolved after component created and triggers `created` event.
  * @param el The element to get component instance at.
+ * @return The found component or `null` if is not a custom element.
  */
 function getComponentAsync(el) {
     if (el.localName.includes('-')) {
@@ -6613,6 +6865,7 @@ exports.getComponentAsync = getComponentAsync;
  * But you can still match super class by this method.
  * @param el The element to search from it and it's ancestors for component instance.
  * @param Com The component constructor to search.
+ * @returns The found component or `null` if no component found.
  */
 function getClosestComponentOfType(el, Com) {
     let parent = el;
@@ -6629,7 +6882,8 @@ function getClosestComponentOfType(el, Com) {
 }
 exports.getClosestComponentOfType = getClosestComponentOfType;
 /**
- * Get component instance from root element as soon as component created, and before trigging `created` event.
+ * Get component instance from root element as soon as component created,
+ * Before properties applied and before trigging `created` event.
  * Or immediately when component already been created.
  * Only for inner use.
  * @param el The element to get component instance at.
@@ -6663,6 +6917,7 @@ function getClosestComponentEarly(el, callback) {
         }
         parent = parent.parentElement;
     }
+    callback(null);
 }
 exports.getClosestComponentEarly = getClosestComponentEarly;
 
@@ -6804,7 +7059,11 @@ function getStyleContent(style, scopeName) {
     }
     return style_parser_1.parseStyleCodes(String(style), scopeName === 'global' ? '' : scopeName);
 }
-/** Add a global style codes. */
+/**
+ * Add a global style. compare to normal style codes, it can use variables and can be updated dinamically.
+ * @param style A string, css`...`, or a function return those.
+ * @returns A newly created style tag element.
+ */
 function addGlobalStyle(style) {
     let scopeName = 'global';
     let styleTag = createStyleElement(style, scopeName);
@@ -6959,13 +7218,16 @@ exports.cache = define_1.defineDirective(CacheDirective);
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.refDirective = exports.createDirectiveFromResult = exports.DirectiveResult = exports.defineDirective = void 0;
+exports.refDirective = exports.DirectiveReferences = exports.DirectiveResult = exports.defineDirective = void 0;
+const references_1 = __webpack_require__(/*! ../helpers/references */ "../flit/out/helpers/references.js");
 /**
  * Defines a directive from a class which implements `Directive`.
  * Returns a function call which will generate a `DirectiveResult`.
  *
  * A `Directive` works like Binding, but it used to generate HTML code pieces,
  * not like `Binding` to modify properties of an element.
+ *
+ * It's hard to define a custom directive, please read source codes before doing this.
  */
 function defineDirective(Dir) {
     return function (...args) {
@@ -6986,20 +7248,35 @@ class DirectiveResult {
     }
 }
 exports.DirectiveResult = DirectiveResult;
-/** Create directive instance from directive result. */
-function createDirectiveFromResult(anchor, context, result) {
-    let Dir = result.directiveConstructor;
-    let directive = new Dir(anchor, context);
-    if (result.ref) {
-        result.ref(directive);
+/** Class to help handle reference from directive result to it's directive class. */
+class DirectiveReferencesClass extends references_1.ResultReferences {
+    /** Calls reference callback when binging instance created. */
+    createFromResult(anchor, context, result) {
+        let Dir = result.directiveConstructor;
+        let directive = new Dir(anchor, context);
+        this.createReference(result, directive);
+        directive.merge(...result.args);
+        return directive;
     }
-    directive.merge(...result.args);
-    return directive;
 }
-exports.createDirectiveFromResult = createDirectiveFromResult;
-/** Reference to directive instance after it created and before merge. */
-function refDirective(result, ref) {
-    result.ref = ref;
+exports.DirectiveReferences = new DirectiveReferencesClass();
+/**
+ * Reference to directive instance after it created and before merge.
+ *  * Use it like:
+ * ```ts
+ * >refDirective(repeat(...))<
+ * ```
+ *
+ * @param result The directive result like `repeat(...)`.
+ * @param ref Callback with the directive object as parameter.
+ * @param unref Callback after directive instance was removed directly, not calls when was contained in a removed template.
+ * @return The `result` parameter.
+ */
+function refDirective(result, ref, unref) {
+    exports.DirectiveReferences.addReference(result, ref);
+    if (unref) {
+        exports.DirectiveReferences.addUnReference(result, unref);
+    }
     return result;
 }
 exports.refDirective = refDirective;
@@ -7133,13 +7410,17 @@ class PartialRenderingProcessor {
         this.startIndexToApply = 0;
         /** Current total data count. */
         this.totalDataCount = 0;
-        /** `totalDataCount` changed and needs to be applied. */
-        this.dataCountNeedsToApply = false;
+        /** Data changed or data count changed and need to be applied. */
+        this.needToApplyDataCountChange = false;
         /**
          * Average item height in pixels, it is used to calculate the position of the `slider`.
          * It will be detected automatically from the first rendering if was not initialized.
          */
         this.averageItemHeight = 0;
+        /** The item count, will not update placeholder height when scrolling up. */
+        this.itemCountWhenUpdatePlaceholderHeight = 0;
+        /** If is not `null`, means updating is not completed yet. */
+        this.untilUpdatingCompletePromise = null;
         this.scroller = scroller;
         this.slider = slider;
         this.sliderChildren = sliderChildren;
@@ -7177,41 +7458,76 @@ class PartialRenderingProcessor {
     setStartIndex(index) {
         this.startIndexToApply = index;
     }
-    /** Update total data count. */
+    /** Whether specifies a start index. */
+    isStartIndexSpecified() {
+        return this.startIndexToApply !== null;
+    }
+    /** Update total data count after reload data. */
     updateDataCount(dataCount) {
         if (dataCount !== this.totalDataCount) {
             this.totalDataCount = dataCount;
-            this.dataCountNeedsToApply = true;
+            this.needToApplyDataCountChange = true;
+            this.itemCountWhenUpdatePlaceholderHeight = 0;
         }
-    }
-    /** Update from applied start index or current scroll position. */
-    updateAlways(doDataUpdating) {
-        // Scroll to specified index.
-        if (this.startIndexToApply !== null) {
-            this.updateWhenStartIndexWillApply(doDataUpdating);
-        }
-        // Keep scroll position but update to different items.
-        else {
-            this.updateFromCurrentScrollOffset(doDataUpdating);
-        }
-        this.updateRoughPlaceholderHeightIfNeeded();
-    }
-    /** Re-generate indices from current scroll offset. */
-    updateFromCurrentScrollOffset(doDataUpdating) {
-        this.resetIndices();
-        this.resetSliderPosition();
-        doDataUpdating(this.startIndex, this.endIndex, null);
     }
     /**
-     * Update only when slider can't cover scroller, and also keep continuous scroll position.
+     * Update from applied start index or current scroll position.
+     * Note it must call `doDataUpdating` synchronously since it's already in a updating queue.
+     */
+    updateRendering(doDataUpdating) {
+        let willApplyStartIndex = this.startIndexToApply !== null;
+        // Scroll to specified index.
+        if (willApplyStartIndex) {
+            this.updateWhenStartIndexWillApply(doDataUpdating);
+        }
+        // Data should changed or partly changed, reset from current scroll position.
+        else if (this.needToApplyDataCountChange) {
+            this.updateFromCurrentScrollOffset(doDataUpdating);
+            this.needToApplyDataCountChange = false;
+        }
+        // Just keep indices and update data.
+        else {
+            doDataUpdating(this.startIndex, this.endIndex, null);
+        }
+        this.lockUpdatingByPromise(queue_1.untilRenderComplete().then(() => {
+            this.updatePlaceholderHeightProgressive();
+            // Re-calcuate position and scroll offset.
+            if (willApplyStartIndex) {
+                this.resetSliderPosition();
+                this.updateScrollOffset();
+            }
+        }));
+    }
+    /**
+     * Update only when current rendering can't cover scroller, and will keep continuous scroll position.
+     * Note it must call `doDataUpdating` synchronously since it may be in a updating queue.
      * Returns whether updated.
      */
-    updateSmoothlyIfNeeded(doDataUpdating) {
-        let updated = this.updateFromCoverage(doDataUpdating);
-        if (updated) {
-            this.updateRoughPlaceholderHeightIfNeeded();
+    updateRenderingSmoothlyIfNeeded(doDataUpdating) {
+        // Last updating is not completed.
+        if (this.untilUpdatingCompletePromise) {
+            return false;
         }
-        return updated;
+        // Reach start or end edge.
+        if (this.startIndex === 0 && this.endIndex === this.totalDataCount) {
+            return false;
+        }
+        let updatePromise = this.updateFromCoverage(doDataUpdating);
+        if (updatePromise) {
+            this.lockUpdatingByPromise(updatePromise.then(() => {
+                this.updatePlaceholderHeightProgressive();
+            }));
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    /** Prevent updating before promise been completed. */
+    async lockUpdatingByPromise(promise) {
+        this.untilUpdatingCompletePromise = promise;
+        await promise;
+        this.untilUpdatingCompletePromise = null;
     }
     /** Update when start index specified. */
     updateWhenStartIndexWillApply(doDataUpdating) {
@@ -7219,19 +7535,6 @@ class PartialRenderingProcessor {
         this.startIndexToApply = null;
         this.resetSliderPosition();
         doDataUpdating(this.startIndex, this.endIndex, null);
-        // Check rendering heights.
-        if (!this.averageItemHeight && this.totalDataCount > 0) {
-            this.measureRenderingHeights();
-            // Re-calcuate position and scroll offset.
-            if (this.startIndex > 0) {
-                this.resetSliderPosition();
-                this.updateScrollOffset();
-            }
-        }
-        else {
-            this.updateScrollOffset();
-        }
-        // `updateScrollOffset` will trigger scroll event, so no need to validate coverage.
     }
     /** Update start and end index before rendering. */
     updateIndices(startIndex) {
@@ -7243,23 +7546,27 @@ class PartialRenderingProcessor {
         this.startIndex = startIndex;
         this.endIndex = endIndex;
     }
-    /** Reset indices from current scroll offset. */
-    resetIndices() {
-        let newStartIndex = Math.floor(this.scroller.scrollTop / this.averageItemHeight);
-        this.updateIndices(newStartIndex);
-    }
-    /** Update height of placeholder. */
-    updateRoughPlaceholderHeightIfNeeded() {
-        if (this.dataCountNeedsToApply) {
+    /**
+     * Update height of placeholder progressive, form current item count and their height.
+     * Must wait for render completed.
+     */
+    updatePlaceholderHeightProgressive() {
+        if (this.endIndex > 0 && this.endIndex >= this.itemCountWhenUpdatePlaceholderHeight || this.endIndex === this.totalDataCount) {
+            let scrollerRect = this.getScrollerClientRect();
+            let sliderRect = this.slider.getBoundingClientRect();
+            let scrollHeight = this.scroller.scrollTop + sliderRect.bottom - scrollerRect.top;
+            this.averageItemHeight = scrollHeight / this.endIndex;
             this.palceholder.style.height = this.averageItemHeight * this.totalDataCount + 'px';
-            this.dataCountNeedsToApply = false;
+            this.itemCountWhenUpdatePlaceholderHeight = this.endIndex;
         }
     }
-    /** Update height of placeholder, form current item count and their height. */
-    updatePrecisePlaceholderHeight(height, itemCount) {
-        this.averageItemHeight = height / itemCount;
-        this.palceholder.style.height = this.averageItemHeight * this.totalDataCount + 'px';
-        this.dataCountNeedsToApply = false;
+    /** Get a fixed client rect of scroller. */
+    getScrollerClientRect() {
+        let scrollerRect = utils_1.getRect(this.scroller);
+        scrollerRect.top += this.scrollerBorderTopWidth;
+        scrollerRect.bottom -= this.scrollerBorderBottomWidth;
+        scrollerRect.height -= this.scrollerBorderTopWidth + this.scrollerBorderBottomWidth;
+        return scrollerRect;
     }
     /** Update position of `slider` after set new indices. */
     updateSliderPosition(direction, position) {
@@ -7268,7 +7575,7 @@ class PartialRenderingProcessor {
             this.slider.style.bottom = 'auto';
         }
         else {
-            this.slider.style.bottom = -position + 'px';
+            this.slider.style.bottom = position + 'px';
             this.slider.style.top = 'auto';
         }
     }
@@ -7284,17 +7591,6 @@ class PartialRenderingProcessor {
         let countBeforeStart = this.startIndex;
         this.scroller.scrollTop = this.averageItemHeight * countBeforeStart;
     }
-    /** Measure to get a not 100% precise average item height. */
-    measureRenderingHeights() {
-        let sliderHeight = this.slider.offsetHeight;
-        if (!sliderHeight) {
-            return;
-        }
-        this.averageItemHeight = Math.round(sliderHeight / (this.endIndex - this.startIndex));
-        if (this.averageItemHeight) {
-            this.renderGroupCount = Math.ceil(sliderHeight / this.averageItemHeight / this.renderCount);
-        }
-    }
     /**
      * Validate if slider fully covers scroller and update indices if not.
      * Returns whether updated indices.
@@ -7305,97 +7601,102 @@ class PartialRenderingProcessor {
         let renderCount = this.renderCount * this.renderGroupCount;
         let unexpectedScrollEnd = this.scroller.scrollTop + this.scroller.clientHeight === this.scroller.scrollHeight && this.endIndex < this.totalDataCount;
         let unexpectedScrollStart = this.scroller.scrollTop === 0 && this.startIndex > 0;
+        let promise = null;
         // No intersection, reset slider position from current slider scroll offset.
         let hasNoIntersection = sliderRect.bottom < scrollerRect.top || sliderRect.top > scrollerRect.bottom;
         if (hasNoIntersection) {
             this.updateFromCurrentScrollOffset(doDataUpdating);
+            promise = queue_1.untilRenderComplete();
         }
         // Scroll down and can't cover at bottom direction.
         // Otherwise will still load more when touch bottom scrolling edge and still more data exist.
         else if (sliderRect.bottom < scrollerRect.bottom || unexpectedScrollEnd) {
-            let roughFirstVisibleIndex = utils_1.locateFirstVisibleIndex(this.scroller, this.sliderChildren.getChildren());
+            let roughFirstVisibleIndex = utils_1.locateFirstVisibleIndex(this.scroller, this.sliderChildren.getChildren(), 0);
             let oldStartIndex = this.startIndex;
             let newStartIndex = this.startIndex + roughFirstVisibleIndex;
             this.updateIndices(newStartIndex);
-            this.UpdateWithSliderPositionStable('down', oldStartIndex, scrollerRect, doDataUpdating);
+            promise = this.updateWithSliderPositionStable('down', oldStartIndex, scrollerRect, doDataUpdating);
         }
         // Scroll up and can't cover at top direction.
         // Keeps last visible index as endIndex.
         // Otherwise will still load more when touch top scrolling edge and still more data exist.
         else if (sliderRect.top > scrollerRect.top || unexpectedScrollStart) {
-            let roughLastVisibleIndex = utils_1.locateLastVisibleIndex(this.scroller, this.sliderChildren.getChildren());
+            let roughLastVisibleIndex = utils_1.locateLastVisibleIndex(this.scroller, this.sliderChildren.getChildren(), 0);
             let oldStartIndex = this.startIndex;
             let newEndIndex = this.startIndex + roughLastVisibleIndex + 1;
             let newStartIndex = newEndIndex - renderCount;
             this.updateIndices(newStartIndex);
-            this.UpdateWithSliderPositionStable('up', oldStartIndex, scrollerRect, doDataUpdating);
+            promise = this.updateWithSliderPositionStable('up', oldStartIndex, scrollerRect, doDataUpdating);
         }
-        // No need to update.
-        else {
-            return false;
-        }
-        return true;
+        // Not updated otherwise.
+        return promise;
     }
-    /** Get a fixed client rect of scroller. */
-    getScrollerClientRect() {
-        let scrollerRect = utils_1.getRect(this.scroller);
-        scrollerRect.top += this.scrollerBorderTopWidth;
-        scrollerRect.bottom -= this.scrollerBorderBottomWidth;
-        scrollerRect.height -= this.scrollerBorderTopWidth + this.scrollerBorderBottomWidth;
-        return scrollerRect;
+    /** Re-generate indices from current scroll offset. */
+    updateFromCurrentScrollOffset(doDataUpdating) {
+        this.resetIndices();
+        this.resetSliderPosition();
+        doDataUpdating(this.startIndex, this.endIndex, null);
+    }
+    /** Reset indices from current scroll offset. */
+    resetIndices() {
+        let newStartIndex = this.averageItemHeight > 0 ? Math.floor(this.scroller.scrollTop / this.averageItemHeight) : 0;
+        this.updateIndices(newStartIndex);
     }
     /** Update slider position to keep it in a stable position after updating data items. */
-    UpdateWithSliderPositionStable(scrollDirection, oldStartIndex, scrollerRect, doDataUpdating) {
+    async updateWithSliderPositionStable(scrollDirection, oldStartIndex, scrollerRect, doDataUpdating) {
         let visibleIndex = scrollDirection === 'down' ? this.startIndex - oldStartIndex : this.endIndex - 1 - oldStartIndex;
         let visibleElement = this.sliderChildren.childAt(visibleIndex);
         let updateData = () => { doDataUpdating(this.startIndex, this.endIndex, scrollDirection); };
+        if (!visibleElement) {
+            throw new Error(`Wrongly rendered: can\'t found expected element in specified index!`);
+        }
         // When reach start index but may not reach scroll start.
         if (this.startIndex === 0) {
-            this.updateWhenReachStartIndex(visibleElement, updateData);
+            await this.updateWhenReachStartIndex(visibleElement, updateData);
         }
         // When reach end index but may not reach scroll end.
         else if (this.endIndex === this.totalDataCount) {
-            this.updateWhenReachEndIndex(visibleElement, updateData);
+            await this.updateWhenReachEndIndex(visibleElement, updateData);
         }
-        // When reach start start but not scroll index.
+        // When reach start index but not scroll index.
         else if (this.startIndex > 0 && this.scroller.scrollTop === 0) {
-            this.updateWhenReachScrollStart(visibleElement, scrollerRect, updateData);
+            await this.updateWhenReachScrollStart(visibleElement, scrollerRect, updateData);
         }
         // When reach scroll end but not end index.
         else if (this.endIndex < this.totalDataCount && this.scroller.scrollTop + this.scroller.clientHeight === this.scroller.scrollHeight) {
-            this.updateWhenReachScrollEnd(visibleElement, scrollerRect, updateData);
+            await this.updateWhenReachScrollEnd(visibleElement, scrollerRect, updateData);
         }
         // Keeps visible element in the same scroll position.
         else if (scrollDirection === 'down') {
-            this.updateNormallyWhenScrollingDown(visibleElement, scrollerRect, updateData);
+            await this.updateNormallyWhenScrollingDown(visibleElement, scrollerRect, updateData);
         }
         // Keeps visible element in the same scroll position.
         else {
-            this.updateNormallyWhenScrollingUp(visibleElement, scrollerRect, updateData);
+            await this.updateNormallyWhenScrollingUp(visibleElement, scrollerRect, updateData);
         }
     }
     /** When reach start index but may not reach scroll start, reset scroll top. */
-    updateWhenReachStartIndex(visibleElement, updateData) {
+    async updateWhenReachStartIndex(lastVisibleElement, updateData) {
         let visibleIndex = this.endIndex - 1 - this.startIndex;
-        let oldTop = visibleElement.getBoundingClientRect().top;
-        let scrollTop = this.scroller.scrollTop;
+        let oldTop = lastVisibleElement.getBoundingClientRect().top;
         this.updateSliderPosition('top', 0);
         // Render to locate first item.
         updateData();
+        await queue_1.untilRenderComplete();
         // Should keep the visible element stable.
         let newVisibleElement = this.sliderChildren.childAt(visibleIndex);
         let newTop = newVisibleElement.getBoundingClientRect().top;
         let translate = newTop - oldTop;
-        // Set scroll top to restore it's translate.
-        this.scroller.scrollTop = scrollTop + translate;
+        // Set scroll top to restore it's translate, `scrollTop` property is opposite with translation, so here it's `+`.
+        this.scroller.scrollTop = this.scroller.scrollTop + translate;
     }
     /** When reach end index but may not reach scroll end, reset scroll top. */
-    updateWhenReachEndIndex(visibleElement, updateData) {
+    async updateWhenReachEndIndex(firstVisibleElement, updateData) {
         let visibleIndex = 0;
-        let oldBottom = visibleElement.getBoundingClientRect().bottom;
-        let scrollTop = this.scroller.scrollTop;
+        let oldBottom = firstVisibleElement.getBoundingClientRect().bottom;
         // Render to locate last item.
         updateData();
+        await queue_1.untilRenderComplete();
         // Get element translated.
         let newVisibleElement = this.sliderChildren.childAt(visibleIndex);
         let newBottom = newVisibleElement.getBoundingClientRect().bottom;
@@ -7403,48 +7704,47 @@ class PartialRenderingProcessor {
         // Get new position.
         let scrollerRect = this.getScrollerClientRect();
         let sliderRect = this.slider.getBoundingClientRect();
-        let position = sliderRect.bottom - scrollerRect.bottom - translate;
-        position += scrollTop;
-        // Scroll height is scroll top + content height after scroller client top.
-        let scrollHeight = scrollTop + sliderRect.bottom - scrollerRect.top - translate;
+        // should minus translate normally, but bottom property is opposite with translation, so here it's `+`.
+        let position = scrollerRect.bottom - sliderRect.bottom + translate;
+        position -= this.scroller.scrollTop;
         this.updateSliderPosition('bottom', position);
-        this.updatePrecisePlaceholderHeight(scrollHeight, this.endIndex);
     }
     /** When reach scroll start but not reach start index, provide more scroll space. */
-    updateWhenReachScrollStart(visibleElement, scrollerRect, updateData) {
+    async updateWhenReachScrollStart(lastVisibleElement, scrollerRect, updateData) {
         // Provide more spaces at start.
         let extendedScrollSpace = this.averageItemHeight * this.startIndex;
         // Translate position from the spaces.
-        let position = visibleElement.getBoundingClientRect().bottom - scrollerRect.bottom;
-        position += extendedScrollSpace;
+        let position = scrollerRect.bottom - lastVisibleElement.getBoundingClientRect().bottom;
+        position -= extendedScrollSpace;
         this.updateSliderPosition('bottom', position);
         updateData();
         this.scroller.scrollTop = extendedScrollSpace;
+        await queue_1.untilRenderComplete();
     }
     /** When reach scroll end but not reach end index, provide more scroll space. */
-    updateWhenReachScrollEnd(visibleElement, scrollerRect, updateData) {
-        let scrollTop = this.scroller.scrollTop;
+    async updateWhenReachScrollEnd(firstVisibleElement, scrollerRect, updateData) {
         // Update normally.
-        this.updateNormallyWhenScrollingDown(visibleElement, scrollerRect, updateData);
-        // Extend mor spaces at end.
-        let newScrollerRect = this.getScrollerClientRect();
-        let sliderRect = this.slider.getBoundingClientRect();
-        let scrollHeight = scrollTop + sliderRect.bottom - newScrollerRect.top;
-        this.updatePrecisePlaceholderHeight(scrollHeight, this.endIndex);
-    }
-    /** Render more items when scrolling down, not reset scroll position. */
-    updateNormallyWhenScrollingDown(visibleElement, scrollerRect, updateData) {
-        let position = visibleElement.getBoundingClientRect().top - scrollerRect.top;
+        let position = firstVisibleElement.getBoundingClientRect().top - scrollerRect.top;
         position += this.scroller.scrollTop;
         this.updateSliderPosition('top', position);
         updateData();
+        await queue_1.untilRenderComplete();
+    }
+    /** Render more items when scrolling down, not reset scroll position. */
+    async updateNormallyWhenScrollingDown(firstVisibleElement, scrollerRect, updateData) {
+        let position = firstVisibleElement.getBoundingClientRect().top - scrollerRect.top;
+        position += this.scroller.scrollTop;
+        this.updateSliderPosition('top', position);
+        updateData();
+        await queue_1.untilRenderComplete();
     }
     /** Render more items when scrolling up, not reset scroll position. */
-    updateNormallyWhenScrollingUp(visibleElement, scrollerRect, updateData) {
-        let position = visibleElement.getBoundingClientRect().bottom - scrollerRect.bottom;
-        position += this.scroller.scrollTop;
+    async updateNormallyWhenScrollingUp(lastVisibleElement, scrollerRect, updateData) {
+        let position = scrollerRect.bottom - lastVisibleElement.getBoundingClientRect().bottom;
+        position -= this.scroller.scrollTop;
         this.updateSliderPosition('bottom', position);
         updateData();
+        await queue_1.untilRenderComplete();
     }
 }
 exports.PartialRenderingProcessor = PartialRenderingProcessor;
@@ -7471,24 +7771,26 @@ const watchers_1 = __webpack_require__(/*! ../../watchers */ "../flit/out/watche
  * So this class is used to watch and update template result that generated from `templateFn` and one `item`.
  */
 class RepetitiveTemplate {
-    constructor(context, templateFn, item, index) {
-        this.context = context;
-        this.templateFn = templateFn;
+    constructor(source, item, index) {
+        this.source = source;
         this.item = item;
         this.index = index;
-        /** Update after components and top level watchers update completed. */
-        this.watcher = new watchers_1.LazyWatcher(this.getTemplateResult.bind(this), this.onUpdateTemplateResult.bind(this), this.context);
-        this.template = new template_1.Template(this.watcher.value, this.context);
+        let context = source.getContext();
+        // Update after components and top level watchers update completed,
+        // and also after directive updated, or it will cause useless updating.
+        this.watcher = new watchers_1.LazyWatcher(this.getTemplateResult.bind(this), this.onUpdateTemplateResult.bind(this), context);
+        this.template = new template_1.Template(this.watcher.value, context);
         this.getWatcherGroup().add(this.watcher);
     }
     /** Get watcher group to add or delete watcher. */
     getWatcherGroup() {
-        var _a;
-        return ((_a = this.context) === null || _a === void 0 ? void 0 : _a.__getWatcherGroup()) || watchers_1.GlobalWatcherGroup;
+        let context = this.source.getContext();
+        return (context === null || context === void 0 ? void 0 : context.__getWatcherGroup()) || watchers_1.GlobalWatcherGroup;
     }
     /** To get current template result for watching. */
     getTemplateResult() {
-        return this.templateFn(this.item, this.index);
+        let templateFn = this.source.getTemplateFn();
+        return templateFn(this.item, this.index);
     }
     /** After template result changed. */
     onUpdateTemplateResult(result) {
@@ -7496,33 +7798,30 @@ class RepetitiveTemplate {
             this.template.merge(result);
         }
         else {
-            let newTemplate = new template_1.Template(result, this.context);
+            let context = this.source.getContext();
+            let newTemplate = new template_1.Template(result, context);
             this.template.replaceWith(newTemplate);
             this.template = newTemplate;
         }
     }
+    /** Update item and indices. */
     update(item, index) {
-        if (item !== this.item || index !== this.index) {
-            this.item = item;
-            this.index = index;
-            this.watcher.update();
-        }
+        this.item = item;
+        this.index = index;
+        this.watcher.update();
     }
-    updateIndex(index) {
-        if (index !== this.index) {
-            this.index = index;
-            this.watcher.update();
-        }
-    }
-    /** Remove elements and disconnect. Can connect again. */
-    disconnect() {
+    /** Remove elements and disconnect. Can connect again later. */
+    remove() {
+        this.disconnect();
         this.template.remove();
+    }
+    /** Just disconnect. */
+    disconnect() {
         this.getWatcherGroup().delete(this.watcher);
     }
     /** Connect after disconnected. */
     connect() {
         this.getWatcherGroup().add(this.watcher);
-        this.watcher.update();
     }
 }
 exports.RepetitiveTemplate = RepetitiveTemplate;
@@ -7544,7 +7843,7 @@ var define_1 = __webpack_require__(/*! ./define */ "../flit/out/directives/defin
 Object.defineProperty(exports, "defineDirective", { enumerable: true, get: function () { return define_1.defineDirective; } });
 Object.defineProperty(exports, "refDirective", { enumerable: true, get: function () { return define_1.refDirective; } });
 Object.defineProperty(exports, "DirectiveResult", { enumerable: true, get: function () { return define_1.DirectiveResult; } });
-Object.defineProperty(exports, "createDirectiveFromResult", { enumerable: true, get: function () { return define_1.createDirectiveFromResult; } });
+Object.defineProperty(exports, "DirectiveReferences", { enumerable: true, get: function () { return define_1.DirectiveReferences; } });
 var cache_1 = __webpack_require__(/*! ./cache */ "../flit/out/directives/cache.js");
 Object.defineProperty(exports, "cache", { enumerable: true, get: function () { return cache_1.cache; } });
 Object.defineProperty(exports, "CacheDirective", { enumerable: true, get: function () { return cache_1.CacheDirective; } });
@@ -7597,6 +7896,12 @@ class LiveAsyncRepeatDirective extends live_repeat_1.LiveRepeatDirective {
         this.key = null;
         /** Need to call `updateSliderPosition` after got `knownDataCount`. */
         this.needToUpdateSliderPositionAfterDataCountKnown = false;
+        /** Whether will update later. */
+        this.willUpdateLater = false;
+        /** Whether will update data count later. */
+        this.willUpdateDataCountLater = false;
+        /** Update version. */
+        this.version = 0;
     }
     merge(dataOptions, templateFn, liveRepeatOptions, transitionOptions) {
         this.dataCount = dataOptions.dataCount;
@@ -7610,22 +7915,37 @@ class LiveAsyncRepeatDirective extends live_repeat_1.LiveRepeatDirective {
         let firstTimeUpdate = !this.dataGetter;
         if (firstTimeUpdate) {
             this.dataGetter = new page_data_getter_1.PageDataGetter(dataOptions.asyncDataGetter, dataOptions.immediateDataGetter);
-            this.updateDataCount().then(() => {
-                this.update();
-            });
+            this.getDataCountThenUpdate();
         }
-        else {
+        else if (!this.willUpdateLater) {
             this.update();
         }
     }
     __updateImmediately() {
-        this.processor.updateAlways(this.updateFromIndices.bind(this));
+        if (!this.willUpdateLater) {
+            this.processor.updateRendering(this.updateFromIndices.bind(this));
+        }
     }
-    async updateDataCount() {
+    checkCoverage() {
+        if (!this.willUpdateLater) {
+            super.checkCoverage();
+        }
+    }
+    async getDataCountThenUpdate() {
         let dataCountConfig = this.dataCount;
         if (!dataCountConfig) {
             return;
         }
+        if (this.willUpdateDataCountLater) {
+            return;
+        }
+        this.willUpdateDataCountLater = true;
+        this.willUpdateLater = true;
+        // Wait a little while to see if more update data count requests come.
+        await Promise.resolve();
+        // If more requests comes when updating it, accept new.
+        this.willUpdateDataCountLater = false;
+        let version = ++this.version;
         let dataCount;
         let knownDataCount = 0;
         if (typeof dataCountConfig === 'function') {
@@ -7640,7 +7960,11 @@ class LiveAsyncRepeatDirective extends live_repeat_1.LiveRepeatDirective {
         else {
             knownDataCount = dataCount;
         }
-        this.processor.updateDataCount(knownDataCount);
+        if (version === this.version) {
+            this.processor.updateDataCount(knownDataCount);
+            this.update();
+            this.willUpdateLater = false;
+        }
     }
     updateFromIndices(startIndex, endIndex, scrollDirection) {
         this.startIndex = startIndex;
@@ -7690,9 +8014,8 @@ class LiveAsyncRepeatDirective extends live_repeat_1.LiveRepeatDirective {
     /**
      * Reload data count and refresh to get all needed data.
      * Call this when data order column changed and you want to keep scroll position, e.g., after sorting. */
-    async reload() {
-        await this.updateDataCount();
-        this.update();
+    reload() {
+        this.getDataCountThenUpdate();
     }
     /** Resolved until `liveDataUpdated` triggered. */
     untilUpdated() {
@@ -7767,6 +8090,7 @@ const edit_1 = __webpack_require__(/*! ../helpers/edit */ "../flit/out/helpers/e
 const utils_1 = __webpack_require__(/*! ../helpers/utils */ "../flit/out/helpers/utils.js");
 const queue_1 = __webpack_require__(/*! ../queue */ "../flit/out/queue/index.js");
 const offset_children_1 = __webpack_require__(/*! ./helpers/offset-children */ "../flit/out/directives/helpers/offset-children.js");
+const updatable_queue_1 = __webpack_require__(/*! ../queue/helpers/updatable-queue */ "../flit/out/queue/helpers/updatable-queue.js");
 /** Default `liveRepeat` options. */
 const DefaultLiveRepeatOptions = {
     renderCount: 50,
@@ -7812,7 +8136,15 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
         this.processor = new partial_rendering_processor_1.PartialRenderingProcessor(scroller, slider, this.sliderChildren);
         this.scroller = scroller;
         this.slider = slider;
-        dom_event_1.on(scroller, 'scroll.passive', this.onScroll, this);
+        dom_event_1.on(scroller, 'scroll.passive', this.checkCoverage, this);
+        let ResizeObserver = window.ResizeObserver;
+        if (ResizeObserver) {
+            this.observer = new ResizeObserver(this.checkCoverage.bind(this));
+            this.observer.observe(this.scroller);
+        }
+        else {
+            dom_event_1.on(window, 'resize', this.checkCoverage, this);
+        }
     }
     canMergeWith(_data, templateFn) {
         return templateFn === this.templateFn || templateFn.toString() === this.templateFn.toString();
@@ -7828,6 +8160,9 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
         if (data !== this.rawData) {
             this.watchAndUpdateData(data);
             this.rawData = data;
+        }
+        else if (this.lastWatcher) {
+            this.update();
         }
     }
     updatePreRendered() {
@@ -7851,9 +8186,9 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
             this.fullData = data;
             this.update();
         };
-        let watcher = new watchers_1.LazyWatcher(watchFn, onUpdate, this.context);
-        this.getWatcherGroup().add(watcher);
-        onUpdate(watcher.value);
+        this.lastWatcher = new watchers_1.LazyWatcher(watchFn, onUpdate, this.context);
+        this.getWatcherGroup().add(this.lastWatcher);
+        onUpdate(this.lastWatcher.value);
     }
     /** Get watcher group to add or delete watcher. */
     getWatcherGroup() {
@@ -7869,15 +8204,21 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
     }
     /** Serveral update entry: normal update; from `setStartIndex`, from `reload`. */
     update() {
-        // Update after watchers and components updated.
-        queue_1.enqueueUpdatable(this, this.context);
+        // Update after watchers and components.
+        queue_1.enqueueUpdatableInOrder(this, this.context, updatable_queue_1.UpdatableUpdateOrder.Directive);
     }
     __updateImmediately() {
         this.processor.updateDataCount(this.fullData.length);
-        this.processor.updateAlways(this.updateFromIndices.bind(this));
+        this.processor.updateRendering(this.updateFromIndices.bind(this));
     }
-    onScroll() {
-        this.processor.updateSmoothlyIfNeeded(this.updateFromIndices.bind(this));
+    /** Returns a promise which will be resolved after data updated and renderer. */
+    untilDataUpdatedAndRendered() {
+        return new Promise(resolve => {
+            this.once('liveDataRendered', resolve);
+        });
+    }
+    checkCoverage() {
+        this.processor.updateRenderingSmoothlyIfNeeded(this.updateFromIndices.bind(this));
     }
     updateFromIndices(startIndex, endIndex, scrollDirection) {
         this.startIndex = startIndex;
@@ -7897,26 +8238,29 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
         for (let record of editRecord) {
             let { type, fromIndex, toIndex, moveFromIndex } = record;
             let oldRepTem = fromIndex < oldRepTems.length && fromIndex !== -1 ? oldRepTems[fromIndex] : null;
-            if (type === edit_1.EditType.Leave) {
-                this.useMatchedRepTem(oldRepTem, toIndex);
-            }
-            else if (type === edit_1.EditType.Move) {
-                this.moveRepTemBefore(oldRepTems[moveFromIndex], oldRepTem);
-                this.useMatchedRepTem(oldRepTems[moveFromIndex], toIndex);
-            }
-            else if (type === edit_1.EditType.MoveModify) {
-                this.moveRepTemBefore(oldRepTems[moveFromIndex], oldRepTem);
-                this.reuseRepTem(oldRepTems[moveFromIndex], newData[toIndex], toIndex);
-            }
-            else if (type === edit_1.EditType.Insert) {
-                let newRepTem = this.createRepTem(newData[toIndex], toIndex);
-                this.moveRepTemBefore(newRepTem, oldRepTem);
-                if (shouldPaly) {
-                    this.mayPlayEnter(newRepTem);
-                }
-            }
-            else if (type === edit_1.EditType.Delete) {
+            if (type === edit_1.EditType.Delete) {
                 this.removeRepTemAndMayPlayLeave(oldRepTem, shouldPaly);
+            }
+            else {
+                let newItem = newData[toIndex];
+                if (type === edit_1.EditType.Leave) {
+                    this.useMatchedRepTem(oldRepTem, newItem, toIndex);
+                }
+                else if (type === edit_1.EditType.Move) {
+                    this.moveRepTemBefore(oldRepTems[moveFromIndex], oldRepTem);
+                    this.useMatchedRepTem(oldRepTems[moveFromIndex], newItem, toIndex);
+                }
+                else if (type === edit_1.EditType.MoveModify) {
+                    this.moveRepTemBefore(oldRepTems[moveFromIndex], oldRepTem);
+                    this.reuseRepTem(oldRepTems[moveFromIndex], newItem, toIndex);
+                }
+                else if (type === edit_1.EditType.Insert) {
+                    let newRepTem = this.createRepTem(newItem, toIndex);
+                    this.moveRepTemBefore(newRepTem, oldRepTem);
+                    if (shouldPaly) {
+                        this.mayPlayEnter(newRepTem);
+                    }
+                }
             }
         }
         if (this.options.get('preRendering')) {
@@ -7927,7 +8271,9 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
     }
     triggerLiveDataEvents(scrollDirection) {
         this.emit('liveDataUpdated', this.liveData, this.startIndex, scrollDirection);
-        queue_1.onRenderComplete(() => {
+        queue_1.untilRenderComplete().then(async () => {
+            // Wait for another micro task, so can be called after even scrollTop updated.
+            await Promise.resolve();
             this.emit('liveDataRendered', this.liveData, this.startIndex, scrollDirection);
         });
     }
@@ -7939,8 +8285,8 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
             this.anchor.insert(repTem.template.extractToFragment());
         }
     }
-    useMatchedRepTem(repTem, index) {
-        repTem.updateIndex(this.startIndex + index);
+    useMatchedRepTem(repTem, item, index) {
+        repTem.update(item, this.startIndex + index);
         this.repTems.push(repTem);
     }
     reuseRepTem(repTem, item, index) {
@@ -7955,10 +8301,12 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
         if ((_a = this.preRendered) === null || _a === void 0 ? void 0 : _a.has(item)) {
             let repTem = this.preRendered.get(item);
             repTem.connect();
+            repTem.update(item, index);
+            this.repTems.push(repTem);
             return repTem;
         }
         else {
-            let repTem = new repetitive_template_1.RepetitiveTemplate(this.context, this.templateFn, item, this.startIndex + index);
+            let repTem = new repetitive_template_1.RepetitiveTemplate(this, item, this.startIndex + index);
             this.repTems.push(repTem);
             (_b = this.preRendered) === null || _b === void 0 ? void 0 : _b.set(item, repTem);
             return repTem;
@@ -7991,11 +8339,23 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
         }
     }
     removeRepTem(repTem) {
-        repTem.disconnect();
+        repTem.remove();
     }
     /** Get `startIndex` for the start index of current rendered items. */
     getStartIndex() {
         return this.startIndex;
+    }
+    /**
+     * Set `startIndex`, and the item in this index will be at the top start position of the viewport.
+     * If needs to update, will update firstly and then set index.
+     */
+    setStartIndex(index) {
+        this.processor.setStartIndex(index);
+        this.update();
+    }
+    /** Whether specifies a start index. */
+    isStartIndexSpecified() {
+        return this.processor.isStartIndexSpecified();
     }
     /**
      * Get `endIndex` for the end index of current rendered items.
@@ -8005,11 +8365,11 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
         return this.startIndex;
     }
     /**
-     * Get the index of the first visible element, which can be used to restore scrolling position by `setStartIndex`.
+     * Get the index of the first visible element, which can be used to restore scrolling position by `setFirstVisibleIndex`.
      * May cause page reflow.
      */
     getFirstVisibleIndex() {
-        return Math.max(0, utils_1.locateFirstVisibleIndex(this.scroller, this.sliderChildren.getChildren()));
+        return Math.max(0, utils_1.locateFirstVisibleIndex(this.scroller, this.sliderChildren.getChildren())) + this.startIndex;
     }
     /**
      * Get the index of the last visible element.
@@ -8018,23 +8378,19 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
     getLastVisibleIndex() {
         return Math.max(0, utils_1.locateLastVisibleIndex(this.scroller, this.sliderChildren.getChildren()));
     }
-    /** Set `startIndex`, and the item in this index will be at the top start position of the viewport. */
-    setStartIndex(index) {
-        this.processor.setStartIndex(index);
-        this.update();
-    }
     /**
-     * Make item in the specified index becomes visible.
-     * If element is not rendered, adjust `startIndex` and re-render firstly. */
-    scrollToViewIndex(index) {
+     * Make item in the specified index becomes visible by scrolling minimum pixels.
+     * Try to adjust immediately, so you will need to ensure elements rendered.
+     * Will re-render if the element in specified index is not rendered.
+     */
+    async makeIndexVisible(index) {
         if (this.isIndexRendered(index)) {
-            this.scrollToViewRenderedIndex(index);
+            return this.scrollToViewRenderedIndex(index);
         }
         else {
             this.setStartIndex(index);
-            if (this.isIndexRendered(index)) {
-                this.scrollToViewRenderedIndex(index);
-            }
+            await this.untilDataUpdatedAndRendered();
+            return this.scrollToViewRenderedIndex(index);
         }
     }
     /** Get if item with specified index is rendered. */
@@ -8043,55 +8399,93 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
     }
     /** After item in index rendered, make it visible. */
     scrollToViewRenderedIndex(index) {
-        let scrollerRect = this.scroller.getBoundingClientRect();
         let el = this.sliderChildren.childAt(index - this.startIndex);
-        let rect = el.getBoundingClientRect();
+        if (!el) {
+            return false;
+        }
+        let scrollerRect = this.scroller.getBoundingClientRect();
+        let elRect = el.getBoundingClientRect();
         // Below it, need to scroll up.
-        if (rect.bottom > scrollerRect.bottom) {
-            this.scroller.scrollTop = this.scroller.scrollTop + (scrollerRect.bottom - rect.bottom);
+        if (elRect.bottom > scrollerRect.bottom) {
+            this.scroller.scrollTop = this.scroller.scrollTop + (elRect.bottom - scrollerRect.bottom);
         }
         // Above it, need to scroll down.
-        else if (rect.top < scrollerRect.top) {
-            this.scroller.scrollTop = this.scroller.scrollTop + (scrollerRect.top - rect.top);
+        else if (elRect.top < scrollerRect.top) {
+            this.scroller.scrollTop = this.scroller.scrollTop + (scrollerRect.top - elRect.top);
+        }
+        return true;
+    }
+    /**
+     * Make item in the specified index visible at the top edge of scroller.
+     * Try to adjust immediately, so you will need to ensure elements rendered.
+     * Will re-render if the element in specified index is not rendered.
+     */
+    async makeIndexVisibleAtTop(index) {
+        if (this.isIndexRendered(index)) {
+            return this.scrollToMakeRenderedIndexAtTop(index);
+        }
+        else {
+            this.setStartIndex(index);
+            await this.untilDataUpdatedAndRendered();
+            return this.scrollToMakeRenderedIndexAtTop(index);
         }
     }
-    // Handle pre rendering
+    /**
+     * Make item in the specified index becomes visible at the top scroll position.
+     * If needs to update, will update firstly and then set index.
+     */
+    async setFirstVisibleIndex(index) {
+        this.setStartIndex(index);
+        await this.untilDataUpdatedAndRendered();
+        return this.scrollToMakeRenderedIndexAtTop(index);
+    }
+    /** After item in index rendered, make it becomes visible at the top scroll position. */
+    scrollToMakeRenderedIndexAtTop(index) {
+        let el = this.sliderChildren.childAt(index - this.startIndex);
+        if (!el) {
+            return false;
+        }
+        let scrollerRect = this.scroller.getBoundingClientRect();
+        let elRect = el.getBoundingClientRect();
+        this.scroller.scrollTop = this.scroller.scrollTop + (elRect.top - scrollerRect.top);
+        return true;
+    }
+    /** Handle pre-rendering */
     async doPreRendering(scrollDirection) {
         let version = this.updateVersion;
         let preRendered = this.preRendered;
+        // Determine the maximum range that need to pre-render, must include current range.
         let renderCount = this.options.get('renderCount') * this.processor.getRenderGroupCount();
         let startIndex = Math.max(0, this.startIndex - renderCount);
         let endIndex = Math.min(this.fullData.length, this.endIndex + renderCount);
+        // The data and global indices that should be pre-rendered.
         let data = this.fullData.slice(startIndex, endIndex);
         let dataSet = new Set(data);
         let indices = [];
         let restRepTems = [];
+        // Rlease items out of maximun range.
         for (let item of preRendered.keys()) {
             if (!dataSet.has(item)) {
                 let repTem = preRendered.get(item);
+                repTem.disconnect();
                 restRepTems.push(repTem);
                 preRendered.delete(item);
             }
         }
+        // If scrolling down, only pre-render items below.
         if (scrollDirection === 'down' || scrollDirection === null) {
             for (let i = this.endIndex; i < endIndex; i++) {
                 indices.push(i);
             }
-            for (let i = this.startIndex - 1; i >= startIndex; i--) {
-                indices.push(i);
-            }
         }
         else {
-            for (let i = this.startIndex - 1; i >= startIndex; i--) {
-                indices.push(i);
-            }
-            for (let i = this.endIndex; i < endIndex; i++) {
+            for (let i = startIndex; i < this.startIndex; i++) {
                 indices.push(i);
             }
         }
         let createCount = 0;
         for (let index of indices) {
-            let item = data[index];
+            let item = this.fullData[index];
             if (preRendered.has(item)) {
                 continue;
             }
@@ -8101,7 +8495,9 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
                 preRendered.set(item, repTem);
             }
             else {
-                let repTem = new repetitive_template_1.RepetitiveTemplate(this.context, this.templateFn, item, index);
+                // Keep it disconnect, so it will not affect rendering performance and still have a rough render results.
+                let repTem = new repetitive_template_1.RepetitiveTemplate(this, item, index);
+                repTem.disconnect();
                 repTem.template.preRender();
                 preRendered.set(item, repTem);
                 createCount++;
@@ -8109,17 +8505,29 @@ class LiveRepeatDirective extends internal_event_emitter_1.InternalEventEmitter 
             if (createCount % 15 === 0) {
                 await utils_1.untilIdle();
                 if (this.updateVersion !== version) {
-                    return;
+                    break;
                 }
             }
         }
     }
+    getContext() {
+        return this.context;
+    }
+    getTemplateFn() {
+        return this.templateFn;
+    }
     remove() {
         this.tryDeleteLastWatcher();
-        dom_event_1.off(this.scroller, 'scroll.passive', this.onScroll, this);
+        dom_event_1.off(this.scroller, 'scroll.passive', this.checkCoverage, this);
+        if (this.observer) {
+            this.observer.disconnect();
+        }
+        else {
+            dom_event_1.off(window, 'resize', this.checkCoverage, this);
+        }
         // Pre-rendering items are not connected, no need to remove them.
-        for (let wtem of this.repTems) {
-            wtem.disconnect();
+        for (let repTem of this.repTems) {
+            repTem.remove();
         }
     }
 }
@@ -8161,6 +8569,8 @@ const contextual_transition_1 = __webpack_require__(/*! ../internals/contextual-
 const repetitive_template_1 = __webpack_require__(/*! ./helpers/repetitive-template */ "../flit/out/directives/helpers/repetitive-template.js");
 const watchers_1 = __webpack_require__(/*! ../watchers */ "../flit/out/watchers/index.js");
 const edit_1 = __webpack_require__(/*! ../helpers/edit */ "../flit/out/helpers/edit.js");
+const utils_1 = __webpack_require__(/*! ../helpers/utils */ "../flit/out/helpers/utils.js");
+const queue_1 = __webpack_require__(/*! ../queue */ "../flit/out/queue/index.js");
 /**
  * `repeat` directive doesn't watches the dependencies when updating a component,
  * instead, it watches dependencies when updating each item,
@@ -8196,6 +8606,9 @@ class RepeatDirective {
             this.watchAndUpdateData(data);
             this.rawData = data;
         }
+        else if (this.lastWatcher) {
+            this.updateData(this.data);
+        }
     }
     watchAndUpdateData(data) {
         this.tryDeleteLastWatcher();
@@ -8211,9 +8624,9 @@ class RepeatDirective {
         // Uses lazy watcher to watch each item of data changes,
         // So each item can be updated indepent,
         // and can also avoid unnecessary updating after total directive data updated.
-        let watcher = new watchers_1.LazyWatcher(watchFn, this.updateData.bind(this), this.context);
-        this.getWatcherGroup().add(watcher);
-        this.updateData(watcher.value);
+        this.lastWatcher = new watchers_1.LazyWatcher(watchFn, this.updateData.bind(this), this.context);
+        this.getWatcherGroup().add(this.lastWatcher);
+        this.updateData(this.lastWatcher.value);
     }
     /** Get watcher group to add watcher. */
     getWatcherGroup() {
@@ -8238,19 +8651,20 @@ class RepeatDirective {
         for (let record of editRecord) {
             let { type, fromIndex, toIndex, moveFromIndex } = record;
             let oldRepTem = fromIndex < oldRepTems.length && fromIndex !== -1 ? oldRepTems[fromIndex] : null;
+            let newItem = newData[toIndex];
             if (type === edit_1.EditType.Leave) {
-                this.useMatchedRepTem(oldRepTem, toIndex);
+                this.useMatchedRepTem(oldRepTem, newItem, toIndex);
             }
             else if (type === edit_1.EditType.Move) {
                 this.moveRepTemBefore(oldRepTems[moveFromIndex], oldRepTem);
-                this.useMatchedRepTem(oldRepTems[moveFromIndex], toIndex);
+                this.useMatchedRepTem(oldRepTems[moveFromIndex], newItem, toIndex);
             }
             else if (type === edit_1.EditType.MoveModify) {
                 this.moveRepTemBefore(oldRepTems[moveFromIndex], oldRepTem);
-                this.reuseRepTem(oldRepTems[moveFromIndex], newData[toIndex], toIndex);
+                this.reuseRepTem(oldRepTems[moveFromIndex], newItem, toIndex);
             }
             else if (type === edit_1.EditType.Insert) {
-                let newRepTem = this.createRepTem(newData[toIndex], toIndex);
+                let newRepTem = this.createRepTem(newItem, toIndex);
                 this.moveRepTemBefore(newRepTem, oldRepTem);
                 if (shouldPaly) {
                     this.mayPlayEnter(newRepTem);
@@ -8269,8 +8683,10 @@ class RepeatDirective {
             this.anchor.insert(repTem.template.extractToFragment());
         }
     }
-    useMatchedRepTem(repTem, index) {
-        repTem.updateIndex(index);
+    useMatchedRepTem(repTem, item, index) {
+        // Must update even reuse matched item,
+        // Because scoped variables may changed.
+        repTem.update(item, index);
         this.repTems.push(repTem);
     }
     reuseRepTem(repTem, item, index) {
@@ -8278,7 +8694,7 @@ class RepeatDirective {
         this.repTems.push(repTem);
     }
     createRepTem(item, index) {
-        let repTem = new repetitive_template_1.RepetitiveTemplate(this.context, this.templateFn, item, index);
+        let repTem = new repetitive_template_1.RepetitiveTemplate(this, item, index);
         this.repTems.push(repTem);
         return repTem;
     }
@@ -8309,12 +8725,83 @@ class RepeatDirective {
         }
     }
     removeRepTem(repTem) {
-        repTem.disconnect();
+        repTem.remove();
+    }
+    /**
+     * Make item in the specified index becomes visible by scrolling minimum pixels in Y direction.
+     * Try to adjust immediately, so you will need to ensure elements rendered.
+     */
+    makeIndexVisible(index) {
+        var _a;
+        let el = (_a = this.repTems[index]) === null || _a === void 0 ? void 0 : _a.template.getFirstElement();
+        if (!el) {
+            return false;
+        }
+        let scroller = utils_1.getClosestScrollWrapper(el);
+        if (!scroller) {
+            return false;
+        }
+        let scrollerRect = scroller.getBoundingClientRect();
+        let elRect = el.getBoundingClientRect();
+        // Below it, need to scroll up.
+        if (elRect.bottom > scrollerRect.bottom) {
+            scroller.scrollTop = scroller.scrollTop + (elRect.bottom - scrollerRect.bottom);
+        }
+        // Above it, need to scroll down.
+        else if (elRect.top < scrollerRect.top) {
+            scroller.scrollTop = scroller.scrollTop + (scrollerRect.top - elRect.top);
+        }
+        return true;
+    }
+    /**
+     * Make item in the specified index visible at the top edge of scroller.
+     * Try to adjust immediately, so you will need to ensure elements rendered.
+     */
+    makeIndexVisibleAtTop(index) {
+        var _a;
+        let el = (_a = this.repTems[index]) === null || _a === void 0 ? void 0 : _a.template.getFirstElement();
+        if (!el) {
+            return false;
+        }
+        let scroller = utils_1.getClosestScrollWrapper(el);
+        if (!scroller) {
+            return false;
+        }
+        let scrollerRect = scroller.getBoundingClientRect();
+        let elRect = el.getBoundingClientRect();
+        scroller.scrollTop = scroller.scrollTop + (elRect.top - scrollerRect.top);
+        return true;
+    }
+    /**
+     * Make item in the specified index becomes visible at the top scroll position.
+     * If needs to update, will update firstly and then set index.
+     */
+    async setFirstVisibleIndex(index) {
+        var _a;
+        await queue_1.untilRenderComplete();
+        let el = (_a = this.repTems[index]) === null || _a === void 0 ? void 0 : _a.template.getFirstElement();
+        if (!el) {
+            return false;
+        }
+        let scroller = utils_1.getClosestScrollWrapper(el);
+        if (!scroller) {
+            return false;
+        }
+        let scrollerRect = scroller.getBoundingClientRect();
+        let elRect = el.getBoundingClientRect();
+        scroller.scrollTop = scroller.scrollTop + (elRect.top - scrollerRect.top);
+        return true;
+    }
+    getContext() {
+        return this.context;
+    }
+    getTemplateFn() {
+        return this.templateFn;
     }
     remove() {
         this.tryDeleteLastWatcher();
         for (let repTem of this.repTems) {
-            repTem.disconnect();
+            repTem.remove();
         }
     }
 }
@@ -8463,6 +8950,7 @@ const watchers_1 = __webpack_require__(/*! ../watchers */ "../flit/out/watchers/
  *
  * @param codes The html code piece or html`...` template result, or a directive result.
  * @param context The context to use when rendering.
+ * @return A `Template` instance.
  */
 function render(codes, context = null) {
     if (codes instanceof directives_1.DirectiveResult) {
@@ -8483,6 +8971,7 @@ exports.render = render;
  * @param renderFn Returns template like html`...`
  * @param context The context you used when rendering.
  * @param onUpdate Called when update after referenced data changed. if new result can't merge with old, will pass a new fragment as parameter.
+ * @return A `{template, unwatch}` object, calls `unwatch` will stop watching `renderFn`. If `context` specifed, will unwatch automatically after context revoked.
  */
 function renderUpdatable(renderFn, context = null, onUpdate) {
     let template;
@@ -8509,6 +8998,7 @@ exports.renderUpdatable = renderUpdatable;
 /**
  * Get a component immediately from a just rendered template.
  * @param template The just rendered template from `render` or `renderUpdatable`.
+ * @returns A component if first element has a component registered, otherwise be `null`.
  */
 function getRenderedAsComponent(template) {
     let firstElement = template.getFirstElement();
@@ -8856,6 +9346,56 @@ exports.MiniHeap = MiniHeap;
 
 /***/ }),
 
+/***/ "../flit/out/helpers/references.js":
+/*!*****************************************!*\
+  !*** ../flit/out/helpers/references.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ResultReferences = void 0;
+class ResultReferences {
+    constructor() {
+        /** Caches reference binding callback. */
+        this.referenceMap = new WeakMap();
+        /** Caches un-reference callback. */
+        this.unReferenceMap = new WeakMap();
+        /** Caches un-reference callback. */
+        this.bindingUnReferenceMap = new WeakMap();
+    }
+    /** Add a reference which will be called after instance created. */
+    addReference(result, ref) {
+        this.referenceMap.set(result, ref);
+    }
+    /** Add a reference which will be called after instance removed. */
+    addUnReference(result, unRef) {
+        this.unReferenceMap.set(result, unRef);
+    }
+    /** Create a reference after instance created. */
+    createReference(result, binding) {
+        if (this.referenceMap.has(result)) {
+            this.referenceMap.get(result)(binding);
+        }
+        if (this.unReferenceMap.has(result)) {
+            let unRef = this.unReferenceMap.get(result);
+            this.bindingUnReferenceMap.set(binding, unRef);
+        }
+    }
+    /** Calls after instance removed. */
+    removeReference(binding) {
+        if (this.bindingUnReferenceMap.has(binding)) {
+            this.bindingUnReferenceMap.get(binding)(binding);
+        }
+    }
+}
+exports.ResultReferences = ResultReferences;
+
+
+/***/ }),
+
 /***/ "../flit/out/helpers/two-way-map.js":
 /*!******************************************!*\
   !*** ../flit/out/helpers/two-way-map.js ***!
@@ -8937,7 +9477,7 @@ exports.TwoWayMap = TwoWayMap;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRect = exports.getElementCountBefore = exports.locateLastVisibleIndex = exports.locateFirstVisibleIndex = exports.untilIdle = exports.untilNextFrame = exports.repeatForTimes = exports.binaryFindIndexToInsert = exports.trim = void 0;
+exports.getClosestScrollWrapper = exports.getRect = exports.getElementCountBefore = exports.locateLastVisibleIndex = exports.locateFirstVisibleIndex = exports.untilIdle = exports.untilNextFrame = exports.repeatForTimes = exports.binaryFindIndexToInsert = exports.trim = void 0;
 /** Trim text by removing `\r\n\t`. */
 function trim(text) {
     return text.replace(/^[\r\n\t]+|[\r\n\t]+$/g, '');
@@ -9018,8 +9558,8 @@ exports.untilIdle = untilIdle;
  * @container Container to check visible inside.
  * @param els Element list to check.
  */
-function locateFirstVisibleIndex(container, els) {
-    return locateVisibleIndex(container, els, false);
+function locateFirstVisibleIndex(container, els, minimumVisibleRate = 0.5) {
+    return locateVisibleIndex(container, els, minimumVisibleRate, false);
 }
 exports.locateFirstVisibleIndex = locateFirstVisibleIndex;
 /**
@@ -9027,27 +9567,42 @@ exports.locateFirstVisibleIndex = locateFirstVisibleIndex;
  * @container Container to check visible inside.
  * @param els Element list to check.
  */
-function locateLastVisibleIndex(container, els) {
-    return locateVisibleIndex(container, els, true);
+function locateLastVisibleIndex(container, els, minimumVisibleRate = 0.5) {
+    return locateVisibleIndex(container, els, minimumVisibleRate, true);
 }
 exports.locateLastVisibleIndex = locateLastVisibleIndex;
-function locateVisibleIndex(container, els, isLast) {
+function locateVisibleIndex(container, els, minimumVisibleRate, locateLast) {
     let containerRect = container.getBoundingClientRect();
     let index = binaryFindIndexToInsert(els, (el) => {
         let rect = el.getBoundingClientRect();
-        if (rect.bottom <= containerRect.top) {
+        let yIntersect = Math.min(containerRect.bottom, rect.bottom) - Math.max(containerRect.top, rect.top);
+        let intersectRate = yIntersect / Math.min(containerRect.height, rect.height);
+        // Fully above.
+        if (rect.bottom < containerRect.top) {
             return 1;
         }
-        else if (rect.top >= containerRect.bottom) {
+        // Fully behind.
+        else if (rect.top > containerRect.bottom) {
             return -1;
         }
+        // Partly cross in top position.
+        else if (rect.top < containerRect.top && intersectRate < minimumVisibleRate) {
+            return 1;
+        }
+        // Partly cross in bottom position.
+        else if (rect.bottom < containerRect.bottom && intersectRate < minimumVisibleRate) {
+            return -1;
+        }
+        // Enough percentage that intersect with.
+        // If `preferLast` is true, prefer moving to right.
         else {
-            // If find last, prefer move to right.
-            return isLast ? 1 : -1;
+            return locateLast ? 1 : -1;
         }
     });
-    if (isLast && index > 0) {
-        index -= 1;
+    if (locateLast) {
+        if (index > 0) {
+            index -= 1;
+        }
     }
     return index;
 }
@@ -9074,6 +9629,19 @@ function getRect(el) {
     };
 }
 exports.getRect = getRect;
+/**
+ * Find the closest scroll wrapper, which has `overflow: auto / scroll` set.
+ * Note that this method may cause reflow.
+ */
+function getClosestScrollWrapper(el) {
+    while (el
+        && el.scrollWidth <= el.clientWidth
+        && el.scrollHeight <= el.clientHeight) {
+        el = el.parentElement;
+    }
+    return el;
+}
+exports.getClosestScrollWrapper = getClosestScrollWrapper;
 
 
 /***/ }),
@@ -9354,6 +9922,7 @@ var transition_1 = __webpack_require__(/*! ./internals/transition */ "../flit/ou
 Object.defineProperty(exports, "defineTransion", { enumerable: true, get: function () { return transition_1.defineTransion; } });
 Object.defineProperty(exports, "getCSSEasingValue", { enumerable: true, get: function () { return transition_1.getCSSEasingValue; } });
 Object.defineProperty(exports, "Transition", { enumerable: true, get: function () { return transition_1.Transition; } });
+Object.defineProperty(exports, "isPlayingTransition", { enumerable: true, get: function () { return transition_1.isPlayingTransition; } });
 Object.defineProperty(exports, "clearTransition", { enumerable: true, get: function () { return transition_1.clearTransition; } });
 var updatable_options_1 = __webpack_require__(/*! ./internals/updatable-options */ "../flit/out/internals/updatable-options.js");
 Object.defineProperty(exports, "UpdatableOptions", { enumerable: true, get: function () { return updatable_options_1.UpdatableOptions; } });
@@ -9366,9 +9935,10 @@ Object.defineProperty(exports, "watchOnce", { enumerable: true, get: function ()
 Object.defineProperty(exports, "watchUntil", { enumerable: true, get: function () { return watchers_1.watchUntil; } });
 Object.defineProperty(exports, "watchImmediately", { enumerable: true, get: function () { return watchers_1.watchImmediately; } });
 var queue_1 = __webpack_require__(/*! ./queue */ "../flit/out/queue/index.js");
-Object.defineProperty(exports, "enqueueUpdatable", { enumerable: true, get: function () { return queue_1.enqueueUpdatable; } });
 Object.defineProperty(exports, "onRenderComplete", { enumerable: true, get: function () { return queue_1.onRenderComplete; } });
-Object.defineProperty(exports, "renderComplete", { enumerable: true, get: function () { return queue_1.renderComplete; } });
+Object.defineProperty(exports, "untilRenderComplete", { enumerable: true, get: function () { return queue_1.untilRenderComplete; } });
+Object.defineProperty(exports, "enqueueUpdatableInOrder", { enumerable: true, get: function () { return queue_1.enqueueUpdatableInOrder; } });
+Object.defineProperty(exports, "UpdatableUpdateOrder", { enumerable: true, get: function () { return queue_1.UpdatableUpdateOrder; } });
 var update_1 = __webpack_require__(/*! ./globals/update */ "../flit/out/globals/update.js");
 Object.defineProperty(exports, "updateAllComponents", { enumerable: true, get: function () { return update_1.updateAllComponents; } });
 Object.defineProperty(exports, "updateAllGlobalWatchers", { enumerable: true, get: function () { return update_1.updateAllGlobalWatchers; } });
@@ -9679,6 +10249,106 @@ function wrapHandler(once, modifiers, el, name, handler, scope) {
             handler(e);
         }
     };
+}
+
+
+/***/ }),
+
+/***/ "../flit/out/internals/html-attributes-parser.js":
+/*!*******************************************************!*\
+  !*** ../flit/out/internals/html-attributes-parser.js ***!
+  \*******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.joinHTMLAttributes = void 0;
+/**
+ * Join two attribute strings into one.
+ * `class="..."` will be merged.
+ * normal `attr="..."` will be replaced.
+ * bindings like `:class="..."` will kept both.
+ */
+function joinHTMLAttributes(superAttributes, assignAttributes) {
+    let superAttributeList = parseToHTMLAttributes(superAttributes);
+    let assignAttributeList = parseToHTMLAttributes(assignAttributes);
+    let joind = joinParsedHTMLAttributes(superAttributeList, assignAttributeList);
+    return joind.map(attr => outputParsedAttribute(attr)).join('');
+}
+exports.joinHTMLAttributes = joinHTMLAttributes;
+/** Parse a html attributes to a attribute list. */
+function parseToHTMLAttributes(attributes) {
+    const attrRE = /([.:?@\w-]+)\s*=(\s*(?:".*?"|'.*?'|\S+)?)|\S+/g;
+    let results = [];
+    let match;
+    while (match = attrRE.exec(attributes)) {
+        // Name is only available for normal standardlize html attributes.
+        let name = /[\w-]/.test(match[1]) ? match[1] : null;
+        let value = name && match[2] ? match[2] : null;
+        results.push({
+            text: match[0],
+            name,
+            value,
+        });
+    }
+    return results;
+}
+/** Parse a html attributes to a list. */
+function joinParsedHTMLAttributes(superAttributeList, assignAttributeList) {
+    for (let item of assignAttributeList) {
+        if (item.name === 'class' || item.name === 'style') {
+            let exist = superAttributeList.find(superAttr => superAttr.name === item.name);
+            if (exist) {
+                exist.value = joinAttributeValues(exist.value, item.value);
+            }
+            else {
+                superAttributeList.push(item);
+            }
+        }
+        else if (item.name) {
+            let exist = superAttributeList.find(superAttr => superAttr.name === item.name);
+            if (exist) {
+                exist.value = item.value;
+            }
+            else {
+                superAttributeList.push(item);
+            }
+        }
+        else {
+            superAttributeList.push(item);
+        }
+    }
+    return superAttributeList;
+}
+/** Join two attribute values. */
+function joinAttributeValues(superValue, assignValue) {
+    if (!assignValue) {
+        return '';
+    }
+    if (!superValue) {
+        superValue = '';
+    }
+    if (!/['"]$/.test(superValue)) {
+        superValue = '"' + superValue + '"';
+    }
+    assignValue = assignValue.replace(/^['"]|['"]$/g, '');
+    return superValue.slice(0, -1) + ' ' + assignValue + superValue.slice(-1);
+}
+/** Output one parsed attribute to an attribute string. */
+function outputParsedAttribute(attr) {
+    if (attr.name) {
+        if (attr.value) {
+            return ' ' + attr.name + '=' + attr.value;
+        }
+        else {
+            return ' ' + attr.name;
+        }
+    }
+    else {
+        return ' ' + attr.text;
+    }
 }
 
 
@@ -9995,46 +10665,34 @@ exports.NodeAnchor = NodeAnchor;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NodeRange = void 0;
+exports.ContainerRange = exports.NodeRange = void 0;
 /**
  * A node range represents a range of nodes from it's start and end position,
  * Such that we can extract nodes in the whole range and make a fragment any time,
  * no matter nodes inside was moved or removed, or insert more.
  */
 class NodeRange {
-    constructor(container) {
+    constructor(fragment) {
         /** Parent to contains all the nodes. */
-        this.container = null;
-        /** Fixed start node of the range. */
-        this.startNode = null;
-        this.container = container;
-        // No need to worry about the last node, it's a fixed element, even a hole - comment node.
-        // Because we always follows the rule in NodeAnchor: Insert more nodes before or in append postion.
-        this.endNode = container.lastChild;
-    }
-    /** Get or create `startNode`. */
-    getStartNode() {
-        if (this.startNode) {
-            return this.startNode;
-        }
-        let startNode = this.container.firstChild;
-        if (!startNode) {
-            return null;
-        }
-        // `startNode` should always ahead of any other nodes inside the template or as rest slot element,
-        // But if first node is a hole - comment node, which will insert nodes before it,
-        // extracting as a fragment will break this relationship.
-        // So here prepend a new comment node as `startNode`.
-        if (startNode.nodeType === 8) {
+        this.fragment = null;
+        this.fragment = fragment;
+        // Fragment hould include at least one node, so it's position can be tracked.
+        // Because startNode should always before any other nodes inside the template or as rest slot lement,
+        // So if starts with a hole - comment node, which will insert nodes before it,
+        // we need to prepend a comment node as `startNode`.
+        let startNode = fragment.firstChild;
+        if (!startNode || startNode.nodeType === 8) {
             startNode = document.createComment('');
-            this.container.prepend(startNode);
+            fragment.prepend(startNode);
         }
         this.startNode = startNode;
-        return startNode;
+        // No need to worry about the last node, it's a fixed element, even for a hole - it's a comment node.
+        // Because we always follows the rule in NodeAnchor: Insert more nodes before or in append postion.
+        this.endNode = fragment.lastChild;
     }
     /** Get current container, may return `null`. */
-    getCurrentContainer() {
-        return this.container;
+    getCurrentFragment() {
+        return this.fragment;
     }
     /**
      * Extract all nodes into a fragment.
@@ -10043,19 +10701,15 @@ class NodeRange {
      */
     extractToFragment() {
         let fragment;
-        // Ensure `startNode` because will be inserted.
-        if (!this.startNode) {
-            this.getStartNode();
-        }
-        if (this.container instanceof DocumentFragment) {
-            fragment = this.container;
+        if (this.fragment instanceof DocumentFragment) {
+            fragment = this.fragment;
         }
         else {
             fragment = document.createDocumentFragment();
             fragment.append(...this.getNodes());
         }
         // Breaks the fragment-child relationship.
-        this.container = null;
+        this.fragment = null;
         return fragment;
     }
     /**
@@ -10063,12 +10717,12 @@ class NodeRange {
      * and cache into a new fragment in order to use them later.
      */
     movesOut() {
-        this.container = this.extractToFragment();
+        this.fragment = this.extractToFragment();
     }
     /** Get all the nodes in the range. */
     getNodes() {
         let nodes = [];
-        let node = this.getStartNode();
+        let node = this.startNode;
         while (node) {
             nodes.push(node);
             if (node === this.endNode) {
@@ -10080,7 +10734,7 @@ class NodeRange {
     }
     /** Get first element in range. */
     getFirstElement() {
-        let node = this.getStartNode();
+        let node = this.startNode;
         while (node) {
             if (node.nodeType === 1) {
                 return node;
@@ -10094,13 +10748,11 @@ class NodeRange {
     }
     /** Insert all the nodes of specified range before start node of current range. */
     before(range) {
-        var _a;
-        (_a = this.getStartNode()) === null || _a === void 0 ? void 0 : _a.before(range.extractToFragment());
+        this.startNode.before(range.extractToFragment());
     }
     /** Replace all the nodes in the range with the nodes of specified range. */
     replaceWith(range) {
-        var _a;
-        (_a = this.getStartNode()) === null || _a === void 0 ? void 0 : _a.before(range.extractToFragment());
+        this.startNode.before(range.extractToFragment());
         this.remove();
     }
     /**
@@ -10112,6 +10764,44 @@ class NodeRange {
     }
 }
 exports.NodeRange = NodeRange;
+/** Compare to `NodeRange`, it only marks end node. */
+class ContainerRange {
+    constructor(container) {
+        this.container = container;
+        this.endNode = container.lastChild;
+    }
+    /**
+     * Extract all nodes into a fragment.
+     * You must insert the extracted fragment into a container soon.
+     * Used to get just parsed fragment, or reuse template nodes.
+     */
+    extractToFragment() {
+        let fragment = document.createDocumentFragment();
+        fragment.append(...this.getNodes());
+        return fragment;
+    }
+    /** Get all the nodes in the range. */
+    getNodes() {
+        let nodes = [];
+        let node = this.container.firstChild;
+        while (node) {
+            nodes.push(node);
+            if (node === this.endNode) {
+                break;
+            }
+            node = node.nextSibling;
+        }
+        return nodes;
+    }
+    /**
+     * Remove all the nodes in range from parent container.
+     * Call this means you will never reuse nodes in the range.
+     */
+    remove() {
+        this.getNodes().forEach(node => node.remove());
+    }
+}
+exports.ContainerRange = ContainerRange;
 
 
 /***/ }),
@@ -10313,7 +11003,7 @@ function scopeTagSelector(name, comName) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.clearTransition = exports.Transition = exports.defineTransion = exports.getCSSEasingValue = void 0;
+exports.clearTransition = exports.isPlayingTransition = exports.Transition = exports.defineTransion = exports.getCSSEasingValue = void 0;
 const dom_event_1 = __webpack_require__(/*! ./dom-event */ "../flit/out/internals/dom-event.js");
 const queue_1 = __webpack_require__(/*! ../queue */ "../flit/out/queue/index.js");
 /** Default animation duration, plays transition for millseconds according to this property by default. */
@@ -10384,6 +11074,7 @@ const CSS_PROPERTIES = {
 /**
  * Get `cubic-bezier(...)` as CSS easing from easing name.
  * @param easing The extended easing name.
+ * @returns CSS easing codes like `line` or `cubic-bezier(...)`.
  */
 function getCSSEasingValue(easing) {
     return CUBIC_BEZIER_EASINGS.hasOwnProperty(easing)
@@ -10391,7 +11082,11 @@ function getCSSEasingValue(easing) {
         : 'linear';
 }
 exports.getCSSEasingValue = getCSSEasingValue;
-/** Define a JS transiton and process all transition details internally. */
+/**
+ * Define a JS transiton and process all transition details internally.
+ * @param name Transition name, must be unique.
+ * @param TransitionConstructor A `Transition` class.
+ */
 function defineTransion(name, TransitionConstructor) {
     if (DefinedJSTransitions.has(name)) {
         console.warn(`You are trying to overwrite transition definition "${name}"`);
@@ -10443,19 +11138,20 @@ class Transition {
     leave() {
         return new Promise(resolve => {
             this.clean();
+            let el = this.el;
             let direction = this.options.direction;
             let willPlay = direction === 'leave' || direction === 'both' || direction === undefined;
             if (!willPlay) {
                 resolve(true);
                 return;
             }
-            let el = this.el;
+            // If mouse hover trigger element, it's related popup becomes visible.
+            el.style.pointerEvents = 'none';
             let onLeaved = (finish) => {
-                el.style.pointerEvents = '';
                 ElementTransitionCache.delete(this.el);
+                el.style.pointerEvents = '';
                 resolve(finish);
             };
-            el.style.pointerEvents = 'none';
             if (this.options.properties) {
                 this.cssLeave(onLeaved);
             }
@@ -10563,12 +11259,10 @@ class Transition {
         let duration = (transitionDuration || animationDuration) * 1000;
         let onTransitionEnd = () => {
             clearTimeout(timeoutId);
-            el.style.pointerEvents = '';
             onEnd(true);
         };
         let onTimeout = () => {
             dom_event_1.off(el, eventName, onTransitionEnd);
-            el.style.pointerEvents = '';
             onEnd(true);
         };
         let timeoutId = setTimeout(onTimeout, duration + 50);
@@ -10587,7 +11281,18 @@ class Transition {
     }
 }
 exports.Transition = Transition;
-/** Clear the transition that is running in the element. */
+/**
+ * Checks whether `el` is playing a transition.
+ * @param el The element at which to check whether playing transition.
+ */
+function isPlayingTransition(el) {
+    return ElementTransitionCache.has(el);
+}
+exports.isPlayingTransition = isPlayingTransition;
+/**
+ * Clear the transition that is running in the element.
+ * @param el The element at which to clear transition.
+ */
 function clearTransition(el) {
     if (ElementTransitionCache.has(el)) {
         ElementTransitionCache.get(el).clean();
@@ -11030,14 +11735,18 @@ exports.observeGetting = void 0;
  *
  * `o = {get p(){...}}`
  * Uses `observeGetting(o, 'p')` instead of `o.p`.
+ *
+ * @param object The source object to get property at.
+ * @param key The property key in object.
+ * @returns Value of `object[key]`.
  */
-function observeGetting(object, getterProperty) {
-    let descriptor = getPropertyDescriptor(object, getterProperty);
+function observeGetting(object, key) {
+    let descriptor = getPropertyDescriptor(object, key);
     if (descriptor && descriptor.get) {
         return descriptor.get.call(object);
     }
     else {
-        return object[getterProperty];
+        return object[key];
     }
 }
 exports.observeGetting = observeGetting;
@@ -11188,6 +11897,9 @@ const originalToString = Object.prototype.toString;
  *
  * Normally you don't need to call this method, properties of components will be observed automatically.
  * But once an object was observed, it can't be revoked.
+ *
+ * @param value The object to be observed, it can also an observed object, will not observe it for twice.
+ * @returns The observed object, it's properties changes will be watched.
  */
 function observe(value) {
     if (value && typeof value === 'object') {
@@ -11259,17 +11971,19 @@ exports.addTargetAndProxy = addTargetAndProxy;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdatableQueue = exports.UpdatableOrder = void 0;
+exports.UpdatableQueue = exports.UpdatableUpdateOrder = void 0;
 const mini_heap_1 = __webpack_require__(/*! ../../helpers/mini-heap */ "../flit/out/helpers/mini-heap.js");
-var UpdatableOrder;
-(function (UpdatableOrder) {
+var UpdatableUpdateOrder;
+(function (UpdatableUpdateOrder) {
     /** Update firstly. */
-    UpdatableOrder[UpdatableOrder["Watcher"] = 0] = "Watcher";
+    UpdatableUpdateOrder[UpdatableUpdateOrder["Watcher"] = 0] = "Watcher";
     /** Update in second order. */
-    UpdatableOrder[UpdatableOrder["Component"] = 1] = "Component";
+    UpdatableUpdateOrder[UpdatableUpdateOrder["Component"] = 1] = "Component";
+    /** Update directive like `repeat` or `liveRepeat`. */
+    UpdatableUpdateOrder[UpdatableUpdateOrder["Directive"] = 2] = "Directive";
     /** Update at last. */
-    UpdatableOrder[UpdatableOrder["Otherwise"] = 2] = "Otherwise";
-})(UpdatableOrder = exports.UpdatableOrder || (exports.UpdatableOrder = {}));
+    UpdatableUpdateOrder[UpdatableUpdateOrder["Otherwise"] = 3] = "Otherwise";
+})(UpdatableUpdateOrder = exports.UpdatableUpdateOrder || (exports.UpdatableUpdateOrder = {}));
 /** Caches updatable items, get then in the order of `context, order`. */
 class UpdatableQueue {
     constructor() {
@@ -11383,9 +12097,10 @@ exports.UpdatableValidator = UpdatableValidator;
 Object.defineProperty(exports, "__esModule", { value: true });
 var queue_1 = __webpack_require__(/*! ./queue */ "../flit/out/queue/queue.js");
 Object.defineProperty(exports, "enqueueUpdatableInOrder", { enumerable: true, get: function () { return queue_1.enqueueUpdatableInOrder; } });
-Object.defineProperty(exports, "enqueueUpdatable", { enumerable: true, get: function () { return queue_1.enqueueUpdatable; } });
 Object.defineProperty(exports, "onRenderComplete", { enumerable: true, get: function () { return queue_1.onRenderComplete; } });
-Object.defineProperty(exports, "renderComplete", { enumerable: true, get: function () { return queue_1.renderComplete; } });
+Object.defineProperty(exports, "untilRenderComplete", { enumerable: true, get: function () { return queue_1.untilRenderComplete; } });
+var updatable_queue_1 = __webpack_require__(/*! ./helpers/updatable-queue */ "../flit/out/queue/helpers/updatable-queue.js");
+Object.defineProperty(exports, "UpdatableUpdateOrder", { enumerable: true, get: function () { return updatable_queue_1.UpdatableUpdateOrder; } });
 
 
 /***/ }),
@@ -11400,7 +12115,7 @@ Object.defineProperty(exports, "renderComplete", { enumerable: true, get: functi
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.renderComplete = exports.onRenderComplete = exports.enqueueUpdatable = exports.enqueueUpdatableInOrder = void 0;
+exports.untilRenderComplete = exports.onRenderComplete = exports.enqueueUpdatableInOrder = void 0;
 const updatable_queue_1 = __webpack_require__(/*! ./helpers/updatable-queue */ "../flit/out/queue/helpers/updatable-queue.js");
 const updatable_validator_1 = __webpack_require__(/*! ./helpers/updatable-validator */ "../flit/out/queue/helpers/updatable-validator.js");
 /*
@@ -11454,14 +12169,11 @@ function enqueueUpdatableInOrder(upt, context, order) {
     enqueueUpdateIfNot();
 }
 exports.enqueueUpdatableInOrder = enqueueUpdatableInOrder;
-/** Enqueue updatable things to queue, will be updated after watchers and components in same context updated. */
-function enqueueUpdatable(upt, context) {
-    enqueueUpdatableInOrder(upt, context, updatable_queue_1.UpdatableOrder.Otherwise);
-}
-exports.enqueueUpdatable = enqueueUpdatable;
 /**
  * Calls `callback` after all the components and watchers updated and rendered in next animation frame.
- * Note that it was called before `renderComplete`.
+ * Called before `untilRenderComplete` but normally there is no difference.
+ * Compare to `untilRenderComplete`, `onRenderComplete` is normally used in internal implementations.
+ * @param callback callback to be called after render completed.
  */
 function onRenderComplete(callback) {
     renderCompleteCallbacks.push(callback);
@@ -11470,14 +12182,16 @@ function onRenderComplete(callback) {
 exports.onRenderComplete = onRenderComplete;
 /**
  * Returns a promise which will be resolved after all the components and watchers updated and rendered in next animation frame.
- * Note that it was called after `onRenderComplete`.
+ * Called after `onRenderComplete` but normally there is no difference.
+ * Compare to `onRenderComplete`, `untilRenderComplete` is normally used in app implementations.
+ * @return A promise to be resolved after render completed.
  */
-function renderComplete() {
+function untilRenderComplete() {
     return new Promise(resolve => {
         onRenderComplete(resolve);
     });
 }
-exports.renderComplete = renderComplete;
+exports.untilRenderComplete = untilRenderComplete;
 /** Enqueue a update task if not have. */
 function enqueueUpdateIfNot() {
     // Why doesn't use `Promise.resolve().then` to start a micro stask normally:
@@ -11508,9 +12222,10 @@ async function update() {
                 catch (err) {
                     console.error(err);
                 }
+                // Wait for more components connect.
+                // Otherwise it wait for removed elements got disconnected.
+                await Promise.resolve();
             } while (!queue.isEmpty());
-            // Wait for more components connect.
-            await Promise.resolve();
         }
         let callbackList = renderCompleteCallbacks;
         renderCompleteCallbacks = [];
@@ -11620,12 +12335,13 @@ class FixedBindingPart {
     update(value) {
         if (!this.binding) {
             let result = new bindings_1.BindingResult(this.bindingName, value);
-            this.binding = bindings_1.createBindingFromResult(this.el, this.context, result, this.bindingModifiers);
+            this.binding = bindings_1.BindingReferences.createFromResult(this.el, this.context, result, this.bindingModifiers);
         }
         else {
             this.binding.update(value);
         }
     }
+    remove() { }
 }
 exports.FixedBindingPart = FixedBindingPart;
 /**
@@ -11645,9 +12361,11 @@ class DynamicBindingPart {
                 this.binding.update(...value.args);
             }
             else {
-                this.removeCurrentBinding();
+                if (this.binding) {
+                    this.removeCurrentBinding();
+                }
                 this.name = value.name;
-                this.binding = bindings_1.createBindingFromResult(this.el, this.context, value);
+                this.binding = bindings_1.BindingReferences.createFromResult(this.el, this.context, value);
             }
         }
         else {
@@ -11658,6 +12376,7 @@ class DynamicBindingPart {
         if (this.binding) {
             this.name = null;
             this.binding.remove();
+            bindings_1.BindingReferences.removeReference(this.binding);
             this.binding = null;
         }
     }
@@ -11836,6 +12555,7 @@ class NodePart {
         }
         else if (contentType === ContentType.Directive) {
             this.content.remove();
+            directives_1.DirectiveReferences.removeReference(this.content);
         }
         else if (contentType === ContentType.TemplateArray) {
             for (let template of this.content) {
@@ -11874,7 +12594,7 @@ class NodePart {
             if (oldDirective) {
                 oldDirective.remove();
             }
-            this.content = directives_1.createDirectiveFromResult(this.anchor, this.context, result);
+            this.content = directives_1.DirectiveReferences.createFromResult(this.anchor, this.context, result);
         }
     }
     updateTemplateArray(results) {
@@ -11882,7 +12602,8 @@ class NodePart {
         if (!templates) {
             templates = this.content = [];
         }
-        // Updates sharing part.
+        results = results.filter(result => result instanceof template_result_1.TemplateResult);
+        // Updates shared part.
         for (let i = 0; i < Math.min(templates.length, results.length); i++) {
             let oldTemplate = templates[i];
             let result = results[i];
@@ -11904,7 +12625,8 @@ class NodePart {
         // Creates more.
         else {
             for (let i = templates.length; i < results.length; i++) {
-                let template = new template_1.Template(results[i], this.context);
+                let result = results[i];
+                let template = new template_1.Template(result, this.context);
                 this.anchor.insert(template.extractToFragment());
                 templates.push(template);
             }
@@ -11918,8 +12640,9 @@ class NodePart {
                 textNode.textContent = text;
             }
             else {
-                textNode = this.content = document.createTextNode(text);
+                textNode = document.createTextNode(text);
                 this.anchor.insert(textNode);
+                this.content = textNode;
             }
         }
         else {
@@ -11927,9 +12650,6 @@ class NodePart {
                 textNode.textContent = '';
             }
         }
-    }
-    remove() {
-        this.clearOldContent();
     }
 }
 exports.NodePart = NodePart;
@@ -12024,7 +12744,6 @@ class PropertyPart {
             this.el[this.name] = value;
         }
     }
-    remove() { }
 }
 exports.PropertyPart = PropertyPart;
 
@@ -12086,6 +12805,7 @@ exports.SlotPart = SlotPart;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.extendsTemplateResult = void 0;
+const html_attributes_parser_1 = __webpack_require__(/*! ../internals/html-attributes-parser */ "../flit/out/internals/html-attributes-parser.js");
 const html_token_parser_1 = __webpack_require__(/*! ../internals/html-token-parser */ "../flit/out/internals/html-token-parser.js");
 const template_result_1 = __webpack_require__(/*! ./template-result */ "../flit/out/template/template-result.js");
 const utils_1 = __webpack_require__(/*! ./utils */ "../flit/out/template/utils.js");
@@ -12126,7 +12846,8 @@ function parseTemplateResultForExtending(string, superString) {
     let tokens = html_token_parser_1.parseToHTMLTokens(string);
     let { attributes, slots, restTokens } = parseToRootAttributesAndSlots(tokens);
     let superTokens = wrapWithTemplateTokens(superString);
-    assignRootAttributesAndSlotsTo(superTokens, attributes, slots, restTokens);
+    assignRootAttributes(superTokens, attributes);
+    assignRootSlots(superTokens, slots, restTokens);
     let stringsAndValueIndices = utils_1.splitByOrderMarkers(html_token_parser_1.joinHTMLTokens(superTokens));
     let cacheForSuper = TemplateExtendsCache.get(string);
     if (!cacheForSuper) {
@@ -12191,9 +12912,12 @@ function wrapWithTemplateTokens(string) {
     }
     return tokens;
 }
+/** Assign attributes of root element to super tokens */
+function assignRootAttributes(superTokens, assignAttributes) {
+    superTokens[0].attributes = html_attributes_parser_1.joinHTMLAttributes(superTokens[0].attributes, assignAttributes);
+}
 /** Assign attributes of root element and all slots to a html token list. */
-function assignRootAttributesAndSlotsTo(tokens, attributes, slots, restTokens) {
-    tokens[0].attributes += attributes;
+function assignRootSlots(tokens, slots, restTokens) {
     if (Object.keys(slots).length > 0 || restTokens.length > 0) {
         for (let i = 0; i < tokens.length; i++) {
             let token = tokens[i];
@@ -12607,17 +13331,35 @@ function cloneParsedResult(sharedResult, el) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TemplateResult = exports.css = exports.svg = exports.html = void 0;
 const template_extends_1 = __webpack_require__(/*! ./template-extends */ "../flit/out/template/template-extends.js");
-/** Returns a HTML template literal, can be used to render or update a component. */
+/**
+ * Returns a HTML template literal, can be used to render or update a component.
+ * Use it like:
+ * ```ts
+ * html`...`
+ * ```
+ */
 function html(strings, ...values) {
     return new TemplateResult('html', strings, values);
 }
 exports.html = html;
-/** Returns a SVG template literal, can be used to render or update a component. */
+/**
+ * Returns a SVG template literal, can be used to render or update a component.
+ * Use it like:
+ * ```ts
+ * svg`...`
+ * ```
+ */
 function svg(strings, ...values) {
     return new TemplateResult('svg', strings, values);
 }
 exports.svg = svg;
-/** Returns a CSS template literal, can be used as component's static style property. */
+/**
+ * Returns a CSS template literal, can be used as component's static style property.
+ * Use it like:
+ * ```ts
+ * css`...`
+ * ```
+ */
 function css(strings, ...values) {
     return new TemplateResult('css', strings, values);
 }
@@ -12652,6 +13394,18 @@ class TemplateResult {
             text += this.strings[i + 1];
         }
         return text;
+    }
+    /** Clone current template result and returns a new one. */
+    clone() {
+        return new TemplateResult(this.type, [...this.strings], [...this.values]);
+    }
+    /** Concat with another template result, and returns a new one. */
+    concat(result) {
+        let strings = [...this.strings];
+        strings[strings.length - 1] += result.strings[0];
+        strings.push(...result.strings.slice(1));
+        let values = [...this.values];
+        return new TemplateResult(this.type, strings, values);
     }
     /**
      * A template result can extend another:
@@ -12804,8 +13558,8 @@ class Template {
      * Elements are not connected but will be pre rendered.
      */
     preRender() {
-        let fragment = this.range.getCurrentContainer();
-        if (!fragment || fragment instanceof DocumentFragment) {
+        let fragment = this.range.getCurrentFragment();
+        if (!fragment || !(fragment instanceof DocumentFragment)) {
             throw new Error(`Can only prerender contents in a fragment!`);
         }
         let walker = document.createTreeWalker(fragment, NodeFilter.SHOW_ELEMENT, null);
@@ -12867,7 +13621,10 @@ class Template {
     replaceWith(template) {
         this.range.replaceWith(template.range);
     }
-    /** Removes all the nodes in the template. */
+    /**
+     * Removes all the nodes in the template.
+     * Note the child template will not call `remove`.
+     */
     remove() {
         this.range.remove();
     }
@@ -12990,7 +13747,11 @@ exports.updateAllGlobalWatchers = exports.watchUntil = exports.watchOnce = expor
 const watcher_group_1 = __webpack_require__(/*! ./watcher-group */ "../flit/out/watchers/watcher-group.js");
 /** Global watcher group to watch scattered things that not belongs to a component. */
 exports.GlobalWatcherGroup = new watcher_group_1.WatcherGroup(null);
-/** Watchs returned value of `fn` and calls `callback` with this value as parameter if the value changed. */
+/**
+ * Watchs returned value of `fn` and calls `callback` with this value as parameter if the value changed.
+ * @param fn The watched function.
+ * @param callback Get called after returned value of `fn` may changed.
+ */
 function watch(fn, callback) {
     return exports.GlobalWatcherGroup.watch(fn, callback);
 }
@@ -12998,6 +13759,8 @@ exports.watch = watch;
 /**
  * Watchs returned value of `fn` and calls `callback` with this value as parameter if the value changed.
  * Will call `callback` immediately.
+ * @param fn The watched function.
+ * @param callback Get called after returned value of `fn` may changed.
  */
 function watchImmediately(fn, callback) {
     return exports.GlobalWatcherGroup.watchImmediately(fn, callback);
@@ -13006,12 +13769,18 @@ exports.watchImmediately = watchImmediately;
 /**
  * Watchs returned value of `fn` and calls `callback` with this value as parameter if the value changed.
  * Only calls `callback` for once.
+ * @param fn The watched function.
+ * @param callback Get called after returned value of `fn` may changed.
  */
 function watchOnce(fn, callback) {
     return exports.GlobalWatcherGroup.watchOnce(fn, callback);
 }
 exports.watchOnce = watchOnce;
-/** Watchs returneded values of `fn` and calls `callback` if this value becomes true like. */
+/**
+ * Watchs returneded values of `fn` and calls `callback` if this value becomes true like.
+ * @param fn The watched function.
+ * @param callback Get called after returned value of `fn` may changed.
+ */
 function watchUntil(fn, callback) {
     return exports.GlobalWatcherGroup.watchUntil(fn, callback);
 }
@@ -13078,27 +13847,43 @@ class WatcherGroup {
     constructor(context) {
         /** All watchers. */
         this.watchers = new Set();
+        /** Whether connected. */
+        this.connected = true;
         this.context = context;
     }
-    /** Add a watcher to current group. */
+    /** Add a watcher to current group, and keeps it's connected state same with current group. */
     add(watcher) {
+        if (this.connected) {
+            watcher.connect();
+        }
+        else {
+            watcher.disconnect();
+        }
         this.watchers.add(watcher);
     }
-    /** Disconnect a watcher, and deleted it from current group. */
+    /** Deleted watcher from current group, will always disconnect the watcher. */
     delete(watcher) {
-        watcher.disconnect();
+        if (this.connected) {
+            watcher.disconnect();
+        }
         this.watchers.delete(watcher);
     }
     /** Connect all the watchers in current group. */
     connect() {
-        for (let watcher of this.watchers) {
-            watcher.connect();
+        if (!this.connected) {
+            for (let watcher of this.watchers) {
+                watcher.connect();
+            }
+            this.connected = true;
         }
     }
     /** Disonnect all the watchers in current group. */
     disconnect() {
-        for (let watcher of this.watchers) {
-            watcher.disconnect();
+        if (this.connected) {
+            for (let watcher of this.watchers) {
+                watcher.disconnect();
+            }
+            this.connected = false;
         }
     }
     /** Update all the watchers in current group. */
@@ -13120,7 +13905,7 @@ class WatcherGroup {
     /** Create a new watcher and add to current group, calls `callback` immediately. */
     watchImmediately(fn, callback) {
         let watcher = new watcher_1.Watcher(fn, callback, this.context);
-        callback.call(this, watcher.value);
+        callback.call(this, watcher.value, undefined);
         this.add(watcher);
         return () => {
             this.delete(watcher);
@@ -13128,8 +13913,8 @@ class WatcherGroup {
     }
     /** Create a new watcher and add to current group, only calls `callback` for once. */
     watchOnce(fn, callback) {
-        let wrappedCallback = (value) => {
-            callback(value);
+        let wrappedCallback = (newValue, oldValue) => {
+            callback(newValue, oldValue);
             unwatch();
         };
         let watcher = new watcher_1.Watcher(fn, wrappedCallback, this.context);
@@ -13141,9 +13926,9 @@ class WatcherGroup {
     }
     /** Create a new watcher and add to current group, calls `callback` only when returned value of `fn` be true like. */
     watchUntil(fn, callback) {
-        let wrappedCallback = (value) => {
-            if (value) {
-                callback(value);
+        let wrappedCallback = (newValue) => {
+            if (newValue) {
+                callback(newValue);
                 unwatch();
             }
         };
@@ -13209,7 +13994,7 @@ class Watcher {
         if (!this.connected) {
             return;
         }
-        queue_1.enqueueUpdatableInOrder(this, this.context, updatable_queue_1.UpdatableOrder.Watcher);
+        queue_1.enqueueUpdatableInOrder(this, this.context, updatable_queue_1.UpdatableUpdateOrder.Watcher);
     }
     /** Update current value immediately, also keeps consitant with the same method in `Component`. */
     __updateImmediately() {
@@ -13220,7 +14005,8 @@ class Watcher {
         let newValue = this.getNewValue();
         // Data may change, doesn't validate object.
         if (newValue !== this.value || typeof newValue === 'object') {
-            this.callback.call(null, this.value = newValue);
+            let oldValue = this.value;
+            this.callback.call(null, this.value = newValue, oldValue);
         }
     }
     /** Gives a readable info about the watcher. */
@@ -13229,13 +14015,17 @@ class Watcher {
     }
     /** Connect and update to collect new dependencies. */
     connect() {
-        this.connected = true;
-        this.update();
+        if (!this.connected) {
+            this.connected = true;
+            this.update();
+        }
     }
     /** Disconnect current watcher with it's denpendencies. */
     disconnect() {
-        this.connected = false;
-        observer_1.clearDependenciesOf(this);
+        if (this.connected) {
+            this.connected = false;
+            observer_1.clearDependenciesOf(this);
+        }
     }
 }
 exports.Watcher = Watcher;
@@ -13248,7 +14038,7 @@ class LazyWatcher extends Watcher {
         if (!this.connected) {
             return;
         }
-        queue_1.enqueueUpdatable(this, this.context);
+        queue_1.enqueueUpdatableInOrder(this, this.context, updatable_queue_1.UpdatableUpdateOrder.Otherwise);
     }
 }
 exports.LazyWatcher = LazyWatcher;
@@ -13268,9 +14058,9 @@ exports.LazyWatcher = LazyWatcher;
 Object.defineProperty(exports, "__esModule", { value: true });
 const ff = __webpack_require__(/*! @pucelle/ff */ "../ff/out/index.js");
 const flit = __webpack_require__(/*! @pucelle/flit */ "../flit/out/index.js");
-const flitUI = __webpack_require__(/*! ../src */ "./src/index.ts");
+const flitUI = __webpack_require__(/*! ../src/index */ "./src/index.ts");
 const flit_1 = __webpack_require__(/*! @pucelle/flit */ "../flit/out/index.js");
-const src_1 = __webpack_require__(/*! ../src */ "./src/index.ts");
+const index_1 = __webpack_require__(/*! ../src/index */ "./src/index.ts");
 window.ff = ff;
 window.flit = flit;
 window.flitUI = flitUI;
@@ -13286,7 +14076,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
         this.rightData = flit_1.observe([4, 5, 6]);
     }
     render() {
-        let { lineHeight } = src_1.theme;
+        let { lineHeight } = index_1.theme;
         return flit_1.html `
 		<div class="wrapper">
 			<section class="theme">
@@ -13295,7 +14085,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				<f-row style="margin: 8px 0;">
 					<f-col .span="4">Mode</f-col>
 					<f-col .span="20">
-						<f-radiogroup .value="light" @@change=${(name) => src_1.theme.assignTheme(name)}>
+						<f-radiogroup .value="light" @@change=${(name) => index_1.theme.assignTheme(name)}>
 							<f-radio .value="light" style="margin-right: 20px;">Light</f-radio>
 							<f-radio .value="dark" style="margin-right: 20px;">Dark</f-radio>
 						</f-radiogroup>
@@ -13305,7 +14095,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				<f-row style="margin: 8px 0;">
 					<f-col .span="4">Size</f-col>
 					<f-col .span="20">
-						<f-radiogroup .value="medium" @@change=${(name) => src_1.theme.assignTheme(name)}>
+						<f-radiogroup .value="medium" @@change=${(name) => index_1.theme.assignTheme(name)}>
 							<f-radio .value="small" style="margin-right: 20px;">Small</f-radio>
 							<f-radio .value="medium" style="margin-right: 20px;">Medium</f-radio>
 							<f-radio .value="large" style="margin-right: 20px;">Large</f-radio>
@@ -13711,7 +14501,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Default</header>
-						<button ${src_1.popup(() => flit_1.html `
+						<button ${index_1.popup(() => flit_1.html `
 								<f-popover .title="Popover title">
 									This is Popover content.
 								</f-popover>
@@ -13720,7 +14510,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">With Close Button</header>
-						<button ${src_1.popup(() => flit_1.html `
+						<button ${index_1.popup(() => flit_1.html `
 								<f-popover .title="Popover title" .closable>
 									This is Popover content.
 								</f-popover>
@@ -13729,7 +14519,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">No Title</header>
-						<button ${src_1.popup(() => flit_1.html `
+						<button ${index_1.popup(() => flit_1.html `
 								<f-popover>
 									This is Popover content.
 								</f-popover>
@@ -13738,7 +14528,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">With actions</header>
-						<button ${src_1.popup(() => flit_1.html `
+						<button ${index_1.popup(() => flit_1.html `
 								<f-popover
 									:ref="popupWithActions"
 									.title="Popover title" 
@@ -13758,7 +14548,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
-						<button ${src_1.popup(() => flit_1.html `
+						<button ${index_1.popup(() => flit_1.html `
 								<f-menu>
 									<f-list .data=${range(1, 6).map(value => ({ value, text: 'Option ' + value }))} />
 								</f-menu>
@@ -13769,7 +14559,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 					</f-col>
 
 					<f-col .span="6">
-						<button ${src_1.popup(() => flit_1.html `
+						<button ${index_1.popup(() => flit_1.html `
 								<f-menu .title="Menu title">
 									<f-list .data=${range(1, 6).map(value => ({ value, text: 'Option ' + value }))} .selectable .selected=${[1]} />
 								</f-menu>
@@ -13788,19 +14578,19 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Default</header>
-						<button ${src_1.tooltip('Tooltip text', { type: 'default' })}>Hover for Tooltip</button>
+						<button ${index_1.tooltip('Tooltip text', { type: 'default' })}>Hover for Tooltip</button>
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Prompt</header>
-						<button ${src_1.tooltip('Add some items to your list by clicking this button.', { type: 'prompt' })}>Add Items</button>
+						<button ${index_1.tooltip('Add some items to your list by clicking this button.', { type: 'prompt' })}>Add Items</button>
 					</f-col>
 				</f-row>
 
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Error</header>
-						<button primary disabled ${src_1.tooltip('You can\'t submit, try resolve all mistakes then this tooltip will disappear.', { type: 'error' })}>Submit</button>
+						<button primary disabled ${index_1.tooltip('You can\'t submit, try resolve all mistakes then this tooltip will disappear.', { type: 'error' })}>Submit</button>
 					</f-col>
 				</f-row>
 			</section>
@@ -13812,28 +14602,28 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Info</header>
-						<button @click=${() => src_1.notification.info('Info notification content', { title: 'Info Notification' })}>
+						<button @click=${() => index_1.notification.info('Info notification content', { title: 'Info Notification' })}>
 							Show Info Notification
 						</button>
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Warn</header>
-						<button @click=${() => src_1.notification.warn('Warning notification content', { title: 'Warning Notification' })}>
+						<button @click=${() => index_1.notification.warn('Warning notification content', { title: 'Warning Notification' })}>
 							Show Warn Notification
 						</button>
 					</f-col>
 					
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Error</header>
-						<button @click=${() => src_1.notification.error('Error notification content', { title: 'Error Notification' })}>
+						<button @click=${() => index_1.notification.error('Error notification content', { title: 'Error Notification' })}>
 							Show Error Notification
 						</button>
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Success</header>
-						<button @click=${() => src_1.notification.success('Success notification content', { title: 'Success Notification' })}>
+						<button @click=${() => index_1.notification.success('Success notification content', { title: 'Success Notification' })}>
 							Show Success Notification
 						</button>
 					</f-col>
@@ -13842,7 +14632,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				<f-row style="margin: 32px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Without Title</header>
-						<button @click=${() => src_1.notification.success('Success notification content', {
+						<button @click=${() => index_1.notification.success('Success notification content', {
             title: 'Success Notification',
         })}>
 							Show Notification with title
@@ -13851,7 +14641,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">With List</header>
-						<button @click=${() => src_1.notification.warn('Warning notification content', {
+						<button @click=${() => index_1.notification.warn('Warning notification content', {
             title: 'Warning Notification',
             list: ['List Item 1', 'List Item 2']
         })}>
@@ -13861,7 +14651,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">With Actions</header>
-						<button @click=${() => src_1.notification.error('Error notification content', {
+						<button @click=${() => index_1.notification.error('Error notification content', {
             title: 'Error Notification',
             actions: [{ text: 'Try Again' }]
         })}>
@@ -13879,28 +14669,28 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				<f-row style="margin: 16px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Default</header>
-						<button @click=${() => src_1.dialog.show('This is dialog message.')}>
+						<button @click=${() => index_1.dialog.show('This is dialog message.')}>
 							Open Default Dialog
 						</button>
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">With Title</header>
-						<button @click=${() => src_1.dialog.show('This is dialog message.', { title: 'Dialog Title' })}>
+						<button @click=${() => index_1.dialog.show('This is dialog message.', { title: 'Dialog Title' })}>
 							Open Dialog with Title
 						</button>
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Confirm</header>
-						<button @click=${() => src_1.dialog.confirm('Are you sure you want to delete these items?', { title: 'Dialog Title' })}>
+						<button @click=${() => index_1.dialog.confirm('Are you sure you want to delete these items?', { title: 'Dialog Title' })}>
 							Open Confirm Dialog
 						</button>
 					</f-col>
 
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">Prompt</header>
-						<button @click=${() => src_1.dialog.prompt('Please input the name of your account:', {
+						<button @click=${() => index_1.dialog.prompt('Please input the name of your account:', {
             title: 'Dialog Title',
             placeholder: 'Name of your account',
             validator: (value) => { if (!value) {
@@ -13918,7 +14708,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				<f-row style="margin: 32px 0 8px 0;" .gutter="24">
 					<f-col .span="6">
 						<header style="margin-bottom: 8px;">With Third action</header>
-						<button @click=${() => src_1.dialog.confirm('You have unsaved data, are you sure you want to save your changes?', {
+						<button @click=${() => index_1.dialog.confirm('You have unsaved data, are you sure you want to save your changes?', {
             title: 'Dialog Title',
             actions: [
                 { text: 'Don\'t Save', third: true },
@@ -13934,7 +14724,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 						<header style="margin-bottom: 8px;">Customize</header>
 						<button @click=${() => {
             let input;
-            src_1.dialog.show(flit_1.html `
+            index_1.dialog.show(flit_1.html `
 										Please input the name of your account:
 										<f-input style="margin-top: 8px; width: 100%;"
 											.placeholder="Name of your account"
@@ -13965,7 +14755,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 						<button @click="${() => {
             let modal = flit_1.getRenderedAsComponent(flit_1.render(flit_1.html `
-								<f-modal style="width: ${src_1.theme.adjust(360)}px;" .title="Modal Title">
+								<f-modal style="width: ${index_1.theme.adjust(360)}px;" .title="Modal Title">
 									This is modal content
 								</f-modal>
 							`));
@@ -13980,7 +14770,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 						<button @click="${() => {
             let modal = flit_1.getRenderedAsComponent(flit_1.render(flit_1.html `
-								<f-modal style="width: ${src_1.theme.adjust(360)}px;" .title="Modal Title">
+								<f-modal style="width: ${index_1.theme.adjust(360)}px;" .title="Modal Title">
 									This is modal content
 									<button :slot="action" @click=${() => modal.hide()}>Cancel</button>
 									<button :slot="action" primary @click=${() => modal.hide()}>Save</button>
@@ -14001,7 +14791,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 
 				<f-table
 					.resizable
-					.store=${new src_1.Store({
+					.store=${new index_1.Store({
             data: range(1, 101).map(n => ({ id: n, value: Math.round(Math.random() * 100) })),
             key: 'id',
         })}
@@ -14040,7 +14830,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 					.resizable
 					.live
 					.renderCount="20"
-					.store=${new src_1.Store({
+					.store=${new index_1.Store({
             data: range(1, 1001).map(n => ({ id: n, value: Math.round(Math.random() * 100) })),
             key: 'id',
         })}
@@ -14108,8 +14898,8 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 			<section>
 				<h3>Drag & Drop</h3>
 
-				<div style="display: inline-flex; padding: 4px; background: ${src_1.theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center; height: 116px;"
-					${src_1.droppable((value, index) => {
+				<div style="display: inline-flex; padding: 4px; background: ${index_1.theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center; height: 116px;"
+					${index_1.droppable((value, index) => {
             ff.remove(this.leftData, value);
             ff.remove(this.rightData, value);
             if (index === -1) {
@@ -14122,15 +14912,15 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				>
 					${flit_1.repeat(this.leftData, (data, index) => flit_1.html `
 						<div style="width: 100px; margin: 4px;"
-							:style.background=${src_1.theme.backgroundColor.toMiddle(15).toString()}
-							${src_1.draggable(data, index)}
+							:style.background=${index_1.theme.backgroundColor.toMiddle(15).toString()}
+							${index_1.draggable(data, index)}
 						>${data}</div>
 					`)}
 				</div>
 				<br>
 
-				<div style="display: inline-flex; padding: 4px; margin-top: -8px; background: ${src_1.theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center; height: 116px;"
-					${src_1.droppable((value, index) => {
+				<div style="display: inline-flex; padding: 4px; margin-top: -8px; background: ${index_1.theme.backgroundColor.toMiddle(5)}; line-height: 100px; font-size: 60px; text-align: center; height: 116px;"
+					${index_1.droppable((value, index) => {
             ff.remove(this.leftData, value);
             ff.remove(this.rightData, value);
             if (index === -1) {
@@ -14143,8 +14933,8 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				>
 					${flit_1.repeat(this.rightData, (data, index) => flit_1.html `
 						<div style="width: 100px; margin: 4px;"
-							:style.background=${src_1.theme.backgroundColor.toMiddle(15).toString()}
-							${src_1.draggable(data, index)}
+							:style.background=${index_1.theme.backgroundColor.toMiddle(15).toString()}
+							${index_1.draggable(data, index)}
 						>${data}</div>
 					`)}
 				</div>
@@ -14155,10 +14945,10 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 				<h3>Resizer</h3>
 
 				<div style="position: relative; display: inline-flex; justify-content: center; line-height: 100px; font-size: 14px; text-align: center; width: 200px; height: 100px;"
-					:style.background=${src_1.theme.backgroundColor.toMiddle(5).toString()}
+					:style.background=${index_1.theme.backgroundColor.toMiddle(5).toString()}
 				>
 					Resizer on the Right
-					<f-resizer .position="right" .min=${200} .max=${600} style="background: ${src_1.theme.backgroundColor.toMiddle(15)}"></f-resizer>
+					<f-resizer .position="right" .min=${200} .max=${600} style="background: ${index_1.theme.backgroundColor.toMiddle(15)}"></f-resizer>
 				</div>
 				<br>
 			</section>
@@ -14167,7 +14957,7 @@ flit_1.define('flit-preview', class extends flit_1.Component {
 	`;
     }
 });
-flit_1.define('f-main-color-select', class extends src_1.Select {
+flit_1.define('f-main-color-select', class extends index_1.Select {
     constructor() {
         super(...arguments);
         this.value = '#3a6cf6';
@@ -14189,7 +14979,7 @@ flit_1.define('f-main-color-select', class extends src_1.Select {
     onReady() {
         super.onReady();
         this.on('change', (value) => {
-            src_1.theme.set('mainColor', value);
+            index_1.theme.set('mainColor', value);
         });
     }
 });
@@ -14200,7 +14990,7 @@ function range(start, end) {
     }
     return data;
 }
-class ExampleRemoteStore extends src_1.RemoteStore {
+class ExampleRemoteStore extends index_1.RemoteStore {
     constructor() {
         super({
             pageSize: 20,
@@ -14242,7 +15032,7 @@ class ContextMenuBinding {
     constructor(el, context) {
         this.popup = null;
         this.unwatchRect = null;
-        this.unkeepEl = null;
+        this.unlockEl = null;
         this.el = el;
         this.context = context;
         flit_1.on(this.el, 'contextmenu.prevent', this.showContextMenu, this);
@@ -14253,12 +15043,12 @@ class ContextMenuBinding {
     async showContextMenu(e) {
         this.renderPopup();
         let popup = this.popup;
-        await flit_1.renderComplete();
+        await flit_1.untilRenderComplete();
         // Align and get focus.
         ff_1.alignToEvent(popup.el, e);
         popup.el.focus();
         // Makesure mouse enter to submenu doesn't cause current contextmenu hidden.
-        this.unkeepEl = ff_1.MouseLeave.keep(this.el);
+        ff_1.MouseLeave.lock(this.el, popup.el);
         // Play enter transition.
         new flit_1.Transition(popup.el, { name: 'fade' }).enter();
         // Register events to show or hide.
@@ -14282,6 +15072,7 @@ class ContextMenuBinding {
     }
     hideContextMenu() {
         if (this.popup) {
+            ff_1.MouseLeave.unlock(this.el, this.popup.el);
             flit_1.off(document, 'mousedown', this.onDocMouseDown, this);
             flit_1.off(this.popup.el, 'click', this.hideContextMenu, this);
             new flit_1.Transition(this.popup.el, { name: 'fade' }).leave().then((finish) => {
@@ -14291,9 +15082,9 @@ class ContextMenuBinding {
             });
         }
         // Not keep visible, may hide immediately.
-        if (this.unkeepEl) {
-            this.unkeepEl();
-            this.unkeepEl = null;
+        if (this.unlockEl) {
+            this.unlockEl();
+            this.unlockEl = null;
         }
         if (this.unwatchRect) {
             this.unwatchRect();
@@ -14364,8 +15155,8 @@ class DraggableBinding {
         let startY = e.clientY;
         let onMouseMove = (e) => {
             if (!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) {
-                isDragging = true;
                 manager.startDragging(this);
+                isDragging = true;
             }
             if (isDragging) {
                 let moveX = e.clientX - startX;
@@ -14375,7 +15166,9 @@ class DraggableBinding {
         };
         let onMouseUp = async () => {
             flit_1.off(document, 'mousemove', onMouseMove);
-            manager.endDragging();
+            if (isDragging) {
+                manager.endDragging();
+            }
         };
         flit_1.on(document, 'mousemove', onMouseMove);
         flit_1.once(document, 'mouseup', onMouseUp);
@@ -14863,50 +15656,90 @@ class Mover {
 
 "use strict";
 
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GotoBinding = void 0;
+exports.getClosestRouter = exports.recirectTo = exports.RedirectToBinding = exports.goTo = exports.GotoBinding = void 0;
 const flit_1 = __webpack_require__(/*! @pucelle/flit */ "../flit/out/index.js");
+const popup_1 = __webpack_require__(/*! ../components/popup */ "./src/components/popup.ts");
 const router_1 = __webpack_require__(/*! ../components/router */ "./src/components/router.ts");
 /**
- * A `:goto` binding will goto a target hre after clicking binded element.
+ * A `:goto` binding will goto a target location path after clicking binded element.
  *
  * `:goto="relativeURL"`
  * `:goto=${relativeURL}`
  */
-let GotoBinding = class GotoBinding {
+class GotoBinding {
     constructor(el) {
         this.router = null;
         this.value = '';
+        this.asPopupPath = false;
         this.el = el;
         flit_1.on(this.el, 'click', this.onClick, this);
     }
-    update(value) {
+    update(value, options = {}) {
+        var _a, _b;
         this.value = value;
+        this.asPopupPath = (_a = options.asPopupPath) !== null && _a !== void 0 ? _a : false;
+        this.router = (_b = options.router) !== null && _b !== void 0 ? _b : null;
     }
     onClick() {
         this.ensureRouter();
-        this.router.goto(this.value);
+        this.router.goto(this.value, this.asPopupPath);
     }
     ensureRouter() {
         if (!this.router) {
-            this.router = flit_1.getClosestComponentOfType(this.el.parentElement, router_1.Router);
+            this.router = getClosestRouter(this.el.parentElement);
             if (!this.router) {
                 throw new Error(`":goto" must be contained in a extended component of "Router"`);
             }
         }
     }
     remove() { }
-};
-GotoBinding = __decorate([
-    flit_1.defineBinding('goto')
-], GotoBinding);
+}
 exports.GotoBinding = GotoBinding;
+/**
+ * A `goto` binding will goto a target location path after clicking binded element.
+ *
+ * `goto(path)`
+ * `goto(path, asPopupPath)`
+ */
+exports.goTo = flit_1.defineBinding('goto', GotoBinding);
+class RedirectToBinding extends GotoBinding {
+    onClick() {
+        this.ensureRouter();
+        this.router.redirectTo(this.value, this.asPopupPath);
+    }
+}
+exports.RedirectToBinding = RedirectToBinding;
+/**
+ * A `recirectTo` binding will redirect a target location path after clicking binded element.
+ *
+ * `recirectTo(path)`
+ * `recirectTo(path, asPopupPath)`
+ */
+exports.recirectTo = flit_1.defineBinding('redirectTo', GotoBinding);
+/** Get closest router by walking ancestor element. */
+function getClosestRouter(el) {
+    let parent = el;
+    while (parent && parent instanceof HTMLElement) {
+        if (parent.localName.includes('-')) {
+            let com = flit_1.getComponent(parent);
+            if (com instanceof router_1.Router) {
+                return com;
+            }
+            else if (com instanceof popup_1.Popup) {
+                parent = com.getTriggerElement();
+            }
+            else {
+                parent = parent.parentElement;
+            }
+        }
+        else {
+            parent = parent.parentElement;
+        }
+    }
+    return null;
+}
+exports.getClosestRouter = getClosestRouter;
 
 
 /***/ }),
@@ -15009,23 +15842,50 @@ exports.DefaultPopupOptions = {
     triangle: true,
     fixTriangle: false,
     transition: { name: 'fade' },
+    showImmediately: false,
+    autoFocus: false,
 };
-/** Cache shared popup component. */
+/** Cache stacked popup components with specified `key` option. */
 const SharedPopupCache = new Map();
-/** Cache popup component usage. */
-const SharedPopupsInUse = new Map();
+/** Cache last created popup component usage with specified `key` option. */
+const SharedPopupsThatsInUse = new Map();
 /** Get a shared popup component by key. */
-function getSharedPopupByKey(key) {
-    let cache = SharedPopupCache.get(key);
-    if (cache) {
-        let popup = cache.popup;
-        // If current popup is in use, not reuse it
-        if (ff_1.MouseLeave.inUse(popup.el)) {
-            return null;
+function getSharedPopupCache(key) {
+    let caches = SharedPopupCache.get(key);
+    if (caches) {
+        for (let i = caches.length - 1; i >= 0; i--) {
+            let cache = caches[i];
+            let popup = cache.popup;
+            // If current popup is in use, not reuse it.
+            if (ff_1.MouseLeave.checkLocked(popup.el)) {
+                return null;
+            }
+            return cache;
         }
-        return cache;
     }
     return null;
+}
+/** Get a shared popup component by key. */
+function addSharedPopupCache(key, cache) {
+    let caches = SharedPopupCache.get(key);
+    if (!caches) {
+        caches = [];
+        SharedPopupCache.set(key, caches);
+    }
+    caches.push(cache);
+}
+/** Delete a shared popup component after it hide. */
+function deleteSharedPopupCache(key, popup) {
+    let caches = SharedPopupCache.get(key);
+    if (caches) {
+        caches = caches.filter(cache => cache.popup !== popup);
+        SharedPopupCache.set(key, caches);
+    }
+}
+/** Get a shared popup component by key. */
+function isSharedPopupKeyInUse(key) {
+    let cache = getSharedPopupCache(key);
+    return cache ? SharedPopupsThatsInUse.has(cache.popup) : false;
 }
 /**
  * A `:popup` binding can bind trigger element with it's popup component,
@@ -15033,16 +15893,26 @@ function getSharedPopupByKey(key) {
  *
  * `:popup=${() => popupComponent}`
  */
-class PopupBinding extends ff_1.EventEmitter {
+class PopupBinding extends ff_1.Emitter {
     constructor(el, context) {
         super();
+        /** When decided to open or opened. */
+        this.willOpen = false;
+        /** Be `true` after opened popup. */
         this.opened = false;
+        /** Be a `Timeout` after decided to open popup but not yet. */
         this.showTimeout = null;
+        /** Be a `Timeout` after decided to close popup but not yet. */
         this.hideTimeout = null;
+        /** Used to watch rect change after popup opened. */
         this.unwatchRect = null;
+        /** Used to watch mouse leaves trigger or popup element after popup opened. */
         this.unwatchLeave = null;
-        this.popupTemplate = null;
+        /** Current popup. */
         this.popup = null;
+        /** Controls current popup. */
+        this.popupTemplate = null;
+        /** Align to current popup. */
         this.aligner = null;
         this.el = el;
         this.context = context;
@@ -15060,61 +15930,100 @@ class PopupBinding extends ff_1.EventEmitter {
         }
         return value;
     }
+    /** Get the trigger element. */
+    getTriggerElement() {
+        return this.el;
+    }
     /** `renderFn` should never change. */
     update(renderFn, options) {
         let firstTimeUpdate = this.options.isNotUpdated();
         this.renderFn = renderFn;
         this.options.update(options);
         if (firstTimeUpdate) {
-            // Must knows trigger type firstly.
+            // Must knows trigger type firstly, then can bind trigger.
             this.bindTrigger();
         }
-        else {
-            flit_1.enqueueUpdatable(this, this.context);
+        else if (this.opened) {
+            flit_1.enqueueUpdatableInOrder(this, this.context, flit_1.UpdatableUpdateOrder.Directive);
         }
     }
     bindTrigger() {
         let trigger = this.getOption('trigger');
-        // Clicking to trigger must have no delay.
         if (trigger === 'click') {
             flit_1.on(this.el, 'click', this.togglePopupOpened, this);
         }
         else if (trigger === 'hover') {
             flit_1.on(this.el, 'mouseenter', this.showPopupLater, this);
         }
-        else {
-            flit_1.on(this.el, trigger, this.showPopupLater, this);
+        else if (trigger === 'focus') {
+            flit_1.on(this.el, 'focus', this.showPopupLater, this);
+            if (this.el.contains(document.activeElement)) {
+                this.showPopupLater();
+            }
+        }
+        if (this.getOption('showImmediately')) {
+            this.showPopupLater();
+        }
+    }
+    unbindTrigger() {
+        let trigger = this.getOption('trigger');
+        if (trigger === 'click') {
+            flit_1.off(this.el, 'click', this.togglePopupOpened, this);
+        }
+        else if (trigger === 'hover') {
+            flit_1.off(this.el, 'mouseenter', this.showPopupLater, this);
+        }
+        else if (trigger === 'focus') {
+            flit_1.off(this.el, 'focus', this.showPopupLater, this);
         }
     }
     /** Toggle opened state and show or hide popup component immediately. */
     togglePopupOpened() {
         if (this.opened) {
+            this.willOpen = false;
             this.hidePopup();
         }
         else {
+            this.willOpen = true;
             this.showPopup();
         }
     }
     /** Show popup component after a short time out. */
     showPopupLater() {
-        if (this.showTimeout) {
-            return;
-        }
-        this.clearHideTimeout();
-        if (this.opened) {
+        if (this.willOpen) {
             return;
         }
         let trigger = this.getOption('trigger');
         let showDelay = this.getOption('showDelay');
-        // If give a delay for `click` type trigger, it will feel like a stuck or slow responsive.
-        if (trigger === 'hover' || trigger === 'focus') {
+        let key = this.getOption('key');
+        // If can reuse exist, show without delay.
+        if (isSharedPopupKeyInUse(key)) {
             showDelay = 0;
         }
-        this.showTimeout = new ff_1.Timeout(() => {
-            this.showTimeout = null;
+        // If give a delay for `click` type trigger, it will feel like a stuck or slow responsive.
+        if (trigger === 'click' || trigger === 'focus') {
+            showDelay = 0;
+        }
+        this.willOpen = true;
+        if (showDelay > 0) {
+            this.showTimeout = new ff_1.Timeout(() => {
+                this.showTimeout = null;
+                if (this.willOpen) {
+                    this.showPopup();
+                }
+            }, showDelay);
+        }
+        else {
             this.showPopup();
-        }, showDelay);
+        }
         this.bindLeavingTriggerEvents();
+    }
+    /** Clear timeout for showing popup component. */
+    clearShowTimeout() {
+        if (this.showTimeout) {
+            this.showTimeout.cancel();
+            this.showTimeout = null;
+        }
     }
     /** Clear timeout for hiding popup component. */
     clearHideTimeout() {
@@ -15127,100 +16036,106 @@ class PopupBinding extends ff_1.EventEmitter {
     bindLeavingTriggerEvents() {
         let trigger = this.getOption('trigger');
         if (trigger === 'hover') {
-            flit_1.once(this.el, 'mouseleave', this.hidePopupLater, this);
+            flit_1.on(this.el, 'mouseleave', this.cancelShowingPopup, this);
         }
         else if (trigger === 'focus') {
-            flit_1.once(this.el, 'blur', this.hidePopupLater, this);
+            flit_1.on(this.el, 'blur', this.cancelShowingPopup, this);
         }
     }
     /** Unbind events to handle leaving trigger element before popup component showing. */
     unbindLeavingTriggerEvents() {
         let trigger = this.getOption('trigger');
         if (trigger === 'hover') {
-            flit_1.off(this.el, 'mouseleave', this.hidePopupLater, this);
+            flit_1.off(this.el, 'mouseleave', this.cancelShowingPopup, this);
         }
         else if (trigger === 'focus') {
-            flit_1.off(this.el, 'blur', this.hidePopupLater, this);
+            flit_1.off(this.el, 'blur', this.cancelShowingPopup, this);
         }
     }
-    /** Hide popup component after a short time out. */
-    hidePopupLater() {
-        if (this.hideTimeout) {
-            return;
-        }
+    /** Cancel showing popup. */
+    cancelShowingPopup() {
+        this.willOpen = false;
+        this.unbindLeavingTriggerEvents();
         this.clearShowTimeout();
-        if (!this.opened) {
-            return;
-        }
-        let hideDelay = this.getOption('hideDelay');
-        this.hideTimeout = new ff_1.Timeout(() => {
-            this.hideTimeout = null;
-            this.hidePopup();
-        }, hideDelay);
-    }
-    /** Clear timeout for showing popup component. */
-    clearShowTimeout() {
-        if (this.showTimeout) {
-            this.showTimeout.cancel();
-            this.showTimeout = null;
-        }
     }
     /** Show popup component. */
     showPopup() {
-        if (this.opened) {
-            return;
-        }
-        this.unbindLeavingTriggerEvents();
-        this.setOpened(true);
-        flit_1.enqueueUpdatable(this, this.context);
+        flit_1.enqueueUpdatableInOrder(this, this.context, flit_1.UpdatableUpdateOrder.Directive);
     }
     __updateImmediately() {
         // Why must enqueue updating?
         // There are 2 entries: trigger here, and update from parent component.
         // We should merge them into one.
-        if (!this.opened) {
+        if (!this.willOpen) {
             return;
         }
         if (this.popup) {
             this.updatePopup();
         }
         else {
-            let popup = this.createPopup();
-            popup.el.style.visibility = 'hidden';
+            let isOldInUse = this.ensurePopup();
+            this.popup.el.style.visibility = 'hidden';
+            this.unbindLeavingTriggerEvents();
+            this.bindLeaveEvents();
+            this.setOpened(true);
             // May do something in handlers of `openedStateChange` event.
             flit_1.onRenderComplete(() => {
-                if (!this.isPopupInControl() || !this.opened) {
+                if (!this.willOpen || !this.popup) {
                     return;
                 }
                 this.alignPopup();
-                popup.el.style.visibility = '';
+                this.popup.el.style.visibility = '';
                 this.mayGetFocus();
-                new flit_1.Transition(popup.el, this.getOption('transition')).enter();
-                this.bindLeaveEvents();
+                if (!isOldInUse) {
+                    new flit_1.Transition(this.popup.el, this.getOption('transition')).enter();
+                }
                 this.unwatchRect = ff_1.watchLayout(this.el, 'rect', this.onTriggerRectChanged.bind(this));
             });
         }
     }
-    /** Get a cached popup component, or create a new one. */
-    createPopup() {
+    /**
+     * Get a cached popup component, or create a new one.
+     * Returns whether old popup is in use.
+     */
+    ensurePopup() {
         let result = this.renderFn();
         let key = this.getOption('key');
         let popup = null;
         let template = null;
+        let canShareWithOld = true;
+        let isOldInUse = false;
         if (!(result instanceof flit_1.TemplateResult)) {
             result = flit_1.html `${result}`;
         }
         if (key) {
-            let cache = getSharedPopupByKey(key);
+            let cache = getSharedPopupCache(key);
             if (cache) {
                 ({ popup, template } = cache);
-                if (template.canMergeWith(result)) {
+                let currentTriggerInsideCachedPopup = popup.el.contains(this.el);
+                // Reuse and merge.
+                if (!currentTriggerInsideCachedPopup && template.canMergeWith(result)) {
                     template.merge(result);
                 }
-                else {
-                    popup.el.remove();
+                // Can't reuse since trigger element inside it.
+                else if (currentTriggerInsideCachedPopup) {
                     popup = null;
                 }
+                // Destroy same name old one immediately.
+                else {
+                    canShareWithOld = false;
+                }
+            }
+        }
+        if (popup) {
+            // Whether use by other popup binding, such that no need to play transition.
+            let inUseBinding = SharedPopupsThatsInUse.get(popup);
+            if (inUseBinding && inUseBinding !== this) {
+                inUseBinding.losePopupControl();
+            }
+            isOldInUse = !!inUseBinding;
+            if (!canShareWithOld) {
+                popup.el.remove();
+                popup = null;
             }
         }
         if (!popup) {
@@ -15228,23 +16143,38 @@ class PopupBinding extends ff_1.EventEmitter {
             template = flit_1.render(result, this.context);
             popup = flit_1.getRenderedAsComponent(template);
             if (key) {
-                SharedPopupCache.set(key, { popup, template });
+                addSharedPopupCache(key, { popup, template });
             }
         }
         if (key) {
-            SharedPopupsInUse.set(popup, this);
+            SharedPopupsThatsInUse.set(popup, this);
         }
         this.popup = popup;
         this.popupTemplate = template;
         popup.setBinding(this);
         popup.applyAppendTo();
-        return popup;
+        return isOldInUse;
     }
-    /** Update popup component. */
-    updatePopup() {
-        if (!this.isPopupInControl()) {
-            return;
+    losePopupControl() {
+        this.clean();
+    }
+    /** Clean all popup properties. */
+    clean() {
+        if (this.opened) {
+            this.unbindLeaveEvents();
+            if (this.unwatchRect) {
+                this.unwatchRect();
+                this.unwatchRect = null;
+            }
+            this.willOpen = false;
+            this.setOpened(false);
+            this.popup = null;
+            this.popupTemplate = null;
+            this.aligner = null;
         }
+    }
+    /** Update popup component, calls when updating an outer component. */
+    updatePopup() {
         let result = this.renderFn();
         let key = this.getOption('key');
         let popup = this.popup;
@@ -15260,31 +16190,19 @@ class PopupBinding extends ff_1.EventEmitter {
             let template = this.popupTemplate = flit_1.render(result, this.context);
             popup = flit_1.getRenderedAsComponent(template);
             if (key) {
-                SharedPopupCache.set(key, { popup, template });
+                addSharedPopupCache(key, { popup, template });
             }
         }
         flit_1.onRenderComplete(() => {
-            if (!this.isPopupInControl() || !this.opened) {
-                return;
+            if (this.popup) {
+                this.alignPopup();
             }
-            this.alignPopup();
         });
     }
     /** Set opened state and triggers event. */
     setOpened(opened) {
         this.opened = opened;
         this.emit('openedStateChange', opened);
-    }
-    /** Whether current popup component is not been used by another binding. */
-    isPopupInControl() {
-        if (!this.popup) {
-            return false;
-        }
-        let key = this.getOption('key');
-        if (!key) {
-            return true;
-        }
-        return SharedPopupsInUse.get(this.popup) === this;
     }
     /** Align popup component. */
     alignPopup() {
@@ -15311,22 +16229,24 @@ class PopupBinding extends ff_1.EventEmitter {
     /** Make element of popup component get focus if possible. */
     mayGetFocus() {
         let trigger = this.getOption('trigger');
-        if ((trigger !== 'hover' && trigger !== 'focus') && this.popup && this.popup.el.tabIndex >= 0) {
+        if (this.getOption('autoFocus') && (trigger !== 'hover' && trigger !== 'focus') && this.popup && this.popup.el.tabIndex >= 0) {
             this.popup.el.focus();
         }
     }
     /** Bind hiding popup component events. */
     bindLeaveEvents() {
+        var _a;
         let trigger = this.getOption('trigger');
         if (trigger === 'hover') {
             // Should not use `MouseLeave.once`, because `hidePopupLater` may be canceled, it needs trigger again.
-            this.unwatchLeave = ff_1.MouseLeave.on([this.el, this.popup.el], this.hidePopupLater.bind(this), {
+            this.unwatchLeave = ff_1.MouseLeave.on(this.el, this.popup.el, this.hidePopup.bind(this), {
                 delay: this.getOption('hideDelay'),
                 mouseIn: true,
             });
         }
         else if (trigger === 'click' || trigger === 'contextmenu') {
             flit_1.on(document, 'mousedown', this.onDocMouseDown, this);
+            ff_1.MouseLeave.lock(this.el, (_a = this.popup) === null || _a === void 0 ? void 0 : _a.el);
         }
         else if (trigger === 'focus') {
             flit_1.on(this.el, 'blur', this.hidePopupLater, this);
@@ -15334,45 +16254,51 @@ class PopupBinding extends ff_1.EventEmitter {
     }
     /** Unbind hiding popup component events. */
     unbindLeaveEvents() {
+        var _a;
         let trigger = this.getOption('trigger');
         if (trigger === 'hover') {
             if (this.unwatchLeave) {
                 this.unwatchLeave();
+                this.unwatchLeave = null;
             }
         }
         else if (trigger === 'click' || trigger === 'contextmenu') {
             flit_1.off(document, 'mousedown', this.onDocMouseDown, this);
+            ff_1.MouseLeave.unlock(this.el, (_a = this.popup) === null || _a === void 0 ? void 0 : _a.el);
         }
         else if (trigger === 'focus') {
             flit_1.off(this.el, 'blur', this.hidePopupLater, this);
         }
     }
-    /** Hide popup component. */
-    hidePopup() {
+    /** Hide popup component after a short time out. */
+    hidePopupLater() {
         if (!this.opened) {
             return;
         }
-        this.unbindLeaveEvents();
-        if (this.unwatchRect) {
-            this.unwatchRect();
-            this.unwatchRect = null;
-        }
-        if (this.isPopupInControl()) {
-            let key = this.getOption('key');
-            let popupEl = this.popup.el;
-            if (key) {
-                SharedPopupsInUse.delete(this.popup);
+        let hideDelay = this.getOption('hideDelay');
+        this.hideTimeout = new ff_1.Timeout(() => {
+            this.hideTimeout = null;
+            if (this.opened) {
+                this.hidePopup();
             }
-            new flit_1.Transition(popupEl, this.getOption('transition')).leave().then(finish => {
-                if (finish) {
-                    popupEl.remove();
-                }
-            });
+        }, hideDelay);
+        this.willOpen = false;
+    }
+    /** Hide popup component. */
+    hidePopup() {
+        let key = this.getOption('key');
+        let popup = this.popup;
+        let popupEl = popup.el;
+        if (key) {
+            deleteSharedPopupCache(key, popup);
+            SharedPopupsThatsInUse.delete(popup);
         }
-        this.setOpened(false);
-        this.popup = null;
-        this.popupTemplate = null;
-        this.aligner = null;
+        new flit_1.Transition(popupEl, this.getOption('transition')).leave().then(finish => {
+            if (finish) {
+                popupEl.remove();
+            }
+        });
+        this.clean();
     }
     /** Trigger when mouse down on document. */
     onDocMouseDown(e) {
@@ -15394,9 +16320,13 @@ class PopupBinding extends ff_1.EventEmitter {
     }
     remove() {
         flit_1.off(this.el, 'mouseenter', this.showPopupLater, this);
-        if (this.popup) {
-            this.popup.el.remove();
+        if (this.opened) {
+            this.hidePopup();
         }
+        else {
+            this.clean();
+        }
+        this.unbindTrigger();
     }
 }
 exports.PopupBinding = PopupBinding;
@@ -15460,10 +16390,12 @@ class TooltipBinding extends popup_1.PopupBinding {
 		`;
     }
     getPopupOptions(options = {}) {
+        var _a;
+        let optionType = (_a = options.type) !== null && _a !== void 0 ? _a : defaultTooltipOptions.type;
         return {
             ...defaultTooltipOptions,
             // Default key is `tooltip` for default type.
-            key: options.type === 'default' ? 'tooltip' : '',
+            key: optionType === 'default' ? 'tooltip' : '',
             ...options,
         };
     }
@@ -15550,11 +16482,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ButtonGroup = void 0;
 const flit_1 = __webpack_require__(/*! @pucelle/flit */ "../flit/out/index.js");
-const theme_1 = __webpack_require__(/*! ../style/theme */ "./src/style/theme.ts");
 /** `<f-buttongroup>` can contains several `<button>` elements as a button group. */
 let ButtonGroup = class ButtonGroup extends flit_1.Component {
     static style() {
-        let { textColor, backgroundColor } = theme_1.theme;
         return flit_1.css `
 		:host{
 			display: inline-flex;
@@ -15576,9 +16506,6 @@ let ButtonGroup = class ButtonGroup extends flit_1.Component {
 			&[primary]{
 				position: relative;
 				z-index: 1;
-				background: ${textColor};
-				border-color: ${textColor};
-				color: ${backgroundColor};
 			}
 
 			&:hover{
@@ -15936,42 +16863,42 @@ let Dialog = class Dialog extends flit_1.Component {
             return '';
         }
         return flit_1.html `
-		<template
-			tabindex="0"
-			${flit_1.show(this.opened, { name: 'fade', enterAtStart: true, onend: this.onTransitionEnd })}
-		>
-			<div class="mask"
-				:ref="mask"
-				${flit_1.show(this.opened, { name: 'fade', enterAtStart: true })}
-			/>
+			<template
+				tabindex="0"
+				${flit_1.show(this.opened, { name: 'fade', enterAtStart: true, onend: this.onTransitionEnd })}
+			>
+				<div class="mask"
+					:ref="mask"
+					${flit_1.show(this.opened, { name: 'fade', enterAtStart: true })}
+				/>
 
-			${options.title ? flit_1.html `
-				<div class="header">
-					<div class="title">
-						${options.title}
+				${options.title ? flit_1.html `
+					<div class="header">
+						<div class="title">
+							${options.title}
+						</div>
 					</div>
-				</div>
-			` : ''}
-
-			<div class="content">
-
-				${options.icon ? flit_1.html `<div class="icon">
-					<f-icon .type="${options.icon}" />
-				</div>` : ''}
-
-				<div class="message">
-					${options.message}
-				</div>
-
-				${options.list && options.list.length > 0 ? flit_1.html `
-					<ul class="list">
-						${options.list.map(text => flit_1.html `<li>${text}</li>`)}
-					</ul>
 				` : ''}
-			</div>
 
-			${this.renderActions(options.actions)}
-		</template>
+				<div class="content">
+
+					${options.icon ? flit_1.html `<div class="icon">
+						<f-icon .type="${options.icon}" />
+					</div>` : ''}
+
+					<div class="message">
+						${options.message}
+					</div>
+
+					${options.list && options.list.length > 0 ? flit_1.html `
+						<ul class="list">
+							${options.list.map(text => flit_1.html `<li>${text}</li>`)}
+						</ul>
+					` : ''}
+				</div>
+
+				${this.renderActions(options.actions)}
+			</template>
 		`;
     }
     renderActions(actions) {
@@ -16021,7 +16948,7 @@ let Dialog = class Dialog extends flit_1.Component {
         }
     }
     async onConnected() {
-        await flit_1.renderComplete();
+        await flit_1.untilRenderComplete();
         if (this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
             this.el.before(this.refs.mask);
         }
@@ -16132,6 +17059,7 @@ class QuickDialog {
 				.placeholder=${options.placeholder}
 				.validator=${options.validator}
 				.type=${options.inputType || 'text'}
+				.value=${value}
 				:ref=${async (i) => input = await flit_1.getComponentAsync(i)}
 				@@input=${(v) => value = v}
 				@keydown.enter=${() => this.dialogComponent.triggerAction('ok')}
@@ -16145,7 +17073,7 @@ class QuickDialog {
             ],
             ...options,
             interruptAction: (button) => {
-                return (originalInterruptAction === null || originalInterruptAction === void 0 ? void 0 : originalInterruptAction(button)) || button === 'ok' && !input.valid;
+                return (originalInterruptAction === null || originalInterruptAction === void 0 ? void 0 : originalInterruptAction(button)) || button === 'ok' && input.valid === false;
             },
         });
         if (btn === 'ok') {
@@ -16244,18 +17172,18 @@ class Dropdown extends flit_1.Component {
         let { trigger, triangle, alignPosition, alignMargin, transition, showDelay, hideDelay } = this;
         let toPopup = flit_1.refBinding(popup_1.popup(this.renderPopup.bind(this), { trigger, triangle, alignPosition, alignMargin, transition, showDelay, hideDelay }), this.refBinding.bind(this));
         return flit_1.html `
-		<template :class.opened=${this.opened} ${toPopup}>
-			<slot />
-			<f-icon class="down-icon" .type="down" />
-		</template>
+			<template :class.opened=${this.opened} ${toPopup}>
+				<slot />
+				<f-icon class="down-icon" .type="down" />
+			</template>
 		`;
     }
     renderPopup() {
         return flit_1.html `
-		<f-popup
-			class="popup"
-			.triangle=${this.triangle}
-		/>
+			<f-popup
+				class="popup"
+				.triangle=${this.triangle}
+			/>
 		`;
     }
     refBinding(binding) {
@@ -16674,6 +17602,301 @@ exports.ColumnWidthResizer = ColumnWidthResizer;
 
 /***/ }),
 
+/***/ "./src/components/helpers/table-state.ts":
+/*!***********************************************!*\
+  !*** ./src/components/helpers/table-state.ts ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TableStateCacher = void 0;
+const ff_1 = __webpack_require__(/*! @pucelle/ff */ "../ff/out/index.js");
+const remote_store_1 = __webpack_require__(/*! ../../store/remote-store */ "./src/store/remote-store.ts");
+const DefaultTableStateOptions = {
+    filter: false,
+    order: false,
+    visibleIndex: false,
+    data: false,
+    store: false,
+    customized: {},
+};
+class TableStateCacher {
+    constructor(table) {
+        this.storagePrefix = 'table_state_';
+        this.cacheMap = new Map();
+        this.table = table;
+    }
+    /** Checks whether caches table state in specified name. */
+    has(name) {
+        return this.cacheMap.has(name) || ff_1.storage.get(this.storagePrefix + name);
+    }
+    /** Cache current table state. */
+    cache(name, options) {
+        let state = this.getState(options);
+        if (options.toStorage) {
+            try {
+                ff_1.storage.set(this.storagePrefix + name, state);
+            }
+            catch (err) {
+                console.error(`Can't serialize table cache data!`, state, err);
+            }
+        }
+        this.cacheMap.set(name, state);
+    }
+    getState(options) {
+        let table = this.table;
+        let store = this.table.store;
+        let state = {};
+        options = { ...DefaultTableStateOptions, ...options };
+        if (options.filter) {
+            state.storeFilter = store.getFilter();
+        }
+        if (options.order) {
+            state.orderName = table.getOrderName();
+            state.orderDirection = table.getOrderDirection();
+        }
+        if (options.visibleIndex) {
+            state.visibleIndex = table.getFirstVisibleIndex();
+        }
+        if (options.data) {
+            state.data = store instanceof remote_store_1.RemoteStore ? store.getCache() : store.getFullData();
+        }
+        if (options.store) {
+            state.store = store;
+        }
+        state.customized = options.customized;
+        return state;
+    }
+    /**
+     * Restore table state by it's cached name.
+     * Returns customized data with `{}` as default value if restored successfully,
+     * Returns `undefined` if have no cache to restore.
+     * Will clear the cache after restored.
+     */
+    restore(name) {
+        let table = this.table;
+        let store = this.table.store;
+        let state = this.cacheMap.get(name);
+        if (!state) {
+            state = ff_1.storage.get(this.storagePrefix + name);
+            if (!state) {
+                return undefined;
+            }
+        }
+        if (state.storeFilter !== undefined) {
+            store.setFilter(state.storeFilter);
+        }
+        if (state.orderName !== undefined && state.orderDirection !== undefined) {
+            table.setOrder(state.orderName, state.orderDirection);
+        }
+        if (state.visibleIndex !== undefined) {
+            table.setFirstVisibleIndex(state.visibleIndex);
+        }
+        if (state.data !== undefined) {
+            if (store instanceof remote_store_1.RemoteStore) {
+                store.setCache(state.data);
+            }
+            else {
+                store.setFullData(state.data);
+            }
+        }
+        if (state.store) {
+            table.store = store;
+        }
+        store.sync();
+        this.clear(name);
+        return state.customized;
+    }
+    /** Clear cache with specified name. */
+    clear(name) {
+        this.cacheMap.delete(name);
+        ff_1.storage.delete(this.storagePrefix + name);
+    }
+}
+exports.TableStateCacher = TableStateCacher;
+
+
+/***/ }),
+
+/***/ "./src/components/helpers/tree-data-navigator.ts":
+/*!*******************************************************!*\
+  !*** ./src/components/helpers/tree-data-navigator.ts ***!
+  \*******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TreeDataNavigator = void 0;
+var TreeDataNavigator;
+(function (TreeDataNavigator) {
+    function moveArrowUp(data, indices) {
+        if (data.length === 0) {
+            return [];
+        }
+        if (indices.length === 0) {
+            indices = [0];
+        }
+        if (correctIndices(data, indices)) {
+            return indices;
+        }
+        // Moves to parent node.
+        if (indices[indices.length - 1] <= 0) {
+            indices.pop();
+            // Move to bottom most if reaches top edge
+            if (indices.length === 0) {
+                while (true) {
+                    let childData = getChildDataByIndices(data, indices);
+                    if (childData && childData.length > 0) {
+                        indices.push(childData.length - 1);
+                    }
+                    else {
+                        break;
+                    }
+                }
+            }
+        }
+        // Moves to last available position deep inside previous node.
+        else {
+            indices[indices.length - 1]--;
+            while (true) {
+                let childData = getChildDataByIndices(data, indices);
+                if (childData && childData.length > 0) {
+                    indices.push(childData.length - 1);
+                }
+                else {
+                    break;
+                }
+            }
+        }
+        return indices;
+    }
+    TreeDataNavigator.moveArrowUp = moveArrowUp;
+    function moveArrowDown(data, indices) {
+        var _a;
+        if (data.length === 0) {
+            return [];
+        }
+        if (indices.length === 0) {
+            return [0];
+        }
+        if (correctIndices(data, indices)) {
+            return indices;
+        }
+        // Moves to first child node.
+        if ((((_a = getChildDataByIndices(data, indices)) === null || _a === void 0 ? void 0 : _a.length) || 0) > 0) {
+            indices.push(0);
+        }
+        // Moves to next siblings and may be next sibling of parent node.
+        else {
+            while (indices.length > 0) {
+                if (indices[indices.length - 1] < getSiblingsByIndices(data, indices).length - 1) {
+                    indices[indices.length - 1]++;
+                    break;
+                }
+                else {
+                    indices.pop();
+                }
+            }
+            //Have at least one node in top level, or it will be handled inside `correctIndices`.
+            if (indices.length === 0) {
+                indices = [0];
+            }
+        }
+        return indices;
+    }
+    TreeDataNavigator.moveArrowDown = moveArrowDown;
+    function moveArrowLeft(data, indices) {
+        if (data.length === 0 || indices.length === 0) {
+            return [];
+        }
+        if (indices.length > 0) {
+            indices.pop();
+        }
+        correctIndices(data, indices);
+        return indices;
+    }
+    TreeDataNavigator.moveArrowLeft = moveArrowLeft;
+    function moveArrowRight(data, indices) {
+        if (data.length === 0 || indices.length === 0) {
+            return [];
+        }
+        indices.push(0);
+        correctIndices(data, indices);
+        return indices;
+    }
+    TreeDataNavigator.moveArrowRight = moveArrowRight;
+    /** Returns whether corrected it. */
+    function correctIndices(data, indices) {
+        let corrected = false;
+        // No siblings, move to previous in parent siblings.
+        // Happens after data changed much.
+        while (indices.length > 0) {
+            let siblings = getSiblingsByIndices(data, indices);
+            if (siblings) {
+                let lastIndex = indices[indices.length - 1];
+                if (lastIndex >= siblings.length) {
+                    indices[indices.length - 1] = siblings.length - 1;
+                    corrected = true;
+                }
+                break;
+            }
+            else {
+                indices.pop();
+                corrected = true;
+            }
+        }
+        return corrected;
+    }
+    TreeDataNavigator.correctIndices = correctIndices;
+    function getItemByIndices(data, indices) {
+        if (!indices) {
+            return undefined;
+        }
+        let value = undefined;
+        let childData = data;
+        for (let index of indices) {
+            if (!childData) {
+                value = undefined;
+                break;
+            }
+            if (index >= 0 && index < childData.length) {
+                value = childData[index];
+                childData = value.opened ? value.children || null : null;
+            }
+        }
+        return value;
+    }
+    TreeDataNavigator.getItemByIndices = getItemByIndices;
+    function getSiblingsByIndices(data, indices) {
+        if (indices.length === 1) {
+            return data;
+        }
+        let value = getItemByIndices(data, indices.slice(0, -1));
+        if ((value === null || value === void 0 ? void 0 : value.opened) && (value === null || value === void 0 ? void 0 : value.children)) {
+            return value === null || value === void 0 ? void 0 : value.children;
+        }
+        return null;
+    }
+    function getChildDataByIndices(data, indices) {
+        if (indices.length === 0) {
+            return data;
+        }
+        let value = getItemByIndices(data, indices);
+        if (value === null || value === void 0 ? void 0 : value.opened) {
+            return value === null || value === void 0 ? void 0 : value.children;
+        }
+        return null;
+    }
+})(TreeDataNavigator = exports.TreeDataNavigator || (exports.TreeDataNavigator = {}));
+
+
+/***/ }),
+
 /***/ "./src/components/icon.ts":
 /*!********************************!*\
   !*** ./src/components/icon.ts ***!
@@ -16715,14 +17938,14 @@ let Icon = class Icon extends flit_1.Component {
         let width = theme_1.theme.adjust(Number(w));
         let height = theme_1.theme.adjust(Number(h));
         return flit_1.html `
-		<template>
-			<svg
-				viewBox=${viewBox}
-				width=${width}
-				height=${height}
-				:html=${inner}
-			></svg>
-		</template>
+			<template>
+				<svg
+					viewBox=${viewBox}
+					width=${width}
+					height=${height}
+					:html=${inner}
+				></svg>
+			</template>
 		`;
     }
 };
@@ -16828,6 +18051,8 @@ const form_1 = __webpack_require__(/*! ./form */ "./src/components/form.ts");
 let Input = class Input extends flit_1.Component {
     constructor() {
         super(...arguments);
+        /** When in composition inputting. */
+        this.inCompositionInputting = false;
         /** Input type, same with `<input type=...>`. */
         this.type = 'text';
         /** Whether input was touched, error messages only appear after touched. */
@@ -16933,22 +18158,24 @@ let Input = class Input extends flit_1.Component {
             ? tooltip_1.tooltip(this.error, { type: 'error' })
             : null;
         return flit_1.html `
-		<template
-			:class.valid=${this.touched && this.valid}
-			:class.invalid=${this.touched && this.valid === false}
-		>
-			<input type=${this.type}
-				.placeholder=${this.placeholder || ''}
-				.value=${this.value}
-				:ref="input"
-				${errorTip}
-				@blur=${this.onBlur}
-				@input=${(e) => this.onInput(e)}
-				@change=${(e) => this.onChange(e)}
-			/>
-			${this.touched && this.valid ? flit_1.html `<f-icon class="valid-icon" .type="checked" />` : ''}
-			${this.touched && this.error && !this.errorInTooltip ? flit_1.html `<div class="error">${this.error}</div>` : ''}
-		</template>
+			<template
+				:class.valid=${this.touched && this.valid}
+				:class.invalid=${this.touched && this.valid === false}
+			>
+				<input type=${this.type}
+					.placeholder=${this.placeholder || ''}
+					.value=${this.value}
+					:ref="input"
+					${errorTip}
+					@blur=${this.onBlur}
+					@compositionstart=${this.onCompositionStart}
+					@compositionend=${this.onCompositionEnd}
+					@input=${this.onInput}
+					@change=${this.onChange}
+				/>
+				${this.touched && this.valid ? flit_1.html `<f-icon class="valid-icon" .type="checked" />` : ''}
+				${this.touched && this.error && !this.errorInTooltip ? flit_1.html `<div class="error">${this.error}</div>` : ''}
+			</template>
 		`;
     }
     onBlur() {
@@ -16958,17 +18185,26 @@ let Input = class Input extends flit_1.Component {
         // So may still not valid even though not changed.
         this.validate();
     }
-    onInput(e) {
-        let input = e.target;
-        let value = input.value;
+    onCompositionStart() {
+        this.inCompositionInputting = true;
+    }
+    onCompositionEnd() {
+        this.inCompositionInputting = false;
+        this.onInput();
+    }
+    onInput() {
+        if (this.inCompositionInputting) {
+            return;
+        }
+        let value = this.refs.input.value;
         if (this.validator) {
             this.valid = null;
             this.error = '';
         }
         this.emit('input', value);
     }
-    onChange(e) {
-        let input = e.target;
+    onChange() {
+        let input = this.refs.input;
         let value = this.value = input.value;
         this.validate();
         this.emit('change', value, this.valid);
@@ -17002,16 +18238,16 @@ let Textarea = class Textarea extends Input {
     }
     render() {
         return flit_1.html `
-		<textarea
-			placeholder=${this.placeholder}
-			.value=${this.value}
-			:ref="input"
-			:class.valid=${this.touched && this.valid === true}
-			:class.invalid=${this.touched && this.valid === false}
-			@focus=${this.onBlur}
-			@input=${(e) => this.onInput(e)}
-			@change=${(e) => this.onChange(e)}
-		/>
+			<textarea
+				placeholder=${this.placeholder}
+				.value=${this.value}
+				:ref="input"
+				:class.valid=${this.touched && this.valid === true}
+				:class.invalid=${this.touched && this.valid === false}
+				@focus=${this.onBlur}
+				@input=${this.onInput}
+				@change=${this.onChange}
+			/>
 		`;
     }
 };
@@ -17044,6 +18280,7 @@ const flit_1 = __webpack_require__(/*! @pucelle/flit */ "../flit/out/index.js");
 const theme_1 = __webpack_require__(/*! ../style/theme */ "./src/style/theme.ts");
 const ff_1 = __webpack_require__(/*! @pucelle/ff */ "../ff/out/index.js");
 const tooltip_1 = __webpack_require__(/*! ../bindings/tooltip */ "./src/bindings/tooltip.ts");
+const tree_data_navigator_1 = __webpack_require__(/*! ./helpers/tree-data-navigator */ "./src/components/helpers/tree-data-navigator.ts");
 /**
  * `<f-list>` will render data items to a list,
  * and provide single or multiple selection.
@@ -17052,6 +18289,10 @@ const tooltip_1 = __webpack_require__(/*! ../bindings/tooltip */ "./src/bindings
 let List = class List extends flit_1.Component {
     constructor() {
         super(...arguments);
+        /** Selected indices by keyboard navigation. */
+        this.treeNavigationIndices = [];
+        /** Whether watching keyboard navigation events. */
+        this.watchingKeyBoardNavigation = false;
         /** List type:
          * `selection`: provide single item or multiple items selection with a checkbox icon.
          * `navigation`: provide single item navigation with a vertical line icon.
@@ -17078,6 +18319,8 @@ let List = class List extends flit_1.Component {
          * Otherwise you can call `ensureActiveItemVisible()` to do same thing.
          */
         this.active = null;
+        /** If specified, when the element get focus, you can use keyboard arrow keys to navigate inside current list. */
+        this.navigateFrom = null;
     }
     static style() {
         let { mainColor, adjust, borderColor, adjustFontSize } = theme_1.theme;
@@ -17119,6 +18362,10 @@ let List = class List extends flit_1.Component {
 					width: 2px;
 					background: ${mainColor.alpha(0.8)};
 				}
+			}
+
+			&.arrow-selected{
+				background-color: ${mainColor.alpha(0.1)};
 			}
 		}
 
@@ -17176,56 +18423,124 @@ let List = class List extends flit_1.Component {
 		}
 		`;
     }
+    render() {
+        return flit_1.html `${this.renderOptions(this.data, this.treeNavigationIndices)}`;
+    }
+    renderOptions(items, indices) {
+        let siblingsHaveIcon = items.some(item => item.icon);
+        let siblingsHaveChildren = items.some(item => item.children);
+        let options = flit_1.repeat(items, (item, index) => {
+            let childIndices = (indices === null || indices === void 0 ? void 0 : indices[0]) === index ? indices.slice(1) : null;
+            return this.renderOption(item, siblingsHaveIcon, siblingsHaveChildren, childIndices);
+        });
+        return options;
+    }
+    renderOption(item, siblingsHaveIcon, siblingsHaveChildren, indices) {
+        let subsection = item.children && item.opened ? flit_1.html `
+			<div class="subsection">${this.renderOptions(item.children, indices)}</div>
+		` : null;
+        let tip = item.tip ? tooltip_1.tooltip(item.tip) : null;
+        return flit_1.html `
+			<div
+				class="option"
+				:class=${this.renderClassName(item)}
+				:class.arrow-selected=${(indices === null || indices === void 0 ? void 0 : indices.length) === 0}
+				@click.prevent=${() => this.onClickOption(item)}
+				${tip}
+
+			>
+				${item.children ? flit_1.html `
+					<div class='toggle' @click.stop=${() => this.toggleOpened(item)}>
+						<f-icon .type=${item.opened ? 'triangle-down' : 'triangle-right'} />
+					</div>
+				` : siblingsHaveChildren ? flit_1.html `
+					<div class='toggle' />
+				` : ''}
+
+				${siblingsHaveIcon ? flit_1.html `
+					<div class='icon'>
+						<f-icon .type=${item.icon} />
+					</div>
+				` : ''}
+		
+				<div class="text">
+					${item.text}
+				</div>
+
+				${this.isSelected(item) ? flit_1.html `<f-icon class="selected-icon" .type="checked" />` : ''}
+			</div>
+
+			${flit_1.toggle(subsection, { properties: ['height', 'marginBottom', 'paddingBottom', 'opacity'] })}
+		`;
+    }
     onCreated() {
         if (this.active) {
             this.ensureActiveItemVisible();
         }
     }
-    render() {
-        return flit_1.html `${this.renderOptions(this.data)}`;
+    onReady() {
+        if (this.navigateFrom) {
+            let lastElement = null;
+            this.watchImmediately(() => {
+                if (typeof this.navigateFrom === 'function') {
+                    return this.navigateFrom();
+                }
+                else {
+                    return this.navigateFrom;
+                }
+            }, navigateFrom => {
+                if (navigateFrom) {
+                    flit_1.on(navigateFrom, 'keydown', this.moveArrowSelectedByEvent, this);
+                    flit_1.on(navigateFrom, 'blur', this.onNavigateFromElementBlur, this);
+                }
+                else if (lastElement) {
+                    flit_1.off(lastElement, 'keydown', this.moveArrowSelectedByEvent, this);
+                    flit_1.on(lastElement, 'blur', this.onNavigateFromElementBlur, this);
+                }
+                lastElement = navigateFrom;
+            });
+        }
     }
-    renderOptions(items) {
-        let siblingsHaveIcon = items.some(item => item.icon);
-        let siblingsHaveChildren = items.some(item => item.children);
-        let options = flit_1.repeat(items, item => this.renderOption(item, siblingsHaveIcon, siblingsHaveChildren));
-        return options;
+    /** Moves arrow selected by a keyboard event. */
+    moveArrowSelectedByEvent(event) {
+        if (event.key === 'ArrowUp') {
+            this.watchingKeyBoardNavigation = true;
+            this.treeNavigationIndices = tree_data_navigator_1.TreeDataNavigator.moveArrowUp(this.data, this.treeNavigationIndices);
+        }
+        else if (event.key === 'ArrowDown') {
+            this.watchingKeyBoardNavigation = true;
+            this.treeNavigationIndices = tree_data_navigator_1.TreeDataNavigator.moveArrowDown(this.data, this.treeNavigationIndices);
+        }
+        else if (event.key === 'ArrowLeft') {
+            if (this.watchingKeyBoardNavigation) {
+                this.treeNavigationIndices = tree_data_navigator_1.TreeDataNavigator.moveArrowLeft(this.data, this.treeNavigationIndices);
+            }
+        }
+        else if (event.key === 'ArrowRight') {
+            if (this.watchingKeyBoardNavigation && this.treeNavigationIndices) {
+                let item = tree_data_navigator_1.TreeDataNavigator.getItemByIndices(this.data, this.treeNavigationIndices);
+                if (item && !item.opened && item.children) {
+                    this.toggleOpened(item);
+                    this.treeNavigationIndices = tree_data_navigator_1.TreeDataNavigator.moveArrowRight(this.data, this.treeNavigationIndices);
+                }
+            }
+        }
+        else if (event.key === 'Enter') {
+            if (this.watchingKeyBoardNavigation && this.treeNavigationIndices) {
+                let item = tree_data_navigator_1.TreeDataNavigator.getItemByIndices(this.data, this.treeNavigationIndices);
+                if (item) {
+                    this.onClickOption(item);
+                }
+            }
+        }
+        else {
+            this.watchingKeyBoardNavigation = false;
+            this.treeNavigationIndices = [];
+        }
     }
-    renderOption(item, siblingsHaveIcon, siblingsHaveChildren) {
-        let subsection = item.children && item.opened ? flit_1.html `
-			<div class="subsection">${this.renderOptions(item.children)}</div>
-		` : null;
-        let tip = item.tip ? tooltip_1.tooltip(item.tip) : null;
-        return flit_1.html `
-		<div
-			class="option"
-			:class=${this.renderClassName(item)}
-			@click.prevent=${() => this.onClickOption(item)}
-			${tip}
-
-		>
-			${item.children ? flit_1.html `
-				<div class='toggle' @click.stop=${() => this.toggleOpened(item)}>
-					<f-icon .type=${item.opened ? 'triangle-down' : 'triangle-right'} />
-				</div>
-			` : siblingsHaveChildren ? flit_1.html `
-				<div class='toggle' />
-			` : ''}
-
-			${siblingsHaveIcon ? flit_1.html `
-				<div class='icon'>
-					<f-icon .type=${item.icon} />
-				</div>
-			` : ''}
-	
-			<div class="text">
-				${item.text}
-			</div>
-
-			${this.isSelected(item) ? flit_1.html `<f-icon class="selected-icon" .type="checked" />` : ''}
-		</div>
-
-		${flit_1.toggle(subsection, { properties: ['height', 'marginBottom', 'paddingBottom', 'opacity'] })}
-		`;
+    onNavigateFromElementBlur() {
+        this.watchingKeyBoardNavigation = false;
+        this.treeNavigationIndices = [];
     }
     renderClassName(item) {
         if (this.type === 'navigation') {
@@ -17383,18 +18698,18 @@ let Loader = Loader_1 = class Loader extends flit_1.Component {
         let d = `M${halfWidth} ${halfWidth} H${size - halfWidth} V${size - halfWidth} H${halfWidth}Z`;
         let dashArray = `${size - strokeWidth} ${(size - strokeWidth) * 3}`;
         return flit_1.html `
-		<template
-			:class="size-${this.size}"
-			:class.as-cover=${this.asCover}
-			:style.width.px=${size}
-			:style.height.px=${size}
-			:style.animation="loader-snake-${this.size} 2s linear infinite"
-		>
-			<svg viewBox="0 0 ${size} ${size}" width=${size} height=${size}>
-				<path class="bg" d=${d} style="stroke-width: ${strokeWidth}" />
-				<path :ref="snake" d=${d} style="stroke-width: ${strokeWidth}; stroke-dasharray: ${dashArray};" />
-			</svg>
-		</template>
+			<template
+				:class="size-${this.size}"
+				:class.as-cover=${this.asCover}
+				:style.width.px=${size}
+				:style.height.px=${size}
+				:style.animation="loader-snake-${this.size} 2s linear infinite"
+			>
+				<svg viewBox="0 0 ${size} ${size}" width=${size} height=${size}>
+					<path class="bg" d=${d} style="stroke-width: ${strokeWidth}" />
+					<path :ref="snake" d=${d} style="stroke-width: ${strokeWidth}; stroke-dasharray: ${dashArray};" />
+				</svg>
+			</template>
 		`;
     }
     getStrokeWidth() {
@@ -17507,10 +18822,10 @@ let Menu = class Menu extends popup_1.Popup {
     }
     render() {
         return flit_1.html `
-		<f-popup>	
-			${this.renderHead()}
-			<slot />
-		</f-popup>
+			<f-popup>	
+				${this.renderHead()}
+				<slot />
+			</f-popup>
 		`.extends(super.render());
     }
     renderHead() {
@@ -17650,68 +18965,72 @@ let Modal = class Modal extends flit_1.Component {
 		}
 	`;
     }
-    //extensions may make win wrapped by a mask, so we need a win el
     render() {
         let shouldRenderClose = !this.slots.action;
         return flit_1.html `
-		<template
-			tabindex="0"
-			${flit_1.show(this.opened, { name: 'fade', enterAtStart: true, onend: this.onTransitionEnd })}
-		>
-			<div class="mask"
-				:ref="mask"
-				${flit_1.show(this.opened, { name: 'fade', enterAtStart: true })}
-			/>
+			<template
+				tabindex="0"
+				${flit_1.show(this.opened, { name: 'fade', enterAtStart: true, onend: this.onTransitionEnd })}
+			>
+				<div class="mask"
+					:ref="mask"
+					${flit_1.show(this.opened, { name: 'fade', enterAtStart: true })}
+				/>
 
-			<div class="header">
-				<div class="title">${this.title}</div>
+				<div class="header">
+					<div class="title">${this.title}</div>
 
-				<div class="actions" :show=${this.slots.action}>
-					<slot name="action" />
+					<div class="actions" :show=${this.slots.action}>
+						<slot name="action" />
+					</div>
+
+					${shouldRenderClose ? flit_1.html `
+						<div class="close" @click=${this.hide}>
+							<f-icon .type="close" />
+						</div>
+					` : ''}
 				</div>
 
-				${shouldRenderClose ? flit_1.html `
-					<div class="close" @click=${this.hide}>
-						<f-icon .type="close" />
-					</div>
-				` : ''}
-			</div>
-
-			<div class="content">
-				<slot />
-			</div>
-		</template>
+				<div class="content">
+					<slot />
+				</div>
+			</template>
 		`;
     }
     onTransitionEnd(type, finish) {
         if (type === 'leave' && finish) {
-            if (this.refs.mask) {
-                this.refs.mask.remove();
-            }
             this.el.remove();
+            this.onTransitionLeaveEnd();
         }
     }
-    async onConnected() {
-        await flit_1.renderComplete();
-        if (this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
-            this.el.before(this.refs.mask);
-        }
-        this.toCenter();
-        flit_1.on(window, 'resize', this.onWindowResize, this);
+    onTransitionLeaveEnd() { }
+    onConnected() {
+        flit_1.untilRenderComplete().then(() => {
+            if (this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
+                this.el.before(this.refs.mask);
+            }
+            this.align();
+            flit_1.on(window, 'resize', this.onWindowResize, this);
+            let unwatch = ff_1.watchLayout(this.el, 'size', () => this.align());
+            this.once('disconnected', unwatch);
+        });
     }
     onDisconnected() {
+        if (this.refs.mask) {
+            this.refs.mask.remove();
+        }
         flit_1.off(window, 'resize', this.onWindowResize, this);
     }
     onWindowResize() {
         if (this.opened) {
-            this.toCenter();
+            this.align();
         }
     }
-    toCenter() {
+    align() {
         ff_1.align(this.el, document.documentElement, 'c');
     }
     /**
-     * To show the modal, you may `renderCoponent` and then call `show()` or append to `body`.
+     * To show the modal, you may `renderComponent` and then call `show()` or append to `body`.
      * If you want render modal as a child element  and append into document automatically,
      * just call `show` in `onConnected`.
      */
@@ -17783,14 +19102,15 @@ let Navigation = class Navigation extends list_1.List {
     }
     render() {
         return flit_1.html `
-		<tempalte>
-			${this.title ? flit_1.html `
-			<div class="title">
-				${this.title}
-			</div>` : ''}
+			<tempalte>
+				${this.title ? flit_1.html `
+				<div class="title">
+					${this.title}
+				</div>` : ''}
 
-			${this.renderOptions(this.data)}
-		</tempalte>`;
+				${this.renderOptions(this.data, this.treeNavigationIndices)}
+			</tempalte>
+		`;
     }
 };
 Navigation = __decorate([
@@ -18283,10 +19603,10 @@ let Popover = class Popover extends popup_1.Popup {
     }
     render() {
         return flit_1.html `
-		<template>	
-			${this.renderHead()}
-			<div class="content"><slot /></div>
-		</template>
+			<template>	
+				${this.renderHead()}
+				<div class="content"><slot /></div>
+			</template>
 		`.extends(super.render());
     }
     renderHead() {
@@ -18394,12 +19714,12 @@ let Popup = class Popup extends flit_1.Component {
     }
     render() {
         return flit_1.html `
-		<template tabindex="0">
-			${this.triangle ? flit_1.html `
-				<div class="triangle" :ref="triangle" :class.triangle-herizontal=${this.herizontal} />
-			` : ''}
-			<slot />
-		</template>
+			<template tabindex="0">
+				${this.triangle ? flit_1.html `
+					<div class="triangle" :ref="triangle" :class.triangle-herizontal=${this.herizontal} />
+				` : ''}
+				<slot />
+			</template>
 		`;
     }
     // Call `update` every time after restored from `cache(...)`.
@@ -18441,6 +19761,11 @@ let Popup = class Popup extends flit_1.Component {
         else {
             this.el.remove();
         }
+    }
+    /** Get the trigger element. */
+    getTriggerElement() {
+        var _a;
+        return ((_a = this.binding) === null || _a === void 0 ? void 0 : _a.getTriggerElement()) || null;
     }
 };
 Popup = __decorate([
@@ -18526,11 +19851,11 @@ let Progress = class Progress extends flit_1.Component {
             alignMargin: [8, 0],
         });
         return flit_1.html `
-		<template ${tip}>
-			<div class="groove">
-				<div class="progress" :ref="progress" :style.width.percent=${Math.min(this.value, 1) * 100}></div>
-			</div>
-		</template>
+			<template ${tip}>
+				<div class="groove">
+					<div class="progress" :ref="progress" :style.width.percent=${Math.min(this.value, 1) * 100}></div>
+				</div>
+			</template>
 		`;
     }
     renderTooltipValue() {
@@ -18792,10 +20117,10 @@ let Resizer = class Resizer extends flit_1.Component {
     }
     render() {
         return flit_1.html `
-		<template
-			:class=${this.position}
-			@mousedown=${this.onStartResize}
-		></template>
+			<template
+				:class=${this.position}
+				@mousedown=${this.onStartResize}
+			></template>
 		`;
     }
     onReady() {
@@ -18871,6 +20196,7 @@ const flit_1 = __webpack_require__(/*! @pucelle/flit */ "../flit/out/index.js");
 /**
  * `<f-router>` can be used as a top container to contains everything that should be routed,
  * Which means choose to be rendered depends on whether current path match.
+ * You will need initialize start path by `this.goto(this.getUnPrefixedPath(location.pathname))`.
  *
  * ```ts
  * render() {
@@ -18883,16 +20209,27 @@ const flit_1 = __webpack_require__(/*! @pucelle/flit */ "../flit/out/index.js");
 let Router = class Router extends flit_1.Component {
     constructor() {
         super(...arguments);
+        /** A prefix will be added to current location, but will be removed from router path. */
         this.prefix = '';
+        /** Current path, no matter normal path or popup path. */
         this.path = '';
+        /** Normal not popup type path. */
+        this.normalPath = '';
+        /** Popup path come from `goto(..., true)`. */
+        this.popupPath = null;
+        /** Stacked popup count. */
+        this.stackedPopupCount = 0;
     }
     onCreated() {
-        this.path = this.getPathFromUri(location.href);
         flit_1.on(window, 'popstate', this.onWindowStateChange, this);
     }
     /** Get relative path for router from a uri. */
     getPathFromUri(uri) {
         let path = new URL(uri).pathname;
+        return this.getUnPrefixedPath(path);
+    }
+    /** Get relative path for router from a uri. */
+    getUnPrefixedPath(path) {
         if (this.prefix && path.startsWith(this.prefix)) {
             path = path.slice(this.prefix.length);
         }
@@ -18906,7 +20243,7 @@ let Router = class Router extends flit_1.Component {
     }
     onWindowStateChange(e) {
         if (e.state) {
-            this.redirectTo(e.state.path);
+            this.redirectTo(e.state.path, e.state.asPopupPath);
         }
     }
     route(routePath, renderFn, options = {}) {
@@ -18928,23 +20265,79 @@ let Router = class Router extends flit_1.Component {
     }
     /** Returns whether current path matches router path. */
     isMatch(routePath) {
-        return PathParser.isMatch(this.path, routePath);
+        return PathParser.isMatch(this.normalPath, routePath)
+            || !!(this.popupPath && PathParser.isMatch(this.popupPath, routePath));
     }
     /** Match current path with router path, returns match parameters and captures. */
     matchPath(routePath) {
-        return PathParser.matchPath(this.path, routePath);
+        if (PathParser.isMatch(this.normalPath, routePath)) {
+            return PathParser.matchPath(this.normalPath, routePath);
+        }
+        else if (this.popupPath && PathParser.isMatch(this.popupPath, routePath)) {
+            return PathParser.matchPath(this.popupPath, routePath);
+        }
+        else {
+            return null;
+        }
     }
-    /** Goto a new path and update render result, add a history state. */
-    goto(path) {
+    /**
+     * Goto a new path and update render result, add a history state.
+     * If `asPopupPath` is `true`, can update current path and also keep last rendering.
+     */
+    goto(path, asPopupPath = false) {
+        if (asPopupPath && path === this.popupPath) {
+            return;
+        }
+        if (!asPopupPath && path === this.normalPath) {
+            return;
+        }
+        if (asPopupPath) {
+            this.popupPath = path;
+            this.stackedPopupCount++;
+        }
+        else {
+            this.clearPopupStack();
+            this.normalPath = path;
+        }
         this.path = path;
         let uri = this.getURIFromPath(path);
-        history.pushState({ path }, '', uri);
+        history.pushState({ path, asPopupPath }, '', uri);
+        this.emit('goto', path, asPopupPath);
     }
-    /** Redirect to a new path and update render result, replace current history state. */
-    redirectTo(path) {
+    /**
+     * Redirect to a new path and update render result, replace current history state.
+     * If `asPopupPath` is `true`, can update current path and also keep last rendering.
+     */
+    redirectTo(path, asPopupPath = false) {
+        if (asPopupPath && path === this.popupPath) {
+            return;
+        }
+        if (!asPopupPath && path === this.normalPath) {
+            return;
+        }
+        if (asPopupPath) {
+            this.popupPath = path;
+            this.stackedPopupCount++;
+        }
+        else {
+            this.clearPopupStack();
+            this.normalPath = path;
+        }
         this.path = path;
         let uri = this.getURIFromPath(path);
-        history.replaceState({ path }, '', uri);
+        history.replaceState({ path, asPopupPath }, '', uri);
+        this.emit('redirectTo', path, asPopupPath);
+    }
+    /**
+     * Clear all popup states and pop last non-popup state.
+     * Must call before set current path.
+     */
+    clearPopupStack() {
+        if (this.popupPath) {
+            history.go(-this.stackedPopupCount);
+            this.stackedPopupCount = 0;
+            this.popupPath = null;
+        }
     }
     /** Get whole url. */
     getURIFromPath(path) {
@@ -19017,11 +20410,11 @@ var PathParser;
         let re = new RegExp(routePath
             .replace(/\./g, '\\.')
             .replace(/\*/g, '.*?')
-            .replace(/(\/?):(\w+)/g, function (_m0, slash, property) {
+            .replace(/(\/):(\w+)/g, function (_m0, slash, property) {
             if (property) {
                 keys.push(property);
             }
-            return slash + '?([\\w-]*?)';
+            return slash + '([\\w-]+)';
         })
             .replace(/^/, '^')
             .replace(/$/, '$'), 'i');
@@ -19062,6 +20455,13 @@ let Search = class Search extends flit_1.Component {
         super(...arguments);
         /** Whether search input get focus. */
         this.focused = false;
+        /** When in composition inputting. */
+        this.inCompositionInputting = false;
+        /**
+         * Whether update value after change event.
+         * If is `false`, update value after input event.
+         */
+        this.lazy = true;
         /** Search input placeholder. */
         this.placeholder = '';
         /** Current inputted value. */
@@ -19133,25 +20533,49 @@ let Search = class Search extends flit_1.Component {
 				.value=${this.value}
 				:ref="input"
 				@focus=${this.onFocus}
-				@change=${(e) => this.onChange(e)}
 			/>
 
-			${this.value && !this.focused
+			${this.value
             ? flit_1.html `
-				<div class="clear" @click=${this.clear}>
-					<f-icon class="close-icon" .type="close" />
-				</div>`
+					<div class="clear" @click.stop=${this.clear}>
+						<f-icon class="close-icon" .type="close" />
+					</div>`
             : ''}
 		`;
+    }
+    onReady() {
+        if (this.lazy) {
+            flit_1.on(this.refs.input, 'change', this.onChange, this);
+        }
+        else {
+            flit_1.on(this.refs.input, 'compositionstart', this.onCompositionStart, this);
+            flit_1.on(this.refs.input, 'compositionend', this.onCompositionEnd, this);
+            flit_1.on(this.refs.input, 'input', this.onInput, this);
+        }
     }
     onFocus() {
         this.focused = true;
         flit_1.once(this.refs.input, 'blur', () => this.focused = false);
     }
-    onChange(e) {
-        let input = e.target;
-        let value = this.value = input.value;
-        this.emit('change', value);
+    onChange() {
+        this.updateValue();
+    }
+    onCompositionStart() {
+        this.inCompositionInputting = true;
+    }
+    onCompositionEnd() {
+        this.inCompositionInputting = false;
+        this.onInput();
+    }
+    onInput() {
+        this.updateValue();
+    }
+    updateValue() {
+        if (this.inCompositionInputting) {
+            return;
+        }
+        this.value = this.refs.input.value;
+        this.emit('change', this.value);
     }
     clear() {
         this.value = '';
@@ -19309,56 +20733,57 @@ let Select = class Select extends dropdown_1.Dropdown {
     }
     render() {
         return flit_1.html `
-		<template :class.not-inputable=${!this.searchable}>
-			${this.renderDisplayOrInput()}
-		</template>
+			<template :class.not-inputable=${!this.searchable}>
+				${this.renderDisplayOrInput()}
+			</template>
 		`.extends(super.render());
     }
     renderDisplayOrInput() {
         if (this.editing) {
             return flit_1.html `
-			<input type="text"
-				class="input"
-				:ref="input"
-				.value=${this.inputted}
-				.placeholder=${this.placeholder}
-				?readonly=${!this.editing}
-				@click=${this.onClick}
-				@input=${this.onInput}
-			>
+				<input type="text"
+					class="input"
+					:ref="input"
+					.value=${this.inputted}
+					.placeholder=${this.placeholder}
+					?readonly=${!this.editing}
+					@click=${this.onClick}
+					@input=${this.onInput}
+				>
 			`;
         }
         else {
             let text = this.renderCurrentDisplay();
             return flit_1.html `
-			<div
-				class="input"
-				:class.placeholder=${!text}
-				@click=${this.onClick}
-			>
-				${text || this.placeholder}
-			</div>
+				<div
+					class="input"
+					:class.placeholder=${!text}
+					@click=${this.onClick}
+				>
+					${text || this.placeholder}
+				</div>
 			`;
         }
     }
     renderPopup() {
         let data = this.getDisplayData();
         return flit_1.html `
-		<f-popup
-			class="popup"
-			:ref="popup"
-			.triangle="false"
-		>
-			<f-list class="list"
-				:ref="list"
-				.type="selection"
-				.selectable
-				.data=${data}
-				.multipleSelect=${this.multipleSelect}
-				.selected=${this.multipleSelect ? this.value : [this.value]}
-				@@select=${this.onSelected}
-			/>
-		</f-popup>
+			<f-popup
+				class="popup"
+				:ref="popup"
+				.triangle="false"
+			>
+				<f-list class="list"
+					:ref="list"
+					.type="selection"
+					.selectable
+					.data=${data}
+					.multipleSelect=${this.multipleSelect}
+					.selected=${this.multipleSelect ? this.value : [this.value]}
+					.navigateFrom=${() => this.refs.input}
+					@@select=${this.onSelected}
+				/>
+			</f-popup>
 		`;
     }
     renderCurrentDisplay() {
@@ -19414,7 +20839,7 @@ let Select = class Select extends dropdown_1.Dropdown {
     }
     async startEditing() {
         this.editing = true;
-        await flit_1.renderComplete();
+        await flit_1.untilRenderComplete();
         this.refs.input.focus();
     }
     endEditing() {
@@ -19614,22 +21039,22 @@ let Slider = class Slider extends flit_1.Component {
             positionStyle.left = this.getPercent() + '%';
         }
         return flit_1.html `
-		<template
-			tabindex="0"
-			:class.vertical=${this.vertical}
-			:class.dragging=${this.draging}
-			${tip}
-			@mousedown=${this.onMouseDown}
-			@focus=${this.onFocus}
-			@blur=${this.onBlur}
-		>
-			<div class="groove" :ref="groove">
-				<div class="groove-bg" />
-				<div class="progress" :style=${sizeStyle} />
-				<div class="ball" :ref="ball" :style=${positionStyle} />
-			</div>
-			
-		</template>
+			<template
+				tabindex="0"
+				:class.vertical=${this.vertical}
+				:class.dragging=${this.draging}
+				${tip}
+				@mousedown=${this.onMouseDown}
+				@focus=${this.onFocus}
+				@blur=${this.onBlur}
+			>
+				<div class="groove" :ref="groove">
+					<div class="groove-bg" />
+					<div class="progress" :style=${sizeStyle} />
+					<div class="ball" :ref="ball" :style=${positionStyle} />
+				</div>
+				
+			</template>
 		`;
     }
     renderTooltipContent() {
@@ -19649,7 +21074,8 @@ let Slider = class Slider extends flit_1.Component {
     }
     onMouseDown(e) {
         let rect = ff_1.getRect(this.refs.groove);
-        let unkeep = ff_1.MouseLeave.keep(this.el);
+        // Avoid mouse leave to cause it hide.
+        ff_1.MouseLeave.lock(this.el);
         this.draging = true;
         // If clicked the ball, not move; only move when clicked the groove.
         if (!e.target.matches(this.scopeClassName('.ball'))) {
@@ -19662,8 +21088,8 @@ let Slider = class Slider extends flit_1.Component {
         };
         flit_1.on(document, 'mousemove', onMouseMove);
         flit_1.once(document, 'mouseup', () => {
+            ff_1.MouseLeave.unlock(this.el);
             flit_1.off(document, 'mousemove', onMouseMove);
-            unkeep();
             this.draging = false;
             this.emit('dragend');
         });
@@ -19827,15 +21253,15 @@ let Switch = class Switch extends flit_1.Component {
     }
     render() {
         return flit_1.html `
-		<template
-			tabindex="0"
-			:class.on=${this.value}
-			@click=${this.onClick}
-			@focus=${this.onFocus}
-			@blur=${this.onBlur}
-		>
-			<div class="ball"></div>
-		</template>
+			<template
+				tabindex="0"
+				:class.on=${this.value}
+				@click=${this.onClick}
+				@focus=${this.onFocus}
+				@blur=${this.onBlur}
+			>
+				<div class="ball"></div>
+			</template>
 		`;
     }
     onClick() {
@@ -19900,14 +21326,15 @@ const theme_1 = __webpack_require__(/*! ../style/theme */ "./src/style/theme.ts"
 const ff_1 = __webpack_require__(/*! @pucelle/ff */ "../ff/out/index.js");
 const column_width_resizer_1 = __webpack_require__(/*! ./helpers/column-width-resizer */ "./src/components/helpers/column-width-resizer.ts");
 const remote_store_1 = __webpack_require__(/*! ../store/remote-store */ "./src/store/remote-store.ts");
+const table_state_1 = __webpack_require__(/*! ./helpers/table-state */ "./src/components/helpers/table-state.ts");
 /**
  * `<f-table>` works just like a `<table>`, it provides data view and per row or per column operation.
  * `store` provides data service and also data filtering and data ordering.
  * `columns` can config data column mode for table view.
  */
 let Table = class Table extends flit_1.Component {
-    constructor() {
-        super(...arguments);
+    constructor(el) {
+        super(el);
         /**
          * If `true`, will only render the rows that in viewport.
          * Default value is `false`.
@@ -19934,13 +21361,12 @@ let Table = class Table extends flit_1.Component {
         /** Transition for each row after created or removed. */
         this.transition = undefined;
         /** Column name to indicate which column is in order. */
-        this.orderColumnName = '';
+        this.orderName = null;
         /** Current column order direction. */
         this.orderDirection = '';
-        /** Repeat directive inside, only available when `live`. */
-        this.repeatDir = null;
         /** Resize column widths when `resizable` is `true`. */
         this.resizer = null;
+        this.stateCacher = new table_state_1.TableStateCacher(this);
     }
     static style() {
         let { adjustFontSize, adjust, mainColor, textColor, backgroundColor } = theme_1.theme;
@@ -20104,30 +21530,47 @@ let Table = class Table extends flit_1.Component {
 		}
 		`;
     }
+    /** If specified, it's returned result will be used to overwrite `column`. */
+    getColumns() {
+        return null;
+    }
+    onCreated() {
+        this.store.on('dataChange', this.onStoreDataChange, this);
+        this.watchImmediately(() => this.getColumns(), columns => {
+            if (columns) {
+                this.columns = columns;
+            }
+        });
+    }
+    onStoreDataChange() {
+        if (this.repeatDir instanceof flit_1.LiveAsyncRepeatDirective) {
+            this.repeatDir.reload();
+        }
+    }
     render() {
         return flit_1.html `
-		<div class="head" :ref="head">
-			<div class="columns" :ref="columnContainer">
-				${this.renderColumns()}
+			<div class="head" :ref="head">
+				<div class="columns" :ref="columnContainer">
+					${this.renderColumns()}
+				</div>
 			</div>
-		</div>
 
-		<div class="body">
-			<table class="table" :ref="table">
-				<colgroup :ref="colgroup">
-					${this.columns.map(column => flit_1.html `
-						<col :style.text-align=${column.align || ''} />
-					`)}
-				</colgroup>
-				${this.renderRows()}
-			</table>
-		</div>
+			<div class="body">
+				<table class="table" :ref="table">
+					<colgroup :ref="colgroup">
+						${this.columns.map(column => flit_1.html `
+							<col :style.text-align=${column.align || ''} />
+						`)}
+					</colgroup>
+					${this.renderRows()}
+				</table>
+			</div>
 		`;
     }
     renderColumns() {
         return this.columns.map((column, index) => {
-            let orderName = column.name || String(column.orderBy);
-            let isOrdered = this.orderColumnName === orderName;
+            let orderName = column.name;
+            let isOrdered = this.orderName === orderName;
             let flexAlign = column.align === 'right' ? 'flex-end' : column.align === 'center' ? 'center' : '';
             return flit_1.html `
 			<div class="column"
@@ -20157,13 +21600,13 @@ let Table = class Table extends flit_1.Component {
             }, this.transition), this.refDirective.bind(this));
         }
         else if (this.live) {
-            return flit_1.refDirective(flit_1.liveRepeat(this.store.currentData, this.renderRow.bind(this), {
+            return flit_1.refDirective(flit_1.liveRepeat(this.store.getCurrentData(), this.renderRow.bind(this), {
                 renderCount: this.renderCount,
                 preRendering: this.preRendering,
             }, this.transition), this.refDirective.bind(this));
         }
         else {
-            return flit_1.repeat(this.store.currentData, this.renderRow.bind(this), this.transition);
+            return flit_1.refDirective(flit_1.repeat(this.store.getCurrentData(), this.renderRow.bind(this), this.transition), this.refDirective.bind(this));
         }
     }
     /**
@@ -20180,8 +21623,10 @@ let Table = class Table extends flit_1.Component {
     /** Reference repeat directive, only for once. */
     refDirective(dir) {
         this.repeatDir = dir;
-        this.repeatDir.on('liveDataUpdated', this.onLiveDataUpdated, this);
-        this.repeatDir.on('liveDataRendered', this.onLiveDataRendered, this);
+        if ((this.repeatDir instanceof flit_1.LiveRepeatDirective) || (this.repeatDir instanceof flit_1.LiveAsyncRepeatDirective)) {
+            this.repeatDir.on('liveDataUpdated', this.onLiveDataUpdated, this);
+            this.repeatDir.on('liveDataRendered', this.onLiveDataRendered, this);
+        }
     }
     /** Triggers `liveDataUpdated` event. */
     onLiveDataUpdated(data, index, scrollDirection) {
@@ -20193,7 +21638,7 @@ let Table = class Table extends flit_1.Component {
     }
     /** Get order icon to indicate order direction. */
     getOrderDirectionIcon(orderName) {
-        if (orderName === this.orderColumnName) {
+        if (orderName === this.orderName) {
             if (this.orderDirection === 'asc') {
                 return 'order-asc';
             }
@@ -20212,14 +21657,14 @@ let Table = class Table extends flit_1.Component {
         let columns = this.columns;
         let column = columns[index];
         // Column is not orderable.
-        let canOrder = column.orderBy;
+        let canOrder = !!column.orderBy;
         if (!canOrder) {
             return;
         }
         let direction = '';
         let descFirst = column.descFirst;
-        let orderName = column.name || String(column.orderBy);
-        if (orderName === this.orderColumnName) {
+        let columnName = column.name;
+        if (columnName === this.orderName) {
             if (descFirst) {
                 direction = this.orderDirection === '' ? 'desc' : this.orderDirection === 'desc' ? 'asc' : '';
             }
@@ -20230,45 +21675,21 @@ let Table = class Table extends flit_1.Component {
         else {
             direction = descFirst ? 'desc' : 'asc';
         }
-        this.orderColumn(column, direction);
-    }
-    /** Order specified column by column name. */
-    orderColumnByName(name, direction = '') {
-        let columns = this.columns;
-        let column = columns.find(col => col.name === name);
-        if (!column) {
-            throw new Error(`Can't find column with name "${name}"!`);
-        }
-        this.orderColumn(column, direction);
-    }
-    /** Order specified column with specified direction by column name. */
-    orderColumn(column, direction = '') {
-        let orderName = column.name || String(column.orderBy);
-        this.orderColumnName = orderName;
-        this.orderDirection = direction;
-        if (direction === '') {
-            this.store.clearOrder();
-        }
-        else {
-            this.store.setOrder(column.orderBy, direction);
-        }
-        this.emit('orderChange', orderName, direction);
+        this.setOrder(columnName, direction);
     }
     onReady() {
-        if (this.resizable) {
-            this.resizer = new column_width_resizer_1.ColumnWidthResizer(this.refs.head, this.refs.columnContainer, this.refs.colgroup, this.columns, this.minColumnWidth, this.scopeClassName('resizing-mask'));
-            this.watch(() => flit_1.observeGetting(this, 'columns'), async (columns) => {
-                var _a, _b;
-                (_a = this.resizer) === null || _a === void 0 ? void 0 : _a.setColumns(columns);
-                // Here we need it render new `<col>`s.
-                await flit_1.renderComplete();
-                (_b = this.resizer) === null || _b === void 0 ? void 0 : _b.updatColumnWidthsPrecisely();
-            });
-            flit_1.onRenderComplete(() => {
-                var _a;
-                (_a = this.resizer) === null || _a === void 0 ? void 0 : _a.updatColumnWidthsPrecisely();
-            });
-        }
+        this.resizer = new column_width_resizer_1.ColumnWidthResizer(this.refs.head, this.refs.columnContainer, this.refs.colgroup, this.columns, this.minColumnWidth, this.scopeClassName('resizing-mask'));
+        this.watch(() => flit_1.observeGetting(this, 'columns'), async (columns) => {
+            var _a, _b;
+            (_a = this.resizer) === null || _a === void 0 ? void 0 : _a.setColumns(columns);
+            // Here we need it render new `<col>`s.
+            await flit_1.untilRenderComplete();
+            (_b = this.resizer) === null || _b === void 0 ? void 0 : _b.updatColumnWidthsPrecisely();
+        });
+        flit_1.onRenderComplete(() => {
+            var _a;
+            (_a = this.resizer) === null || _a === void 0 ? void 0 : _a.updatColumnWidthsPrecisely();
+        });
     }
     onConnected() {
         flit_1.onRenderComplete(() => {
@@ -20276,65 +21697,127 @@ let Table = class Table extends flit_1.Component {
             this.once('disconnected', unwatchSize);
         });
     }
+    /** Order specified column by column name. */
+    setOrder(columnName, direction = '') {
+        var _a;
+        this.orderName = columnName;
+        this.orderDirection = direction;
+        let column = (_a = this.columns) === null || _a === void 0 ? void 0 : _a.find(col => col.name === columnName);
+        if (column) {
+            this.applyOrder(column, direction);
+        }
+        else {
+            this.watchOnce(() => this.columns, columns => {
+                let column = columns.find(col => col.name === columnName);
+                if (column) {
+                    this.applyOrder(column, direction);
+                }
+            });
+        }
+    }
+    /** Clear column order. */
+    clearOrder() {
+        this.orderName = null;
+        this.orderDirection = '';
+        this.store.setOrder(null);
+        this.store.sync();
+    }
+    /** Order specified column with specified direction by column name. */
+    applyOrder(column, direction = '') {
+        if (direction === '') {
+            this.store.setOrder(null);
+        }
+        else {
+            this.store.setOrder(column.orderBy, direction);
+        }
+        this.store.sync();
+        this.emit('orderChange', this.orderName, direction);
+    }
+    /** Column name to indicate which column is in order. */
+    getOrderName() {
+        return this.orderName;
+    }
+    /** Current column order direction. */
+    getOrderDirection() {
+        return this.orderDirection;
+    }
     /** Get start index of live data in live mode, otherwise returns `0`. */
     getStartIndex() {
         var _a, _b;
-        return (_b = (_a = this.repeatDir) === null || _a === void 0 ? void 0 : _a.getStartIndex()) !== null && _b !== void 0 ? _b : 0;
+        if (this.repeatDir instanceof flit_1.RepeatDirective) {
+            return 0;
+        }
+        else {
+            return (_b = (_a = this.repeatDir) === null || _a === void 0 ? void 0 : _a.getStartIndex()) !== null && _b !== void 0 ? _b : 0;
+        }
     }
     /** Get end index of live data in live mode, otherwise returns data length. */
     getEndIndex() {
-        var _a, _b;
-        return (_b = (_a = this.repeatDir) === null || _a === void 0 ? void 0 : _a.getEndIndex()) !== null && _b !== void 0 ? _b : this.store.fullData.length;
-    }
-    /** Set `startIndex`, and the item in this index will be at the top start position of the viewport. */
-    setStartIndex(index) {
-        if (!this.__updated) {
-            this.once('updated', () => {
-                this.setStartIndex(index);
-            });
-        }
-        else if (this.repeatDir) {
-            this.repeatDir.setStartIndex(index);
+        var _a;
+        if (this.repeatDir instanceof flit_1.RepeatDirective) {
+            return this.store.getCurrentData().length;
         }
         else {
-            index = Math.min(index, this.store.fullData.length - 1);
-            let row = this.refs.table.rows[index];
-            if (row) {
-                ff_1.scrollToTop(row);
-            }
-        }
-    }
-    /** Adjust `startIndex` and scroll position to make item in the specified index becomes visible if it's not. */
-    scrollToViewIndex(index) {
-        if (!this.__updated) {
-            this.once('updated', () => {
-                this.setStartIndex(index);
-            });
-        }
-        else if (this.repeatDir) {
-            this.repeatDir.scrollToViewIndex(index);
-        }
-        else {
-            index = Math.min(index, this.store.fullData.length - 1);
-            let row = this.refs.table.rows[index];
-            if (row) {
-                ff_1.scrollToView(row);
-            }
+            return (_a = this.repeatDir.getEndIndex()) !== null && _a !== void 0 ? _a : this.store.getFullData().length;
         }
     }
     /**
-     * Get the first visible index of element.
+     * Set start index property, and scroll to appropriate position.
+     * You can safely call this before any thing rendered.
+     * Note the final `startIndex` property may be different,
+     * and you can't ensure the element is this index is visible.
+     */
+    async setStartIndex(index) {
+        await this.untilReady();
+        if (this.repeatDir instanceof flit_1.LiveRepeatDirective || this.repeatDir instanceof flit_1.LiveAsyncRepeatDirective) {
+            this.repeatDir.setStartIndex(index);
+        }
+        else {
+            this.repeatDir.setFirstVisibleIndex(index);
+        }
+    }
+    /** Whether specifies a start index. */
+    isStartIndexSpecified() {
+        if (this.repeatDir instanceof flit_1.LiveRepeatDirective || this.repeatDir instanceof flit_1.LiveAsyncRepeatDirective) {
+            return this.repeatDir.isStartIndexSpecified();
+        }
+        else {
+            return false;
+        }
+    }
+    /**
+     * Adjust `startIndex` and scroll position to make item in the specified index becomes visible if it's not.
+     * Returns whether find the element in specified index.
+     */
+    async makeIndexVisible(index) {
+        await this.untilReady();
+        return this.repeatDir.makeIndexVisible(index);
+    }
+    /**
+     * Make item in the specified index becomes visible at the top scroll position.
+     * Returns whether find the element in specified index.
+     * You can safely call this before any thing rendered.
+     */
+    async setFirstVisibleIndex(index) {
+        await this.untilReady();
+        return this.repeatDir.setFirstVisibleIndex(index);
+    }
+    /**
+     * Get the index of the first visible element.
      * Must after first time rendered.
      */
     getFirstVisibleIndex() {
-        if (this.repeatDir) {
+        if (this.repeatDir instanceof flit_1.LiveRepeatDirective || this.repeatDir instanceof flit_1.LiveAsyncRepeatDirective) {
             return this.repeatDir.getFirstVisibleIndex();
         }
         else {
             return ff_1.locateFirstVisibleIndex(this.refs.table, this.refs.table.rows);
         }
     }
-    /** Get currently rendered data item at specified index. */
+    /**
+     * Get currently rendered data item at specified index.
+     * Returns null if it's not rendered yet.
+     */
     getRenderedItem(index) {
         let isRendered = index >= this.getStartIndex() && index < this.getEndIndex();
         if (isRendered) {
@@ -20342,7 +21825,7 @@ let Table = class Table extends flit_1.Component {
                 return this.store.getImmediateData(index, index + 1)[0];
             }
             else {
-                return this.store.currentData[index];
+                return this.store.getCurrentData()[index];
             }
         }
         else {
@@ -20355,6 +21838,30 @@ let Table = class Table extends flit_1.Component {
      */
     getRenderedRow(index) {
         return this.refs.table.rows[index - this.getStartIndex()] || null;
+    }
+    /** Checks whether have state cached in a specified name. */
+    hasState(name) {
+        return this.stateCacher.has(name);
+    }
+    /**
+     * Caches a state includes order, filter, startIndex...
+     * Remember the `name` must be unique for each table instance.
+     */
+    cacheState(name, options = {}) {
+        this.stateCacher.cache(name, options);
+    }
+    /**
+     * Restore table state by it's cached name.
+     * Returns customized data with `{}` as default value if restored successfully,
+     * Returns `undefined` if have no cache to restore.
+     * Will clear the cache after restored.
+     */
+    restoreState(name) {
+        return this.stateCacher.restore(name);
+    }
+    /** Clear cached state with specified name. */
+    clearState(name) {
+        this.stateCacher.clear(name);
     }
 };
 Table = __decorate([
@@ -20497,6 +22004,7 @@ let Tooltip = class Tooltip extends popup_1.Popup {
 			max-width: ${adjust(220)}px;
 			padding: ${adjust(4)}px ${adjust(8)}px;
 			line-height: ${adjust(20)}px;
+			pointer-events: none;
 		}
 
 		.text{
@@ -20549,17 +22057,17 @@ let Tooltip = class Tooltip extends popup_1.Popup {
     }
     render() {
         return flit_1.html `
-		<template class="type-${this.type}">
-			<div class="text">
-				<slot />
-			</div>
-
-			${this.type === 'prompt' ? flit_1.html `
-				<div class="close" @click=${this.close}>
-					<f-icon .type="close" />
+			<template class="type-${this.type}">
+				<div class="text">
+					<slot />
 				</div>
-			` : ''}
-		</template>
+
+				${this.type === 'prompt' ? flit_1.html `
+					<div class="close" @click=${this.close}>
+						<f-icon .type="close" />
+					</div>
+				` : ''}
+			</template>
 		`.extends(super.render());
     }
 };
@@ -21059,13 +22567,21 @@ exports.PageDataCacher = void 0;
 const ff_1 = __webpack_require__(/*! @pucelle/ff */ "../ff/out/index.js");
 class PageDataCacher {
     constructor(pageSize, dataCount, dataGetter, preloadPageCount = 0) {
-        this.cache = new Map();
+        this.cacheMap = new Map();
         this.requests = new Map();
         this.totalDataCount = null;
         this.pageSize = pageSize;
         this.dataCount = dataCount;
         this.dataGetter = dataGetter;
         this.preloadPageCount = preloadPageCount;
+    }
+    /** Get cache map. */
+    getCache() {
+        return this.cacheMap;
+    }
+    /** Restore cache map. */
+    setCache(cacheMap) {
+        this.cacheMap = cacheMap;
     }
     /** Get data count and also caches it. */
     async getDataCount() {
@@ -21096,7 +22612,7 @@ class PageDataCacher {
         let endPageIndex = Math.floor((endIndex - 1) / this.pageSize); // 50 -> 0, 51 -> 1
         let items = [];
         for (let i = startPageIndex; i <= endPageIndex; i++) {
-            let cacheItems = this.cache.get(i);
+            let cacheItems = this.cacheMap.get(i);
             let pageItems = cacheItems;
             if (!pageItems) {
                 pageItems = ff_1.repeatForTimes(null, this.pageSize);
@@ -21140,7 +22656,7 @@ class PageDataCacher {
     }
     /** Load page data if needed. */
     async ensurePageData(pageIndex) {
-        if (!this.cache.has(pageIndex)) {
+        if (!this.cacheMap.has(pageIndex)) {
             await this.loadPageData(pageIndex);
         }
     }
@@ -21161,7 +22677,7 @@ class PageDataCacher {
             let promise = requestPromise.then(items => {
                 let fresh = this.requests.has(pageIndex);
                 if (fresh) {
-                    this.cache.set(pageIndex, [...items]);
+                    this.cacheMap.set(pageIndex, [...items]);
                     this.requests.delete(pageIndex);
                 }
             });
@@ -21169,7 +22685,7 @@ class PageDataCacher {
             return promise;
         }
         else {
-            this.cache.set(pageIndex, [...requestPromise]);
+            this.cacheMap.set(pageIndex, [...requestPromise]);
             return Promise.resolve();
         }
     }
@@ -21183,8 +22699,8 @@ class PageDataCacher {
         if (startPageIndex > endPageIndex) {
             [startPageIndex, endPageIndex] = [endPageIndex, startPageIndex];
         }
-        let maxPageIndex = Math.max(...this.cache.keys());
-        let maxIndex = this.cache.get(maxPageIndex).length + maxPageIndex * this.pageSize;
+        let maxPageIndex = Math.max(...this.cacheMap.keys());
+        let maxIndex = this.cacheMap.get(maxPageIndex).length + maxPageIndex * this.pageSize;
         let maxNewIndex = maxIndex + moveCount;
         let maxNewPageIndex = Math.ceil(maxNewIndex / this.pageSize);
         // Moves right, get each from a left position.
@@ -21209,11 +22725,11 @@ class PageDataCacher {
         }
         // Removes the affected pages.
         for (let pageIndex = startPageIndex; pageIndex <= endPageIndex; pageIndex++) {
-            this.cache.delete(pageIndex);
+            this.cacheMap.delete(pageIndex);
         }
         // Removes the rest pages.
         for (let pageIndex = maxNewPageIndex + 1; pageIndex <= maxPageIndex; pageIndex++) {
-            this.cache.delete(pageIndex);
+            this.cacheMap.delete(pageIndex);
         }
         // Removes the requests that affected.
         for (let pageIndex of [...this.requests.keys()]) {
@@ -21230,14 +22746,15 @@ class PageDataCacher {
         let items = this.getImmediateData(startIndex, endIndex);
         let hasAnyItem = items.some(item => item !== null);
         if (hasAnyItem) {
-            this.cache.set(pageIndex, items);
+            this.cacheMap.set(pageIndex, items);
             return true;
         }
         return false;
     }
     /** Clear all data cache. */
     clear() {
-        this.cache = new Map();
+        this.cacheMap = new Map();
+        this.requests = new Map();
         this.totalDataCount = null;
     }
 }
@@ -21266,7 +22783,7 @@ const page_data_cacher_1 = __webpack_require__(/*! ./helpers/page-data-cacher */
  * You should extends this class and overwrite abstract methods,
  * and should support like column ordering and filtering or searching in backend.
  */
-class RemoteStore extends ff_1.EventEmitter {
+class RemoteStore extends ff_1.Emitter {
     constructor(options = {}) {
         var _a, _b;
         super();
@@ -21276,6 +22793,8 @@ class RemoteStore extends ff_1.EventEmitter {
         this.orderKey = null;
         /** Current ordered direction. */
         this.orderDirection = '';
+        /** Word to filter results. */
+        this.filterWord = null;
         /** Whether will reload. */
         this.willReload = false;
         let pageSize = (_a = options.pageSize) !== null && _a !== void 0 ? _a : 50;
@@ -21283,40 +22802,40 @@ class RemoteStore extends ff_1.EventEmitter {
         this.cacher = new page_data_cacher_1.PageDataCacher(pageSize, this.dataCount.bind(this), this.dataGetter.bind(this), preloadPageCount);
     }
     /** Set ordering key and apply it to backend. */
-    setOrder(key, direction) {
+    setOrder(key, direction = '') {
         this.orderKey = key;
         this.orderDirection = direction;
         this.reloadLater();
-        this.setRemoteOrder(key, direction);
     }
-    /** Clear ordering and apply it to backend. */
-    clearOrder() {
-        this.orderKey = null;
-        this.orderDirection = '';
-        this.reloadLater();
-        this.setRemoteOrder(null, '');
+    /** Get order rule. */
+    getOrder() {
+        return {
+            order: this.orderKey,
+            orderDirection: this.orderDirection,
+        };
     }
-    /** Overwrite to set remote order in backend. */
-    setRemoteOrder(_key, _direction) { }
-    /** Set filter key to filter data items and apply it to backend. */
+    /** Set filter word to filter data items and apply it to backend. */
     setFilter(filterWord) {
+        this.filterWord = filterWord;
         this.reloadLater();
-        this.setRemoteFilter(filterWord);
     }
-    /** Clears filter and shows all data and apply it to backend. */
-    clearFilter() {
-        this.reloadLater();
-        this.setRemoteFilter('');
+    /** Get current filter word. */
+    getFilter() {
+        return this.filterWord;
     }
-    /** Overwrite to set remote filtering or searching in backend. */
-    setRemoteFilter(_filterWord) { }
+    /** Get cache map. */
+    getCache() {
+        return this.cacher.getCache();
+    }
+    /** Set cache map. */
+    setCache(cacheMap) {
+        this.cacher.setCache(cacheMap);
+    }
     /** Clear cache data later. */
     reloadLater() {
         if (!this.willReload) {
             Promise.resolve().then(() => {
-                this.reloadImmediately();
-                this.emit('dataChange');
-                this.willReload = false;
+                this.sync();
             });
             this.willReload = true;
         }
@@ -21324,6 +22843,21 @@ class RemoteStore extends ff_1.EventEmitter {
     /** Clear cache data immediately. */
     reloadImmediately() {
         this.cacher.clear();
+    }
+    /**
+     * Normally when calls `reload`, setting filter or order will cause update current data in next micro task.
+     * If you can ensure everything is ready, you may sync to load new data immediately.
+     */
+    sync() {
+        if (this.willReload) {
+            this.reloadImmediately();
+            this.emit('dataChange');
+            this.willReload = false;
+        }
+    }
+    /** Reload all data. */
+    reload() {
+        this.reloadLater();
     }
     /** Get data items immediately. */
     async getDataCount() {
@@ -21366,7 +22900,7 @@ exports.Store = void 0;
 const ff_1 = __webpack_require__(/*! @pucelle/ff */ "../ff/out/index.js");
 const key_map_1 = __webpack_require__(/*! ./helpers/key-map */ "./src/store/helpers/key-map.ts");
 /* Used to cache object type data and support selection, ordering and filtering. */
-class Store extends ff_1.EventEmitter {
+class Store extends ff_1.Emitter {
     constructor(options = {}) {
         super();
         /** If `key` specified, when different but same key items added, it covers the old one. */
@@ -21441,57 +22975,84 @@ class Store extends ff_1.EventEmitter {
             }
         }
     }
+    /** Get all the data. */
+    getFullData() {
+        return this.fullData;
+    }
+    /**
+     * Set all the data.
+     * will update `currentData` later, except you call `syncCurrentData`.
+     */
+    setFullData(data) {
+        this.fullData = data;
+        if (this.dataMap) {
+            this.dataMap.clear();
+            for (let item of data) {
+                this.dataMap.add(item);
+            }
+        }
+        this.updateCurrentDataLater();
+    }
+    /** Get current data. */
+    getCurrentData() {
+        return this.currentData;
+    }
     /**
      * Set ordering rule.
-     * Note it doesn't trigger `dataChange` immediately.
+     * will update `currentData` later, except you call `syncCurrentData`.
      */
-    setOrder(by, direction) {
-        this.order = new ff_1.Order([by, direction || 'asc']);
+    setOrder(by, direction = '') {
+        this.order = by instanceof ff_1.Order ? by : by === null ? null : new ff_1.Order(by);
         this.orderDirection = direction;
         this.updateCurrentDataLater();
     }
-    /**
-     * Clear ordering rule.
-     * Note it doesn't trigger `dataChange` immediately.
-     */
-    clearOrder() {
-        this.order = null;
-        this.updateCurrentDataLater();
+    /** Get current ordering rule. */
+    getOrder() {
+        return {
+            order: this.order,
+            orderDirection: this.orderDirection,
+        };
     }
     /**
      * Set filter to filter data items.
-     * Note it doesn't trigger `dataChange` immediately.
+     * will update `currentData` later, except you call `syncCurrentData`.
      */
     setFilter(filter) {
         this.filter = filter;
         this.deselectAll();
         this.updateCurrentDataLater();
     }
-    /**
-     * Clears filter and shows all data.
-     * Note it doesn't trigger `dataChange` immediately.
-     */
-    clearFilter() {
-        this.setFilter(null);
+    /** Get current filter. */
+    getFilter() {
+        return this.filter;
     }
     /** Update current data later after filter or order changed. */
     updateCurrentDataLater() {
         if (!this.willUpdateCurrentData) {
-            Promise.resolve().then(() => {
-                this.updateCurrentDataImmediately();
-                this.emit('dataChange');
-                this.willUpdateCurrentData = false;
-            });
             this.willUpdateCurrentData = true;
+            Promise.resolve().then(() => {
+                this.sync();
+            });
         }
     }
     /** Update current data immediately after filter or order changed. */
     updateCurrentDataImmediately() {
         let currentData = this.filter ? this.fullData.filter(this.filter) : [...this.fullData];
-        if (this.order) {
-            this.order.sortArray(currentData);
+        if (this.order && this.orderDirection) {
+            this.order.sortArray(currentData, this.orderDirection);
         }
         this.currentData = currentData;
+    }
+    /**
+     * Normally when update `fullData`, setting filter or order will cause update current data in next micro task.
+     * If you can ensure everything is ready, you may sync to update current data immediately.
+     */
+    sync() {
+        if (this.willUpdateCurrentData) {
+            this.updateCurrentDataImmediately();
+            this.emit('dataChange');
+            this.willUpdateCurrentData = false;
+        }
     }
     /** Add data items to the end position, removes repeative items firstly. */
     add(...items) {
@@ -21592,6 +23153,14 @@ class Store extends ff_1.EventEmitter {
         }
         return [...toRemove];
     }
+    /** Get selected data. */
+    getSelected() {
+        return this.selected;
+    }
+    /** Get selected data. */
+    setSelected(items) {
+        this.selected = items;
+    }
     /** Returns whether an item is selected. */
     isSelected(item) {
         if (this.selectedMap) {
@@ -21683,8 +23252,8 @@ class Store extends ff_1.EventEmitter {
     }
     /** Select or deselect a range, from last touched item to current item. */
     shiftSelect(item) {
-        let startIndex = Math.max(this.lastTouchedItem ? this.getIndex(this.lastTouchedItem) : 0, 0);
-        let endIndex = this.getIndex(item);
+        let startIndex = Math.max(this.lastTouchedItem ? this.getFullIndexOf(this.lastTouchedItem) : 0, 0);
+        let endIndex = this.getFullIndexOf(item);
         if (endIndex >= 0) {
             if (startIndex > endIndex) {
                 [startIndex, endIndex] = [endIndex, startIndex];
@@ -21699,18 +23268,30 @@ class Store extends ff_1.EventEmitter {
         }
     }
     /** Get item index in full data. */
-    getIndex(item) {
+    getFullIndexOf(item) {
         if (this.dataMap && !this.dataMap.has(item)) {
             return -1;
         }
-        return this.fullData.indexOf(this.get(item));
+        if (this.key) {
+            let valueAtKey = item[this.key];
+            return this.fullData.findIndex(i => i[this.key] === valueAtKey);
+        }
+        else {
+            return this.fullData.indexOf(this.get(item));
+        }
     }
     /** Get item index in current data. */
-    getCurrentIndex(item) {
+    getCurrentIndexOf(item) {
         if (this.dataMap && !this.dataMap.has(item)) {
             return -1;
         }
-        return this.currentData.indexOf(this.get(item));
+        if (this.key) {
+            let valueAtKey = item[this.key];
+            return this.currentData.findIndex(i => i[this.key] === valueAtKey);
+        }
+        else {
+            return this.currentData.indexOf(this.get(item));
+        }
     }
     /** Select all items. */
     selectAll() {
@@ -22440,18 +24021,6 @@ function appendTo(el, target) {
     return firstElement;
 }
 exports.appendTo = appendTo;
-
-
-/***/ }),
-
-/***/ 0:
-/*!*****************************!*\
-  !*** multi ./docs/index.ts ***!
-  \*****************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(/*! ./docs/index.ts */"./docs/index.ts");
 
 
 /***/ })

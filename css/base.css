@@ -35,7 +35,8 @@ img, iframe {
   border: none; }
 
 input, select, button, textarea, table, optgroup, pre {
-  font: inherit;
+  font-size: inherit;
+  font-family: inherit;
   color: inherit; }
 
 input, select, button, textarea, label, img, svg {
