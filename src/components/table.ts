@@ -32,7 +32,7 @@ export interface TableColumn<T = any> {
 	name: string
 
 	/** Column title. */
-	title: string
+	title: TemplateResult | string
 
 	/** Column basis width. */
 	width?: number

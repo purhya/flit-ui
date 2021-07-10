@@ -14,7 +14,8 @@ export interface PopupOptions {
 
 	/** 
 	 * How to trigger the popup.
-	 * You should not change it after set.
+	 * You should not change it after initialized.
+	 * Note when use `focus` type trigger, you must ensure element can get focus.
 	 */
 	readonly trigger?: 'hover' | 'click' | 'focus' | 'contextmenu'
 
@@ -60,6 +61,9 @@ export interface PopupOptions {
 
 	/** If specified as `true`, popup element will get focus after poped-up if it can get focus. */
 	autoFocus?: boolean
+
+	/** Whether the popup is pointerable and can interact with mouse. */
+	pointerable?: boolean
 }
 
 interface PopupBindingEvents {
@@ -84,6 +88,7 @@ export const DefaultPopupOptions: PopupOptions = {
 	transition: {name: 'fade'},
 	showImmediately: false,
 	autoFocus: false,
+	pointerable: true,
 }
 
 
@@ -226,7 +231,10 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 		if (firstTimeUpdate) {
 			// Must knows trigger type firstly, then can bind trigger.
-			this.bindTrigger()
+			// Bind it late can improve performance.
+			onRenderComplete(() => {
+				this.bindTrigger()
+			})
 		}
 		else if (this.opened) {
 			enqueueUpdatableInOrder(this, this.context, UpdatableUpdateOrder.Directive)
@@ -367,6 +375,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 	/** Show popup component. */
 	showPopup() {
+		this.willOpen = true
 		enqueueUpdatableInOrder(this, this.context, UpdatableUpdateOrder.Directive)
 	}
 	
@@ -398,6 +407,12 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 				}
 
 				this.alignPopup()
+
+				// Very small rate no popup property, don't know why.
+				if (!this.popup) {
+					return
+				}
+
 				this.popup.el.style.visibility = ''
 				this.mayGetFocus()
 
@@ -485,6 +500,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 		popup.setBinding(this as PopupBinding)
 		popup.applyAppendTo()
+		popup.el.style.pointerEvents = this.getOption('pointerable') ? '' : 'none'
 
 		return isOldInUse
 	}

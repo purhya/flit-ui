@@ -34,7 +34,6 @@ export class Tooltip<E = any> extends Popup<E> {
 			max-width: ${adjust(220)}px;
 			padding: ${adjust(4)}px ${adjust(8)}px;
 			line-height: ${adjust(20)}px;
-			pointer-events: none;
 		}
 
 		.text{

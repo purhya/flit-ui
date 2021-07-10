@@ -8,9 +8,6 @@ export interface TooltipOptions extends PopupOptions{
 
 	/** Tooltip type, `default | prompt | error`. */
 	readonly type?: TooltipType
-
-	/** Whether mouse can pointer tooltip popup. */
-	canPointer?: boolean
 }
 
 
@@ -22,6 +19,7 @@ const defaultTooltipOptions: TooltipOptions = {
 	triangle: true,
 	fixTriangle: false,
 	type: 'default',
+	pointerable: false
 }
 
 
