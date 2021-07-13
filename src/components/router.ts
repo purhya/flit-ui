@@ -193,19 +193,26 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 			this.stackedPopupCount++
 		}
 		else {
-			this.clearPopupStack()
 			this.normalPath = path
+			this.popupPath = null
+			this.stackedPopupCount = 0
 		}
 
 		let oldState = this.state
-		let uri = this.getURIFromPath(path)
 
 		this.path = path
 		this.state = {path, asPopupPath}
-		history.pushState(this.state, '', uri)
+		this.push(path, asPopupPath)
 
 		this.emit('goto', this.state, oldState)
 		this.emit('goOrRedirectTo', this.state, oldState)
+	}
+
+	/** Use this to push a state sepeartely but not affect rendering. */
+	push(path: string, asPopupPath: boolean = false) {
+		let uri = this.getURIFromPath(path)
+		let state = {path, asPopupPath}
+		history.pushState(state, '', uri)
 	}
 
 	/** 
@@ -221,19 +228,26 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 			this.popupPath = path
 		}
 		else {
-			this.clearPopupStack()
 			this.normalPath = path
+			this.popupPath = null
+			this.stackedPopupCount = 0
 		}
 
 		let oldState = this.state
-		let uri = this.getURIFromPath(path)
 
 		this.path = path
 		this.state = {path, asPopupPath}
-		history.replaceState(this.state, '', uri)
+		this.replace(path, asPopupPath)
 
 		this.emit('redirectTo', this.state, oldState)
 		this.emit('goOrRedirectTo', this.state, oldState)
+	}
+
+	/** Use this to replace a state sepeartely but not affect rendering. */
+	replace(path: string, asPopupPath: boolean = false) {
+		let uri = this.getURIFromPath(path)
+		let state = {path, asPopupPath}
+		history.pushState(state, '', uri)
 	}
 
 	/** 

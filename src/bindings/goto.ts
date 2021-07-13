@@ -61,7 +61,7 @@ export class GotoBinding implements Binding<string>{
  * `goto(path)`
  * `goto(path, asPopupPath)`
  */
-export const goTo = defineBinding('goto', GotoBinding) as (path: string, options: GoToOptions) => BindingResult
+export const goTo = defineBinding('goto', GotoBinding) as (path: string, options?: GoToOptions) => BindingResult
 
 
 export class RedirectToBinding extends GotoBinding{
@@ -78,7 +78,7 @@ export class RedirectToBinding extends GotoBinding{
  * `recirectTo(path)`
  * `recirectTo(path, asPopupPath)`
  */
-export const recirectTo = defineBinding('redirectTo', GotoBinding) as (path: string, options: GoToOptions) => BindingResult
+export const recirectTo = defineBinding('redirectTo', GotoBinding) as (path: string, options?: GoToOptions) => BindingResult
 
 
 /** Get closest router by walking ancestor element. */
