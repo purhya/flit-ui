@@ -247,7 +247,7 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	replace(path: string, asPopupPath: boolean = false) {
 		let uri = this.getURIFromPath(path)
 		let state = {path, asPopupPath}
-		history.pushState(state, '', uri)
+		history.replaceState(state, '', uri)
 	}
 
 	/** 
