@@ -28,6 +28,12 @@ export interface PopupOptions {
 	/** Popup align margin, reference to `align`. Default value is `4`. */
 	alignMargin?: number | number[]
 
+	/** Whether can shrink height in y direction when there is not enough space. */
+	canShrinkInY?: boolean
+
+	/** Whether stick to viewport edges where there is not enough space. */
+	stickToEdges?: boolean
+
 	/** 
 	 * Delay showing in millseconds, such that mouse hover unexpected will not cause layer popup.
 	 * Only for `hover` and `focus` trigger types.
@@ -81,10 +87,12 @@ export const DefaultPopupOptions: PopupOptions = {
 	trigger: 'hover',
 	alignPosition: 'b',
 	alignMargin: 4,
-	showDelay: 100,
-	hideDelay: 100,
+	canShrinkInY: true,
+	stickToEdges: false,
 	triangle: true,
 	fixTriangle: false,
+	showDelay: 100,
+	hideDelay: 100,
 	transition: {name: 'fade'},
 	showImmediately: false,
 	autoFocus: false,
@@ -243,6 +251,11 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 	protected bindTrigger() {
 		let trigger = this.getOption('trigger')
+
+		// No mouse, uses click event instead.
+		if (trigger === 'hover' && !matchMedia('(pointer:fine)').matches) {
+			trigger = 'click'
+		}
 
 		if (trigger === 'click') {
 			on(this.el, 'click', this.togglePopupOpened, this)
@@ -590,9 +603,10 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 		return {
 			margin: this.getOption('alignMargin'),
-			canShrinkInY: true,
+			canShrinkInY: this.getOption('canShrinkInY'),
 			triangle,
-			fixTriangle: this.getOption('fixTriangle'), 
+			fixTriangle: this.getOption('fixTriangle'),
+			stickToEdges: this.getOption('stickToEdges'),
 		}
 	}
 
