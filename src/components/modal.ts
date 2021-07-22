@@ -63,8 +63,8 @@ export class Modal<E = any> extends Component<E> {
 			display: flex;
 			width: ${adjust(28)}px;
 			height: ${adjust(28)}px;
-			margin-top: -${adjust(-6)}px;
-			margin-right: ${adjust(-9)}px;
+			margin-top: 0;
+			margin-right: ${adjust(-7)}px;
 			cursor: pointer;
 
 			&:active{
@@ -73,6 +73,28 @@ export class Modal<E = any> extends Component<E> {
 
 			f-icon{
 				margin: auto;
+			}
+
+			svg{
+				width: ${adjust(20)}px;
+				height: ${adjust(20)}px;
+
+				line{
+					stroke-width: 0.75 !important;
+				}
+			}
+		}
+
+		@media (max-width: 768px) {
+			.close{
+				svg{
+					width: ${adjust(28)}px;
+					height: ${adjust(28)}px;
+
+					line{
+						stroke-width: 0.54 !important;
+					}
+				}
 			}
 		}
 
