@@ -36,14 +36,12 @@ export class Navigation<T> extends List<T> {
 
 	render() {
 		return html`
-			<tempalte>
-				${this.title ? html`
-				<div class="title">
-					${this.title}
-				</div>` : ''}
+			${this.title ? html`
+			<div class="title">
+				${this.title}
+			</div>` : ''}
 
-				${this.renderOptions(this.data, this.treeNavigationIndices)}
-			</tempalte>
+			${this.renderOptions(this.data, this.treeNavigationIndices)}
 		`
 	}
 }

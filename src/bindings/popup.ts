@@ -250,21 +250,19 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 	}
 
 	protected bindTrigger() {
-		let trigger = this.getOption('trigger')
-
-		// No mouse, uses click event instead.
-		if (trigger === 'hover' && !matchMedia('(pointer:fine)').matches) {
-			trigger = 'click'
-		}
+		let trigger = this.getTrigger()
 
 		if (trigger === 'click') {
-			on(this.el, 'click', this.togglePopupOpened, this)
+			on(this.el, trigger, this.onClickEl, this)
+		}
+		else if (trigger === 'contextmenu') {
+			on(this.el, trigger, this.onContextMenu, this)
 		}
 		else if (trigger === 'hover') {
-			on(this.el, 'mouseenter', this.showPopupLater, this)
+			on(this.el, 'mouseenter', this.onEnterOrFocusEl, this)
 		}
 		else if (trigger === 'focus') {
-			on(this.el, 'focus', this.showPopupLater, this)
+			on(this.el, 'focus', this.onEnterOrFocusEl, this)
 
 			if (this.el.contains(document.activeElement)) {
 				this.showPopupLater()
@@ -276,17 +274,48 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 		}
 	}
 
-	protected unbindTrigger() {
+	protected getTrigger() {
 		let trigger = this.getOption('trigger')
 
+		// No mouse, uses click event instead.
+		if (trigger === 'hover' && !matchMedia('(pointer:fine)').matches) {
+			trigger = 'click'
+		}
+
+		return trigger
+	}
+
+	protected onClickEl(e: Event) {
+		e.preventDefault()
+		e.stopPropagation()
+		this.togglePopupOpened()
+	}
+
+	protected onContextMenu(e: Event) {
+		e.preventDefault()
+		e.stopPropagation()
+		this.togglePopupOpened()
+	}
+
+	protected onEnterOrFocusEl(e: Event) {
+		e.stopPropagation()
+		this.showPopupLater()
+	}
+
+	protected unbindTrigger() {
+		let trigger = this.getTrigger()
+
 		if (trigger === 'click') {
-			off(this.el, 'click', this.togglePopupOpened, this)
+			off(this.el, trigger, this.onClickEl, this)
+		}
+		else if (trigger === 'contextmenu') {
+			off(this.el, trigger, this.onContextMenu, this)
 		}
 		else if (trigger === 'hover') {
-			off(this.el, 'mouseenter', this.showPopupLater, this)
+			off(this.el, 'mouseenter', this.onEnterOrFocusEl, this)
 		}
 		else if (trigger === 'focus') {
-			off(this.el, 'focus', this.showPopupLater, this)
+			off(this.el, 'focus', this.onEnterOrFocusEl, this)
 		}
 	}
 
@@ -308,7 +337,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 			return
 		}
 
-		let trigger = this.getOption('trigger')
+		let trigger = this.getTrigger()
 		let showDelay = this.getOption('showDelay')
 		let key = this.getOption('key')
 
@@ -358,24 +387,17 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 	/** Bind events to handle leaving trigger element before popup component showing. */
 	protected bindLeavingTriggerEvents() {
-		let trigger = this.getOption('trigger')
-
+		let trigger = this.getTrigger()
 		if (trigger === 'hover') {
 			on(this.el, 'mouseleave', this.cancelShowingPopup, this)
-		}
-		else if (trigger === 'focus') {
-			on(this.el, 'blur', this.cancelShowingPopup, this)
 		}
 	}
 
 	/** Unbind events to handle leaving trigger element before popup component showing. */
 	protected unbindLeavingTriggerEvents() {
-		let trigger = this.getOption('trigger')
+		let trigger = this.getTrigger()
 		if (trigger === 'hover') {
 			off(this.el, 'mouseleave', this.cancelShowingPopup, this)
-		}
-		else if (trigger === 'focus') {
-			off(this.el, 'blur', this.cancelShowingPopup, this)
 		}
 	}
 
@@ -612,7 +634,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 	/** Make element of popup component get focus if possible. */
 	protected mayGetFocus() {
-		let trigger = this.getOption('trigger')
+		let trigger = this.getTrigger()
 		if (this.getOption('autoFocus') && (trigger !== 'hover' && trigger !== 'focus') && this.popup && this.popup.el.tabIndex >= 0) {
 			this.popup.el.focus()
 		}
@@ -620,7 +642,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 	/** Bind hiding popup component events. */
 	protected bindLeaveEvents() {
-		let trigger = this.getOption('trigger')
+		let trigger = this.getTrigger()
 		if (trigger === 'hover') {
 			// Should not use `MouseLeave.once`, because `hidePopupLater` may be canceled, it needs trigger again.
 			this.unwatchLeave = MouseLeave.on(this.el, this.popup!.el, this.hidePopup.bind(this), {
@@ -639,7 +661,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 	/** Unbind hiding popup component events. */
 	protected unbindLeaveEvents() {
-		let trigger = this.getOption('trigger')
+		let trigger = this.getTrigger()
 		if (trigger === 'hover') {
 			if (this.unwatchLeave) {
 				this.unwatchLeave()
