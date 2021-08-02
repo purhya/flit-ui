@@ -76,11 +76,11 @@ export class Modal<E = any> extends Component<E> {
 			}
 
 			svg{
-				width: ${adjust(20)}px;
-				height: ${adjust(20)}px;
+				width: ${adjust(24)}px;
+				height: ${adjust(24)}px;
 
 				line{
-					stroke-width: 0.75 !important;
+					stroke-width: 0.625 !important;
 				}
 			}
 		}

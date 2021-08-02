@@ -19,7 +19,7 @@ const defaultTooltipOptions: TooltipOptions = {
 	triangle: true,
 	fixTriangle: false,
 	type: 'default',
-	pointerable: false
+	pointerable: false,
 }
 
 
