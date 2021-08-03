@@ -117,7 +117,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 			max-width: 100%;
 
 			&:hover .order{
-				visibility: visible;
+				display: flex;
 			}
 		}
 
@@ -139,17 +139,16 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 
 		.order{
 			width: ${adjust(16)}px;
-			display: flex;
 			flex: none;
 			margin-right: ${adjust(-8)}px;	// Gives 16 - 8 = 8px as cell padding-right.
-			visibility: hidden;
+			display: none;
 
 			f-icon{
 				margin: auto;
 			}
 
 			&.current{
-				visibility: visible;
+				display: flex;
 			}
 		}
 

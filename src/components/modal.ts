@@ -1,4 +1,4 @@
-import {css, define, html, on, untilRenderComplete, off, Component, show} from '@pucelle/flit'
+import {css, define, html, on, untilRenderComplete, off, Component, show, ContextualTransitionOptions} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {align, watchLayout} from '@pucelle/ff'
 import {appendTo} from '../utils/element'
@@ -137,11 +137,11 @@ export class Modal<E = any> extends Component<E> {
 		return html`
 			<template
 				tabindex="0"
-				${show(this.opened, {name: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
+				${show(this.opened, {...this.getTransition(), onend: this.onTransitionEnd})}
 			>
 				<div class="mask"
 					:ref="mask"
-					${show(this.opened, {name: 'fade', enterAtStart: true})}
+					${show(this.opened, this.getTransition())}
 				/>
 
 				<div class="header">
@@ -163,6 +163,10 @@ export class Modal<E = any> extends Component<E> {
 				</div>
 			</template>
 		`
+	}
+
+	protected getTransition(): ContextualTransitionOptions {
+		return {name: 'fade', enterAtStart: true}
 	}
 
 	protected onTransitionEnd(type: string, finish: boolean) {
