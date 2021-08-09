@@ -555,11 +555,11 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 
 	/** Order specified column with specified direction by column name. */
 	protected applyOrder(column: TableColumn, direction: 'asc' | 'desc' | '' = '') {
-		if (direction === '') {
-			this.store.setOrder(null)
+		if (column.orderBy && direction !== '') {
+			this.store.setOrder(column.orderBy as any, direction)
 		}
 		else {
-			this.store.setOrder(column.orderBy as any, direction)
+			this.store.setOrder(null)
 		}
 
 		this.store.sync()
