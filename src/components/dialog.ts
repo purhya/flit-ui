@@ -1,8 +1,7 @@
 import {css, define, html, untilRenderComplete, show, Component, TemplateResult, on, off, render, getRenderedAsComponent, getComponentAsync} from '@pucelle/flit'
 import {theme} from '../style/theme'
-import {align} from '@pucelle/ff'
+import {align, translations} from '@pucelle/ff'
 import {appendTo} from '../utils/element'
-import {translations} from '../translations/translations'
 import {Input} from './input'
 
 
@@ -440,3 +439,12 @@ export class QuickDialog {
 
 /** A quick global API to show dialogs. */
 export const dialog = new QuickDialog()
+
+
+/** Default transitions for `<f-dialog>`. */
+translations.addIf('enus', {
+	ok: 'OK',
+	cancel: 'Cancel',
+	yes: 'Yes',
+	no: 'No',
+})

@@ -46,5 +46,3 @@ export * from './bindings/loading'
 export * from './bindings/goto'
 export * from './bindings/drag-drop'
 
-export * from './translations/translations'
-
