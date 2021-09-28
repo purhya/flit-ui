@@ -140,7 +140,7 @@ export class Modal<E = any> extends Component<E> {
 				${show(this.opened, {...this.getTransition(), onend: this.onTransitionEnd})}
 			>
 				<div class="mask"
-					:ref="mask"
+					:refElement="mask"
 					${show(this.opened, this.getTransition())}
 				/>
 
@@ -180,8 +180,8 @@ export class Modal<E = any> extends Component<E> {
 
 	protected onConnected() {
 		untilRenderComplete().then(() => {
-			if (this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
-				this.el.before(this.refs.mask)
+			if (this.refElements.mask && this.el.previousElementSibling !== this.refElements.mask) {
+				this.el.before(this.refElements.mask)
 			}
 
 			this.align()
@@ -193,8 +193,8 @@ export class Modal<E = any> extends Component<E> {
 	}
 
 	protected onDisconnected() {
-		if (this.refs.mask) {
-			this.refs.mask.remove()
+		if (this.refElements.mask) {
+			this.refElements.mask.remove()
 		}
 		
 		off(window, 'resize', this.onWindowResize, this)

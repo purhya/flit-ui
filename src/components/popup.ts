@@ -73,7 +73,7 @@ export class Popup<E = any> extends Component<E> {
 		return html`
 			<template tabindex="0">
 				${this.triangle ? html`
-					<div class="triangle" :ref="triangle" :class.triangle-herizontal=${this.herizontal} />
+					<div class="triangle" :refElement="triangle" :class.triangle-herizontal=${this.herizontal} />
 				` : ''}
 				<slot />
 			</template>

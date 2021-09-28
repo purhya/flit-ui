@@ -96,7 +96,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 		`.extends(super.style())
 	}
 
-	readonly refs!: {
+	readonly refElements!: {
 
 		/** The element of popup component. */
 		popup: HTMLElement
@@ -175,7 +175,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 			return html`
 				<input type="text"
 					class="input"
-					:ref="input"
+					:refElement="input"
 					.value=${this.inputted}
 					.placeholder=${this.placeholder}
 					?readonly=${!this.editing}
@@ -205,17 +205,17 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 		return html`
 			<f-popup
 				class="popup"
-				:ref="popup"
+				:refElement="popup"
 				.triangle="false"
 			>
 				<f-list class="list"
-					:ref="list"
+					:refElement="list"
 					.type="selection"
 					.selectable
 					.data=${data}
 					.multipleSelect=${this.multipleSelect}
 					.selected=${this.multipleSelect ? this.value : [this.value]}
-					.navigateFrom=${() => this.refs.input}
+					.navigateFrom=${() => this.refElements.input}
 					@@select=${this.onSelected}
 				/>
 			</f-popup>
@@ -285,7 +285,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	protected async startEditing() {
 		this.editing = true
 		await untilRenderComplete()
-		this.refs.input.focus()
+		this.refElements.input.focus()
 	}
 
 	protected endEditing() {
@@ -301,8 +301,8 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	}
 
 	protected mayFocusInput() {
-		if (this.editing && this.refs.input) {
-			this.refs.input.focus()
+		if (this.editing && this.refElements.input) {
+			this.refElements.input.focus()
 		}
 	}
 	
@@ -311,22 +311,22 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 	}
 
 	protected syncPopupWidth() {
-		if (this.refs.popup) {
-			this.refs.popup.style.minWidth = String(this.el.offsetWidth) + 'px'
+		if (this.refElements.popup) {
+			this.refElements.popup.style.minWidth = String(this.el.offsetWidth) + 'px'
 		}
 	}
 
 	protected scrollToViewSelectedOption() {
-		if (this.refs.list) {
-			let selectedOption = this.refs.list.querySelector('[class*=selected]') as HTMLElement | null
-			if (selectedOption && getScrollDirection(this.refs.list) === 'y') {
+		if (this.refElements.list) {
+			let selectedOption = this.refElements.list.querySelector('[class*=selected]') as HTMLElement | null
+			if (selectedOption && getScrollDirection(this.refElements.list) === 'y') {
 				scrollToTop(selectedOption)
 			}
 		}
 	}
 
 	protected onInput() {
-		this.inputted = (this.refs.input as HTMLInputElement).value
+		this.inputted = (this.refElements.input as HTMLInputElement).value
 		this.showPopup()
 	}
 }

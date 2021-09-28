@@ -75,7 +75,7 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 		`
 	}
 
-	refs!: {
+	refElements!: {
 
 		/** Search input element. */
 		input: HTMLInputElement
@@ -106,7 +106,7 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 			<input type="text"
 				placeholder=${this.placeholder}
 				.value=${this.value}
-				:ref="input"
+				:refElement="input"
 				@focus=${this.onFocus}
 			/>
 
@@ -123,18 +123,18 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 
 	protected onReady() {
 		if (this.lazy) {
-			on(this.refs.input, 'change', this.onChange, this)
+			on(this.refElements.input, 'change', this.onChange, this)
 		}
 		else {
-			on(this.refs.input, 'compositionstart', this.onCompositionStart, this)
-			on(this.refs.input, 'compositionend', this.onCompositionEnd, this)
-			on(this.refs.input, 'input', this.onInput, this)
+			on(this.refElements.input, 'compositionstart', this.onCompositionStart, this)
+			on(this.refElements.input, 'compositionend', this.onCompositionEnd, this)
+			on(this.refElements.input, 'input', this.onInput, this)
 		}
 	}
 
 	protected onFocus() {
 		this.focused = true
-		once(this.refs.input, 'blur', () => this.focused = false)
+		once(this.refElements.input, 'blur', () => this.focused = false)
 	}
 
 	protected onChange() {
@@ -159,7 +159,7 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 			return
 		}
 
-		this.value = this.refs.input.value
+		this.value = this.refElements.input.value
 		this.emit('change', this.value)
 	}
 

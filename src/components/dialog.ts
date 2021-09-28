@@ -191,7 +191,7 @@ export class Dialog<E = any> extends Component<E> {
 				${show(this.opened, {name: 'fade', enterAtStart: true, onend: this.onTransitionEnd})}
 			>
 				<div class="mask"
-					:ref="mask"
+					:refElement="mask"
 					${show(this.opened, {name: 'fade', enterAtStart: true})}
 				/>
 
@@ -264,8 +264,8 @@ export class Dialog<E = any> extends Component<E> {
 
 	protected onTransitionEnd(type: string, finish: boolean) {
 		if (type === 'leave' && finish) {
-			if (this.refs.mask) {
-				this.refs.mask.remove()
+			if (this.refElements.mask) {
+				this.refElements.mask.remove()
 			}
 			this.el.remove()
 		}
@@ -280,8 +280,8 @@ export class Dialog<E = any> extends Component<E> {
 	protected async onConnected() {
 		await untilRenderComplete()
 		
-		if (this.refs.mask && this.el.previousElementSibling !== this.refs.mask) {
-			this.el.before(this.refs.mask)
+		if (this.refElements.mask && this.el.previousElementSibling !== this.refElements.mask) {
+			this.el.before(this.refElements.mask)
 		}
 
 		this.toCenter()
@@ -410,7 +410,7 @@ export class QuickDialog {
 				.validator=${options.validator}
 				.type=${options.inputType || 'text'}
 				.value=${value}
-				:ref=${async (i: HTMLElement) => input = await getComponentAsync(i) as Input}
+				:refElement=${async (i: HTMLElement) => input = await getComponentAsync(i) as Input}
 				@@input=${(v: string) => value = v}
 				@keydown.enter=${() => this.dialogComponent!.triggerAction('ok')}
 			/>

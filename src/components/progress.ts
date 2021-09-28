@@ -56,7 +56,7 @@ export class Progress<E = any> extends Component<E> {
 
 	protected render() {
 		let tip = tooltip(this.renderTooltipValue(), {
-			alignTo: () => this.refs.progress,
+			alignTo: () => this.refElements.progress,
 			alignPosition: 'bc-tr',
 			alignMargin: [8, 0],
 		})
@@ -64,7 +64,7 @@ export class Progress<E = any> extends Component<E> {
 		return html`
 			<template ${tip}>
 				<div class="groove">
-					<div class="progress" :ref="progress" :style.width.percent=${Math.min(this.value, 1) * 100}></div>
+					<div class="progress" :refElement="progress" :style.width.percent=${Math.min(this.value, 1) * 100}></div>
 				</div>
 			</template>
 		`

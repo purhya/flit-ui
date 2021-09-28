@@ -299,7 +299,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		this.stateCacher = new TableStateCacher(this)
 	}
 
-	refs!: {
+	refElements!: {
 		/** Head container. */
 		head: HTMLTableSectionElement
 
@@ -336,15 +336,15 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 
 	protected render(): TemplateResult {
 		return html`
-			<div class="head" :ref="head">
-				<div class="columns" :ref="columnContainer">
+			<div class="head" :refElement="head">
+				<div class="columns" :refElement="columnContainer">
 					${this.renderColumns()}
 				</div>
 			</div>
 
 			<div class="body">
-				<table class="table" :ref="table">
-					<colgroup :ref="colgroup">
+				<table class="table" :refElement="table">
+					<colgroup :refElement="colgroup">
 						${this.columns.map(column => html`
 							<col :style.text-align=${column.align || ''} />
 						`)}
@@ -498,9 +498,9 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 
 	protected onReady() {
 		this.resizer = new ColumnWidthResizer(
-			this.refs.head,
-			this.refs.columnContainer,
-			this.refs.colgroup,
+			this.refElements.head,
+			this.refElements.columnContainer,
+			this.refElements.colgroup,
 			this.columns,
 			this.minColumnWidth,
 			this.scopeClassName('resizing-mask')
@@ -662,7 +662,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 			return this.repeatDir.getFirstVisibleIndex()
 		}
 		else {
-			return locateFirstVisibleIndex(this.refs.table, this.refs.table.rows)
+			return locateFirstVisibleIndex(this.refElements.table, this.refElements.table.rows)
 		}
 	}
 
@@ -690,7 +690,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	 * Please makesure rendering is completed.
 	 */
 	getRenderedRow(index: number): HTMLTableRowElement | null {
-		return this.refs.table.rows[index - this.getStartIndex()] || null
+		return this.refElements.table.rows[index - this.getStartIndex()] || null
 	}
 
 	/** Checks whether have state cached in a specified name. */

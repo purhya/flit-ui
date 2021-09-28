@@ -139,7 +139,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 
 	protected render() {
 		let tip = tooltip(this.renderTooltipContent(), {
-			alignTo: () => this.refs.ball,
+			alignTo: () => this.refElements.ball,
 			alignPosition: this.vertical ? 'r' : 't',
 		})
 
@@ -169,10 +169,10 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 				@focus=${this.onFocus}
 				@blur=${this.onBlur}
 			>
-				<div class="groove" :ref="groove">
+				<div class="groove" :refElement="groove">
 					<div class="groove-bg" />
 					<div class="progress" :style=${sizeStyle} />
-					<div class="ball" :ref="ball" :style=${positionStyle} />
+					<div class="ball" :refElement="ball" :style=${positionStyle} />
 				</div>
 				
 			</template>
@@ -200,7 +200,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 	}
 
 	protected onMouseDown(e: MouseEvent) {
-		let rect = getRect(this.refs.groove)
+		let rect = getRect(this.refElements.groove)
 
 		// Avoid mouse leave to cause it hide.
 		MouseLeave.lock(this.el)

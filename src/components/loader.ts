@@ -94,7 +94,7 @@ export class Loader<E = any> extends Component<E> {
 			>
 				<svg viewBox="0 0 ${size} ${size}" width=${size} height=${size}>
 					<path class="bg" d=${d} style="stroke-width: ${strokeWidth}" />
-					<path :ref="snake" d=${d} style="stroke-width: ${strokeWidth}; stroke-dasharray: ${dashArray};" />
+					<path :refElement="snake" d=${d} style="stroke-width: ${strokeWidth}; stroke-dasharray: ${dashArray};" />
 				</svg>
 			</template>
 		`
@@ -108,7 +108,7 @@ export class Loader<E = any> extends Component<E> {
 		let strokeWidth = this.getStrokeWidth()
 		let size = Loader.sizes[this.size]
 
-		this.refs.snake.animate([
+		this.refElements.snake.animate([
 			{
 				strokeDashoffset: 0,
 			},

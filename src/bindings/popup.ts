@@ -625,7 +625,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 
 	/** Get align options. */
 	protected getAlignOptions(): AlignOptions {
-		let triangle = this.popup!.refs.triangle
+		let triangle = this.popup!.refElements.triangle as HTMLElement
 
 		return {
 			margin: this.getOption('alignMargin'),

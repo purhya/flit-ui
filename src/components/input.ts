@@ -102,7 +102,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 	/** When in composition inputting. */
 	protected inCompositionInputting: boolean = false
 
-	readonly refs!: {
+	readonly refElements!: {
 		input: HTMLInputElement
 	}
 
@@ -152,7 +152,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 				<input type=${this.type}
 					.placeholder=${this.placeholder || ''}
 					.value=${this.value}
-					:ref="input"
+					:refElement="input"
 					${errorTip}
 					@blur=${this.onBlur}
 					@compositionstart=${this.onCompositionStart}
@@ -189,7 +189,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 			return
 		}
 
-		let value = this.refs.input.value
+		let value = this.refElements.input.value
 
 		if (this.validator) {
 			this.valid = null
@@ -200,7 +200,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 	}
 
 	protected onChange() {
-		let input = this.refs.input
+		let input = this.refElements.input
 		let value = this.value = input.value
 
 		this.validate()
@@ -241,7 +241,7 @@ export class Textarea extends Input {
 			<textarea
 				placeholder=${this.placeholder}
 				.value=${this.value}
-				:ref="input"
+				:refElement="input"
 				:class.valid=${this.touched && this.valid === true}
 				:class.invalid=${this.touched && this.valid === false}
 				@focus=${this.onBlur}
