@@ -1,4 +1,4 @@
-import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, Context, Transition, Template, UpdatableOptions, html, onRenderComplete, render, getRenderedAsComponent, enqueueUpdatableInOrder, UpdatableUpdateOrder} from '@pucelle/flit'
+import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, Context, Transition, Template, UpdatableOptions, html, onRenderComplete, render, getRenderedAsComponent, enqueueUpdatableInOrder, QueueUpdateOrder} from '@pucelle/flit'
 import {Timeout, MouseLeave, watchLayout, isVisibleInViewport, AlignPosition, Emitter, AlignOptions, Aligner} from '@pucelle/ff'
 import {Popup} from '../components/popup'
 import {RenderFn} from '../types'
@@ -245,7 +245,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 			})
 		}
 		else if (this.opened) {
-			enqueueUpdatableInOrder(this, this.context, UpdatableUpdateOrder.Directive)
+			enqueueUpdatableInOrder(this, this.context, QueueUpdateOrder.Directive)
 		}
 	}
 
@@ -415,7 +415,7 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 	/** Show popup component. */
 	showPopup() {
 		this.willOpen = true
-		enqueueUpdatableInOrder(this, this.context, UpdatableUpdateOrder.Directive)
+		enqueueUpdatableInOrder(this, this.context, QueueUpdateOrder.Directive)
 	}
 	
 	__updateImmediately() {
@@ -488,8 +488,8 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 				let currentTriggerInsideCachedPopup = popup.el.contains(this.el)
 
 				// Reuse and merge.
-				if (!currentTriggerInsideCachedPopup && template.canMergeWith(result)) {
-					template.merge(result)
+				if (!currentTriggerInsideCachedPopup && template.canPatchBy(result)) {
+					template.patch(result)
 				}
 
 				// Can't reuse since trigger element inside it.
@@ -577,8 +577,8 @@ export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding
 			result = html`${result}`
 		}
 
-		if (template.canMergeWith(result)) {
-			template.merge(result)
+		if (template.canPatchBy(result)) {
+			template.patch(result)
 		}
 		else {
 			popup.el.remove()
