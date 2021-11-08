@@ -264,7 +264,7 @@ define('flit-preview', class extends Component {
 
 					<f-row style="margin: 16px 0 10px;" .gutter="24">
 						<f-col .span="12" style="text-align: right;">
-							<button primary @click=${() => (getComponent(this.refs.form as any) as Form).validate()}>Save</button>
+							<button primary @click=${() => (getComponent(this.refElements.form as any) as Form).validate()}>Save</button>
 						</f-col>
 					</f-row>
 				</f-form>
@@ -512,8 +512,8 @@ define('flit-preview', class extends Component {
 									.title="Popover title" 
 								>
 									This is Popover content.
-									<button :slot="action" @click=${() => (getComponent(this.refs.popupWithActions as HTMLElement) as Popover).close()}>Cancel</button>
-									<button :slot="action" primary @click=${() => (getComponent(this.refs.popupWithActions as HTMLElement) as Popover).close()}>Save</button>
+									<button :slot="action" @click=${() => (getComponent(this.refElements.popupWithActions as HTMLElement) as Popover).close()}>Cancel</button>
+									<button :slot="action" primary @click=${() => (getComponent(this.refElements.popupWithActions as HTMLElement) as Popover).close()}>Save</button>
 								</f-popover>
 								`,
 								{trigger: 'click'}

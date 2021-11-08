@@ -4,7 +4,10 @@ import {toPower} from '@pucelle/ff'
 /** Class to process colors. */
 export class Color {
 
-	/** Color from rgba values. */
+	/** 
+	 * Color from rgba values.
+	 * RGBA values are betweens 0~1.
+	 */
 	static fromRGBA(r: number, g: number, b: number, a: number): Color {
 		r = Math.max(Math.min(r, 1), 0)
 		g = Math.max(Math.min(g, 1), 0)
@@ -30,7 +33,10 @@ export class Color {
 		}
 	}
 
-	/** Color from rgb values. */
+	/** 
+	 * Color from rgb values.
+	 * RGBA values are betweens 0~1.
+	 */
 	static fromRGB(r: number, g: number, b: number): Color {
 		return Color.fromRGBA(r, g, b, 1)
 	}
@@ -49,11 +55,11 @@ export class Color {
 
 	/** Get [r, g, b, a] values, all betweens 0 ~ 1. */
 	getRGBA(): [number, number, number, number] {
-		if (/^#[0-9a-fA-F]{3,6}$/.test(this.value)) {
+		if (/^#[0-9a-fA-F]{3,8}$/.test(this.value)) {
 			return [...this.parseNormalColor(this.value), 1] as [number, number, number, number]
 		}
 
-		let match = this.value.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/)
+		let match = this.value.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i)
 		if (match) {
 			return [
 				Number(match[1]) / 255,
@@ -63,7 +69,7 @@ export class Color {
 			]
 		}
 
-		match = this.value.match(/^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/)
+		match = this.value.match(/^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/i)
 		if (match) {
 			return [
 				Number(match[1]) / 255,
@@ -73,7 +79,7 @@ export class Color {
 			]
 		}
 
-		match = this.value.match(/^rgba\(\s*(#[0-9a-fA-F]{3,6})\s*,\s*([\d.]+)\s*\)$/)
+		match = this.value.match(/^rgba\(\s*(#[0-9a-fA-F]{3,6})\s*,\s*([\d.]+)\s*\)$/i)
 		if (match) {
 			return [...this.parseNormalColor(match[1]), Number(match[2])] as [number, number, number, number]
 		}

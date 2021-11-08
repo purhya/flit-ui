@@ -1,5 +1,5 @@
 import {off, defineBinding, on, Binding, BindingResult, TemplateResult, TransitionOptions, Context, Transition, Template, UpdatableOptions, html, onRenderComplete, render, getRenderedAsComponent, enqueueUpdatableInOrder, QueueUpdateOrder} from '@pucelle/flit'
-import {Timeout, MouseLeave, watchLayout, isVisibleInViewport, AlignPosition, Emitter, AlignOptions, Aligner} from '@pucelle/ff'
+import {Timeout, MouseLeave, watchLayout, isVisibleInViewport, AlignPosition, EventEmitter, AlignOptions, Aligner} from '@pucelle/ff'
 import {Popup} from '../components/popup'
 import {RenderFn} from '../types'
 
@@ -165,7 +165,7 @@ function isSharedPopupKeyInUse(key: string): boolean {
  * 
  * `:popup=${() => popupComponent}`
  */
-export class PopupBinding extends Emitter<PopupBindingEvents> implements Binding<RenderFn> {
+export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Binding<RenderFn> {
 
 	protected readonly el: HTMLElement
 	protected readonly context: Context

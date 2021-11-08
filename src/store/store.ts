@@ -1,4 +1,4 @@
-import {Emitter, Order, OrderFunction, CanSortKeys} from '@pucelle/ff'
+import {Order, OrderFunction, CanSortKeys, EventEmitter} from '@pucelle/ff'
 import {KeyMap} from './helpers/key-map'
 
 
@@ -25,7 +25,7 @@ export interface StoreOptions<T> {
 
 
 /* Used to cache object type data and support selection, ordering and filtering. */
-export class Store<T = any> extends Emitter<StoreEvents> {
+export class Store<T = any> extends EventEmitter<StoreEvents> {
 
 	/** If `key` specified, when different but same key items added, it covers the old one. */
 	protected readonly key: keyof T | null = null

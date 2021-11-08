@@ -1,4 +1,4 @@
-import {CanSortKeys, Emitter} from '@pucelle/ff'
+import {CanSortKeys, EventEmitter} from '@pucelle/ff'
 import {LiveAsyncRepeatDataOptions} from '@pucelle/flit'
 import {PageDataCacher} from './helpers/page-data-cacher'
 
@@ -27,7 +27,7 @@ export interface RemoteStoreOptions {
  * You should extends this class and overwrite abstract methods,
  * and should support like column ordering and filtering or searching in backend.
  */
-export abstract class RemoteStore<T = any> extends Emitter<RemoteStoreEvents> {
+export abstract class RemoteStore<T = any> extends EventEmitter<RemoteStoreEvents> {
 
 	protected readonly cacher: PageDataCacher<T>
 
