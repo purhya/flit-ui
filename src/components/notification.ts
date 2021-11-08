@@ -59,7 +59,7 @@ interface NotificationItem extends NotificationOptions {
 
 /** `<f-notification>` helps to show a notification list to notify some info. */
 @define('f-notification')
-export class Notification<E = any> extends Component<E> {
+export class Notification<E = {}> extends Component<E> {
 	static style() {
 		let {infoColor, adjust, successColor, errorColor, warningColor, popupBorderRadius, popupShadowBlurRadius, adjustFontSize, backgroundColor, textColor, popupShadowColor} = theme
 		

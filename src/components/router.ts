@@ -23,13 +23,13 @@ export interface RouteOptions {
 export interface RouterEvents {
 
 	/** Triggers after router changed and pushed new state, components are not updated yet. */
-	goto: (newState: RouterHistoryState, oldState: RouterHistoryState) => void
+	goto: (newState: RouterHistoryState, oldState: RouterHistoryState | null) => void
 
 	/** Triggers after router changed and replace current state, components are not updated yet. */
-	redirectTo: (newState: RouterHistoryState, oldState: RouterHistoryState) => void
+	redirectTo: (newState: RouterHistoryState, oldState: RouterHistoryState | null) => void
 
 	/** Triggers after router changed and replace current state, components are not updated yet. */
-	goOrRedirectTo: (newState: RouterHistoryState, oldState: RouterHistoryState) => void
+	goOrRedirectTo: (newState: RouterHistoryState, oldState: RouterHistoryState | null) => void
 }
 
 /** Current history state. */
@@ -53,7 +53,7 @@ export interface RouterHistoryState {
  * ```
  */
 @define('f-router')
-export class Router<E = any> extends Component<RouterEvents & E> {
+export class Router<E = {}> extends Component<RouterEvents & E> {
 
 	/** 
 	 * A prefix will be added to the front of current path as final path.
@@ -183,7 +183,7 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	 * Goto a new path and update render result, add a history state.
 	 * If `asPopupPath` is `true`, can update current path and also keep last rendering.
 	 */
-	goto(path: string, asPopupPath: boolean = false) {
+	goto(this: Router, path: string, asPopupPath: boolean = false) {
 		if (path === this.path) {
 			return
 		}
@@ -209,7 +209,7 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	}
 
 	/** Use this to push a state sepeartely but not affect rendering. */
-	push(path: string, asPopupPath: boolean = false) {
+	push(this: Router, path: string, asPopupPath: boolean = false) {
 		let uri = this.getURIFromPath(path)
 		let state = {path, asPopupPath}
 		history.pushState(state, '', uri)
@@ -219,7 +219,7 @@ export class Router<E = any> extends Component<RouterEvents & E> {
 	 * Redirect to a new path and update render result, replace current history state.
 	 * If `asPopupPath` is `true`, can update current path and also keep last rendering.
 	 */
-	redirectTo(path: string, asPopupPath: boolean = false) {
+	redirectTo(this: Router, path: string, asPopupPath: boolean = false) {
 		if (path === this.path) {
 			return
 		}

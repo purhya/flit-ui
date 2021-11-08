@@ -10,7 +10,7 @@ import {PopupOptions} from '../bindings/popup'
  * `:slot=action` - Add action buttons and show them at head.
  */
 @define('f-popover')
-export class Popover<E = any> extends Popup<E> {
+export class Popover<E = {}> extends Popup<E> {
 
 	static style() {
 		let {adjust, adjustFontSize, textColor} = theme

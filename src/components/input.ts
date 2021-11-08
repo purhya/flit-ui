@@ -10,7 +10,7 @@ interface InputEvents {
 	input: (value: string | number) => void
 
 	/** Triggers after value changed. */
-	change: (value: string | number, valid: boolean) => void
+	change: (value: string | number, valid: boolean | null) => void
 }
 
 
@@ -19,7 +19,7 @@ interface InputEvents {
  * you can also set validator to validate it's value, or set customized error message.
  */
 @define('f-input')
-export class Input<E = any> extends Component<InputEvents & E> {
+export class Input<E = {}> extends Component<InputEvents & E> {
 
 	static style() {
 		let {adjust, adjustFontSize, errorColor, borderColor, mainColor, successColor, focusBlurRadius, fieldBackgroundColor} = theme
@@ -184,7 +184,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 		this.onInput()
 	}
 
-	protected onInput() {
+	protected onInput(this: Input) {
 		if (this.inCompositionInputting) {
 			return
 		}
@@ -199,7 +199,7 @@ export class Input<E = any> extends Component<InputEvents & E> {
 		this.emit('input', value)
 	}
 
-	protected onChange() {
+	protected onChange(this: Input) {
 		let input = this.refElements.input
 		let value = this.value = input.value
 

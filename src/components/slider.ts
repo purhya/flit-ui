@@ -19,7 +19,7 @@ interface SliderEvents {
 
 /** `<f-slider>` provides a range selector, you may pick one value by sliding in the bar. */
 @define('f-slider')
-export class Slider<E = any> extends Component<E & SliderEvents> {
+export class Slider<E = {}> extends Component<E & SliderEvents> {
 
 	static style() {
 		let {mainColor, borderColor, adjust, adjustFontSize, focusBlurRadius, backgroundColor} = theme
@@ -199,7 +199,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		return constrain(percentage, 0, 100)
 	}
 
-	protected onMouseDown(e: MouseEvent) {
+	protected onMouseDown(this: Slider, e: MouseEvent) {
 		let rect = getRect(this.refElements.groove)
 
 		// Avoid mouse leave to cause it hide.
@@ -232,7 +232,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		this.emit('dragstart')
 	}
 
-	protected changeValueByEvent(e: MouseEvent, rect: Rect) {
+	protected changeValueByEvent(this: Slider, e: MouseEvent, rect: Rect) {
 		let rate
 
 		if (this.vertical) {
@@ -256,7 +256,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		}
 	}
 
-	protected onWheel(e: WheelEvent) {
+	protected onWheel(this: Slider, e: WheelEvent) {
 		if (!this.step || document.activeElement !== this.el) {
 			return
 		}
@@ -283,7 +283,7 @@ export class Slider<E = any> extends Component<E & SliderEvents> {
 		on(document, 'wheel.prevent', this.onWheel as (e: Event) => void, this)
 	}
 
-	protected onKeyDown(e: KeyboardEvent) {
+	protected onKeyDown(this: Slider, e: KeyboardEvent) {
 		let newValue
 
 		if (this.vertical) {

@@ -12,7 +12,7 @@ interface CheckboxGroupEvents {
 
 /** `<f-checkboxgroup>` can contains several `<f-checkbox>` as child. */
 @define('f-checkboxgroup')
-export class CheckboxGroup<Events = any> extends Component<Events & CheckboxGroupEvents> {
+export class CheckboxGroup<Events = {}> extends Component<Events & CheckboxGroupEvents> {
 
 	/** All child `<f-checkbox>`. */
 	readonly checkboxs: Checkbox[] = []
@@ -26,7 +26,7 @@ export class CheckboxGroup<Events = any> extends Component<Events & CheckboxGrou
 		checkbox.on('change', this.onCheckboxChange.bind(this, checkbox))
 	}
 
-	protected onCheckboxChange(checkbox: Checkbox) {
+	protected onCheckboxChange(this: CheckboxGroup, checkbox: Checkbox) {
 		if (checkbox.checked) {
 			add(this.value, checkbox.value)
 		}
@@ -47,7 +47,7 @@ interface CheckboxEvents {
 
 /** `<f-checkbox>` just like `<input type=checkbox>`, you can click to check or uncheck one checkbox in a checkbox group. */
 @define('f-checkbox')
-export class Checkbox<E = any> extends Component<E & CheckboxEvents> {
+export class Checkbox<E = {}> extends Component<E & CheckboxEvents> {
 
 	static style() {
 		let {mainColor, focusBlurRadius, adjust} = theme
@@ -136,7 +136,7 @@ export class Checkbox<E = any> extends Component<E & CheckboxEvents> {
 		this.toggleChecked()
 	}
 
-	protected toggleChecked() {
+	protected toggleChecked(this: Checkbox) {
 		this.checked = !this.checked
 		this.indeterminate = false
 		this.emit('change', this.checked)

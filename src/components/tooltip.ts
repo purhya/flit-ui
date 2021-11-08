@@ -16,7 +16,7 @@ export type TooltipType = 'default' | 'prompt' | 'error'
 
 /** `<f-tooltip>` shows a short text message beside it's trigger element. */
 @define('f-tooltip')
-export class Tooltip<E = any> extends Popup<E> {
+export class Tooltip<E = {}> extends Popup<E> {
 
 	static style() {
 		let {adjust, adjustFontSize, popupBackgroundColor, textColor, errorColor} = theme

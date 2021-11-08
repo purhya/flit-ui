@@ -7,7 +7,7 @@ export type LoaderSize = 'small' | 'medium' | 'large'
 
 /** `<f-loader>` shows an loading animation to indicate resource is loading. */
 @define('f-loader')
-export class Loader<E = any> extends Component<E> {
+export class Loader<E = {}> extends Component<E> {
 
 	static sizes: {[key in LoaderSize]: number} = {
 		small: 18,

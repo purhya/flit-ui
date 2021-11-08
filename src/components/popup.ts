@@ -6,7 +6,7 @@ import {appendTo} from '../utils/element'
 
 /** `<f-popup>` is the container for popup content. */
 @define('f-popup')
-export class Popup<E = any> extends Component<E> {
+export class Popup<E = {}> extends Component<E> {
 
 	static style() {
 		let {popupBorderRadius, popupBackgroundColor, popupShadowBlurRadius, popupShadowColor, adjust} = theme

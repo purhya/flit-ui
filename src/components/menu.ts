@@ -6,7 +6,7 @@ import {PopupOptions} from '../bindings/popup'
 
 /** `<f-menu>` shows a menu with a list beside it's trigger element. */
 @define('f-menu')
-export class Menu<E = any> extends Popup<E> {
+export class Menu<E = {}> extends Popup<E> {
 
 	static style() {
 		let {adjust, adjustFontSize, textColor} = theme

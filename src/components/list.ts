@@ -51,7 +51,7 @@ interface ListEvents<T> {
  * It shouldn't include too many levels, since it doesn't have overflow setting like `f-tree`.
  */
 @define('f-list')
-export class List<T, E = any> extends Component<E & ListEvents<T>> {
+export class List<T = any, E = {}> extends Component<E & ListEvents<T>> {
 
 	static style() {
 		let {mainColor, adjust, borderColor, adjustFontSize} = theme
@@ -348,7 +348,7 @@ export class List<T, E = any> extends Component<E & ListEvents<T>> {
 		return this.selected.includes(item.value!)
 	}
 
-	protected onClickOption(item: ListItem<T>) {
+	protected onClickOption(this: List, item: ListItem<T>) {
 		if (this.type === 'navigation') {
 			this.active = item.value!
 			this.emit('navigate', item.value)

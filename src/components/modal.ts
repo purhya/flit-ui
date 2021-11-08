@@ -10,7 +10,7 @@ import {appendTo} from '../utils/element'
  * `:slot="action"` - Add action buttons and show them at head.
  */
 @define('f-modal')
-export class Modal<E = any> extends Component<E> {
+export class Modal<E = {}> extends Component<E> {
 
 	static style() {
 		let {adjustFontSize, textColor, popupBorderRadius, popupShadowBlurRadius, popupBackgroundColor, popupShadowColor, adjust} = theme
@@ -178,7 +178,7 @@ export class Modal<E = any> extends Component<E> {
 
 	protected onTransitionLeaveEnd() {}
 
-	protected onConnected() {
+	protected onConnected(this: Modal) {
 		untilRenderComplete().then(() => {
 			if (this.refElements.mask && this.el.previousElementSibling !== this.refElements.mask) {
 				this.el.before(this.refElements.mask)

@@ -17,7 +17,7 @@ interface SelectEvents<T> {
 
 /** `<f-select>` works just like `<select>`, you can select one or multiple option from it. */
 @define('f-select')
-export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
+export class Select<T = any, E = {}> extends Dropdown<E & SelectEvents<T>> {
 	
 	static style() {
 		let {mainColor, adjust, borderColor, popupShadowBlurRadius, fieldBackgroundColor, popupShadowColor} = theme
@@ -270,7 +270,7 @@ export class Select<T = any, E = any> extends Dropdown<E & SelectEvents<T>> {
 		}
 	}
 
-	protected onSelected(selected: T | T[]) {
+	protected onSelected(this: Select, selected: T | T[]) {
 		if (this.multipleSelect) {
 			this.value = selected as T[]
 		}

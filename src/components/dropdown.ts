@@ -8,7 +8,7 @@ import {AlignPosition} from '@pucelle/ff'
  * `Dropdown` is abstract class for any component having popup content to show.
  * You should extend it to implement some dropdown type components, like `Select`.
   */
-export abstract class Dropdown<E = any> extends Component<E> {
+export abstract class Dropdown<E = {}> extends Component<E> {
 
 	static style() {
 		let {mainColor} = theme

@@ -14,7 +14,7 @@ interface SearchEvents {
  * Now only a input, will extend to list suggestted local or remote data in future.
  */
 @define('f-search')
-export class Search<E = any> extends Component<SearchEvents & E> {
+export class Search<E = {}> extends Component<SearchEvents & E> {
 
 	static style() {
 		let {adjust, borderColor, borderRadius, mainColor, focusBlurRadius, lineHeight, fieldBackgroundColor} = theme
@@ -154,7 +154,7 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 		this.updateValue()
 	}
 
-	protected updateValue() {
+	protected updateValue(this: Search) {
 		if (this.inCompositionInputting) {
 			return
 		}
@@ -163,7 +163,7 @@ export class Search<E = any> extends Component<SearchEvents & E> {
 		this.emit('change', this.value)
 	}
 
-	protected clear() {
+	protected clear(this: Search) {
 		this.value = ''
 		this.emit('change', '')
 	}

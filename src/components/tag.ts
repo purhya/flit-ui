@@ -11,7 +11,7 @@ interface TagEvents {
 
 /** `<f-tag>` used to give a label to an item. */
 @define('f-tag')
-export class Tag<E = any> extends Component<E & TagEvents> {
+export class Tag<E = {}> extends Component<E & TagEvents> {
 
 	static style() {
 		let {borderColor, borderRadius, adjust, adjustFontSize} = theme
@@ -67,7 +67,7 @@ export class Tag<E = any> extends Component<E & TagEvents> {
 		`
 	}
 
-	protected close () {
+	protected close(this: Tag) {
 		this.emit('close', this.value)
 	}
 }

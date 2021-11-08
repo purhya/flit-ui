@@ -70,7 +70,7 @@ export interface TableColumn<T = any> {
  * `columns` can config data column mode for table view.
  */
 @define('f-table')
-export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> extends Component<TableEvents<T> & E> {
+export class Table<T = any, E = {}, S extends Store<T> | RemoteStore<T> = any> extends Component<TableEvents<T> & E> {
 
 	static style() {
 		let {adjustFontSize, adjust, mainColor, textColor, backgroundColor} = theme
@@ -438,12 +438,12 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	}
 
 	/** Triggers `liveDataUpdated` event. */
-	protected onLiveDataUpdated(data: T[], index: number, scrollDirection: 'up' | 'down') {
+	protected onLiveDataUpdated(this: Table, data: T[], index: number, scrollDirection: 'up' | 'down') {
 		this.emit('liveDataUpdated', data, index, scrollDirection)
 	}
 
 	/** Triggers `liveDataRendered` event. */
-	protected onLiveDataRendered(data: T[], index: number, scrollDirection: 'up' | 'down') {
+	protected onLiveDataRendered(this: Table, data: T[], index: number, scrollDirection: 'up' | 'down') {
 		this.emit('liveDataRendered', data, index, scrollDirection)
 	}
 
@@ -519,7 +519,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		})
 	}
 
-	protected onConnected() {
+	protected onConnected(this: Table) {
 		onRenderComplete(() => {
 			let unwatchSize = watchLayout(this.el, 'size', () => this.resizer?.updatColumnWidthsPrecisely())
 			this.once('disconnected', unwatchSize)
@@ -554,7 +554,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 	}
 
 	/** Order specified column with specified direction by column name. */
-	protected applyOrder(column: TableColumn, direction: 'asc' | 'desc' | '' = '') {
+	protected applyOrder(this: Table, column: TableColumn, direction: 'asc' | 'desc' | '' = '') {
 		if (column.orderBy && direction !== '') {
 			this.store.setOrder(column.orderBy as any, direction)
 		}
@@ -563,7 +563,7 @@ export class Table<T = any, E = any, S extends Store<T> | RemoteStore<T> = any> 
 		}
 
 		this.store.sync()
-		this.emit('orderChange', this.orderName, direction)
+		this.emit('orderChange', this.orderName!, direction)
 	}
 
 	/** Column name to indicate which column is in order. */

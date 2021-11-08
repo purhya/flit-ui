@@ -17,7 +17,7 @@ export type ResizerPosition = 'top' | 'right' | 'bottom' | 'left'
 
 /** `<f-resizer>` should an absolute type resizer bar, drag it will */
 @define('f-resizer')
-export class Resizer<E = any> extends Component<E & ResizerEvents> {
+export class Resizer<E = {}> extends Component<E & ResizerEvents> {
 	
 	static style() {
 		return css`
@@ -107,7 +107,7 @@ export class Resizer<E = any> extends Component<E & ResizerEvents> {
 		}
 	}
 
-	protected onStartResize(e: MouseEvent) {
+	protected onStartResize(this: Resizer, e: MouseEvent) {
 		let startX = e.clientX
 		let startY = e.clientY
 		let startParentWidth = this.el.parentElement!.offsetWidth
@@ -134,7 +134,7 @@ export class Resizer<E = any> extends Component<E & ResizerEvents> {
 		once(document, 'mouseup', onMouseUp)
 	}
 
-	protected resize(startParentWidth: number, startParentHeight: number, movementX: number, movementY: number) {
+	protected resize(this: Resizer, startParentWidth: number, startParentHeight: number, movementX: number, movementY: number) {
 		let value: number
 
 		if (this.position === 'top' || this.position === 'bottom') {

@@ -4,7 +4,7 @@ import {Input, Textarea} from './input'
 
 /** `<f-form>` can contain `<f-input>` or `<f-textarea>` and check their valid state in bundle. */
 @define('f-form')
-export class Form<E = any> extends Component<E> {
+export class Form<E = {}> extends Component<E> {
 
 	static style() {
 		return css`
@@ -21,13 +21,13 @@ export class Form<E = any> extends Component<E> {
 	valid: boolean = true
 
 	/** Register a child `<f-input>` or `<f-textarea>`. */
-	register(input: Input | Textarea) {
+	register(this: Form, input: Input | Textarea) {
 		this.inputs.push(input)
 		this.valid = this.valid && input.valid !== false
 		input.on('change', this.onInputChange, this)
 	}
 
-	protected onInputChange(_value: string, valid: boolean) {
+	protected onInputChange(_value: string | number, valid: boolean | null) {
 		if (valid !== this.valid) {
 			if (valid) {
 				this.valid = this.inputs.every(input => input.valid)

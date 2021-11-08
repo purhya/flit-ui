@@ -49,7 +49,7 @@ interface RadioEvents {
 
 /** `<f-radio>` just like `<input type=radio>`, you can click to check one radio in a radio group. */
 @define('f-radio')
-export class Radio<E = any> extends Component<E & RadioEvents> {
+export class Radio<E = {}> extends Component<E & RadioEvents> {
 
 	static style() {
 		let {mainColor, adjust, focusBlurRadius} = theme
@@ -127,7 +127,7 @@ export class Radio<E = any> extends Component<E & RadioEvents> {
 		`
 	}
 
-	protected onClick() {
+	protected onClick(this: Radio) {
 		if (!this.checked) {
 			this.checked = true
 			this.emit('change', true)

@@ -71,7 +71,7 @@ export interface PromptDialogOptions extends DialogOptions {
 
 /** `<f-dialog>` shows critical content and in a overlay modal, you must interact with it before continue. */
 @define('f-dialog')
-export class Dialog<E = any> extends Component<E> {
+export class Dialog<E = {}> extends Component<E> {
 	
 	static style() {
 		let {textColor, adjust, adjustFontSize, popupBorderRadius, popupShadowBlurRadius, popupShadowColor, popupBackgroundColor} = theme

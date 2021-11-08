@@ -3,7 +3,7 @@ import {define, Component, css} from '@pucelle/flit'
 
 /** `<f-buttongroup>` can contains several `<button>` elements as a button group. */
 @define('f-buttongroup')
-export class ButtonGroup<E = any> extends Component<E> {
+export class ButtonGroup<E = {}> extends Component<E> {
 
 	static style() {
 		return css`

@@ -5,7 +5,7 @@ import {tooltip} from '../bindings/tooltip'
 
 /** `<f-progress>` gives a progress notification in percentage, just like `<input type=progress>`. */
 @define('f-progress')
-export class Progress<E = any> extends Component<E> {
+export class Progress<E = {}> extends Component<E> {
 
 	static style() {
 		let {mainColor, adjust, adjustFontSize} = theme

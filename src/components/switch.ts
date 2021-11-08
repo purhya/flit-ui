@@ -11,7 +11,7 @@ interface SwitchEvents {
 
 /** `<f-switch>` work just like `<f-checkbox>` but easier to interact with. */
 @define('f-switch')
-export class Switch<E = any> extends Component<E & SwitchEvents> {
+export class Switch<E = {}> extends Component<E & SwitchEvents> {
 
 	static style() {
 		let {mainColor, adjust, focusBlurRadius, backgroundColor} = theme
@@ -84,7 +84,7 @@ export class Switch<E = any> extends Component<E & SwitchEvents> {
 		this.toggleState()
 	}
 
-	protected toggleState() {
+	protected toggleState(this: Switch) {
 		this.value = !this.value
 		this.emit('change', this.value)
 	}
