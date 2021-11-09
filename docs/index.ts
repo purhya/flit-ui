@@ -1007,8 +1007,8 @@ define('f-main-color-select', class extends Select<string> {
 	onReady() {
 		super.onReady()
 
-		this.on('change', (value: string) => {
-			theme.set('mainColor', value)
+		this.on('change', (value: string | string[]) => {
+			theme.set('mainColor', String(value))
 		})
 	}
 })
