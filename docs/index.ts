@@ -29,6 +29,10 @@ define('flit-preview', class extends Component {
 	leftData = observe([1, 2, 3])
 	rightData = observe([4, 5, 6])
 
+	refComponents: {
+		form: Form
+	}
+
 	render() {
 		let {lineHeight} = theme
 
@@ -221,7 +225,7 @@ define('flit-preview', class extends Component {
 			<section>
 				<h3>Form</h3>
 
-				<f-form :ref="form">
+				<f-form :refComponent="form">
 					<f-row style="margin: 8px 0 24px 0;" .gutter="24">
 						<f-col .span="12">
 							<label required>Name</label><br>
@@ -264,7 +268,7 @@ define('flit-preview', class extends Component {
 
 					<f-row style="margin: 16px 0 10px;" .gutter="24">
 						<f-col .span="12" style="text-align: right;">
-							<button primary @click=${() => (getComponent(this.refElements.form as any) as Form).validate()}>Save</button>
+							<button primary @click=${() => this.refComponents.form.validate()}>Save</button>
 						</f-col>
 					</f-row>
 				</f-form>

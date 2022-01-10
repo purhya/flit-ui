@@ -46,7 +46,7 @@ export class Search<E = {}> extends Component<SearchEvents & E> {
 			position: absolute;
 			top: 0;
 			bottom: 0;
-			left: 8px;
+			left: ${adjust(8)}px;
 			color: ${borderColor.toMiddle(10)};
 		}
 

@@ -16,10 +16,10 @@ interface TableEvents<T> {
 	columnResize: (columnWidths: number[]) => void
 
 	/** Triggers after live data updated in live mode. */
-	liveDataUpdated: (data: T[], index: number, scrollDirection: 'up' | 'down') => void
+	liveDataUpdated: (data: T[], index: number, scrollDirection: 'up' | 'down' | null) => void
 
 	/** Triggers after live data rendered in live mode. */
-	liveDataRendered: (data: T[], index: number, scrollDirection: 'up' | 'down') => void
+	liveDataRendered: (data: T[], index: number, scrollDirection: 'up' | 'down' | null) => void
 }
 
 
@@ -438,12 +438,12 @@ export class Table<T = any, E = {}, S extends Store<T> | RemoteStore<T> = any> e
 	}
 
 	/** Triggers `liveDataUpdated` event. */
-	protected onLiveDataUpdated(this: Table, data: T[], index: number, scrollDirection: 'up' | 'down') {
+	protected onLiveDataUpdated(this: Table, data: T[], index: number, scrollDirection: 'up' | 'down' | null) {
 		this.emit('liveDataUpdated', data, index, scrollDirection)
 	}
 
 	/** Triggers `liveDataRendered` event. */
-	protected onLiveDataRendered(this: Table, data: T[], index: number, scrollDirection: 'up' | 'down') {
+	protected onLiveDataRendered(this: Table, data: T[], index: number, scrollDirection: 'up' | 'down' | null) {
 		this.emit('liveDataRendered', data, index, scrollDirection)
 	}
 
