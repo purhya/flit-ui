@@ -34,6 +34,7 @@ export interface RouterEvents {
 
 /** Current history state. */
 export interface RouterHistoryState {
+	id: number
 	path: string
 	asPopupPath: boolean
 }
@@ -76,6 +77,9 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 	/** Stacked popup count. */
 	protected stackedPopupCount: number = 0
 
+	/** A increased id seed. */
+	protected histiryIdSeed: number = 0
+
 	protected onCreated() {
 		on(window, 'popstate', this.onWindowStateChange as (e: Event) => void, this)
 	}
@@ -105,8 +109,17 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 
 	private onWindowStateChange(e: PopStateEvent) {
 		if (e.state) {
-			if (this.state?.asPopupPath) {
-				this.stackedPopupCount--
+			if (this.state) {
+
+				// History backward.
+				if (this.state.id > e.state.id && this.state.asPopupPath) {
+					this.stackedPopupCount--
+				}
+
+				// History forward.
+				if (this.state.id < e.state.id && e.state.asPopupPath) {
+					this.stackedPopupCount++
+				}
 			}
 
 			this.redirectTo(e.state.path, e.state.asPopupPath)
@@ -121,7 +134,7 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 	
 	/** 
 	 * Used in a `render()` function, render it if route path match.
-	 * `renderFn` recvives `[12345]` for router path `/\/user\/(\d+)/`.
+	 * `renderFn` receives `[12345]` for path `/user/12345` and router `/\/user\/(\d+)/`.
 	 */
 	route(routePath: RegExp, renderFn: (captures: string[]) => '' | TemplateResult, options?: RouteOptions): '' | TemplateResult | DirectiveResult
 
@@ -201,7 +214,7 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 		let oldState = this.state
 
 		this.path = path
-		this.state = {path, asPopupPath}
+		this.state = {id: this.histiryIdSeed++, path, asPopupPath}
 		this.push(path, asPopupPath)
 
 		this.emit('goto', this.state, oldState)
@@ -236,7 +249,7 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 		let oldState = this.state
 
 		this.path = path
-		this.state = {path, asPopupPath}
+		this.state = {id: this.histiryIdSeed++, path, asPopupPath}
 		this.replace(path, asPopupPath)
 
 		this.emit('redirectTo', this.state, oldState)
