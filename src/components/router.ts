@@ -232,7 +232,7 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 	}
 
 	/** Use this to push a state sepeartely but not affect rendering. */
-	protected justPush(path: string, asPopupPath: boolean = false) {
+	pushHistory(path: string, asPopupPath: boolean = false) {
 		let state = {id: this.histiryIdSeed++, path, asPopupPath}
 		this.pushHistoryState(state)
 	}
@@ -276,7 +276,7 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 	}
 
 	/** Use this to push a state sepeartely but not affect rendering. */
-	protected justRedirect(path: string, asPopupPath: boolean = false) {
+	replaceHistory(path: string, asPopupPath: boolean = false) {
 		let state = {id: this.histiryIdSeed++, path, asPopupPath}
 		this.replaceHistoryState(state)
 	}
