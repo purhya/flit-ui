@@ -107,7 +107,7 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 		off(window, 'popstate', this.onWindowStateChange as (e: Event) => void, this)
 	}
 
-	private onWindowStateChange(e: PopStateEvent) {
+	protected onWindowStateChange(e: PopStateEvent) {
 		if (e.state) {
 			if (this.state) {
 
@@ -122,7 +122,7 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 				}
 			}
 
-			this.redirectTo(e.state.path, e.state.asPopupPath)
+			this.handleRedirectToState(e.state)
 		}
 	}
 
@@ -201,66 +201,84 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 			return
 		}
 
-		if (asPopupPath) {
-			this.popupPath = path
+		let state = {id: this.histiryIdSeed++, path, asPopupPath}
+		this.handleGotoState(state)
+	}
+
+	protected handleGotoState(this: Router, state: RouterHistoryState) {
+		if (state.asPopupPath) {
+			this.popupPath = state.path
 			this.stackedPopupCount++
 		}
 		else {
-			this.normalPath = path
+			this.normalPath = state.path
 			this.popupPath = null
 			this.stackedPopupCount = 0
 		}
 
 		let oldState = this.state
 
-		this.path = path
-		this.state = {id: this.histiryIdSeed++, path, asPopupPath}
-		this.push(path, asPopupPath)
+		this.path = state.path
+		this.state = state
+		this.pushHistoryState(state)
 
 		this.emit('goto', this.state, oldState)
 		this.emit('goOrRedirectTo', this.state, oldState)
 	}
 
-	/** Use this to push a state sepeartely but not affect rendering. */
-	push(this: Router, path: string, asPopupPath: boolean = false) {
-		let uri = this.getURIFromPath(path)
-		let state = {path, asPopupPath}
+	protected pushHistoryState(this: Router, state: RouterHistoryState) {
+		let uri = this.getURIFromPath(state.path)
 		history.pushState(state, '', uri)
+	}
+
+	/** Use this to push a state sepeartely but not affect rendering. */
+	protected justPush(path: string, asPopupPath: boolean = false) {
+		let state = {id: this.histiryIdSeed++, path, asPopupPath}
+		this.pushHistoryState(state)
 	}
 
 	/** 
 	 * Redirect to a new path and update render result, replace current history state.
 	 * If `asPopupPath` is `true`, can update current path and also keep last rendering.
 	 */
-	redirectTo(this: Router, path: string, asPopupPath: boolean = false) {
+	redirectTo(path: string, asPopupPath: boolean = false) {
 		if (path === this.path) {
 			return
 		}
 
-		if (asPopupPath) {
-			this.popupPath = path
+		let state = {id: this.histiryIdSeed++, path, asPopupPath}
+		this.handleRedirectToState(state)
+	}
+
+	protected handleRedirectToState(this: Router, state: RouterHistoryState) {
+		if (state.asPopupPath) {
+			this.popupPath = state.path
 		}
 		else {
-			this.normalPath = path
+			this.normalPath = state.path
 			this.popupPath = null
 			this.stackedPopupCount = 0
 		}
 
 		let oldState = this.state
 
-		this.path = path
-		this.state = {id: this.histiryIdSeed++, path, asPopupPath}
-		this.replace(path, asPopupPath)
+		this.path = state.path
+		this.state = state
+		this.replaceHistoryState(state)
 
-		this.emit('redirectTo', this.state, oldState)
-		this.emit('goOrRedirectTo', this.state, oldState)
+		this.emit('redirectTo', state, oldState)
+		this.emit('goOrRedirectTo', state, oldState)
 	}
 
-	/** Use this to replace a state sepeartely but not affect rendering. */
-	replace(path: string, asPopupPath: boolean = false) {
-		let uri = this.getURIFromPath(path)
-		let state = {path, asPopupPath}
+	protected replaceHistoryState(state: RouterHistoryState) {
+		let uri = this.getURIFromPath(state.path)
 		history.replaceState(state, '', uri)
+	}
+
+	/** Use this to push a state sepeartely but not affect rendering. */
+	protected justRedirect(path: string, asPopupPath: boolean = false) {
+		let state = {id: this.histiryIdSeed++, path, asPopupPath}
+		this.replaceHistoryState(state)
 	}
 
 	/** 
@@ -277,7 +295,7 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 	}
 
 	/** Get whole url. */
-	private getURIFromPath(path: string): string {
+	protected getURIFromPath(path: string): string {
 		if (!path) {
 			path = '/'
 		}
