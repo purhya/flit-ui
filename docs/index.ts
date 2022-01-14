@@ -31,6 +31,7 @@ define('flit-preview', class extends Component {
 
 	refComponents: {
 		form: Form
+		popupWithActions: Popover
 	}
 
 	render() {
@@ -512,12 +513,12 @@ define('flit-preview', class extends Component {
 							popup(
 								() => html`
 								<f-popover
-									:ref="popupWithActions"
+									:refComponent="popupWithActions"
 									.title="Popover title" 
 								>
 									This is Popover content.
-									<button :slot="action" @click=${() => (getComponent(this.refElements.popupWithActions as HTMLElement) as Popover).close()}>Cancel</button>
-									<button :slot="action" primary @click=${() => (getComponent(this.refElements.popupWithActions as HTMLElement) as Popover).close()}>Save</button>
+									<button :slot="action" @click=${() => this.refComponents.popupWithActions.close()}>Cancel</button>
+									<button :slot="action" primary @click=${() => this.refComponents.popupWithActions.close()}>Save</button>
 								</f-popover>
 								`,
 								{trigger: 'click'}
@@ -753,7 +754,7 @@ define('flit-preview', class extends Component {
 											.placeholder="Name of your account"
 											.validator=${(v: string) => v ? '' : 'Name field is required'}
 											.errorInTooltip
-											:ref=${async (el: HTMLElement) => input = await getComponentAsync(el) as Input}
+											:refComponent=${(i: Input) => input = i}
 										/>
 										<f-checkbox .checked style="margin-top: 8px;">Remember Me</f-checkbox>
 									`,

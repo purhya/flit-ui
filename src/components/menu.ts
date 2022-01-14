@@ -53,8 +53,11 @@ export class Menu<E = {}> extends Popup<E> {
 	title: string = ''
 
 	defaultPopupOptions: PopupOptions = {
-		// `trigger` not work here because when need to handle trigger, current component is not created.
+
+		// A `trigger` option doesn't work here because no trigger element binded yet.
+
 		alignPosition: 'bc',
+
 		fixTriangle: true,
 	}
 
@@ -70,9 +73,9 @@ export class Menu<E = {}> extends Popup<E> {
 	protected renderHead() {
 		if (this.title) {
 			return html`
-			<div class="header">
-				<div class="title">${this.title}</div>
-			</div>
+				<div class="header">
+					<div class="title">${this.title}</div>
+				</div>
 			`
 		}
 

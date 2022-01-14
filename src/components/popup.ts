@@ -10,8 +10,8 @@ export class Popup<E = {}> extends Component<E> {
 
 	static style() {
 		let {popupBorderRadius, popupBackgroundColor, popupShadowBlurRadius, popupShadowColor, adjust} = theme
-		let w = adjust(10)
-		let h = adjust(7)
+		let w = adjust(14)
+		let h = adjust(9)
 		let x = adjust(11)
 
 		return css`

@@ -49,7 +49,7 @@ export class Select<T = any, E = {}> extends Dropdown<E & SelectEvents<T>> {
 		}
 
 		.down-icon{
-			margin-left: auto;
+			margin-left: 3px;
 			margin-right: 4px;
 		}
 	
@@ -143,6 +143,12 @@ export class Select<T = any, E = {}> extends Dropdown<E & SelectEvents<T>> {
 
 	/** Current selected value or multiple values when `multipleSelect` is `true`. */
 	value: T | T[] | null = null
+
+	/** 
+	 * Whether close pop-up after selected.
+	 * Only works when doing single-selection.
+	 */
+	hideAfterSelected: boolean = true
 
 	protected onCreated() {
 		this.initializeStartValue()
@@ -276,7 +282,10 @@ export class Select<T = any, E = {}> extends Dropdown<E & SelectEvents<T>> {
 		}
 		else {
 			this.value = selected as T
-			this.hidePopup()
+
+			if (this.hideAfterSelected) {
+				this.hidePopup()
+			}
 		}
 		
 		this.emit('change', this.value!)
