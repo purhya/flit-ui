@@ -68,13 +68,13 @@ export abstract class Dropdown<E = {}> extends Component<E> {
 
 	/** 
 	 * Delay in milliseconds before showing popup content.
-	 * Default value is `100`.
+	 * Default value is `100` ms.
 	 */
 	showDelay: number = 100
 
 	/** 
 	 * Delay in milliseconds before hiding popup content.
-	 * Default value is `100`.
+	 * Default value is `100` ms.
 	 */
 	hideDelay: number = 100
 

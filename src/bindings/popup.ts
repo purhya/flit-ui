@@ -100,62 +100,78 @@ export const DefaultPopupOptions: PopupOptions = {
 }
 
 
-/** Cache stacked popup components with specified `key` option. */
-const SharedPopupCache: Map<string, {template: Template, popup: Popup}[]> = new Map()
+namespace SharedPopupHelpers {
 
-/** Cache last created popup component usage with specified `key` option. */
-const SharedPopupsThatsInUse: Map<Popup, PopupBinding> = new Map()
+	/** Cache stacked popup components with their `key` option. */
+	const PopupCache: Map<string, {template: Template, popup: Popup}[]> = new Map()
 
-/** Get a shared popup component by key. */
-function getSharedPopupCache(key: string): {template: Template, popup: Popup} | null {
-	let caches = SharedPopupCache.get(key)
+	/** Cache popup components that in use, and used by which binding. */
+	const PopupsUsedBy: Map<Popup, PopupBinding> = new Map()
 
-	if (caches) {
-		// We want to match template result here.
-		// Then we found:
-		// Popup1 -> Popup2.
-		// Popup3 reuse Popup1.
-		// Popup2 still appears and follows Popup3 for a little while, then disappear.
-		// This is not what we want.
 
-		for (let i = caches.length - 1; i >= 0; i--) {
-			let cache = caches[i]
-			let popup = cache.popup
+	/** Get a shared popup component by key. */
+	export function getCache(key: string): {template: Template, popup: Popup} | null {
+		let caches = PopupCache.get(key)
 
-			// If current popup is in use, not reuse it.
-			if (!MouseLeave.checkLocked(popup.el)) {
-				return cache
+		if (caches) {
+			// We want to match template result here.
+			// Then we found:
+			// Popup1 -> Popup2.
+			// Popup3 reuse Popup1.
+			// Popup2 still appears and follows Popup3 for a little while, then disappear.
+			// This is not what we want.
+
+			for (let i = caches.length - 1; i >= 0; i--) {
+				let cache = caches[i]
+				let popup = cache.popup
+
+				// If current popup is in use, not reuse it.
+				if (!MouseLeave.checkLocked(popup.el)) {
+					return cache
+				}
 			}
 		}
+
+		return null
 	}
 
-	return null
-}
+	/** Get a shared popup component by key. */
+	export function addCache(key: string, cache: {template: Template, popup: Popup}) {
+		let caches = PopupCache.get(key)
+		if (!caches) {
+			caches = []
+			PopupCache.set(key, caches)
+		}
 
-/** Get a shared popup component by key. */
-function addSharedPopupCache(key: string, cache: {template: Template, popup: Popup}) {
-	let caches = SharedPopupCache.get(key)
-	if (!caches) {
-		caches = []
-		SharedPopupCache.set(key, caches)
+		caches.push(cache)
 	}
 
-	caches.push(cache)
-}
+	/** Delete a shared popup component after it was hide. */
+	export function deleteCache(key: string, popup: Popup) {
+		let caches = PopupCache.get(key)
+		if (caches) {
+			caches = caches.filter(cache => cache.popup !== popup)
+			PopupCache.set(key, caches)
+		}
 
-/** Delete a shared popup component after it hide. */
-function deleteSharedPopupCache(key: string, popup: Popup) {
-	let caches = SharedPopupCache.get(key)
-	if (caches) {
-		caches = caches.filter(cache => cache.popup !== popup)
-		SharedPopupCache.set(key, caches)
+		PopupsUsedBy.delete(popup)
 	}
-}
 
-/** Get a shared popup component by key. */
-function isSharedPopupKeyInUse(key: string): boolean {
-	let cache = getSharedPopupCache(key)
-	return cache ? SharedPopupsThatsInUse.has(cache.popup) : false
+	/** Is cache with the specified key is being used by any binding. */
+	export function isKeyInUse(key: string): boolean {
+		let cache = getCache(key)
+		return cache ? PopupsUsedBy.has(cache.popup) : false
+	}
+
+	/** Check which binding is using the specified popup. */
+	export function getPopupUser(popup: Popup): PopupBinding | undefined {
+		return PopupsUsedBy.get(popup)
+	}
+
+	/** Set user for a popup. */
+	export function setPopupUser(popup: Popup, binding: PopupBinding) {
+		return PopupsUsedBy.set(popup, binding)
+	}
 }
 
 
@@ -346,7 +362,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		let key = this.getOption('key')
 
 		// If can reuse exist, show without delay.
-		if (isSharedPopupKeyInUse(key)) {
+		if (SharedPopupHelpers.isKeyInUse(key)) {
 			showDelay = 0
 		}
 
@@ -473,7 +489,11 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		let key = this.getOption('key')
 		let popup: Popup | null = null
 		let template: Template | null = null
+
+		/** Whether can patch with existed popup and reuse it. */
 		let canShareWithOld = true
+
+		/** Whether the existed popup is in use. */
 		let isOldInUse = false
 
 		if (!(result instanceof TemplateResult)) {
@@ -481,13 +501,13 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		}
 
 		if (key) {
-			let cache = getSharedPopupCache(key)
+			let cache = SharedPopupHelpers.getCache(key)
 			if (cache) {
 				({popup, template} = cache)
 
 				let currentTriggerInsideCachedPopup = popup.el.contains(this.el)
 
-				// Reuse and merge.
+				// Reuse and patch.
 				if (!currentTriggerInsideCachedPopup && template.canPatchBy(result)) {
 					template.patch(result)
 				}
@@ -505,15 +525,18 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		}
 		
 		if (popup) {
-			// Whether use by other popup binding, such that no need to play transition.
-			let inUseBinding = SharedPopupsThatsInUse.get(popup)
+			// Whether is used by other popup binding, such that no need to play transition.
+			let usedByBinding = SharedPopupHelpers.getPopupUser(popup)
 
-			if (inUseBinding && inUseBinding !== this) {
-				inUseBinding.losePopupControl()
+			// If is using, lose the control of it.
+			// No matter whether can reuse it or not.
+			if (usedByBinding && usedByBinding !== this) {
+				usedByBinding.losePopupControl()
 			}
 
-			isOldInUse = !!inUseBinding
+			isOldInUse = !!usedByBinding
 
+			// Delete the popup that can't be shared.
 			if (!canShareWithOld) {
 				popup.el.remove()
 				popup = null
@@ -526,12 +549,12 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			popup = getRenderedAsComponent(template) as Popup
 
 			if (key) {
-				addSharedPopupCache(key, {popup, template})
+				SharedPopupHelpers.addCache(key, {popup, template})
 			}
 		}
 
 		if (key) {
-			SharedPopupsThatsInUse.set(popup, this)
+			SharedPopupHelpers.setPopupUser(popup, this)
 		}
 
 		this.popup = popup
@@ -550,20 +573,25 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	/** Clean all popup properties. */
 	protected clean() {
-		if (this.opened) {
-			this.unbindLeaveEvents()
+		let key = this.getOption('key')
+		let popup = this.popup
 
-			if (this.unwatchRect) {
-				this.unwatchRect()
-				this.unwatchRect = null
-			}
-
-			this.willOpen = false
-			this.setOpened(false)
-			this.popup = null
-			this.popupTemplate = null
-			this.aligner = null
+		if (key && popup) {
+			SharedPopupHelpers.deleteCache(key, popup)
 		}
+
+		this.unbindLeaveEvents()
+
+		if (this.unwatchRect) {
+			this.unwatchRect()
+			this.unwatchRect = null
+		}
+
+		this.willOpen = false
+		this.setOpened(false)
+		this.popup = null
+		this.popupTemplate = null
+		this.aligner = null
 	}
 
 	/** Update popup component, calls when updating an outer component. */
@@ -587,7 +615,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			popup = getRenderedAsComponent(template) as Popup
 
 			if (key) {
-				addSharedPopupCache(key, {popup, template})
+				SharedPopupHelpers.addCache(key, {popup, template})
 			}
 		}
 
@@ -600,8 +628,10 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	/** Set opened state and triggers event. */
 	protected setOpened(opened: boolean) {
-		this.opened = opened
-		this.emit('openedStateChange', opened)
+		if (opened !== this.opened) {
+			this.opened = opened
+			this.emit('openedStateChange', opened)
+		}
 	}
 
 	/** Align popup component. */
@@ -712,14 +742,8 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	/** Hide popup component. */
 	protected hidePopup() {
-		let key = this.getOption('key')
 		let popup = this.popup!
 		let popupEl = popup.el
-
-		if (key) {
-			deleteSharedPopupCache(key, popup)
-			SharedPopupsThatsInUse.delete(popup)
-		}
 
 		new Transition(popupEl, this.getOption('transition')).leave().then(finish => {
 			if (finish) {
