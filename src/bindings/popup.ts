@@ -2,6 +2,7 @@ import {off, defineBinding, on, Binding, BindingResult, TemplateResult, Transiti
 import {Timeout, MouseLeave, watchLayout, isVisibleInViewport, AlignPosition, EventEmitter, AlignOptions, Aligner} from '@pucelle/ff'
 import {Popup} from '../components/popup'
 import {RenderFn} from '../types'
+import {SharedPopups} from './helpers/shared-popups'
 
 
 export interface PopupOptions {
@@ -47,7 +48,7 @@ export interface PopupOptions {
 	 */
 	hideDelay?: number
 
-	/** Should show triangle. */
+	/** Whether should show triangle. */
 	triangle?: boolean
 
 	/** 
@@ -70,6 +71,9 @@ export interface PopupOptions {
 
 	/** Whether the popup is pointerable and can interact with mouse. */
 	pointerable?: boolean
+
+	/** Whether caches the popup component after it hides. */
+	cacheable?: boolean
 }
 
 interface PopupBindingEvents {
@@ -97,81 +101,7 @@ export const DefaultPopupOptions: PopupOptions = {
 	showImmediately: false,
 	autoFocus: false,
 	pointerable: true,
-}
-
-
-namespace SharedPopupHelpers {
-
-	/** Cache stacked popup components with their `key` option. */
-	const PopupCache: Map<string, {template: Template, popup: Popup}[]> = new Map()
-
-	/** Cache popup components that in use, and used by which binding. */
-	const PopupsUsedBy: Map<Popup, PopupBinding> = new Map()
-
-
-	/** Get a shared popup component by key. */
-	export function getCache(key: string): {template: Template, popup: Popup} | null {
-		let caches = PopupCache.get(key)
-
-		if (caches) {
-			// We want to match template result here.
-			// Then we found:
-			// Popup1 -> Popup2.
-			// Popup3 reuse Popup1.
-			// Popup2 still appears and follows Popup3 for a little while, then disappear.
-			// This is not what we want.
-
-			for (let i = caches.length - 1; i >= 0; i--) {
-				let cache = caches[i]
-				let popup = cache.popup
-
-				// If current popup is in use, not reuse it.
-				if (!MouseLeave.checkLocked(popup.el)) {
-					return cache
-				}
-			}
-		}
-
-		return null
-	}
-
-	/** Get a shared popup component by key. */
-	export function addCache(key: string, cache: {template: Template, popup: Popup}) {
-		let caches = PopupCache.get(key)
-		if (!caches) {
-			caches = []
-			PopupCache.set(key, caches)
-		}
-
-		caches.push(cache)
-	}
-
-	/** Delete a shared popup component after it was hide. */
-	export function deleteCache(key: string, popup: Popup) {
-		let caches = PopupCache.get(key)
-		if (caches) {
-			caches = caches.filter(cache => cache.popup !== popup)
-			PopupCache.set(key, caches)
-		}
-
-		PopupsUsedBy.delete(popup)
-	}
-
-	/** Is cache with the specified key is being used by any binding. */
-	export function isKeyInUse(key: string): boolean {
-		let cache = getCache(key)
-		return cache ? PopupsUsedBy.has(cache.popup) : false
-	}
-
-	/** Check which binding is using the specified popup. */
-	export function getPopupUser(popup: Popup): PopupBinding | undefined {
-		return PopupsUsedBy.get(popup)
-	}
-
-	/** Set user for a popup. */
-	export function setPopupUser(popup: Popup, binding: PopupBinding) {
-		return PopupsUsedBy.set(popup, binding)
-	}
+	cacheable: false,
 }
 
 
@@ -215,6 +145,12 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	/** Align to current popup. */
 	protected aligner: Aligner | null = null
+
+	/** Cached popup for reusing when `cacheable` is `true`. */
+	protected cachedPopup: Popup | null = null
+
+	/** Cached popup template for reusing when `cacheable` is `true`. */
+	protected cachedPopupTemplate: Template | null = null
 
 	constructor(el: Element, context: Context) {
 		super()
@@ -362,7 +298,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		let key = this.getOption('key')
 
 		// If can reuse exist, show without delay.
-		if (SharedPopupHelpers.isKeyInUse(key)) {
+		if (SharedPopups.isKeyInUse(key)) {
 			showDelay = 0
 		}
 
@@ -455,26 +391,27 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 			this.setOpened(true)
 
-			// May do something in handlers of `openedStateChange` event.
 			onRenderComplete(() => {
+				// May do something in the handlers of `openedStateChange` event and make it closed.
 				if (!this.willOpen || !this.popup) {
 					return
 				}
 
-				this.alignPopup()
-
-				// Very small rate no popup property, don't know why.
-				if (!this.popup) {
+				// May align not successfully.
+				let aligned = this.alignPopup()
+				if (!aligned) {
 					return
 				}
 
 				this.popup.el.style.visibility = ''
 				this.mayGetFocus()
 
+				// Plays transition.
 				if (!isOldInUse) {
 					new Transition(this.popup.el, this.getOption('transition')).enter()
 				}
 
+				// Watch it's rect changing.
 				this.unwatchRect = watchLayout(this.el, 'rect', this.onTriggerRectChanged.bind(this))
 			})
 		}
@@ -500,8 +437,23 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			result = html`${result}`
 		}
 
-		if (key) {
-			let cache = SharedPopupHelpers.getCache(key)
+		// Uses cache.
+		if (this.cachedPopup && this.cachedPopupTemplate) {
+			popup = this.cachedPopup
+			this.cachedPopup = null
+
+			if (this.cachedPopupTemplate.canPatchBy(result)) {
+				this.cachedPopupTemplate.patch(result)
+				popup = this.cachedPopup
+				template = this.cachedPopupTemplate
+				this.cachedPopup = null
+				this.cachedPopupTemplate = null
+			}
+		}
+
+		// Uses shared cache by `key`.
+		if (!popup && key) {
+			let cache = SharedPopups.getCache(key)
 			if (cache) {
 				({popup, template} = cache)
 
@@ -517,7 +469,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 					popup = null
 				}
 
-				// Destroy same name old one immediately.
+				// Destroy otherwise same name popup immediately.
 				else {
 					canShareWithOld = false
 				}
@@ -526,7 +478,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		
 		if (popup) {
 			// Whether is used by other popup binding, such that no need to play transition.
-			let usedByBinding = SharedPopupHelpers.getPopupUser(popup)
+			let usedByBinding = SharedPopups.getPopupUser(popup)
 
 			// If is using, lose the control of it.
 			// No matter whether can reuse it or not.
@@ -549,12 +501,12 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			popup = getRenderedAsComponent(template) as Popup
 
 			if (key) {
-				SharedPopupHelpers.addCache(key, {popup, template})
+				SharedPopups.addCache(key, {popup, template})
 			}
 		}
 
 		if (key) {
-			SharedPopupHelpers.setPopupUser(popup, this)
+			SharedPopups.setPopupUser(popup, this)
 		}
 
 		this.popup = popup
@@ -567,17 +519,24 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		return isOldInUse
 	}
 
+	/** Rlease control with a popup component after another binding take it. */
 	losePopupControl() {
 		this.clean()
 	}
 
-	/** Clean all popup properties. */
+	/** Cleans all popup properties. */
 	protected clean() {
 		let key = this.getOption('key')
 		let popup = this.popup
+		let popupTemplate = this.popupTemplate
 
 		if (key && popup) {
-			SharedPopupHelpers.deleteCache(key, popup)
+			SharedPopups.deleteCache(key, popup)
+		}
+
+		if (popup && popupTemplate && this.options.get('cacheable')) {
+			this.cachedPopup = popup
+			this.cachedPopupTemplate = popupTemplate
 		}
 
 		this.unbindLeaveEvents()
@@ -615,7 +574,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			popup = getRenderedAsComponent(template) as Popup
 
 			if (key) {
-				SharedPopupHelpers.addCache(key, {popup, template})
+				SharedPopups.addCache(key, {popup, template})
 			}
 		}
 
@@ -634,8 +593,8 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		}
 	}
 
-	/** Align popup component. */
-	protected alignPopup() {
+	/** Align popup component, returns whether aligns it successfully. */
+	protected alignPopup(): boolean {
 		let popup = this.popup!
 		let alignToFn = this.getOption('alignTo')
 		let alignTo = alignToFn ? alignToFn(this.el) : this.el
@@ -650,7 +609,10 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		let aligned = this.aligner.align()
 		if (!aligned) {
 			this.hidePopup()
+			return false
 		}
+
+		return true
 	}
 
 	/** Get align options. */

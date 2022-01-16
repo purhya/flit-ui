@@ -82,6 +82,7 @@ export class Popup<E = {}> extends Component<E> {
 	
 	// Call `update` every time after restored from `cache(...)`.
 	protected onConnected() {
+		
 		// Why render `<popup>` to body?
 		// It's very common that the `el` is covered or clipped,
 		// which will cause the `<popup>` is not fully visible.
@@ -108,16 +109,16 @@ export class Popup<E = {}> extends Component<E> {
 		this.applyAppendTo()
 	}
 	
-	/** Insert popup element into target specified by `appendTo`. */
+	/** Set related popup binding. */
+	setBinding(binding: PopupBinding) {
+		this.binding = binding
+	}
+
+	/** Insert popup element into target that specified by `appendTo`. */
 	applyAppendTo() {
 		if (this.appendTo) {
 			appendTo(this.el, this.appendTo)
 		}
-	}
-
-	/** Set related popup binding. */
-	setBinding(binding: PopupBinding) {
-		this.binding = binding
 	}
 
 	/** Close popup content, may play leave transition. */
