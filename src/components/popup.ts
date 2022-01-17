@@ -19,14 +19,19 @@ export class Popup<E = {}> extends Component<E> {
 			position: absolute;
 			left: 0;
 			top: 0;
-			z-index: 1000;	// Same with window, so if in window, we must move it behind the window
+
+			// Same with window, so if in window, we must move it behind the window
+			z-index: 1000;
+			
 			background: ${popupBackgroundColor};
 			border-radius: ${popupBorderRadius}px;
-			filter: drop-shadow(0 0 ${popupShadowBlurRadius / 2}px ${popupShadowColor});	// 3px nearly equals 6px in box-shadow.
+
+			// 3px drop shadow nearly equals 6px in box-shadow.
+			filter: drop-shadow(0 0 ${popupShadowBlurRadius / 2}px ${popupShadowColor});
 		}
 
 		.triangle{
-			// Must be the styles in top position
+			// Triangle should set "top" position, not others.
 			position: absolute;
 			border-left: ${w / 2}px solid transparent;
 			border-right: ${w / 2}px solid transparent;

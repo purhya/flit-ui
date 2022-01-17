@@ -440,7 +440,6 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		// Uses cache.
 		if (this.cachedPopup && this.cachedPopupTemplate) {
 			popup = this.cachedPopup
-			this.cachedPopup = null
 
 			if (this.cachedPopupTemplate.canPatchBy(result)) {
 				this.cachedPopupTemplate.patch(result)
