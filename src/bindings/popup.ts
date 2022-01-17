@@ -494,17 +494,14 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			}
 		}
 		
-		if (!popup) {
+		if (!popup || !template) {
 			// No need to watch the renderFn, it will be watched from outer component render function.
 			template = render(result, this.context)
 			popup = getRenderedAsComponent(template) as Popup
-
-			if (key) {
-				SharedPopups.addCache(key, {popup, template})
-			}
 		}
 
 		if (key) {
+			SharedPopups.addCache(key, {popup, template})
 			SharedPopups.setPopupUser(popup, this)
 		}
 
