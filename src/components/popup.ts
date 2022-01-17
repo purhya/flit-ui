@@ -22,7 +22,7 @@ export class Popup<E = {}> extends Component<E> {
 
 			// Same with window, so if in window, we must move it behind the window
 			z-index: 1000;
-			
+
 			background: ${popupBackgroundColor};
 			border-radius: ${popupBorderRadius}px;
 
@@ -119,7 +119,10 @@ export class Popup<E = {}> extends Component<E> {
 		this.binding = binding
 	}
 
-	/** Insert popup element into target that specified by `appendTo`. */
+	/** 
+	 * Insert popup element into target that specified by `appendTo`.
+	 * Can also ensure 
+	 */
 	applyAppendTo() {
 		if (this.appendTo) {
 			appendTo(this.el, this.appendTo)

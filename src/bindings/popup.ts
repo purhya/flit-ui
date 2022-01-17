@@ -78,7 +78,7 @@ export interface PopupOptions {
 
 interface PopupBindingEvents {
 	
-	/** Triggers when `opened` state of popup binding changed. */
+	/** Triggers when `opened` state of popup-binding changed. */
 	openedStateChange?: (opened: boolean) => void
 
 	/** Triggers before align popup to current element. */
@@ -383,8 +383,11 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			this.updatePopup()
 		}
 		else {
-			let isOldInUse = this.ensurePopup()
-			this.popup!.el.style.visibility = 'hidden'
+			let isOldExist = this.ensurePopup()
+			let popup = this.popup!
+
+			popup.el.style.pointerEvents = this.getOption('pointerable') ? '' : 'none'
+			popup.el.style.visibility = 'hidden'
 			
 			this.unbindLeavingTriggerEvents()
 			this.bindLeaveEvents()
@@ -407,7 +410,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 				this.mayGetFocus()
 
 				// Plays transition.
-				if (!isOldInUse) {
+				if (!isOldExist) {
 					new Transition(this.popup.el, this.getOption('transition')).enter()
 				}
 
@@ -422,17 +425,16 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	 * Returns whether old popup is in use.
 	 */
 	protected ensurePopup(): boolean {
+
+		// No need to watch the renderFn, it will be watched from the outer component.
 		let result = this.renderFn()
+
 		let key = this.getOption('key')
 		let popup: Popup | null = null
 		let template: Template | null = null
+		let cache = key ? SharedPopups.findCache(key, this.el) : null
 
-		/** Whether can patch with existed popup and reuse it. */
-		let canShareWithOld = true
-
-		/** Whether the existed popup is in use. */
-		let isOldInUse = false
-
+		// Make sure the render result is a template result.
 		if (!(result instanceof TemplateResult)) {
 			result = html`${result}`
 		}
@@ -451,53 +453,22 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		}
 
 		// Uses shared cache by `key`.
-		if (!popup && key) {
-			let cache = SharedPopups.getCache(key)
-			if (cache) {
-				({popup, template} = cache)
-
-				let currentTriggerInsideCachedPopup = popup.el.contains(this.el)
-
-				// Reuse and patch.
-				if (!currentTriggerInsideCachedPopup && template.canPatchBy(result)) {
-					template.patch(result)
-				}
-
-				// Can't reuse since trigger element inside it.
-				else if (currentTriggerInsideCachedPopup) {
-					popup = null
-				}
-
-				// Destroy otherwise same name popup immediately.
-				else {
-					canShareWithOld = false
-				}
+		if (!popup && cache) {
+			if (cache.template.canPatchBy(result)) {
+				popup = cache.popup
+				template = cache.template
+				template.patch(result)
 			}
 		}
 		
-		if (popup) {
-			// Whether is used by other popup binding, such that no need to play transition.
-			let usedByBinding = SharedPopups.getPopupUser(popup)
-
-			// If is using, lose the control of it.
-			// No matter whether can reuse it or not.
-			if (usedByBinding && usedByBinding !== this) {
-				usedByBinding.losePopupControl()
-			}
-
-			isOldInUse = !!usedByBinding
-
-			// Delete the popup that can't be shared.
-			if (!canShareWithOld) {
-				popup.el.remove()
-				popup = null
-			}
-		}
-		
+		// Create new popup.
 		if (!popup || !template) {
-			// No need to watch the renderFn, it will be watched from outer component render function.
 			template = render(result, this.context)
 			popup = getRenderedAsComponent(template) as Popup
+		}
+
+		if (key && cache) {
+			SharedPopups.cleanOtherControls(key, cache, popup, this)
 		}
 
 		if (key) {
@@ -508,14 +479,14 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		this.popup = popup
 		this.popupTemplate = template
 
-		popup.setBinding(this as PopupBinding)
+		popup.setBinding(this)
 		popup.applyAppendTo()
-		popup.el.style.pointerEvents = this.getOption('pointerable') ? '' : 'none'
 
-		return isOldInUse
+		let isOldExist = !!cache?.popup
+		return isOldExist
 	}
 
-	/** Rlease control with a popup component after another binding take it. */
+	/** Rlease control with it's popup component after another popup-binding take it. */
 	losePopupControl() {
 		this.clean()
 	}
@@ -707,9 +678,10 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			if (finish) {
 				popupEl.remove()
 			}
-		})
 
-		this.clean()
+			// Clean after transition end.
+			this.clean()
+		})
 	}
 
 	/** Trigger when mouse down on document. */
