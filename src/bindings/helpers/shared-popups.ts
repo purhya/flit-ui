@@ -1,5 +1,5 @@
 import {MouseLeave} from '@pucelle/ff'
-import {Template} from '@pucelle/flit'
+import {clearTransition, Template} from '@pucelle/flit'
 import type {Popup} from '../../components/popup'
 import type {PopupBinding} from '../popup'
 
@@ -107,7 +107,10 @@ export namespace SharedPopups {
 		}
 
 		// Made another popup because of can't share, delete the old one.
-		if (existPopup !== popup) {
+		if (existPopup === popup) {
+			clearTransition(popup.el)
+		}
+		else {
 			existPopup.el.remove()
 			deleteCache(key, existPopup)
 		}

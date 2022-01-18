@@ -467,10 +467,12 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			popup = getRenderedAsComponent(template) as Popup
 		}
 
+		// Cleans old popups, and cut it's relationship with other popup-binding.
 		if (key && cache) {
 			SharedPopups.cleanOtherControls(key, cache, popup, this)
 		}
 
+		// Add as cache.
 		if (key) {
 			SharedPopups.addCache(key, {popup, template})
 			SharedPopups.setPopupUser(popup, this)
