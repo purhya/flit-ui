@@ -26,7 +26,6 @@ export namespace SharedPopups {
 	 */
 	export function findCache(key: string, triggerEl: Element): SharedPopupCache | null {
 		let cache = findCacheByKey(key)
-
 		if (!cache) {
 			return null
 		}
@@ -36,6 +35,11 @@ export namespace SharedPopups {
 		// Popup sequence, can't close the old popup.
 		let isTriggerInside = popup.el.contains(triggerEl)
 		if (isTriggerInside) {
+			return null
+		}
+
+		let existBinding = PopupsUsedBy.get(popup)
+		if (existBinding && !existBinding.__canLoseControl()) {
 			return null
 		}
 
@@ -97,13 +101,13 @@ export namespace SharedPopups {
 	 * If another popup-binding holds the popup, cut the relationship.
 	 * Otherwise if cached popup can't reuse, just delete it.
 	 */
-	export function cleanOtherControls(key: string, cache: SharedPopupCache, popup: Popup, binding: PopupBinding) {
+	export function cleanPopupControls(key: string, cache: SharedPopupCache, popup: Popup, binding: PopupBinding) {
 		let existPopup = cache.popup
 		let existBinding = PopupsUsedBy.get(existPopup)
 
 		// Reused by another popup-binding, release it.
 		if (existBinding && existBinding !== binding) {
-			existBinding.losePopupControl()
+			existBinding.__losePopupControl()
 		}
 
 		// Made another popup because of can't share, delete the old one.
@@ -119,7 +123,9 @@ export namespace SharedPopups {
 	/** Is cache with the specified key is being used by any binding. */
 	export function isKeyInUse(key: string): boolean {
 		let cache = findCacheByKey(key)
-		return cache ? PopupsUsedBy.has(cache.popup) : false
+		let popup = cache?.popup
+
+		return popup ? PopupsUsedBy.has(popup) : false
 	}
 
 	/** Set user for a popup. */

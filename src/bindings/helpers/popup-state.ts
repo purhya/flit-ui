@@ -33,7 +33,7 @@ export class PopupState extends EventEmitter<PopupStateEvents> {
 	 * Returns whether the request is the first show request.
 	 */
 	willShow(showDelay: number): boolean {
-		if (this.willShowSoon) {
+		if (this.opened || this.willShowSoon) {
 			return false
 		}
 
@@ -63,7 +63,7 @@ export class PopupState extends EventEmitter<PopupStateEvents> {
 	 * Returns whether the request is the first request.
 	 */
 	willHide(hideDelay: number): boolean {
-		if (this.willHideSoon) {
+		if (!this.opened || this.willHideSoon) {
 			return false
 		}
 
@@ -88,10 +88,7 @@ export class PopupState extends EventEmitter<PopupStateEvents> {
 		this.willHideSoon = false
 	}
 
-	/** 
-	 * Send a request to show immediately.
-	 * Returns whether the request is the first request.
-	 */
+	/** Send a request to show immediately. */
 	show() {
 		this.willNotShow()
 		this.willNotHide()
@@ -99,16 +96,10 @@ export class PopupState extends EventEmitter<PopupStateEvents> {
 		if (!this.opened) {
 			this.opened = true
 			this.emit('do-show')
-			return true
 		}
-
-		return false
 	}
 
-	/** 
-	 * Send a request to hide immediately.
-	 * Returns whether the request is the first request.
-	 */
+	/** Send a request to hide immediately. */
 	hide() {
 		this.willNotShow()
 		this.willNotHide()
@@ -116,10 +107,7 @@ export class PopupState extends EventEmitter<PopupStateEvents> {
 		if (this.opened) {
 			this.opened = false
 			this.emit('do-hide')
-			return true
 		}
-
-		return false
 	}
 
 	/** Clean and restore to start state. */

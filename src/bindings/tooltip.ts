@@ -51,14 +51,9 @@ export class TooltipBinding extends PopupBinding {
 	}
 
 	protected getPopupOptions(options: TooltipOptions = {}): TooltipOptions {
-		let optionType = options.type ?? defaultTooltipOptions.type
-
 		return {
 			...defaultTooltipOptions,
-
-			// Default key is `tooltip` for default type.
-			key: optionType === 'default' ? 'tooltip' : '',
-			
+			key: 'tooltip',
 			...options,
 		}
 	}
@@ -77,8 +72,8 @@ export class TooltipBinding extends PopupBinding {
 		super.showPopupLater()
 	}
 
-	protected bindTrigger() {
-		if (this.shouldAlwaysKeepVisible()) {
+	protected bindEnterEvents() {
+		if (this.shouldKeepVisible()) {
 			// If not wait window loaded, page scrolling position may be not determinated yet.
 			// So element may be aligned to a wrong position.
 			ensureWindowLoaded().then(() => {
@@ -86,24 +81,18 @@ export class TooltipBinding extends PopupBinding {
 			})
 		}
 		else {
-			super.bindTrigger()
+			super.bindEnterEvents()
 		}
 	}
-
-	/** Whether the tooltip should always visible. */
-	protected shouldAlwaysKeepVisible(): boolean {
-		return ['prompt', 'error'].includes(this.getOption<any>('type'))
-	}
-
-	protected bindLeaveEvents() {
-		if (!this.shouldAlwaysKeepVisible()) {
-			super.bindLeaveEvents()
-		}
+	
+	protected shouldKeepVisible(): boolean {
+		return super.shouldKeepVisible()
+			|| ['prompt', 'error'].includes(this.getOption<any>('type'))
 	}
 
 	/** After trigger element position changed. */
 	protected onTriggerRectChanged() {
-		if (this.shouldAlwaysKeepVisible() || isVisibleInViewport(this.el, 0.1, this.popup!.el)) {
+		if (this.shouldKeepVisible() || isVisibleInViewport(this.el, 0.1, this.popup!.el)) {
 			if (this.popup) {
 				this.alignPopup()
 			}

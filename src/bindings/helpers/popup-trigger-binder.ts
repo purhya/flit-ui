@@ -7,6 +7,7 @@ export type TiggerType = 'hover' | 'click' | 'focus' | 'contextmenu'
 interface PopupTriggerEvents {
 	'will-show': () => void
 	'will-hide': () => void
+	'cancel-show': () => void
 	'hide': () => void
 	'toggle-show-hide': () => void
 }
@@ -114,7 +115,7 @@ export class PopupTriggerBinder extends EventEmitter<PopupTriggerEvents> {
 	}
 
 	private cancelShowingPopup() {
-		this.emit('will-hide')
+		this.emit('cancel-show')
 	}
 
 	/** Bind events to hiden popup events. */

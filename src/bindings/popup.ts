@@ -98,7 +98,8 @@ export interface PopupOptions {
 	cacheable?: boolean
 
 	/** 
-	 * If specified as `true`, will keep the popup visible, until it becomes `false`.
+	 * If specified as `true`, will keep the popup visible once popup opened,
+	 * until this value becomes `false`, or hide popup manually.
 	 * Default value is `false`.
 	 */
 	keepVisible?: boolean
@@ -152,9 +153,6 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	/** Used to watch rect change after popup opened. */
 	protected unwatchRect: (() => void) | null = null
 
-	/** Used to watch mouse leaves trigger or popup element after popup opened. */
-	protected unwatchLeave: (() => void) | null = null
-
 	/** Current popup. */
 	protected popup: Popup | null = null
 
@@ -170,13 +168,16 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	/** Cached popup template for reusing when `cacheable` is `true`. */
 	protected cachedPopupTemplate: Template | null = null
 
+	/** Whether stops the popup hidden. */
+	protected keptToBeVisible: boolean = false
+
 	constructor(el: Element, context: Context) {
 		super()
 
 		this.el = el as HTMLElement
 		this.context = context
-		this.state = new PopupState()
 		this.binder = new PopupTriggerBinder(this.el)
+		this.state = new PopupState()
 
 		// Not it does't assign default values to it.
 		this.options = new UpdatableOptions({})
@@ -185,13 +186,37 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	}
 
 	protected initPopupEvents() {
+		this.binder.on('will-show', this.showPopupLater, this)
+		this.binder.on('will-hide', this.onHidePopupLaterFomBinder, this)
+		this.binder.on('cancel-show', () => this.state.willNotShow, this)
+		this.binder.on('hide', this.onHidePopupLaterFomBinder, this)
+		this.binder.on('toggle-show-hide', this.togglePopupShowHide, this)
+
 		this.state.on('do-show', this.doShowingPopup, this)
 		this.state.on('do-hide', this.doHidingPopup, this)
+	}
 
-		this.binder.on('will-show', this.showPopupLater, this)
-		this.binder.on('will-hide', this.hidePopupLater, this)
-		this.binder.on('hide', this.hidePopup, this)
-		this.binder.on('toggle-show-hide', this.togglePopupShowHide, this)
+	protected onWillHidePopupLaterFomBinder() {
+		if (this.shouldKeepVisible()) {
+			this.keptToBeVisible = true
+			return
+		}
+
+		this.hidePopupLater()
+	}
+
+	protected onHidePopupLaterFomBinder() {
+		if (this.shouldKeepVisible()) {
+			this.keptToBeVisible = true
+			return
+		}
+
+		this.hidePopup()
+	}
+
+	/** Whether the tooltip should keep to be visible. */
+	protected shouldKeepVisible(): boolean {
+		return this.options.get('keepVisible')
 	}
 
 	protected getOption<K extends keyof PopupOptions>(key: K): NonNullable<PopupOptions[K]> {
@@ -217,24 +242,28 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	/** `renderFn` should never change. */
 	update(renderFn: RenderFn, options?: PopupOptions) {
 		let firstTimeUpdate = this.options.isNotUpdated()
-		//let notBindedLeaveTrigger = this.options.get('keepVisible')
 
 		this.renderFn = renderFn
 		this.options.update(options)
 
 		if (firstTimeUpdate) {
-			// Must knows trigger type firstly, then can bind trigger.
-			// Bind it late can improve performance.
+
+			// Must knows trigger type firstly, then can bind trigger events.
+			// Bind it later can improve performance.
 			onRenderComplete(() => {	
-				this.bindTrigger()
+				this.bindEnterEvents()
 			})
 		}
 		else if (this.state.opened) {
 			enqueueUpdatableInOrder(this, this.context, QueueUpdateOrder.Directive)
 		}
+
+		if (this.keptToBeVisible && !this.options.get('keepVisible')) {
+			this.hidePopupLater()
+		}
 	}
 
-	protected bindTrigger() {
+	protected bindEnterEvents() {
 		this.binder.setTrigger(this.getOption('trigger'))
 		this.binder.bindEnter()
 
@@ -243,7 +272,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		}
 	}
 
-	protected unbindTrigger() {
+	protected unbindEnterEvents() {
 		this.binder.unbindEnter()
 	}
 
@@ -348,7 +377,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		popup.el.style.visibility = 'hidden'
 		
 		this.binder.unBindLeaveBeforeShow()
-		this.bindLeaveEvents()
+		this.binder.bindLeave(this.getOption('hideDelay'), this.popup!.el)
 
 		onRenderComplete(() => {
 			this.afterPopupRendered(isOldExist)
@@ -441,7 +470,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 		// Cleans old popups, and cut it's relationship with other popup-binding.
 		if (key && cache) {
-			SharedPopups.cleanOtherControls(key, cache, popup, this)
+			SharedPopups.cleanPopupControls(key, cache, popup, this)
 		}
 
 		// Add as cache.
@@ -503,16 +532,6 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		}
 	}
 
-	/** Bind hiding popup component events. */
-	protected bindLeaveEvents() {
-		this.binder.bindLeave(this.getOption('hideDelay'), this.popup!.el)
-	}
-
-	/** Unbind hiding popup component events. */
-	protected unbindLeaveEvents() {
-		this.binder.unbindLeave()
-	}
-
 	/** Hide popup component after a short time out. */
 	hidePopupLater() {
 		let hideDelay = this.getOption('hideDelay')
@@ -528,6 +547,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	protected doHidingPopup() {
 		let popup = this.popup!
 		let popupEl = popup.el
+
 		this.clean()
 
 		new Transition(popupEl, this.getOption('transition')).leave().then(finish => {
@@ -539,8 +559,13 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		this.emit('openedStateChange', false)
 	}
 
+	/** Returns whether the popup-binding can lose control of popup. */
+	__canLoseControl() {
+		return !this.keptToBeVisible
+	}
+
 	/** Rlease control with it's popup component after another popup-binding take it. */
-	losePopupControl() {
+	__losePopupControl() {
 		this.clean()
 	}
 
@@ -559,7 +584,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			this.cachedPopupTemplate = popupTemplate
 		}
 
-		this.unbindLeaveEvents()
+		this.binder.unbindLeave()
 
 		if (this.unwatchRect) {
 			this.unwatchRect()
@@ -582,7 +607,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			this.clean()
 		}
 
-		this.unbindTrigger()
+		this.unbindEnterEvents()
 	}
 }
 

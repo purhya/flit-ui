@@ -141,6 +141,7 @@ export class Slider<E = {}> extends Component<E & SliderEvents> {
 		let tip = tooltip(this.renderTooltipContent(), {
 			alignTo: () => this.refElements.ball,
 			alignPosition: this.vertical ? 'r' : 't',
+			keepVisible: this.draging,
 		})
 
 		let sizeStyle: any = {}
