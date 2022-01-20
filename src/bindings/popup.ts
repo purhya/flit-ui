@@ -188,7 +188,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	protected initPopupEvents() {
 		this.binder.on('will-show', this.showPopupLater, this)
 		this.binder.on('will-hide', this.onHidePopupLaterFomBinder, this)
-		this.binder.on('cancel-show', () => this.state.willNotShow, this)
+		this.binder.on('cancel-show', this.cancelShowFromBinder, this)
 		this.binder.on('hide', this.onHidePopupLaterFomBinder, this)
 		this.binder.on('toggle-show-hide', this.togglePopupShowHide, this)
 
@@ -212,6 +212,10 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		}
 
 		this.hidePopup()
+	}
+
+	protected cancelShowFromBinder() {
+		this.state.willNotShow()
 	}
 
 	/** Whether the tooltip should keep to be visible. */
@@ -247,12 +251,8 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		this.options.update(options)
 
 		if (firstTimeUpdate) {
-
-			// Must knows trigger type firstly, then can bind trigger events.
-			// Bind it later can improve performance.
-			onRenderComplete(() => {	
-				this.bindEnterEvents()
-			})
+			this.binder.setTrigger(this.getOption('trigger'))
+			this.bindEnterEvents()
 		}
 		else if (this.state.opened) {
 			enqueueUpdatableInOrder(this, this.context, QueueUpdateOrder.Directive)
@@ -264,7 +264,6 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	}
 
 	protected bindEnterEvents() {
-		this.binder.setTrigger(this.getOption('trigger'))
 		this.binder.bindEnter()
 
 		if (this.getOption('showImmediately')) {
@@ -279,16 +278,11 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	/** Toggle opened state and show or hide popup component immediately. */
 	protected togglePopupShowHide() {
 		if (this.state.opened) {
-			this.state.show()
-		}
-		else {
 			this.state.hide()
 		}
-	}
-
-	protected onMouseEnterOrFocusEl(e: Event) {
-		e.stopPropagation()
-		this.showPopupLater()
+		else {
+			this.state.show()
+		}
 	}
 
 	/** Show popup component after a short time out. */
