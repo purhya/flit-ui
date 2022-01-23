@@ -365,12 +365,11 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	/** Render the popup component. */
 	protected renderPopup() {
 		let isOldExist = this.ensurePopup()
-		let popup = this.popup!
+		let popupEl = this.popup!.el
 
-		popup.el.style.pointerEvents = this.getOption('pointerable') ? '' : 'none'
-		popup.el.style.visibility = 'hidden'
+		popupEl.style.pointerEvents = this.getOption('pointerable') ? '' : 'none'
+		popupEl.style.visibility = 'hidden'
 		
-		this.binder.unBindLeaveBeforeShow()
 		this.binder.bindLeave(this.getOption('hideDelay'), this.popup!.el)
 
 		onRenderComplete(() => {
@@ -417,7 +416,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	/** 
 	 * Get a cached popup component, or create a new one.
-	 * Returns whether old popup is in use.
+	 * Returns whether old popup in same key is existing.
 	 */
 	protected ensurePopup(): boolean {
 

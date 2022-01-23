@@ -1,5 +1,5 @@
 import {EventEmitter, MouseLeave} from "@pucelle/ff"
-import {off, on} from "@pucelle/flit"
+import {off, on, once} from "@pucelle/flit"
 
 
 export type TiggerType = 'hover' | 'click' | 'focus' | 'contextmenu'
@@ -103,12 +103,12 @@ export class PopupTriggerBinder extends EventEmitter<PopupTriggerEvents> {
 	/** Bind events to handle leaving trigger element before popup showing. */
 	bindLeaveBeforeShow() {
 		if (this.trigger === 'hover') {
-			on(this.el, 'mouseleave', this.cancelShowingPopup, this)
+			once(this.el, 'mouseleave', this.cancelShowingPopup, this)
 		}
 	}
 
 	/** Unbind events to handle leaving trigger element before popup showing. */
-	unBindLeaveBeforeShow() {
+	private unbindLeaveBeforeShow() {
 		if (this.trigger === 'hover') {
 			off(this.el, 'mouseleave', this.cancelShowingPopup, this)
 		}
@@ -120,6 +120,8 @@ export class PopupTriggerBinder extends EventEmitter<PopupTriggerEvents> {
 
 	/** Bind events to hiden popup events. */
 	bindLeave(hideDelay: number, popupEl: Element) {
+		this.unbindLeaveBeforeShow()
+
 		this.popupEl = popupEl
 
 		if (this.trigger === 'hover') {
@@ -183,5 +185,4 @@ export class PopupTriggerBinder extends EventEmitter<PopupTriggerEvents> {
 			off(this.el, 'blur', this.hidePopupLater, this)
 		}
 	}
-
 }
