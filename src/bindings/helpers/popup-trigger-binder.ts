@@ -118,7 +118,7 @@ export class PopupTriggerBinder extends EventEmitter<PopupTriggerEvents> {
 		this.emit('cancel-show')
 	}
 
-	/** Bind events to hiden popup events. */
+	/** Bind events to hide popup element. */
 	bindLeave(hideDelay: number, popupEl: Element) {
 		this.unbindLeaveBeforeShow()
 
@@ -126,17 +126,7 @@ export class PopupTriggerBinder extends EventEmitter<PopupTriggerEvents> {
 
 		if (this.trigger === 'hover') {
 			if (this.havePointer()) {
-
-				// Should not use `MouseLeave.once`, because `hidePopupLater` may be canceled, it needs trigger again.
-				this.unwatchLeave = MouseLeave.on(this.el, popupEl,
-					() => {
-						this.emit('hide')
-					},
-					{
-						delay: hideDelay,
-						mouseIn: true,
-					}
-				)
+				this.bindMouseLeave(hideDelay, popupEl)
 			}
 			else {
 				on(document, 'touchstart', this.onDocMouseDownOrTouch, this)
@@ -149,6 +139,19 @@ export class PopupTriggerBinder extends EventEmitter<PopupTriggerEvents> {
 		else if (this.trigger === 'focus') {
 			on(this.el, 'blur', this.hidePopupLater, this)
 		}
+	}
+
+	/** Bind events to hide popup element after mouse leave both trigger and popup element. */
+	protected bindMouseLeave(hideDelay: number, popupEl: Element) {
+		this.unwatchLeave = MouseLeave.on(this.el, popupEl,
+			() => {
+				this.emit('hide')
+			},
+			{
+				delay: hideDelay,
+				mouseIn: true,
+			}
+		)
 	}
 
 	/** Trigger when mouse down on document, and not inside `el` or popup. */

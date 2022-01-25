@@ -187,16 +187,16 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	protected initPopupEvents() {
 		this.binder.on('will-show', this.showPopupLater, this)
-		this.binder.on('will-hide', this.onHidePopupLaterFomBinder, this)
-		this.binder.on('cancel-show', this.cancelShowFromBinder, this)
-		this.binder.on('hide', this.onHidePopupLaterFomBinder, this)
+		this.binder.on('will-hide', this.onHideFomBinder, this)
+		this.binder.on('cancel-show', this.cancelShowingFromBinder, this)
+		this.binder.on('hide', this.onHideFomBinder, this)
 		this.binder.on('toggle-show-hide', this.togglePopupShowHide, this)
 
 		this.state.on('do-show', this.doShowingPopup, this)
 		this.state.on('do-hide', this.doHidingPopup, this)
 	}
 
-	protected onWillHidePopupLaterFomBinder() {
+	protected onWillHideFomBinder() {
 		if (this.shouldKeepVisible()) {
 			this.keptToBeVisible = true
 			return
@@ -205,7 +205,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		this.hidePopupLater()
 	}
 
-	protected onHidePopupLaterFomBinder() {
+	protected onHideFomBinder() {
 		if (this.shouldKeepVisible()) {
 			this.keptToBeVisible = true
 			return
@@ -214,8 +214,17 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		this.hidePopup()
 	}
 
-	protected cancelShowFromBinder() {
-		this.state.willNotShow()
+	/** 
+	 * Although we call it `cancal showing`,
+	 * May still be in opened state right now.
+	 */
+	protected cancelShowingFromBinder() {
+		if (this.state.opened) {
+			this.hidePopup()
+		}
+		else {
+			this.state.willNotShow()
+		}
 	}
 
 	/** Whether the tooltip should keep to be visible. */
