@@ -169,7 +169,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 	protected cachedPopupTemplate: Template | null = null
 
 	/** Whether stops the popup hidden. */
-	protected keptToBeVisible: boolean = false
+	protected keepToBeVisible: boolean = false
 
 	constructor(el: Element, context: Context) {
 		super()
@@ -198,7 +198,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	protected onWillHideFomBinder() {
 		if (this.shouldKeepVisible()) {
-			this.keptToBeVisible = true
+			this.keepToBeVisible = true
 			return
 		}
 
@@ -207,7 +207,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	protected onHideFomBinder() {
 		if (this.shouldKeepVisible()) {
-			this.keptToBeVisible = true
+			this.keepToBeVisible = true
 			return
 		}
 
@@ -267,7 +267,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 			enqueueUpdatableInOrder(this, this.context, QueueUpdateOrder.Directive)
 		}
 
-		if (this.keptToBeVisible && !this.options.get('keepVisible')) {
+		if (this.keepToBeVisible && !this.options.get('keepVisible')) {
 			this.hidePopupLater()
 		}
 	}
@@ -547,6 +547,10 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	/** Truly Hide popup when required. */
 	protected doHidingPopup() {
+		if (!this.popup) {
+			return
+		}
+
 		let popup = this.popup!
 		let popupEl = popup.el
 
@@ -563,7 +567,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	/** Returns whether the popup-binding can lose control of popup. */
 	__canLoseControl() {
-		return !this.keptToBeVisible
+		return !this.keepToBeVisible
 	}
 
 	/** Rlease control with it's popup component after another popup-binding take it. */
