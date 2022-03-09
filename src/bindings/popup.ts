@@ -446,7 +446,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 		if (this.cachedPopup && this.cachedPopupTemplate) {
 			popup = this.cachedPopup
 
-			if (this.cachedPopupTemplate.canPatchBy(result)) {
+			if (this.cachedPopupTemplate.canPatchByContextual(result, this.context)) {
 				this.cachedPopupTemplate.patch(result)
 				popup = this.cachedPopup
 				template = this.cachedPopupTemplate
@@ -457,7 +457,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 		// Uses shared cache by `key`.
 		if (!popup && cache) {
-			if (cache.template.canPatchBy(result)) {
+			if (cache.template.canPatchByContextual(result, this.context)) {
 				popup = cache.popup
 				template = cache.template
 				template.patch(result)
