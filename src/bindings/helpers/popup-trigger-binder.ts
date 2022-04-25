@@ -2,7 +2,8 @@ import {EventEmitter, MouseLeave} from "@pucelle/ff"
 import {off, on, once} from "@pucelle/flit"
 
 
-export type TiggerType = 'hover' | 'click' | 'focus' | 'contextmenu'
+/** `None` means can only be triggered by calling APIs. */
+export type TiggerType = 'hover' | 'click' | 'focus' | 'contextmenu' | 'none'
 
 interface PopupTriggerEvents {
 	'will-show': () => void

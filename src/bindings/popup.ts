@@ -25,10 +25,17 @@ export interface PopupOptions {
 	/** Element to align to, use current element if not specified. */
 	alignTo?: (trigger: Element) => Element
 
-	/** Where the popup align, reference to `align`. */
+	/** 
+	 * Where the popup align with target element,
+	 * reference to `alignTo` for more details.
+	 * Default value is `b`, means aligning at the bottom of target element.
+	 */
 	alignPosition?: AlignPosition
 
-	/** Popup align margin, reference to `align`. Default value is `4`. */
+	/** 
+	 * Popup align margin, reference to `alignTo` for more details.
+	 * Default value is `4`.
+	 */
 	alignMargin?: number | number[]
 
 	/** 
