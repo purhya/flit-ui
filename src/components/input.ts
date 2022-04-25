@@ -99,9 +99,6 @@ export class Input<E = {}> extends Component<InputEvents & E> {
 		`
 	}
 
-	/** When in composition inputting. */
-	protected inCompositionInputting: boolean = false
-
 	readonly refElements!: {
 		input: HTMLInputElement
 	}
@@ -155,8 +152,6 @@ export class Input<E = {}> extends Component<InputEvents & E> {
 					:refElement="input"
 					${errorTip}
 					@blur=${this.onBlur}
-					@compositionstart=${this.onCompositionStart}
-					@compositionend=${this.onCompositionEnd}
 					@input=${this.onInput}
 					@change=${this.onChange}
 				/>
@@ -175,17 +170,8 @@ export class Input<E = {}> extends Component<InputEvents & E> {
 		this.validate()
 	}
 
-	protected onCompositionStart() {
-		this.inCompositionInputting = true
-	}
-
-	protected onCompositionEnd() {
-		this.inCompositionInputting = false
-		this.onInput()
-	}
-
-	protected onInput(this: Input) {
-		if (this.inCompositionInputting) {
+	protected onInput(this: Input, e: KeyboardEvent) {
+		if (e.isComposing) {
 			return
 		}
 
