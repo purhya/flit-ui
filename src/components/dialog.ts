@@ -2,7 +2,7 @@ import {css, define, html, untilRenderComplete, show, Component, TemplateResult,
 import {theme} from '../style/theme'
 import {align, translations} from '@pucelle/ff'
 import {appendTo} from '../utils/element'
-import {Input} from './input'
+import {Input, Textarea} from './input'
 
 
 export interface DialogOptions {
@@ -62,7 +62,7 @@ export interface PromptDialogOptions extends DialogOptions {
 	defaultValue?: string | number
 
 	/** Input type, same with `<input type=...>`. */
-	inputType?: 'text' | 'password'
+	inputType?: 'text' | 'password' | 'textarea'
 
 	/** To validate current value, returns an error message or `null` if passes. */
 	validator?: (value: string) => string | undefined
@@ -158,7 +158,7 @@ export class Dialog<E = {}> extends Component<E> {
 
 		.input{
 			margin-top: ${adjust(8)}px;
-			margin-bottom: ${adjust(22)}px;
+			margin-bottom: ${adjust(8)}px;
 			width: 100%;
 		}
 		`
@@ -400,20 +400,34 @@ export class QuickDialog {
 	/** Show prompt type dialog or add it to dialog stack. */
 	async prompt(message: string | TemplateResult, options: PromptDialogOptions = {}): Promise<string | undefined> {
 		let value = options.defaultValue ? String(options.defaultValue) : ''
-		let input: Input
+		let input: Input | Textarea
 		let originalInterruptAction = options.interruptAction
 
 		let messageWithInput = html`
 			${message}
-			<f-input class="input" 
-				.placeholder=${options.placeholder}
-				.validator=${options.validator}
-				.type=${options.inputType || 'text'}
-				.value=${value}
-				:refElement=${async (i: HTMLElement) => input = await getComponentAsync(i) as Input}
-				@@input=${(v: string) => value = v}
-				@keydown.enter=${() => this.dialogComponent!.triggerAction('ok')}
-			/>
+
+			${options.inputType === 'textarea'
+			? html`
+				<f-textarea class="input" 
+					.placeholder=${options.placeholder}
+					.validator=${options.validator}
+					.type=${options.inputType || 'text'}
+					.value=${value}
+					:refElement=${async (i: HTMLElement) => input = await getComponentAsync(i) as Textarea}
+					@@input=${(v: string) => value = v}
+				/>
+			` : html`
+				<f-input class="input" 
+					.placeholder=${options.placeholder}
+					.validator=${options.validator}
+					.type=${options.inputType || 'text'}
+					.value=${value}
+					:refElement=${async (i: HTMLElement) => input = await getComponentAsync(i) as Input}
+					@@input=${(v: string) => value = v}
+					@keydown.enter=${() => this.dialogComponent!.triggerAction('ok')}
+				/>
+			`}
+			
 		`
 
 		let btn = await this.addOptions({

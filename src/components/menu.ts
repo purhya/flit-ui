@@ -54,7 +54,7 @@ export class Menu<E = {}> extends Popup<E> {
 
 	defaultPopupOptions: PopupOptions = {
 
-		// A `trigger` option doesn't work here because no trigger element binded yet.
+		// The `trigger` option doesn't work here because of no trigger element binded yet.
 
 		alignPosition: 'bc',
 
