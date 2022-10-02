@@ -272,13 +272,14 @@ export class List<T = any, E = {}> extends Component<E & ListEvents<T>> {
 					return this.navigateFrom
 				}
 			}, navigateFrom => {
+				if (lastElement) {
+					off(lastElement, 'keydown', this.moveArrowSelectedByEvent as any, this)
+					off(lastElement, 'blur', this.onNavigateFromElementBlur as any, this)
+				}
+
 				if (navigateFrom) {
 					on(navigateFrom, 'keydown', this.moveArrowSelectedByEvent as any, this)
 					on(navigateFrom, 'blur', this.onNavigateFromElementBlur as any, this)
-				}
-				else if (lastElement) {
-					off(lastElement, 'keydown', this.moveArrowSelectedByEvent as any, this)
-					on(lastElement, 'blur', this.onNavigateFromElementBlur as any, this)
 				}
 
 				lastElement = navigateFrom
@@ -312,9 +313,13 @@ export class List<T = any, E = {}> extends Component<E & ListEvents<T>> {
 		}
 		else if (event.key === 'Enter') {
 			if (this.watchingKeyBoardNavigation && this.treeNavigationIndices) {
-				let item = TreeDataNavigator.getItemByIndices(this.data, this.treeNavigationIndices)
-				if (item) {
-					this.onClickOption(item)
+				let el = this.el.querySelector(this.scopeClassName('.arrow-selected'))
+				if (el) {
+					let box = el.getBoundingClientRect()
+					let centerEl = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) as HTMLElement
+					if (centerEl instanceof HTMLElement) {
+						centerEl.click()
+					}
 				}
 			}
 		}
