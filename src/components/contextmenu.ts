@@ -1,4 +1,4 @@
-import {define, css} from '@pucelle/flit'
+import {define, css, on} from '@pucelle/flit'
 import {theme} from '../style/theme'
 import {Popup} from '../components/popup'
 
@@ -28,4 +28,11 @@ export class ContextMenu<E = {}> extends Popup<E> {
 	}
 
 	triangle: boolean = false
+
+	protected onReady(): void {
+		super.onReady()
+
+		// Avoid mousedown event at a contextmenu broadcast and cause parent popup hidden. 
+		on(this.el, 'mousedown.stop', () => {}, this)
+	}
 }
