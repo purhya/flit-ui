@@ -14,11 +14,11 @@ export interface DroppableOptions<T> {
 	/** `name` for droppable, can drop draggable to droppable only when name match. */
 	readonly name?: string
 
-	/** Called after mouse enter. */
-	onenter?: (data: T, index: number) => void
+	/** Called after mouse entered into a droppable area. */
+	onenter?: (data: T, toIndex: number) => void
 
-	/** Called after mouse leave. */
-	onleave?: (data: T, index: number) => void
+	/** Called after mouse was just leaved from a droppable area. */
+	onleave?: (data: T, toIndex: number) => void
 }
 
 type Draggable = DraggableBinding<any>
@@ -43,7 +43,6 @@ export class DraggableBinding<T> implements Binding<T> {
 
 		// To avoid image dragging handled be HTML5 drag & drop
 		this.el.setAttribute('draggable', 'false')
-		this.el.style.cursor = 'grab'
 
 		on(this.el, 'mousedown', this.onMouseDown as any, this)
 		on(this.el, 'mouseenter', this.onMouseEnter, this)
@@ -113,16 +112,16 @@ export class DroppableBinding<T> implements Binding<(data: T, index: number) => 
 	/** Allows draggable drop only when name match. */
 	name: string = ''
 
-	protected onenter: ((data: T, index: number) => void) | null = null
-	protected onleave: ((data: T, index: number) => void) | null = null
-	protected ondrop!: (data: T, index: number) => void
+	protected onenter: ((data: T, toIndex: number) => void) | null = null
+	protected onleave: ((data: T, toIndex: number) => void) | null = null
+	protected ondrop!: (data: T, toIndex: number, fromIndex: number) => void
 
 	constructor(el: Element) {
 		this.el = el as HTMLElement
 		on(this.el, 'mouseenter', this.onMouseEnter as any, this)
 	}
 
-	update(ondrop: (data: T, index: number) => void, options: DroppableOptions<T> = {}) {
+	update(ondrop: (data: T, toIndex: number, fromIndex: number) => void, options: DroppableOptions<T> = {}) {
 		this.ondrop = ondrop
 
 		this.name = options.name || ''
@@ -154,9 +153,9 @@ export class DroppableBinding<T> implements Binding<(data: T, index: number) => 
 	}
 
 	/** Triggers dragging element drop to current droppable. */
-	emitDrop(dragging: Draggable, index: number) {
+	emitDrop(dragging: Draggable, toIndex: number) {
 		if (this.ondrop) {
-			this.ondrop(dragging.data as T, index)
+			this.ondrop(dragging.data as T, toIndex, dragging.index)
 		}
 	}
 
@@ -172,7 +171,7 @@ export class DroppableBinding<T> implements Binding<(data: T, index: number) => 
  * @param options Droppable options.
  */
 export const droppable = defineBinding('droppable', DroppableBinding) as
-	<T>(ondrop: (data: T, index: number) => void, options?: DroppableOptions<T>) => void
+	<T>(ondrop: (data: T, toIndex: number, fromInde: number) => void, options?: DroppableOptions<T>) => void
 
 
 /** 
@@ -232,9 +231,9 @@ class DragDropRelationshipManager {
 	}
 
 	/** When dragging and enter a draggable. */
-	enterDraggable(drag: Draggable) {
-		if (this.canSwapWith(drag) && this.mover) {
-			this.mover.onEnterDraggable(drag)
+	enterDraggable(enter: Draggable) {
+		if (this.canSwapWith(enter) && this.mover) {
+			this.mover.onEnterDraggable(enter)
 		}
 	}
 
@@ -493,22 +492,22 @@ class Mover {
 	}
 	
 	/** When mouse enter draggable. */
-	onEnterDraggable(dragTo: Draggable) {
+	onEnterDraggable(dragEnter: Draggable) {
 		if (!this.activeDropArea) {
 			return
 		}
 
 		// May cause enter or leave events triggered acciedently if is playing animation.
-		if (isPlayingAnimation(dragTo.el)) {
+		if (isPlayingAnimation(dragEnter.el)) {
 			return
 		}
 
-		let willMoveElements = new Set([dragTo.el, ...this.getSiblingsAfter(dragTo.el)])
+		let willMoveElements = new Set([dragEnter.el, ...this.getSiblingsAfter(dragEnter.el)])
 		willMoveElements.delete(this.el)
 
 		// When the dragged into element has been moved, dragged into it again means that it's movement will be restored.
-		if (this.movedElements.has(dragTo.el)) {
-			willMoveElements.delete(dragTo.el)
+		if (this.movedElements.has(dragEnter.el)) {
+			willMoveElements.delete(dragEnter.el)
 		}
 
 		// Keeps position.
@@ -525,9 +524,9 @@ class Mover {
 			}
 		}
 
-		this.dragTo = dragTo
-		this.dragToRect = getRect(dragTo.el)
-		this.dragToIndex = this.generateDraggedToIndex(dragTo, willMoveElements.has(dragTo.el))
+		this.dragTo = dragEnter
+		this.dragToRect = getRect(dragEnter.el)
+		this.dragToIndex = this.generateDraggedToIndex(dragEnter, willMoveElements.has(dragEnter.el))
 	}
 
 	protected generateDraggedToIndex(drag: Draggable, beenMoved: boolean): number {

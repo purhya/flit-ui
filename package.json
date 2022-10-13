@@ -11,7 +11,7 @@
 	},
 	"main": "out/index.js",
 	"scripts": {
-		"build": "tsc -b && npm run copy-icons",
+		"build": "tsc -b",
 		"watch": "tsc -b -w",
 		"build-doc": "webpack --config webpack-docs.config.js",
 		"watch-doc": "webpack --config webpack-docs.config.js --watch",

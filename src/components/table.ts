@@ -418,7 +418,7 @@ export class Table<T = any, E = {}, S extends Store<T> | RemoteStore<T> = any> e
 	 * How to render each row.
 	 * You should define a new component and overwrite this method if want to do more customized rendering.
 	 */
-	protected renderRow(item: T | null, index: number) {
+	protected renderRow(item: T | null, index: number): TemplateResult {
 		let tds = this.columns.map((column) => {
 			let result = item && column.render ? column.render.call(this, item, index) : '\xa0'
 			return html`<td :style.text-align=${column.align || ''}>${result}</td>`
