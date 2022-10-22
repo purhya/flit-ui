@@ -68,7 +68,11 @@ export class Router<E = {}> extends Component<RouterEvents & E> {
 	/** Current history state */
 	state: RouterHistoryState | null = null
 
-	/** Normal not popup type path. */
+	/** 
+	 * Normal not popup type path.
+	 * It doesn't change if a popup path was pushed,
+	 * So may a normal path and a popup path both exists, and matches two router parts.
+	 */
 	protected normalPath: string = ''
 
 	/** Popup path come from `goto(..., true)`. */
