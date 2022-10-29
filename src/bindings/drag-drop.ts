@@ -392,7 +392,10 @@ class Mover {
 		document.body.style.cursor = 'grabbing'
 		document.body.style.userSelect = 'none'
 		
-		this.el.style.position = 'fixed'
+		if (this.el.localName !== 'tr') {
+			this.el.style.position = 'fixed'
+		}
+		
 		this.el.style.zIndex = '9999'
 		this.el.style.width = this.rect.width + 'px'
 		this.el.style.height = this.rect.height + 'px'

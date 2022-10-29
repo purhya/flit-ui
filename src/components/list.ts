@@ -7,7 +7,10 @@ import {TreeDataNavigator} from './helpers/tree-data-navigator'
 
 export interface ListItem<T = any> {
 
-	/** Unique value to identify current item. */
+	/** 
+	 * Unique value to identify current item.
+	 * If value be `undefined`, and have any children, clicking it will cause it been opened.
+	 */
 	value?: T
 
 	/** List item content, can be a template result. */
@@ -170,7 +173,7 @@ export class List<T = any, E = {}> extends Component<E & ListEvents<T>> {
 	type: 'selection' | 'navigation' = 'selection'
 
 	/** 
-	 * Whether each items selectable, only for type `selection`.
+	 * Whether each item is selectable, only when at `selection` mode.
 	 * Default value is `false`.
 	 */
 	selectable: boolean = false
@@ -354,7 +357,10 @@ export class List<T = any, E = {}> extends Component<E & ListEvents<T>> {
 	}
 
 	protected onClickOption(this: List, item: ListItem<T>) {
-		if (this.type === 'navigation') {
+		if (item.value === undefined) {
+			this.toggleOpened(item)
+		}
+		else if (this.type === 'navigation') {
 			this.active = item.value!
 			this.emit('navigate', item.value)
 		}
