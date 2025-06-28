@@ -194,7 +194,7 @@ export class PopupBinding extends EventEmitter<PopupBindingEvents> implements Bi
 
 	protected initPopupEvents() {
 		this.binder.on('will-show', this.showPopupLater, this)
-		this.binder.on('will-hide', this.onHideFomBinder, this)
+		this.binder.on('will-hide', this.onWillHideFomBinder, this)
 		this.binder.on('cancel-show', this.cancelShowingFromBinder, this)
 		this.binder.on('hide', this.onHideFomBinder, this)
 		this.binder.on('toggle-show-hide', this.togglePopupShowHide, this)
