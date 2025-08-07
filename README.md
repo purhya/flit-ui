@@ -1,4 +1,4 @@
-# Flit-UI - Obsoleted
+# Flit-UI
 
 ## About
 
