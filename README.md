@@ -4,7 +4,7 @@
 
 **flit-ui** is a a foundational Web UI system which can be easily customized. It based on [flit.js](https://github.com/purhya/flit.js) and [ff](https://github.com/pucelle/ff).
 
-**flit-ui** was heavily inspired from [MorningStar Design System](http://designsystem.morningstar.com/index.html) since I've worked there.
+**flit-ui** was heavily inspired by [MorningStar Design System](http://designsystem.morningstar.com/index.html) since I've worked there.
 
 
 ## Preview
