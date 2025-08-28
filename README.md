@@ -9,7 +9,7 @@
 
 ## Preview
 
-A simple [Preview Page](https://purhya.github.io/flit-ui/) is here, more resources will come in the future.
+A simple [Preview Page](https://purhya.github.io/flit-ui/) is here.
 
 
 ## Note
