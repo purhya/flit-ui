@@ -1,4 +1,4 @@
-# Flit-UI
+# flit-ui
 
 ## About
 
