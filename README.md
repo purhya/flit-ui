@@ -14,7 +14,7 @@ A simple [Preview Page](https://purhya.github.io/flit-ui/) is here, more resourc
 
 ## Note
 
-**Flit-UI** only works on modern browsers like Chrome and Firefox.
+**flit-ui** only works on modern browsers like Chrome and Firefox.
 
 
 ## License
